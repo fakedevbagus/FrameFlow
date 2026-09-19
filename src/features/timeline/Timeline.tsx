@@ -107,6 +107,7 @@ export function Timeline({
             track={track}
             project={project}
             timelineDurationMs={timelineDurationMs}
+            currentTimeMs={clampedCurrentTimeMs}
             selectedClipId={selectedClipId}
             onSelectClip={onSelectClip}
             zoom={zoom}
@@ -121,6 +122,7 @@ interface TimelineTrackProps {
   track: Track;
   project: Project;
   timelineDurationMs: number;
+  currentTimeMs: number;
   selectedClipId: string | null;
   onSelectClip?: (clipId: string) => void;
   zoom: number;
@@ -130,6 +132,7 @@ function TimelineTrack({
   track,
   project,
   timelineDurationMs,
+  currentTimeMs,
   selectedClipId,
   onSelectClip,
   zoom,
@@ -179,12 +182,18 @@ function TimelineTrack({
         {track.clips.length === 0 ? (
           <div className="track-empty">Klik media untuk menambahkannya</div>
         ) : null}
+
+        <div
+          aria-hidden="true"
+          className="timeline-track-playhead"
+          style={{ left: (currentTimeMs / 1000 * pixelsPerSecond) + "px" }}
+        />
       </div>
     </div>
   );
 }
 
-function getTimelineDurationMs(project: Project): number {
+export function getTimelineDurationMs(project: Project): number {
   const latestClipEndMs = project.tracks.reduce(
     (latestTrackEnd, track) =>
       Math.max(
