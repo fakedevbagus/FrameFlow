@@ -2,8 +2,10 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState } from "react";
 import type { Project } from "../project/domain";
 import {
-  findActivePreviewClip,
+  getActiveAudioPreviewClips,
+  getActiveVisualPreviewClips,
   getClipLocalTimeMs,
+  type ActivePreviewClip,
 } from "./preview";
 
 interface PreviewProps {
@@ -22,73 +24,17 @@ export function Preview({
   currentTimeMs,
   isPlaying,
 }: PreviewProps) {
-  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
+  const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
   const [mediaError, setMediaError] = useState<PreviewError | null>(null);
-  const activePreview = findActivePreviewClip(project, currentTimeMs);
-  const asset = activePreview?.asset ?? null;
-  const activeAssetId = activePreview?.asset.id ?? null;
-  const mediaUrl = asset ? tryConvertFileSrc(asset.sourcePath) : null;
-  const localTimeMs = activePreview
-    ? getClipLocalTimeMs(activePreview.clip, currentTimeMs)
-    : 0;
-  const visibleMediaError =
-    asset && mediaError?.assetId === asset.id ? mediaError.message : null;
+  const hasVisualPreview = visualClips.length > 0;
+  const hasAudioPreview = audioClips.length > 0;
 
-  function setMediaErrorForAsset(message: string) {
-    if (asset) {
-      setMediaError({ assetId: asset.id, message });
-    }
+  function handleMediaError(assetId: string, message: string) {
+    setMediaError({ assetId, message });
   }
 
-  function handleMediaRef(element: HTMLMediaElement | null) {
-    mediaRef.current = element;
-  }
-
-  useEffect(() => {
-    const media = mediaRef.current;
-
-    if (!media || !activeAssetId || !asset || asset.mediaType === "image") {
-      return;
-    }
-
-    if (isPlaying) {
-      void Promise.resolve()
-        .then(() => media.play())
-        .catch(() => {
-          setMediaError({
-            assetId: activeAssetId,
-            message:
-              "Preview playback could not start in the current WebView.",
-          });
-        });
-      return;
-    }
-
-    if (!media.paused) {
-      media.pause();
-    }
-  }, [activeAssetId, asset, isPlaying]);
-
-  useEffect(() => {
-    if (isPlaying) {
-      return;
-    }
-
-    const media = mediaRef.current;
-
-    if (!media || !activeAssetId || !asset || asset.mediaType === "image") {
-      return;
-    }
-
-    try {
-      media.currentTime = Math.max(0, localTimeMs / 1000);
-    } catch {
-      // Some WebView/media implementations reject seeking before metadata is ready.
-      // Native media error events provide the user-facing failure state.
-    }
-  }, [activeAssetId, asset, isPlaying, localTimeMs]);
-
-  if (!activePreview || !asset) {
+  if (!hasVisualPreview && !hasAudioPreview) {
     return (
       <div className="preview-content" data-preview-state="empty">
         <span>Preview</span>
@@ -97,70 +43,219 @@ export function Preview({
     );
   }
 
-  if (!mediaUrl && asset.mediaType !== "image") {
-    return (
-      <div className="preview-content" data-preview-state="error">
-        <span>Preview unavailable</span>
-        <small>Lokasi media tidak dapat dipetakan ke WebView.</small>
-      </div>
-    );
-  }
+  return (
+    <div
+      className="preview-stage"
+      data-preview-state={hasVisualPreview ? "video" : "audio"}
+    >
+      {visualClips.map((layer, index) => (
+        <PreviewVisualLayer
+          key={layer.clip.id}
+          layer={layer}
+          currentTimeMs={currentTimeMs}
+          isPlaying={isPlaying}
+          zIndex={index + 1}
+          onError={handleMediaError}
+        />
+      ))}
 
-  if (asset.mediaType === "image") {
+      {audioClips.map((layer) => (
+        <PreviewAudioLayer
+          key={layer.clip.id}
+          layer={layer}
+          currentTimeMs={currentTimeMs}
+          isPlaying={isPlaying}
+          showControls={!hasVisualPreview}
+          onError={handleMediaError}
+        />
+      ))}
+
+      {!hasVisualPreview && hasAudioPreview ? (
+        <div className="preview-audio-header">
+          <div className="preview-audio-icon" aria-hidden="true">
+            ♪
+          </div>
+          <span>Audio preview</span>
+        </div>
+      ) : null}
+
+      {mediaError ? (
+        <div className="preview-error-overlay" role="status">
+          {mediaError.message}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface PreviewLayerProps {
+  layer: ActivePreviewClip;
+  currentTimeMs: number;
+  isPlaying: boolean;
+  zIndex?: number;
+  showControls?: boolean;
+  onError: (assetId: string, message: string) => void;
+}
+
+function PreviewVisualLayer({
+  layer,
+  currentTimeMs,
+  isPlaying,
+  zIndex = 1,
+  onError,
+}: PreviewLayerProps) {
+  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
+  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+
+    if (!media || layer.asset.mediaType === "image") {
+      return;
+    }
+
+    try {
+      media.currentTime = Math.max(0, localTimeMs / 1000);
+    } catch {
+      // The media element may not accept seeking until metadata is available.
+    }
+  }, [layer.asset.id, layer.clip.id]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+
+    if (!media || layer.asset.mediaType === "image") {
+      return;
+    }
+
+    if (!isPlaying) {
+      if (!media.paused) {
+        media.pause();
+      }
+      return;
+    }
+
+    void media.play().catch(() => undefined);
+  }, [isPlaying, layer.asset.id, layer.clip.id]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      return;
+    }
+
+    const media = mediaRef.current;
+
+    if (!media || layer.asset.mediaType === "image") {
+      return;
+    }
+
+    try {
+      media.currentTime = Math.max(0, localTimeMs / 1000);
+    } catch {
+      // Some WebView/media implementations reject seeking before metadata is ready.
+    }
+  }, [isPlaying, layer.asset.id, layer.clip.id, localTimeMs]);
+
+  if (layer.asset.mediaType === "image") {
     return (
       <img
-        alt={asset.name}
-        className="preview-media"
+        alt={layer.asset.name}
+        className="preview-layer preview-image-layer"
         data-preview-state="image"
         src={mediaUrl ?? ""}
+        style={{ zIndex }}
       />
-    );
-  }
-
-  if (asset.mediaType === "audio") {
-    return (
-      <div className="preview-audio-container" data-preview-state="audio">
-        <div className="preview-audio-icon" aria-hidden="true">
-          ♪
-        </div>
-        <strong>{asset.name}</strong>
-        <small>Audio preview</small>
-        <audio
-          aria-label="Audio preview"
-          className="preview-audio"
-          controls
-          data-testid="preview-audio"
-          ref={handleMediaRef}
-          src={mediaUrl ?? ""}
-          onError={() => setMediaErrorForAsset("Audio could not be loaded.")}
-        />
-        {visibleMediaError ? (
-          <small className="preview-error" role="status">
-            {visibleMediaError}
-          </small>
-        ) : null}
-      </div>
     );
   }
 
   return (
-    <>
-      <video
-        className="preview-media"
-        data-preview-state="video"
-        data-testid="preview-video"
-        playsInline
-        preload="metadata"
-        ref={handleMediaRef}
-        src={mediaUrl ?? ""}
-        onError={() => setMediaErrorForAsset("Video could not be loaded.")}
-      />
-      {visibleMediaError ? (
-        <div className="preview-error-overlay" role="status">
-          {visibleMediaError}
-        </div>
-      ) : null}
-    </>
+    <video
+      className="preview-layer preview-video-layer"
+      data-preview-state="video"
+      data-testid="preview-video"
+      playsInline
+      preload="metadata"
+      ref={mediaRef}
+      src={mediaUrl ?? ""}
+      style={{ zIndex }}
+      onError={() =>
+        onError(layer.asset.id, "Video could not be loaded.")
+      }
+    />
+  );
+}
+
+function PreviewAudioLayer({
+  layer,
+  currentTimeMs,
+  isPlaying,
+  showControls = false,
+  onError,
+}: PreviewLayerProps) {
+  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
+  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
+
+    try {
+      media.currentTime = Math.max(0, localTimeMs / 1000);
+    } catch {
+      // The media element may not accept seeking until metadata is available.
+    }
+  }, [layer.asset.id, layer.clip.id]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
+
+    if (!isPlaying) {
+      if (!media.paused) {
+        media.pause();
+      }
+      return;
+    }
+
+    void media.play().catch(() => undefined);
+  }, [isPlaying, layer.asset.id, layer.clip.id]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      return;
+    }
+
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
+
+    try {
+      media.currentTime = Math.max(0, localTimeMs / 1000);
+    } catch {
+      // Some WebView/media implementations reject seeking before metadata is ready.
+    }
+  }, [isPlaying, layer.asset.id, layer.clip.id, localTimeMs]);
+
+  return (
+    <audio
+      aria-label={showControls ? "Audio preview" : layer.asset.name + " audio layer"}
+      className={showControls ? "preview-audio-layer preview-audio-layer-controls" : "preview-audio-layer"}
+      controls={showControls}
+      data-testid="preview-audio"
+      ref={mediaRef}
+      src={mediaUrl ?? ""}
+      onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
+    />
   );
 }
 
