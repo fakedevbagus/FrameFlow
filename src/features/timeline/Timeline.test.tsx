@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "./commands";
 import { Timeline } from "./Timeline";
@@ -25,8 +25,10 @@ describe("Timeline", () => {
     };
 
     project = addAssetToTimeline(project, "asset-1");
+    project.tracks[0].clips[0].id = "generated-clip";
 
-    render(<Timeline project={project} />);
+    const onSelectClip = vi.fn();
+    render(<Timeline project={project} onSelectClip={onSelectClip} />);
 
     const clip = screen.getByTitle("intro.mp4 · 00:12");
 
@@ -37,5 +39,39 @@ describe("Timeline", () => {
     expect(screen.getByText("00:00")).toBeInTheDocument();
     expect(screen.getByText("00:05")).toBeInTheDocument();
     expect(screen.getByText("00:10")).toBeInTheDocument();
+
+    fireEvent.click(clip);
+
+    expect(onSelectClip).toHaveBeenCalledWith("generated-clip");
+  });
+
+  it("marks the selected clip", () => {
+    let project = createProject({ id: "project-2" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-2",
+          name: "selected.mp4",
+          mediaType: "video",
+          sourcePath: "/selected.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-2");
+
+    render(
+      <Timeline
+        project={project}
+        selectedClipId={project.tracks[0].clips[0].id}
+      />,
+    );
+
+    const clip = screen.getByRole("button", { name: "Select selected.mp4 clip" });
+
+    expect(clip).toHaveAttribute("aria-pressed", "true");
+    expect(clip.className).toContain("timeline-clip-selected");
   });
 });
