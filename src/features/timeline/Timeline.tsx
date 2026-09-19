@@ -36,6 +36,7 @@ type ClipInteractionMode = "move" | "trim-start" | "trim-end";
 interface ClipInteraction {
   clipId: string;
   mode: ClipInteractionMode;
+  pointerId: number;
   startClientX: number;
   originalTimelineStartMs: number;
   originalSourceStartMs: number;
@@ -104,9 +105,14 @@ export function Timeline({
     event.stopPropagation();
     onSelectClip?.(clip.id);
 
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
     setInteraction({
       clipId: clip.id,
       mode,
+      pointerId: event.pointerId,
       startClientX: event.clientX,
       originalTimelineStartMs: clip.timelineStartMs,
       originalSourceStartMs: clip.sourceStartMs,
@@ -119,7 +125,11 @@ export function Timeline({
   }
 
   function updateClipInteraction(event: PointerEvent<HTMLElement>) {
-    if (!interaction || event.buttons !== 1) {
+    if (
+      !interaction ||
+      event.buttons !== 1 ||
+      event.pointerId !== interaction.pointerId
+    ) {
       return;
     }
 
@@ -211,9 +221,17 @@ export function Timeline({
     });
   }
 
-  function finishClipInteraction() {
+  function finishClipInteraction(event?: PointerEvent<HTMLElement>) {
     if (!interaction) {
       return;
+    }
+
+    if (
+      event &&
+      "hasPointerCapture" in event.currentTarget &&
+      event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
     if (!interaction.hasMoved) {
@@ -329,7 +347,7 @@ interface TimelineTrackProps {
     mode: ClipInteractionMode,
   ) => void;
   onUpdateClipInteraction: (event: PointerEvent<HTMLElement>) => void;
-  onFinishClipInteraction: () => void;
+  onFinishClipInteraction: (event?: PointerEvent<HTMLElement>) => void;
   onCancelClipInteraction: () => void;
 }
 
