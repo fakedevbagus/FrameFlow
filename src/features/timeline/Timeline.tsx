@@ -27,6 +27,7 @@ interface TimelineProps {
   onMoveClip?: (clipId: string, timelineStartMs: number) => void;
   onTrimClipStart?: (clipId: string, sourceStartMs: number) => void;
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
+  onToggleTrackMute?: (trackId: string) => void;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
 }
@@ -56,6 +57,7 @@ export function Timeline({
   onMoveClip,
   onTrimClipStart,
   onTrimClipEnd,
+  onToggleTrackMute,
   zoom = DEFAULT_TIMELINE_ZOOM,
   onZoomChange,
 }: TimelineProps) {
@@ -327,6 +329,7 @@ export function Timeline({
             currentTimeMs={clampedCurrentTimeMs}
             selectedClipId={selectedClipId}
             onSelectClip={onSelectClip}
+            onToggleTrackMute={onToggleTrackMute}
             zoom={zoom}
             interaction={interaction}
             getDisplayClip={getDisplayClip}
@@ -348,6 +351,7 @@ interface TimelineTrackProps {
   currentTimeMs: number;
   selectedClipId: string | null;
   onSelectClip?: (clipId: string) => void;
+  onToggleTrackMute?: (trackId: string) => void;
   zoom: number;
   interaction: ClipInteraction | null;
   getDisplayClip: (clip: Clip) => Clip;
@@ -368,6 +372,7 @@ function TimelineTrack({
   currentTimeMs,
   selectedClipId,
   onSelectClip,
+  onToggleTrackMute,
   zoom,
   interaction,
   getDisplayClip,
@@ -381,8 +386,20 @@ function TimelineTrack({
   return (
     <div className="track">
       <div className="track-label">
-        <strong>{track.type === "video" ? "V1" : "A1"}</strong>
-        <span>{track.name}</span>
+        <div className="track-label-main">
+          <strong>{track.type === "video" ? "V1" : "A1"}</strong>
+          <span>{track.name}</span>
+        </div>
+        <button
+          aria-label={track.isMuted ? "Unmute " + track.name : "Mute " + track.name}
+          aria-pressed={track.isMuted}
+          className="track-mute-button"
+          onClick={() => onToggleTrackMute?.(track.id)}
+          title={track.isMuted ? "Unmute track" : "Mute track"}
+          type="button"
+        >
+          {track.isMuted ? "M" : "M"}
+        </button>
       </div>
       <div
         className="timeline-lane"
