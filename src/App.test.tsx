@@ -211,4 +211,40 @@ describe("App", () => {
     expect(screen.getAllByRole("button", { name: "Select split-ui.mp4 clip" })).toHaveLength(2);
   });
 
+
+  it("moves a timeline clip through direct mouse drag", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-direct-drag",
+        name: "direct-drag.mp4",
+        mediaType: "video",
+        sourcePath: "/media/direct-drag.mp4",
+        durationMs: 12000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("direct-drag.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add direct-drag.mp4 to timeline" }),
+    );
+
+    const clip = screen.getByRole("button", { name: "Select direct-drag.mp4 clip" });
+
+    fireEvent.pointerDown(clip, { button: 0, clientX: 0 });
+    fireEvent.pointerMove(clip, { buttons: 1, clientX: 80 });
+    fireEvent.pointerUp(clip, { button: 0, clientX: 80 });
+
+    await waitFor(() => {
+      expect(
+        container.querySelector('[title="direct-drag.mp4 · 00:12"]'),
+      ).toHaveStyle({ left: "80px" });
+    });
+  });
+
 });
