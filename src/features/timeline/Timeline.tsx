@@ -401,7 +401,7 @@ function TimelineTrack({
           title={track.isMuted ? "Unmute track" : "Mute track"}
           type="button"
         >
-          M
+          {track.isMuted ? "🔇" : "🔊"}
         </button>
       </div>
       <div
