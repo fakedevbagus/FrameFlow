@@ -52,31 +52,22 @@ export function Preview({
     }
 
     if (isPlaying) {
-      try {
-        const playResult = media.play();
-
-        if (playResult) {
-          void playResult.catch(() => {
-            setMediaError({
-              assetId: activeAssetId,
-              message:
-                "Preview playback could not start in the current WebView.",
-            });
+      void Promise.resolve()
+        .then(() => media.play())
+        .catch(() => {
+          setMediaError({
+            assetId: activeAssetId,
+            message:
+              "Preview playback could not start in the current WebView.",
           });
-        }
-      } catch {
-        setMediaError({
-          assetId: activeAssetId,
-          message: "Preview playback could not start in the current WebView.",
         });
-      }
       return;
     }
 
     if (!media.paused) {
       media.pause();
     }
-  }, [activeAssetId, asset?.mediaType, isPlaying]);
+  }, [activeAssetId, asset, isPlaying]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -95,7 +86,7 @@ export function Preview({
       // Some WebView/media implementations reject seeking before metadata is ready.
       // Native media error events provide the user-facing failure state.
     }
-  }, [activeAssetId, asset?.mediaType, isPlaying, localTimeMs]);
+  }, [activeAssetId, asset, isPlaying, localTimeMs]);
 
   if (!activePreview || !asset) {
     return (
