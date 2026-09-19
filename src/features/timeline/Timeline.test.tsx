@@ -132,6 +132,28 @@ describe("Timeline", () => {
     expect(clip.className).toContain("timeline-clip-selected");
   });
 
+  it("does not commit a move for a simple click", () => {
+    const project = createVideoProject();
+    const onMoveClip = vi.fn();
+    const onSelectClip = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onMoveClip={onMoveClip}
+        onSelectClip={onSelectClip}
+      />,
+    );
+
+    const clip = screen.getByRole("button", { name: "Select intro.mp4 clip" });
+
+    fireEvent.pointerDown(clip, { button: 0, clientX: 120 });
+    fireEvent.pointerUp(clip, { button: 0, clientX: 120 });
+
+    expect(onMoveClip).not.toHaveBeenCalled();
+    expect(onSelectClip).toHaveBeenCalledWith(project.tracks[0].clips[0].id);
+  });
+
   it("moves a clip by dragging and commits the snapped position", () => {
     const project = createVideoProject();
     const onMoveClip = vi.fn();
