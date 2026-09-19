@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { importMediaFiles } from "./features/media/import";
 
@@ -8,6 +8,10 @@ vi.mock("./features/media/import", () => ({
 }));
 
 const importMediaFilesMock = vi.mocked(importMediaFiles);
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -39,4 +43,27 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("intro.mp4")).toBeInTheDocument());
     expect(screen.getByText("video · 0:12")).toBeInTheDocument();
   });
+
+  it("adds imported video to the visible timeline when clicked", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-1",
+        name: "intro.mp4",
+        mediaType: "video",
+        sourcePath: "/media/intro.mp4",
+        durationMs: 12000,
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() => expect(screen.getByText("intro.mp4")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Add intro.mp4 to timeline" }));
+
+    expect(screen.getByTitle("intro.mp4 · 00:12")).toBeInTheDocument();
+    expect(screen.getByText("V1")).toBeInTheDocument();
+  });
+
 });
