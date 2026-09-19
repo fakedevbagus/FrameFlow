@@ -20,7 +20,17 @@
       }
     ],
     "security": {
-      "csp": null
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$HOME/**",
+          "/media/**",
+          "/mnt/**",
+          "/run/media/**"
+        ]
+      },
+      "csp": "default-src 'self' asset:; connect-src 'self' ipc: http://ipc.localhost; img-src 'self' asset: data:; media-src 'self' asset: blob:; style-src 'self' 'unsafe-inline'",
+      "devCsp": "default-src 'self' asset:; connect-src 'self' ipc: http://ipc.localhost http://localhost:1420 ws://localhost:1420; img-src 'self' asset: data:; media-src 'self' asset: blob:; style-src 'self' 'unsafe-inline'"
     }
   },
   "bundle": {

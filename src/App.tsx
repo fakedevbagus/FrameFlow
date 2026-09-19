@@ -9,6 +9,7 @@ import {
   trimClipStart,
 } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
+import { Preview } from "./features/preview/Preview";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
@@ -137,6 +138,7 @@ function App() {
   }, [isPlaying, setPlaybackTime, timelineDurationMs]);
 
   function handleCurrentTimeChange(timeMs: number) {
+    setIsPlaying(false);
     setPlaybackTime(timeMs);
   }
 
@@ -579,10 +581,11 @@ function App() {
 
           <div className="preview-region">
             <div className="preview-canvas">
-              <div className="preview-content">
-                <span>Preview</span>
-                <small>Tambahkan media ke timeline untuk mulai mengedit.</small>
-              </div>
+              <Preview
+                project={project}
+                currentTimeMs={displayedCurrentTimeMs}
+                isPlaying={isPlaying}
+              />
             </div>
             <div className="transport-controls" aria-label="Playback controls">
               <button
