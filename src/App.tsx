@@ -277,7 +277,6 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     handleDeleteSelectedClip,
-    handleDeleteSelectedClip,
     handleRedo,
     handleTogglePlayback,
     handleUndo,
