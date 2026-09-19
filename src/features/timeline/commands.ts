@@ -180,7 +180,7 @@ export function splitClipAtTime(
     throw new Error("Track is locked.");
   }
 
-  if (!Number.isFinite(timelineTimeMs) || timelineTimeMs < clip.timelineStartMs) {
+  if (!Number.isFinite(timelineTimeMs) || timelineTimeMs <= clip.timelineStartMs) {
     throw new Error("Split time must be inside the selected clip.");
   }
 
