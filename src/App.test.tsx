@@ -158,6 +158,59 @@ describe("App", () => {
     expect(container.querySelector(".timeline-playhead")).not.toBeNull();
   });
 
+  it("undoes and redoes a timeline edit with keyboard shortcuts", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-history-ui",
+        name: "history-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/history-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    const undoButton = screen.getByRole("button", { name: "Undo" });
+    const redoButton = screen.getByRole("button", { name: "Redo" });
+
+    expect(undoButton).toBeDisabled();
+    expect(redoButton).toBeDisabled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+    await waitFor(() => expect(screen.getByText("history-ui.mp4")).toBeInTheDocument());
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add history-ui.mp4 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select history-ui.mp4 clip" }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Move clip +1s" }));
+    expect(screen.getByTitle("history-ui.mp4 · 00:08")).toHaveStyle({
+      left: "40px",
+    });
+    expect(undoButton).not.toBeDisabled();
+    expect(redoButton).toBeDisabled();
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+    await waitFor(() => {
+      expect(screen.getByTitle("history-ui.mp4 · 00:08")).toHaveStyle({
+        left: "0px",
+      });
+    });
+    expect(redoButton).not.toBeDisabled();
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true, shiftKey: true });
+    await waitFor(() => {
+      expect(screen.getByTitle("history-ui.mp4 · 00:08")).toHaveStyle({
+        left: "40px",
+      });
+    });
+
+    expect(container.querySelector(".project-notice")).toHaveTextContent("Redo.");
+  });
+
   it("splits the selected clip at the playhead", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
