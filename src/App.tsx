@@ -4,6 +4,7 @@ import {
   addAssetToTimeline,
   moveClipOnTimeline,
   removeClipFromTimeline,
+  toggleTrackMute,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -180,6 +181,73 @@ function App() {
   function handleSelectClip(clipId: string) {
     setSelectedClipId(clipId);
     setProjectNotice(null);
+  }
+
+  function getPreviewMediaElements(): HTMLMediaElement[] {
+    const container = document.querySelector(".preview-stage");
+
+    if (!container) {
+      return [];
+    }
+
+    return Array.from(container.querySelectorAll("video, audio"));
+  }
+
+  async function startPreviewMedia(): Promise<boolean> {
+    const mediaElements = getPreviewMediaElements();
+
+    if (mediaElements.length === 0) {
+      return true;
+    }
+
+    try {
+      await Promise.all(mediaElements.map((media) => media.play()));
+      return true;
+    } catch (error) {
+      const name = error instanceof DOMException ? error.name : "";
+      const message =
+        name === "NotSupportedError"
+          ? "Preview media format is not supported by the Linux WebView."
+          : name === "NotAllowedError"
+            ? "Preview playback was blocked by the WebView."
+            : error instanceof Error && error.message
+              ? error.message
+              : "Preview playback could not start.";
+
+      setProjectNotice(message);
+      return false;
+    }
+  }
+
+  function pausePreviewMedia() {
+    for (const media of getPreviewMediaElements()) {
+      media.pause();
+    }
+  }
+
+  async function handleTogglePlayback() {
+    if (isPlaying) {
+      pausePreviewMedia();
+      setIsPlaying(false);
+      return;
+    }
+
+    if (playbackTimeRef.current >= timelineDurationRef.current) {
+      setPlaybackTime(0);
+    }
+
+    const started = await startPreviewMedia();
+
+    if (started) {
+      setIsPlaying(true);
+    }
+  }
+
+  function handleToggleTrackMute(trackId: string) {
+    applyProjectChange(
+      (currentProject) => toggleTrackMute(currentProject, trackId),
+      "Track mute updated.",
+    );
   }
 
   const handleDeleteSelectedClip = useCallback(() => {
@@ -627,6 +695,7 @@ function App() {
             onMoveClip={handleDirectMoveClip}
             onTrimClipStart={handleDirectTrimClipStart}
             onTrimClipEnd={handleDirectTrimClipEnd}
+            onToggleTrackMute={handleToggleTrackMute}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
           />
