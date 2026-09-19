@@ -55,7 +55,6 @@ function App() {
   const assets = project.assets;
   const timelineDurationMs = getTimelineDurationMs(project);
   const selectedClipContext = findClipContext(project, selectedClipId);
-  timelineDurationRef.current = timelineDurationMs;
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
     timelineDurationMs,
@@ -64,6 +63,10 @@ function App() {
   useEffect(() => {
     saveWorkspaceProject(project);
   }, [project]);
+
+  useEffect(() => {
+    timelineDurationRef.current = timelineDurationMs;
+  }, [timelineDurationMs]);
 
   async function handleOpenProject() {
     try {
