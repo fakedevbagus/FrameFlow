@@ -807,3 +807,32 @@ button:disabled {
   bottom: 0;
   transform: translateX(-1px);
 }
+
+
+.inspector-section {
+  display: grid;
+  gap: 8px;
+}
+
+.inspector-section-title {
+  color: #7f899a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.inspector-button-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.inspector-button-grid .toolbar-button,
+.split-button {
+  width: 100%;
+}
+
+.split-button {
+  text-align: center;
+}

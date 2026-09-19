@@ -119,4 +119,96 @@ describe("App", () => {
     expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
   });
 
+
+  it("applies move and trim controls to the selected clip", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-edit",
+        name: "edit.mp4",
+        mediaType: "video",
+        sourcePath: "/media/edit.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() => expect(screen.getByText("edit.mp4")).toBeInTheDocument());
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add edit.mp4 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select edit.mp4 clip" }),
+    );
+
+    const clip = screen.getByTitle("edit.mp4 · 00:08");
+    fireEvent.click(screen.getByRole("button", { name: "Move clip +1s" }));
+    expect(screen.getByTitle("edit.mp4 · 00:08")).toHaveStyle({ left: "40px" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Trim clip start +1s" }));
+    expect(screen.getByTitle("edit.mp4 · 00:07")).toHaveStyle({ left: "80px" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Trim clip end -1s" }));
+    expect(screen.getByTitle("edit.mp4 · 00:06")).toBeInTheDocument();
+    expect(screen.getByTitle("edit.mp4 · 00:06")).toHaveStyle({ left: "80px" });
+
+    expect(clip).toBeInTheDocument();
+    expect(container.querySelector(".timeline-playhead")).not.toBeNull();
+  });
+
+  it("splits the selected clip at the playhead", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-split-ui",
+        name: "split-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/split-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() => expect(screen.getByText("split-ui.mp4")).toBeInTheDocument());
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add split-ui.mp4 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select split-ui.mp4 clip" }),
+    );
+
+    const ruler = container.querySelector(".timeline-ruler-scale");
+    expect(ruler).not.toBeNull();
+
+    Object.defineProperty(ruler, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 0,
+        height: 28,
+        left: 0,
+        right: 800,
+        top: 0,
+        width: 800,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 200 });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Playhead at 00:05")).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Split at playhead" }));
+
+    expect(screen.getByTitle("split-ui.mp4 · 00:05")).toBeInTheDocument();
+    expect(screen.getByTitle("split-ui.mp4 · 00:03")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Select split-ui.mp4 clip" })).toHaveLength(2);
+  });
+
 });
