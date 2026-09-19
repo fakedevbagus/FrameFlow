@@ -427,6 +427,7 @@ function App() {
                 <span className="inspector-section-title">Move</span>
                 <div className="inspector-button-grid">
                   <button
+                    aria-label="Move clip -1s"
                     className="toolbar-button"
                     disabled={selectedClipContext.clip.timelineStartMs === 0}
                     onClick={() => handleMoveSelectedClip(-1000)}
@@ -435,6 +436,7 @@ function App() {
                     −1s
                   </button>
                   <button
+                    aria-label="Move clip +1s"
                     className="toolbar-button"
                     onClick={() => handleMoveSelectedClip(1000)}
                     type="button"
@@ -448,6 +450,7 @@ function App() {
                 <span className="inspector-section-title">Trim start</span>
                 <div className="inspector-button-grid">
                   <button
+                    aria-label="Extend clip start -1s"
                     className="toolbar-button"
                     disabled={selectedClipContext.clip.sourceStartMs === 0}
                     onClick={() => handleTrimSelectedClipStart(-1000)}
@@ -456,6 +459,7 @@ function App() {
                     −1s
                   </button>
                   <button
+                    aria-label="Trim clip start +1s"
                     className="toolbar-button"
                     disabled={
                       selectedClipContext.clip.sourceEndMs === null ||
@@ -473,6 +477,7 @@ function App() {
                 <span className="inspector-section-title">Trim end</span>
                 <div className="inspector-button-grid">
                   <button
+                    aria-label="Trim clip end -1s"
                     className="toolbar-button"
                     disabled={
                       selectedClipContext.clip.sourceEndMs === null ||
@@ -484,6 +489,7 @@ function App() {
                     −1s
                   </button>
                   <button
+                    aria-label="Extend clip end +1s"
                     className="toolbar-button"
                     disabled={!canExtendSelectedClipEnd()}
                     onClick={() => handleTrimSelectedClipEnd(1000)}
