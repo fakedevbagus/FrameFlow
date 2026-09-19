@@ -195,7 +195,7 @@ function TimelineTrack({
   );
 }
 
-export function getTimelineDurationMs(project: Project): number {
+function getTimelineDurationMs(project: Project): number {
   const latestClipEndMs = project.tracks.reduce(
     (latestTrackEnd, track) =>
       Math.max(
