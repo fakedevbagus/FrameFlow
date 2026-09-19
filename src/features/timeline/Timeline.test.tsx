@@ -131,4 +131,80 @@ describe("Timeline", () => {
     expect(clip).toHaveAttribute("aria-pressed", "true");
     expect(clip.className).toContain("timeline-clip-selected");
   });
+
+  it("moves a clip by dragging and commits the snapped position", () => {
+    const project = createVideoProject();
+    const onMoveClip = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onMoveClip={onMoveClip}
+      />,
+    );
+
+    const clip = screen.getByRole("button", { name: "Select intro.mp4 clip" });
+
+    fireEvent.pointerDown(clip, { button: 0, clientX: 0 });
+    fireEvent.pointerMove(clip, { buttons: 1, clientX: 96 });
+    fireEvent.pointerUp(clip, { button: 0, clientX: 96 });
+
+    expect(onMoveClip).toHaveBeenCalledWith(
+      project.tracks[0].clips[0].id,
+      2500,
+    );
+  });
+
+  it("trims the start handle and commits the snapped source start", () => {
+    const project = createVideoProject();
+    const onTrimClipStart = vi.fn();
+
+    const { container } = render(
+      <Timeline
+        project={project}
+        onTrimClipStart={onTrimClipStart}
+      />,
+    );
+
+    const handle = container.querySelector(".timeline-trim-handle-start");
+    const clip = screen.getByRole("button", { name: "Select intro.mp4 clip" });
+
+    expect(handle).not.toBeNull();
+
+    fireEvent.pointerDown(handle as HTMLSpanElement, { button: 0, clientX: 0 });
+    fireEvent.pointerMove(clip, { buttons: 1, clientX: 80 });
+    fireEvent.pointerUp(clip, { button: 0, clientX: 80 });
+
+    expect(onTrimClipStart).toHaveBeenCalledWith(
+      project.tracks[0].clips[0].id,
+      2000,
+    );
+  });
+
+  it("trims the end handle and commits the snapped source end", () => {
+    const project = createVideoProject();
+    const onTrimClipEnd = vi.fn();
+
+    const { container } = render(
+      <Timeline
+        project={project}
+        onTrimClipEnd={onTrimClipEnd}
+      />,
+    );
+
+    const handle = container.querySelector(".timeline-trim-handle-end");
+    const clip = screen.getByRole("button", { name: "Select intro.mp4 clip" });
+
+    expect(handle).not.toBeNull();
+
+    fireEvent.pointerDown(handle as HTMLSpanElement, { button: 0, clientX: 480 });
+    fireEvent.pointerMove(clip, { buttons: 1, clientX: 400 });
+    fireEvent.pointerUp(clip, { button: 0, clientX: 400 });
+
+    expect(onTrimClipEnd).toHaveBeenCalledWith(
+      project.tracks[0].clips[0].id,
+      8000,
+    );
+  });
+
 });
