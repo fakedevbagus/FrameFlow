@@ -140,13 +140,17 @@ fn run_ffprobe(path: &Path, args: &[&str]) -> Result<std::process::Output, Strin
 
 fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
   let output = Command::new("ffmpeg")
-    .args(["-hide_banner", "-i"])
+    .args(["-hide_banner", "-nostats", "-i"])
     .arg(path)
-    .args(["-f", "null", "-"])
+    .args(["-map", "0:0", "-f", "null", "-", "-progress", "pipe:1"])
     .output()
     .map_err(|error| format!("Could not run ffmpeg: {error}"))?;
 
-  Ok(parse_ffmpeg_duration(&output.stderr))
+  if let Some(duration_ms) = parse_ffmpeg_duration(&output.stderr) {
+    return Ok(Some(duration_ms));
+  }
+
+  Ok(parse_ffmpeg_progress(&output.stdout))
 }
 
 fn parse_ffmpeg_duration(output: &[u8]) -> Option<u64> {
@@ -180,6 +184,23 @@ fn parse_ffmpeg_duration(output: &[u8]) -> Option<u64> {
   }
 
   last_progress_time_ms
+}
+
+fn parse_ffmpeg_progress(output: &[u8]) -> Option<u64> {
+  let text = String::from_utf8_lossy(output);
+  let mut last_out_time_ms = None;
+
+  for line in text.lines() {
+    let Some(value) = line.strip_prefix("out_time_ms=") else {
+      continue;
+    };
+
+    if let Ok(out_time_us) = value.trim().parse::<u64>() {
+      last_out_time_ms = Some(out_time_us / 1000);
+    }
+  }
+
+  last_out_time_ms
 }
 
 fn parse_timestamp_ms(value: &str) -> Option<u64> {
