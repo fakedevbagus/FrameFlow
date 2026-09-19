@@ -40,6 +40,10 @@ export function Preview({
     }
   }
 
+  function handleMediaRef(element: HTMLMediaElement | null) {
+    mediaRef.current = element;
+  }
+
   useEffect(() => {
     const media = mediaRef.current;
 
@@ -167,10 +171,6 @@ export function Preview({
       ) : null}
     </>
   );
-}
-
-function handleMediaRef(element: HTMLMediaElement | null) {
-  mediaRef.current = element;
 }
 
 function tryConvertFileSrc(path: string): string | null {
