@@ -102,7 +102,8 @@ describe("Preview", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Play")).toBeInTheDocument();
+    expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
+    expect(screen.getByLabelText("Audio preview")).toBeInTheDocument();
     expect(screen.getByText("music.mp3")).toBeInTheDocument();
   });
 
