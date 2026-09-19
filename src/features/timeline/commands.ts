@@ -75,6 +75,12 @@ export function moveClipOnTimeline(
     throw new Error("Clip timeline position must be zero or greater.");
   }
 
+  const candidateEndMs = timelineStartMs + getClipDurationMs(location.clip);
+
+  if (hasTimelineOverlap(location.track, clipId, timelineStartMs, candidateEndMs)) {
+    throw new Error("Clip cannot overlap another clip on the same track.");
+  }
+
   const tracks = project.tracks.map((track, index) =>
     index === location.trackIndex
       ? {
@@ -119,6 +125,12 @@ export function trimClipStart(
     throw new Error("Clip cannot be trimmed before the start of the timeline.");
   }
 
+  const candidateEndMs = clip.timelineStartMs + getClipDurationMs(clip);
+
+  if (hasTimelineOverlap(location.track, clipId, timelineStartMs, candidateEndMs)) {
+    throw new Error("Clip cannot overlap another clip on the same track.");
+  }
+
   return updateClipAtLocation(
     project,
     location,
@@ -157,6 +169,12 @@ export function trimClipEnd(
     if (newSourceEndMs > asset.durationMs) {
       throw new Error("Clip end cannot exceed the source media duration.");
     }
+  }
+
+  const candidateEndMs = clip.timelineStartMs + (newSourceEndMs - clip.sourceStartMs);
+
+  if (hasTimelineOverlap(location.track, clipId, clip.timelineStartMs, candidateEndMs)) {
+    throw new Error("Clip cannot overlap another clip on the same track.");
   }
 
   return updateClipAtLocation(
@@ -225,6 +243,32 @@ type ClipLocation = {
   clip: Clip;
   clipIndex: number;
 };
+
+function hasTimelineOverlap(
+  track: Project["tracks"][number],
+  excludedClipId: string,
+  candidateStartMs: number,
+  candidateEndMs: number,
+): boolean {
+  return track.clips.some((clip) => {
+    if (clip.id === excludedClipId) {
+      return false;
+    }
+
+    const existingStartMs = clip.timelineStartMs;
+    const existingEndMs = existingStartMs + getClipDurationMs(clip);
+
+    return candidateStartMs < existingEndMs && candidateEndMs > existingStartMs;
+  });
+}
+
+function getClipDurationMs(clip: Clip): number {
+  if (clip.sourceEndMs === null) {
+    return 0;
+  }
+
+  return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+}
 
 function findClipLocation(project: Project, clipId: string): ClipLocation {
   for (let trackIndex = 0; trackIndex < project.tracks.length; trackIndex += 1) {

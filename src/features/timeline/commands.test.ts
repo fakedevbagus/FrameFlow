@@ -101,6 +101,34 @@ describe("moveClipOnTimeline", () => {
     expect(updated.updatedAt).toBe("2026-09-20T01:00:00.000Z");
   });
 
+  it("rejects moving a clip into another clip on the same track", () => {
+    const project = createProject({ id: "move-overlap-project" });
+    project.assets.push(
+      {
+        id: "move-overlap-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 5000,
+      },
+      {
+        id: "move-overlap-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 5000,
+      },
+    );
+
+    const withFirst = addAssetToTimeline(project, "move-overlap-a");
+    const populated = addAssetToTimeline(withFirst, "move-overlap-b");
+    const firstClipId = populated.tracks[0].clips[0].id;
+
+    expect(() => moveClipOnTimeline(populated, firstClipId, 1000)).toThrow(
+      "Clip cannot overlap another clip on the same track.",
+    );
+  });
+
   it("rejects moving a clip before the timeline origin", () => {
     const project = createProject({ id: "move-project-2" });
     project.assets.push({

@@ -91,39 +91,211 @@ fn media_type(path: &Path) -> Result<String, String> {
 }
 
 fn probe_duration_ms(path: &Path) -> Result<u64, String> {
-  let output = Command::new("ffprobe")
-    .args([
-      "-v",
-      "error",
-      "-show_entries",
-      "format=duration",
-      "-of",
-      "default=noprint_wrappers=1:nokey=1",
-    ])
+  let format_output = run_ffprobe(path, &[
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "default=noprint_wrappers=1:nokey=1",
+  ])?;
+
+  if let Some(duration_ms) = parse_duration_ms(&format_output.stdout) {
+    return Ok(duration_ms);
+  }
+
+  let stream_output = run_ffprobe(path, &[
+    "-show_entries",
+    "stream=duration",
+    "-of",
+    "default=noprint_wrappers=1:nokey=1",
+  ])?;
+
+  if let Some(duration_ms) = parse_duration_ms(&stream_output.stdout) {
+    return Ok(duration_ms);
+  }
+
+  if let Some(duration_ms) = probe_duration_from_audio_packets(path)? {
+    return Ok(duration_ms);
+  }
+
+  if let Some(duration_ms) = probe_duration_with_ffmpeg(path)? {
+    return Ok(duration_ms);
+  }
+
+  let format_detail = ffprobe_detail(&format_output.stderr, &format_output.stdout);
+  let stream_detail = ffprobe_detail(&stream_output.stderr, &stream_output.stdout);
+
+  Err(if !format_detail.is_empty() {
+    format!("ffprobe could not determine the selected media duration: {format_detail}")
+  } else if !stream_detail.is_empty() {
+    format!("ffprobe could not determine the selected media duration: {stream_detail}")
+  } else {
+    "ffprobe could not determine the selected media duration.".to_string()
+  })
+}
+
+fn run_ffprobe(path: &Path, args: &[&str]) -> Result<std::process::Output, String> {
+  Command::new("ffprobe")
+    .args(["-v", "error"])
+    .args(args)
     .arg(path)
     .output()
-    .map_err(|error| format!("Could not run ffprobe: {error}"))?;
+    .map_err(|error| format!("Could not run ffprobe: {error}"))
+}
+
+fn probe_duration_from_audio_packets(path: &Path) -> Result<Option<u64>, String> {
+  let output = run_ffprobe(
+    path,
+    &[
+      "-select_streams",
+      "a:0",
+      "-show_entries",
+      "packet=pts_time,duration_time",
+      "-of",
+      "csv=p=0",
+    ],
+  )?;
 
   if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-
-    return Err(if detail.is_empty() {
-      "ffprobe could not read the selected media file.".to_string()
-    } else {
-      format!("ffprobe could not read the selected media file: {detail}")
-    });
+    return Ok(None);
   }
 
-  let duration = String::from_utf8_lossy(&output.stdout)
-    .trim()
-    .parse::<f64>()
-    .map_err(|_| "ffprobe returned an invalid duration.".to_string())?;
+  let mut latest_end_ms = None;
 
-  if !duration.is_finite() || duration < 0.0 {
-    return Err("ffprobe returned an invalid duration.".to_string());
+  for line in String::from_utf8_lossy(&output.stdout).lines() {
+    let mut values = line.split(',').map(str::trim);
+    let Some(pts_text) = values.next() else {
+      continue;
+    };
+
+    let Some(pts_seconds) = pts_text.parse::<f64>().ok() else {
+      continue;
+    };
+
+    if !pts_seconds.is_finite() || pts_seconds < 0.0 {
+      continue;
+    }
+
+    let duration_seconds = values
+      .next()
+      .and_then(|value| value.parse::<f64>().ok())
+      .filter(|value| value.is_finite() && *value >= 0.0)
+      .unwrap_or(0.0);
+
+    let end_seconds = pts_seconds + duration_seconds;
+
+    if end_seconds.is_finite() && end_seconds >= 0.0 {
+      let end_ms = (end_seconds * 1000.0).round() as u64;
+      latest_end_ms = Some(latest_end_ms.map_or(end_ms, |current: u64| current.max(end_ms)));
+    }
   }
 
-  Ok((duration * 1000.0).round() as u64)
+  Ok(latest_end_ms)
+}
+
+fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
+  let output = Command::new("ffmpeg")
+    .args(["-hide_banner", "-nostats", "-i"])
+    .arg(path)
+    .args(["-map", "0:0", "-f", "null", "-", "-progress", "pipe:1"])
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg: {error}"))?;
+
+  if let Some(duration_ms) = parse_ffmpeg_duration(&output.stderr) {
+    return Ok(Some(duration_ms));
+  }
+
+  Ok(parse_ffmpeg_progress(&output.stdout))
+}
+
+fn parse_ffmpeg_duration(output: &[u8]) -> Option<u64> {
+  let text = String::from_utf8_lossy(output);
+  let mut last_progress_time_ms = None;
+
+  for line in text.lines() {
+    if let Some(marker_index) = line.find("Duration:") {
+      let value = line[marker_index + "Duration:".len()..]
+        .split(',')
+        .next()
+        .unwrap_or_default()
+        .trim();
+
+      if let Some(duration_ms) = parse_timestamp_ms(value) {
+        return Some(duration_ms);
+      }
+    }
+
+    if let Some(marker_index) = line.rfind("time=") {
+      let value = line[marker_index + "time=".len()..]
+        .split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .trim();
+
+      if let Some(duration_ms) = parse_timestamp_ms(value) {
+        last_progress_time_ms = Some(duration_ms);
+      }
+    }
+  }
+
+  last_progress_time_ms
+}
+
+fn parse_ffmpeg_progress(output: &[u8]) -> Option<u64> {
+  let text = String::from_utf8_lossy(output);
+  let mut last_out_time_ms = None;
+
+  for line in text.lines() {
+    let Some(value) = line.strip_prefix("out_time_ms=") else {
+      continue;
+    };
+
+    if let Ok(out_time_us) = value.trim().parse::<u64>() {
+      last_out_time_ms = Some(out_time_us / 1000);
+    }
+  }
+
+  last_out_time_ms
+}
+
+fn parse_timestamp_ms(value: &str) -> Option<u64> {
+  let mut parts = value.split(':');
+
+  let hours = parts.next()?.trim().parse::<u64>().ok()?;
+  let minutes = parts.next()?.trim().parse::<u64>().ok()?;
+  let seconds = parts.next()?.trim().parse::<f64>().ok()?;
+
+  if hours > 23 || minutes > 59 || !seconds.is_finite() || seconds < 0.0 {
+    return None;
+  }
+
+  Some(
+    (hours * 3_600_000)
+      .saturating_add(minutes * 60_000)
+      .saturating_add((seconds * 1000.0).round() as u64),
+  )
+}
+
+fn ffprobe_detail(stderr: &[u8], stdout: &[u8]) -> String {
+  let stderr = String::from_utf8_lossy(stderr).trim().to_string();
+
+  if !stderr.is_empty() {
+    return stderr;
+  }
+
+  String::from_utf8_lossy(stdout).trim().to_string()
+}
+
+fn parse_duration_ms(output: &[u8]) -> Option<u64> {
+  String::from_utf8_lossy(output)
+    .lines()
+    .filter_map(|line| line.trim().parse::<f64>().ok())
+    .find_map(|duration| {
+      if duration.is_finite() && duration >= 0.0 {
+        Some((duration * 1000.0).round() as u64)
+      } else {
+        None
+      }
+    })
 }
 
 fn project_path(value: &str) -> Result<PathBuf, String> {
@@ -150,4 +322,37 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![inspect_media, open_project, save_project])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
+}
+
+
+#[cfg(test)]
+mod tests {
+  use super::{media_type, parse_duration_ms};
+  use std::path::Path;
+
+  #[test]
+  fn recognizes_mp3_as_audio() {
+    assert_eq!(media_type(Path::new("music.MP3")).unwrap(), "audio");
+  }
+
+  #[test]
+  fn parses_first_valid_duration_value() {
+    assert_eq!(parse_duration_ms(b"N/A\n42.125\n"), Some(42_125));
+  }
+
+  #[test]
+  fn parses_ffmpeg_progress_duration() {
+    assert_eq!(
+      super::parse_ffmpeg_progress(b"out_time_ms=1234567\nprogress=end\n"),
+      Some(1_234),
+    );
+  }
+
+  #[test]
+  fn ignores_unknown_ffmpeg_progress_duration() {
+    assert_eq!(
+      super::parse_ffmpeg_progress(b"out_time_ms=N/A\nprogress=end\n"),
+      None,
+    );
+  }
 }

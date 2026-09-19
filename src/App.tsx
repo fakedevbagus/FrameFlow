@@ -250,6 +250,45 @@ function App() {
     return selectedClipContext.clip.sourceEndMs < selectedClipContext.asset.durationMs;
   }
 
+  function handleDirectMoveClip(clipId: string, timelineStartMs: number) {
+    updateClipById(
+      (currentProject) => moveClipOnTimeline(currentProject, clipId, timelineStartMs),
+      "Clip moved.",
+    );
+  }
+
+  function handleDirectTrimClipStart(clipId: string, sourceStartMs: number) {
+    updateClipById(
+      (currentProject) => trimClipStart(currentProject, clipId, sourceStartMs),
+      "Clip start trimmed.",
+    );
+  }
+
+  function handleDirectTrimClipEnd(clipId: string, sourceEndMs: number) {
+    updateClipById(
+      (currentProject) => trimClipEnd(currentProject, clipId, sourceEndMs),
+      "Clip end trimmed.",
+    );
+  }
+
+  function updateClipById(
+    operation: (project: ReturnType<typeof loadWorkspaceProject>) => ReturnType<typeof loadWorkspaceProject>,
+    notice: string,
+  ) {
+    setProject((currentProject) => {
+      try {
+        const nextProject = operation(currentProject);
+        setProjectNotice(notice);
+        return nextProject;
+      } catch (error) {
+        setProjectNotice(
+          error instanceof Error ? error.message : "Clip edit could not be applied.",
+        );
+        return currentProject;
+      }
+    });
+  }
+
   async function handleImport() {
     setImportError(null);
     setIsImporting(true);
@@ -395,6 +434,9 @@ function App() {
             onCurrentTimeChange={setCurrentTimeMs}
             selectedClipId={selectedClipId}
             onSelectClip={handleSelectClip}
+            onMoveClip={handleDirectMoveClip}
+            onTrimClipStart={handleDirectTrimClipStart}
+            onTrimClipEnd={handleDirectTrimClipEnd}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
           />

@@ -836,3 +836,42 @@ button:disabled {
 .split-button {
   text-align: center;
 }
+
+
+.timeline-clip-interacting {
+  cursor: grabbing;
+  opacity: 0.92;
+}
+
+.timeline-trim-handle {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.timeline-trim-handle::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 28px;
+  border-radius: 2px;
+  background: rgb(232 236 245 / 55%);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.timeline-trim-handle-start {
+  left: 0;
+}
+
+.timeline-trim-handle-end {
+  right: 0;
+}
+
+.timeline-trim-handle:hover::after {
+  background: rgb(255 255 255 / 85%);
+}
