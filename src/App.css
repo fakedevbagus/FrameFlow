@@ -675,3 +675,92 @@ button:disabled {
   font-size: 9px;
   font-variant-numeric: tabular-nums;
 }
+
+
+.timeline-clip {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.timeline-clip:focus-visible {
+  outline: 2px solid #b9b0ff;
+  outline-offset: -2px;
+}
+
+.timeline-clip-selected {
+  border-color: #c4bbff;
+  box-shadow:
+    0 0 0 2px #9085ff,
+    0 4px 14px rgb(0 0 0 / 24%);
+}
+
+.inspector-content {
+  display: grid;
+  gap: 16px;
+  padding-top: 20px;
+}
+
+.inspector-summary {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid #2c333f;
+  border-radius: 8px;
+  background: #1c2028;
+}
+
+.inspector-summary strong {
+  overflow: hidden;
+  color: #e0e5ed;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector-type {
+  width: fit-content;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #aab3c2;
+  background: #252b35;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.inspector-fields {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  padding: 0 2px;
+  color: #8490a1;
+  font-size: 11px;
+}
+
+.inspector-fields strong {
+  color: #d4d9e2;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.danger-button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #5a343c;
+  border-radius: 7px;
+  cursor: pointer;
+  color: #f3c6cc;
+  background: #2a1b20;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.danger-button:hover {
+  border-color: #7a424c;
+  background: #321e24;
+}
