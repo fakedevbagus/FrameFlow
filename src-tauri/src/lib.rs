@@ -113,6 +113,10 @@ fn probe_duration_ms(path: &Path) -> Result<u64, String> {
     return Ok(duration_ms);
   }
 
+  if let Some(duration_ms) = probe_duration_from_audio_packets(path)? {
+    return Ok(duration_ms);
+  }
+
   if let Some(duration_ms) = probe_duration_with_ffmpeg(path)? {
     return Ok(duration_ms);
   }
@@ -136,6 +140,56 @@ fn run_ffprobe(path: &Path, args: &[&str]) -> Result<std::process::Output, Strin
     .arg(path)
     .output()
     .map_err(|error| format!("Could not run ffprobe: {error}"))
+}
+
+fn probe_duration_from_audio_packets(path: &Path) -> Result<Option<u64>, String> {
+  let output = run_ffprobe(
+    path,
+    &[
+      "-select_streams",
+      "a:0",
+      "-show_entries",
+      "packet=pts_time,duration_time",
+      "-of",
+      "csv=p=0",
+    ],
+  )?;
+
+  if !output.status.success() {
+    return Ok(None);
+  }
+
+  let mut latest_end_ms = None;
+
+  for line in String::from_utf8_lossy(&output.stdout).lines() {
+    let mut values = line.split(',').map(str::trim);
+    let Some(pts_text) = values.next() else {
+      continue;
+    };
+
+    let Some(pts_seconds) = pts_text.parse::<f64>().ok() else {
+      continue;
+    };
+
+    if !pts_seconds.is_finite() || pts_seconds < 0.0 {
+      continue;
+    }
+
+    let duration_seconds = values
+      .next()
+      .and_then(|value| value.parse::<f64>().ok())
+      .filter(|value| value.is_finite() && *value >= 0.0)
+      .unwrap_or(0.0);
+
+    let end_seconds = pts_seconds + duration_seconds;
+
+    if end_seconds.is_finite() && end_seconds >= 0.0 {
+      let end_ms = (end_seconds * 1000.0).round() as u64;
+      latest_end_ms = Some(latest_end_ms.map_or(end_ms, |current: u64| current.max(end_ms)));
+    }
+  }
+
+  Ok(latest_end_ms)
 }
 
 fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
