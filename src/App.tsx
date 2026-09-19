@@ -11,6 +11,7 @@ import {
 import { Timeline } from "./features/timeline/Timeline";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
+import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
 import {
   commitHistory,
   createHistoryState,
@@ -21,10 +22,6 @@ import {
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
-import {
-  stepFrame,
-  stepPlaybackTime,
-} from "./features/playback/playback";
 import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
@@ -53,9 +50,8 @@ function App() {
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
   const assets = project.assets;
-  const timelineDurationMs = getTimelineDurationMs(project);
   const selectedClipContext = findClipContext(project, selectedClipId);
-  timelineDurationRef.current = timelineDurationMs;
+  const timelineDurationMs = getTimelineDurationMs(project);
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
     timelineDurationMs,
@@ -68,6 +64,15 @@ function App() {
   useEffect(() => {
     timelineDurationRef.current = timelineDurationMs;
   }, [timelineDurationMs]);
+
+  const setPlaybackTime = useCallback((timeMs: number) => {
+    const safeTimeMs = Math.min(
+      Math.max(timeMs, 0),
+      timelineDurationRef.current,
+    );
+    playbackTimeRef.current = safeTimeMs;
+    setCurrentTimeMs(safeTimeMs);
+  }, []);
 
   const handleTogglePlayback = useCallback(() => {
     if (isPlaying) {
@@ -133,6 +138,23 @@ function App() {
 
   function handleCurrentTimeChange(timeMs: number) {
     setPlaybackTime(timeMs);
+  }
+
+  async function handleOpenProject() {
+    try {
+      const result = await openProjectFromDialog();
+      if (result) {
+        setHistory(resetHistory(result.project));
+        setSelectedClipId(null);
+        setPlaybackTime(0);
+        setIsPlaying(false);
+        setProjectNotice("Project opened.");
+      }
+    } catch (error) {
+      setProjectNotice(
+        error instanceof Error ? error.message : "Project could not be opened.",
+      );
+    }
   }
 
   async function handleSaveProject() {
@@ -595,7 +617,7 @@ function App() {
 
           <Timeline
             project={project}
-            currentTimeMs={currentTimeMs}
+            currentTimeMs={displayedCurrentTimeMs}
             onCurrentTimeChange={handleCurrentTimeChange}
             selectedClipId={selectedClipId}
             onSelectClip={handleSelectClip}
@@ -818,30 +840,4 @@ function formatDuration(durationMs: number | null): string {
   return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0");
 }
 
-export default App;  const setPlaybackTime = useCallback((timeMs: number) => {
-    try {
-      const result = await openProjectFromDialog();
-      if (result) {
-        setHistory(resetHistory(result.project));
-        setSelectedClipId(null);
-        setPlaybackTime(0);
-        setIsPlaying(false);
-        setProjectNotice("Project opened.");
-      }
-    } catch (error) {
-      setProjectNotice(
-        error instanceof Error ? error.message : "Project could not be opened.",
-      );
-    }
-  }
-
-  const setPlaybackTime = useCallback((timeMs: number) => {
-    const safeTimeMs = Math.min(
-      Math.max(timeMs, 0),
-      timelineDurationRef.current,
-    );
-    playbackTimeRef.current = safeTimeMs;
-    setCurrentTimeMs(safeTimeMs);
-  }, []);
-
-
+export default App;
