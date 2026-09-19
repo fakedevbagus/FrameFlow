@@ -151,23 +151,35 @@ fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
 
 fn parse_ffmpeg_duration(output: &[u8]) -> Option<u64> {
   let text = String::from_utf8_lossy(output);
+  let mut last_progress_time_ms = None;
 
   for line in text.lines() {
-    let Some(marker_index) = line.find("Duration:") else {
-      continue;
-    };
+    if let Some(marker_index) = line.find("Duration:") {
+      let value = line[marker_index + "Duration:".len()..]
+        .split(',')
+        .next()
+        .unwrap_or_default()
+        .trim();
 
-    let value = line[marker_index + "Duration:".len()..]
-      .split(',')
-      .next()?
-      .trim();
+      if let Some(duration_ms) = parse_timestamp_ms(value) {
+        return Some(duration_ms);
+      }
+    }
 
-    if let Some(duration_ms) = parse_timestamp_ms(value) {
-      return Some(duration_ms);
+    if let Some(marker_index) = line.rfind("time=") {
+      let value = line[marker_index + "time=".len()..]
+        .split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .trim();
+
+      if let Some(duration_ms) = parse_timestamp_ms(value) {
+        last_progress_time_ms = Some(duration_ms);
+      }
     }
   }
 
-  None
+  last_progress_time_ms
 }
 
 fn parse_timestamp_ms(value: &str) -> Option<u64> {
