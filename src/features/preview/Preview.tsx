@@ -75,7 +75,10 @@ export function Preview({
           <div className="preview-audio-icon" aria-hidden="true">
             ♪
           </div>
-          <span>Audio preview</span>
+          <div className="preview-audio-header-copy">
+            <span>Audio preview</span>
+            <small>{audioClips.map((clip) => clip.asset.name).join(", ")}</small>
+          </div>
         </div>
       ) : null}
 
@@ -115,12 +118,22 @@ function PreviewVisualLayer({
       return;
     }
 
+    const initialTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
+
     try {
-      media.currentTime = Math.max(0, localTimeMs / 1000);
+      media.currentTime = Math.max(0, initialTimeMs / 1000);
     } catch {
       // The media element may not accept seeking until metadata is available.
     }
-  }, [layer.asset.id, layer.clip.id]);
+  }, [
+    currentTimeMs,
+    layer.asset.id,
+    layer.asset.mediaType,
+    layer.clip.id,
+    layer.clip.sourceEndMs,
+    layer.clip.sourceStartMs,
+    layer.clip.timelineStartMs,
+  ]);
 
   useEffect(() => {
     const media = mediaRef.current;
@@ -136,8 +149,8 @@ function PreviewVisualLayer({
       return;
     }
 
-    void media.play().catch(() => undefined);
-  }, [isPlaying, layer.asset.id, layer.clip.id]);
+    void Promise.resolve(media.play()).catch(() => undefined);
+  }, [isPlaying, layer.asset.id, layer.asset.mediaType, layer.clip.id]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -155,7 +168,13 @@ function PreviewVisualLayer({
     } catch {
       // Some WebView/media implementations reject seeking before metadata is ready.
     }
-  }, [isPlaying, layer.asset.id, layer.clip.id, localTimeMs]);
+  }, [
+    isPlaying,
+    layer.asset.id,
+    layer.asset.mediaType,
+    layer.clip.id,
+    localTimeMs,
+  ]);
 
   if (layer.asset.mediaType === "image") {
     return (
@@ -176,7 +195,7 @@ function PreviewVisualLayer({
       data-testid="preview-video"
       playsInline
       preload="metadata"
-      ref={mediaRef}
+      ref={handleMediaRef}
       src={mediaUrl ?? ""}
       style={{ zIndex }}
       onError={() =>
@@ -252,7 +271,7 @@ function PreviewAudioLayer({
       className={showControls ? "preview-audio-layer preview-audio-layer-controls" : "preview-audio-layer"}
       controls={showControls}
       data-testid="preview-audio"
-      ref={mediaRef}
+      ref={handleMediaRef}
       src={mediaUrl ?? ""}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
     />
