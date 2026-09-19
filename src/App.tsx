@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { MediaAsset } from "./features/project/domain";
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
+import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
 import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
@@ -17,11 +18,26 @@ function App() {
   const [project, setProject] = useState(loadWorkspaceProject);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [projectNotice, setProjectNotice] = useState<string | null>(null);
   const assets = project.assets;
 
   useEffect(() => {
     saveWorkspaceProject(project);
   }, [project]);
+
+  async function handleOpenProject() {
+    try {
+      const result = await openProjectFromDialog();
+      if (result) { setProject(result.project); setProjectNotice("Project opened."); }
+    } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Project could not be opened."); }
+  }
+
+  async function handleSaveProject() {
+    try {
+      const path = await saveProjectFromDialog(project);
+      if (path) setProjectNotice("Project saved.");
+    } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Project could not be saved."); }
+  }
 
   async function handleImport() {
     setImportError(null);
@@ -119,8 +135,8 @@ function App() {
         <section className="editor-area">
           <div className="editor-toolbar">
             <div><p className="eyebrow">Project</p><h2>Untitled project</h2></div>
-            <div className="toolbar-actions"><button className="toolbar-button" type="button">9:16</button><button className="primary-button" type="button">Export</button></div>
-          </div>
+            <div className="toolbar-actions"><button className="toolbar-button" onClick={handleOpenProject} type="button">Open</button><button className="toolbar-button" onClick={handleSaveProject} type="button">Save</button><button className="toolbar-button" type="button">9:16</button><button className="primary-button" type="button">Export</button></div>
+          {projectNotice ? <p className="project-notice" role="status">{projectNotice}</p> : null}</div>
           <div className="preview-region">
             <div className="preview-canvas"><div className="preview-content"><span>Preview</span><small>Tambahkan media ke timeline untuk mulai mengedit.</small></div></div>
             <div className="transport-controls" aria-label="Playback controls"><button aria-label="Previous frame" className="transport-button" type="button">◀</button><button aria-label="Play" className="play-button" type="button">▶</button><button aria-label="Next frame" className="transport-button" type="button">▶</button><span className="timecode">00:00:00:00</span></div>
