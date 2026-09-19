@@ -137,6 +137,8 @@ describe("Preview", () => {
       />,
     );
 
-    expect(playMock).toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(playMock).toHaveBeenCalled();
+    });
   });
 });
