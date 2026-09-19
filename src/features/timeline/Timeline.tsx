@@ -149,19 +149,29 @@ export function Timeline({
 
     const deltaMs = pixelsToMilliseconds(deltaPixels, pixelsPerSecond);
     const asset = project.assets.find((candidate) => candidate.id === clip.assetId);
+    const activeTrack = project.tracks.find((track) =>
+      track.clips.some((candidate) => candidate.id === interaction.clipId),
+    );
     const snapCandidates = buildSnapCandidates(
       project,
       interaction.clipId,
-      project.tracks.find((track) =>
-        track.clips.some((candidate) => candidate.id === interaction.clipId),
-      )?.id ?? null,
+      activeTrack?.id ?? null,
     );
 
     if (interaction.mode === "move") {
-      const nextStartMs = snapTimelineTime(
+      const snappedStartMs = snapTimelineTime(
         interaction.originalTimelineStartMs + deltaMs,
         snapCandidates,
       );
+      const nextStartMs = activeTrack
+        ? resolveMoveStartWithoutOverlap(
+            activeTrack,
+            interaction.clipId,
+            snappedStartMs,
+            getClipDurationMs(clip),
+            deltaPixels,
+          )
+        : snappedStartMs;
 
       setInteraction({
         ...interaction,
@@ -452,6 +462,39 @@ function TimelineTrack({
       </div>
     </div>
   );
+}
+
+function resolveMoveStartWithoutOverlap(
+  track: Track,
+  clipId: string,
+  candidateStartMs: number,
+  durationMs: number,
+  deltaPixels: number,
+): number {
+  let resolvedStartMs = Math.max(0, candidateStartMs);
+  const movingRight = deltaPixels >= 0;
+
+  const otherClips = track.clips
+    .filter((clip) => clip.id !== clipId)
+    .sort((a, b) => a.timelineStartMs - b.timelineStartMs);
+
+  for (const clip of otherClips) {
+    const existingStartMs = clip.timelineStartMs;
+    const existingEndMs = existingStartMs + getClipDurationMs(clip);
+
+    if (
+      resolvedStartMs >= existingEndMs ||
+      resolvedStartMs + durationMs <= existingStartMs
+    ) {
+      continue;
+    }
+
+    resolvedStartMs = movingRight
+      ? Math.max(0, existingStartMs - durationMs)
+      : existingEndMs;
+  }
+
+  return Math.max(0, resolvedStartMs);
 }
 
 function buildSnapCandidates(
