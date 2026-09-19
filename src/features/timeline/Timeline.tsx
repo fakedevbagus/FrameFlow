@@ -48,6 +48,8 @@ export function Timeline({ project, selectedClipId = null, onSelectClip }: Timel
             track={track}
             project={project}
             timelineDurationMs={timelineDurationMs}
+            selectedClipId={selectedClipId}
+            onSelectClip={onSelectClip}
           />
         ))}
       </div>
