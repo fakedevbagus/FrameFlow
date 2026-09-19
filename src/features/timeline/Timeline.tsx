@@ -404,6 +404,10 @@ function TimelineTrack({
                 (isInteracting ? " timeline-clip-interacting" : "")
               }
               key={clip.id}
+              style={{
+                left: clip.timelineStartMs / 1000 * pixelsPerSecond + "px",
+                width: width + "px",
+              }}
               onClick={() => onSelectClip?.(clip.id)}
               onKeyDown={handleClipKeyDown}
               onPointerDown={(event) => onBeginClipInteraction(event, sourceClip, "move")}
