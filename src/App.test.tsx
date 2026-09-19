@@ -83,4 +83,40 @@ describe("App", () => {
     expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
   });
 
+
+  it("deletes the selected clip with the Delete key", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-keyboard",
+        name: "keyboard.mp4",
+        mediaType: "video",
+        sourcePath: "/media/keyboard.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("keyboard.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add keyboard.mp4 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select keyboard.mp4 clip" }),
+    );
+
+    fireEvent.keyDown(window, { key: "Delete" });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTitle("keyboard.mp4 · 00:08"),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
+  });
+
 });
