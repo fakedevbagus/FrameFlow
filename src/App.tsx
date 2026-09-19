@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
-import { addAssetToTimeline } from "./features/timeline/commands";
+import { addAssetToTimeline, removeClipFromTimeline } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
@@ -18,10 +18,12 @@ const navigation: Array<{ id: WorkspaceView; label: string }> = [
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
   const [project, setProject] = useState(loadWorkspaceProject);
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
   const assets = project.assets;
+  const selectedClipContext = findClipContext(project, selectedClipId);
 
   useEffect(() => {
     saveWorkspaceProject(project);
@@ -32,6 +34,7 @@ function App() {
       const result = await openProjectFromDialog();
       if (result) {
         setProject(result.project);
+        setSelectedClipId(null);
         setProjectNotice("Project opened.");
       }
     } catch (error) {
@@ -62,6 +65,31 @@ function App() {
           error instanceof Error
             ? error.message
             : "Media could not be added to the timeline.",
+        );
+        return currentProject;
+      }
+    });
+  }
+
+  function handleSelectClip(clipId: string) {
+    setSelectedClipId(clipId);
+    setProjectNotice(null);
+  }
+
+  function handleDeleteSelectedClip() {
+    if (!selectedClipId) {
+      return;
+    }
+
+    setProject((currentProject) => {
+      try {
+        const nextProject = removeClipFromTimeline(currentProject, selectedClipId);
+        setSelectedClipId(null);
+        setProjectNotice("Clip deleted.");
+        return nextProject;
+      } catch (error) {
+        setProjectNotice(
+          error instanceof Error ? error.message : "Clip could not be deleted.",
         );
         return currentProject;
       }
@@ -161,7 +189,7 @@ function App() {
           <div className="editor-toolbar">
             <div>
               <p className="eyebrow">Project</p>
-              <h2>Untitled project</h2>
+              <h2>{project.name}</h2>
             </div>
             <div className="toolbar-actions">
               <button className="toolbar-button" onClick={handleOpenProject} type="button">
@@ -205,7 +233,11 @@ function App() {
             </div>
           </div>
 
-          <Timeline project={project} />
+          <Timeline
+            project={project}
+            selectedClipId={selectedClipId}
+            onSelectClip={handleSelectClip}
+          />
         </section>
 
         <aside className="panel inspector-panel">
@@ -215,17 +247,50 @@ function App() {
               <h2>Inspector</h2>
             </div>
           </div>
-          <div className="inspector-empty">
-            <strong>Pilih sebuah clip</strong>
-            <span>
-              Posisi, ukuran, audio, dan properti lainnya akan muncul di sini.
-            </span>
-          </div>
+
+          {selectedClipContext ? (
+            <div className="inspector-content">
+              <div className="inspector-summary">
+                <span className="inspector-type">{selectedClipContext.asset?.mediaType ?? "media"}</span>
+                <strong>{selectedClipContext.asset?.name ?? "Missing media"}</strong>
+              </div>
+
+              <div className="inspector-fields">
+                <span>Track</span>
+                <strong>{selectedClipContext.track.name}</strong>
+                <span>Start</span>
+                <strong>{formatDuration(selectedClipContext.clip.timelineStartMs)}</strong>
+                <span>Duration</span>
+                <strong>{formatDuration(getClipDurationMs(selectedClipContext.clip))}</strong>
+                <span>Source</span>
+                <strong>
+                  {formatDuration(selectedClipContext.clip.sourceStartMs)} –{" "}
+                  {formatDuration(selectedClipContext.clip.sourceEndMs)}
+                </strong>
+              </div>
+
+              <button
+                className="danger-button"
+                onClick={handleDeleteSelectedClip}
+                type="button"
+              >
+                Delete clip
+              </button>
+            </div>
+          ) : (
+            <div className="inspector-empty">
+              <strong>Pilih sebuah clip</strong>
+              <span>
+                Posisi, ukuran, audio, dan properti lainnya akan muncul di sini.
+              </span>
+            </div>
+          )}
+
           <div className="project-details">
             <span>Canvas</span>
-            <strong>1080 × 1920</strong>
+            <strong>{project.canvas.width} × {project.canvas.height}</strong>
             <span>Frame rate</span>
-            <strong>30 fps</strong>
+            <strong>{project.canvas.frameRate} fps</strong>
           </div>
         </aside>
       </section>
@@ -236,6 +301,49 @@ function App() {
       </footer>
     </main>
   );
+}
+
+function findClipContext(
+  project: ReturnType<typeof loadWorkspaceProject>,
+  clipId: string | null,
+) {
+  if (!clipId) {
+    return null;
+  }
+
+  for (const track of project.tracks) {
+    const clip = track.clips.find((candidate) => candidate.id === clipId);
+
+    if (clip) {
+      return {
+        asset: project.assets.find((asset) => asset.id === clip.assetId) ?? null,
+        clip,
+        track,
+      };
+    }
+  }
+
+  return null;
+}
+
+function getClipDurationMs(clip: { sourceStartMs: number; sourceEndMs: number | null }): number {
+  if (clip.sourceEndMs === null) {
+    return 0;
+  }
+
+  return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+}
+
+function formatDuration(durationMs: number | null): string {
+  if (durationMs === null) {
+    return "—";
+  }
+
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0");
 }
 
 export default App;
