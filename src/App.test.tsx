@@ -26,6 +26,18 @@ describe("App", () => {
     expect(screen.getAllByRole("button", { name: "Import media" })).toHaveLength(2);
   });
 
+  it("steps the playhead by one frame with the transport controls", () => {
+    render(<App />);
+
+    expect(screen.getByText("00:00:00:00")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
+    expect(screen.getByText("00:00:00:01")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous frame" }));
+    expect(screen.getByText("00:00:00:00")).toBeInTheDocument();
+  });
+
   it("shows imported media in the library", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
