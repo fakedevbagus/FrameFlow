@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import {
   addAssetToTimeline,
@@ -10,6 +10,7 @@ import {
 } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
+import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
   commitHistory,
   createHistoryState,
@@ -20,6 +21,10 @@ import {
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
+import {
+  stepFrame,
+  stepPlaybackTime,
+} from "./features/playback/playback";
 import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
@@ -37,7 +42,9 @@ function App() {
   );
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
+  const playbackTimeRef = useRef(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
@@ -45,7 +52,12 @@ function App() {
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
   const assets = project.assets;
+  const timelineDurationMs = getTimelineDurationMs(project);
   const selectedClipContext = findClipContext(project, selectedClipId);
+  const displayedCurrentTimeMs = Math.min(
+    Math.max(currentTimeMs, 0),
+    timelineDurationMs,
+  );
 
   useEffect(() => {
     saveWorkspaceProject(project);
@@ -57,7 +69,8 @@ function App() {
       if (result) {
         setHistory(resetHistory(result.project));
         setSelectedClipId(null);
-        setCurrentTimeMs(0);
+        setPlaybackTime(0);
+        setIsPlaying(false);
         setProjectNotice("Project opened.");
       }
     } catch (error) {
@@ -65,6 +78,78 @@ function App() {
         error instanceof Error ? error.message : "Project could not be opened.",
       );
     }
+  }
+
+  const setPlaybackTime = useCallback((timeMs: number) => {
+    const safeTimeMs = Math.min(Math.max(timeMs, 0), timelineDurationMs);
+    playbackTimeRef.current = safeTimeMs;
+    setCurrentTimeMs(safeTimeMs);
+  }, [timelineDurationMs]);
+
+  const handleTogglePlayback = useCallback(() => {
+    if (isPlaying) {
+      setIsPlaying(false);
+      return;
+    }
+
+    if (playbackTimeRef.current >= timelineDurationMs) {
+      setPlaybackTime(0);
+    }
+
+    setIsPlaying(true);
+  }, [isPlaying, setPlaybackTime, timelineDurationMs]);
+
+  const handleStepFrame = useCallback((direction: -1 | 1) => {
+    setIsPlaying(false);
+    setPlaybackTime(
+      stepFrame(
+        playbackTimeRef.current,
+        project.canvas.frameRate,
+        timelineDurationMs,
+        direction,
+      ),
+    );
+  }, [project.canvas.frameRate, setPlaybackTime, timelineDurationMs]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      return;
+    }
+
+    let animationFrameId = 0;
+    let lastTimestamp: number | null = null;
+
+    const tick = (timestamp: number) => {
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
+      }
+
+      const elapsedMs = Math.max(0, timestamp - lastTimestamp);
+      lastTimestamp = timestamp;
+
+      const next = stepPlaybackTime(
+        playbackTimeRef.current,
+        elapsedMs,
+        timelineDurationMs,
+      );
+
+      setPlaybackTime(next.timeMs);
+
+      if (next.reachedEnd) {
+        setIsPlaying(false);
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(tick);
+    };
+
+    animationFrameId = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [isPlaying, setPlaybackTime, timelineDurationMs]);
+
+  function handleCurrentTimeChange(timeMs: number) {
+    setPlaybackTime(timeMs);
   }
 
   async function handleSaveProject() {
@@ -167,6 +252,12 @@ function App() {
         return;
       }
 
+      if (key === " " && !modifierPressed) {
+        event.preventDefault();
+        handleTogglePlayback();
+        return;
+      }
+
       if (!selectedClipId) {
         return;
       }
@@ -182,6 +273,7 @@ function App() {
   }, [
     handleDeleteSelectedClip,
     handleRedo,
+    handleTogglePlayback,
     handleUndo,
     selectedClipId,
   ]);
@@ -488,17 +580,32 @@ function App() {
               </div>
             </div>
             <div className="transport-controls" aria-label="Playback controls">
-              <button aria-label="Previous frame" className="transport-button" type="button">
+              <button
+                aria-label="Previous frame"
+                className="transport-button"
+                onClick={() => handleStepFrame(-1)}
+                type="button"
+              >
                 ◀
               </button>
-              <button aria-label="Play" className="play-button" type="button">
-                ▶
+              <button
+                aria-label={isPlaying ? "Pause" : "Play"}
+                className="play-button"
+                onClick={handleTogglePlayback}
+                type="button"
+              >
+                {isPlaying ? "Ⅱ" : "▶"}
               </button>
-              <button aria-label="Next frame" className="transport-button" type="button">
+              <button
+                aria-label="Next frame"
+                className="transport-button"
+                onClick={() => handleStepFrame(1)}
+                type="button"
+              >
                 ▶
               </button>
               <span className="timecode">
-                {formatTimecode(currentTimeMs, project.canvas.frameRate)}
+                {formatTimecode(displayedCurrentTimeMs, project.canvas.frameRate)}
               </span>
             </div>
           </div>
@@ -506,7 +613,7 @@ function App() {
           <Timeline
             project={project}
             currentTimeMs={currentTimeMs}
-            onCurrentTimeChange={setCurrentTimeMs}
+            onCurrentTimeChange={handleCurrentTimeChange}
             selectedClipId={selectedClipId}
             onSelectClip={handleSelectClip}
             onMoveClip={handleDirectMoveClip}
