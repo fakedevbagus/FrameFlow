@@ -10,6 +10,13 @@ import {
 } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
+import {
+  commitHistory,
+  createHistoryState,
+  redoHistory,
+  resetHistory,
+  undoHistory,
+} from "./features/history/history";
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
@@ -25,13 +32,18 @@ const navigation: Array<{ id: WorkspaceView; label: string }> = [
 
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
-  const [project, setProject] = useState(loadWorkspaceProject);
+  const [history, setHistory] = useState(() =>
+    createHistoryState(loadWorkspaceProject()),
+  );
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
+  const project = history.present;
+  const canUndo = history.past.length > 0;
+  const canRedo = history.future.length > 0;
   const assets = project.assets;
   const selectedClipContext = findClipContext(project, selectedClipId);
 
@@ -43,7 +55,7 @@ function App() {
     try {
       const result = await openProjectFromDialog();
       if (result) {
-        setProject(result.project);
+        setHistory(resetHistory(result.project));
         setSelectedClipId(null);
         setCurrentTimeMs(0);
         setProjectNotice("Project opened.");
@@ -67,19 +79,10 @@ function App() {
   }
 
   function handleAddAsset(assetId: string) {
-    setProject((currentProject) => {
-      try {
-        setProjectNotice(null);
-        return addAssetToTimeline(currentProject, assetId);
-      } catch (error) {
-        setProjectNotice(
-          error instanceof Error
-            ? error.message
-            : "Media could not be added to the timeline.",
-        );
-        return currentProject;
-      }
-    });
+    applyProjectChange(
+      (currentProject) => addAssetToTimeline(currentProject, assetId),
+      "Media added to timeline.",
+    );
   }
 
   function handleSelectClip(clipId: string) {
@@ -92,20 +95,45 @@ function App() {
       return;
     }
 
-    setProject((currentProject) => {
+    setHistory((currentHistory) => {
       try {
-        const nextProject = removeClipFromTimeline(currentProject, selectedClipId);
+        const nextProject = removeClipFromTimeline(
+          currentHistory.present,
+          selectedClipId,
+        );
         setSelectedClipId(null);
         setProjectNotice("Clip deleted.");
-        return nextProject;
+        return commitHistory(currentHistory, nextProject);
       } catch (error) {
         setProjectNotice(
           error instanceof Error ? error.message : "Clip could not be deleted.",
         );
-        return currentProject;
+        return currentHistory;
       }
     });
   }, [selectedClipId]);
+
+  const handleUndo = useCallback(() => {
+    setHistory((currentHistory) => {
+      if (!currentHistory.past.length) {
+        return currentHistory;
+      }
+
+      setProjectNotice("Undo.");
+      return undoHistory(currentHistory);
+    });
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    setHistory((currentHistory) => {
+      if (!currentHistory.future.length) {
+        return currentHistory;
+      }
+
+      setProjectNotice("Redo.");
+      return redoHistory(currentHistory);
+    });
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -124,6 +152,25 @@ function App() {
         return;
       }
 
+      const modifierPressed = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+
+      if (modifierPressed && key === "z") {
+        event.preventDefault();
+        if (event.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+        return;
+      }
+
+      if (modifierPressed && key === "y") {
+        event.preventDefault();
+        handleRedo();
+        return;
+      }
+
       if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault();
         handleDeleteSelectedClip();
@@ -132,7 +179,32 @@ function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleDeleteSelectedClip, selectedClipId]);
+  }, [
+    handleDeleteSelectedClip,
+    handleRedo,
+    handleUndo,
+    selectedClipId,
+  ]);
+
+  function applyProjectChange(
+    operation: (
+      currentProject: ReturnType<typeof loadWorkspaceProject>,
+    ) => ReturnType<typeof loadWorkspaceProject>,
+    notice: string,
+  ) {
+    setHistory((currentHistory) => {
+      try {
+        const nextProject = operation(currentHistory.present);
+        setProjectNotice(notice);
+        return commitHistory(currentHistory, nextProject);
+      } catch (error) {
+        setProjectNotice(
+          error instanceof Error ? error.message : "Project edit could not be applied.",
+        );
+        return currentHistory;
+      }
+    });
+  }
 
   function updateSelectedClip(
     operation: (project: ReturnType<typeof loadWorkspaceProject>) => ReturnType<typeof loadWorkspaceProject>,
@@ -142,18 +214,7 @@ function App() {
       return;
     }
 
-    setProject((currentProject) => {
-      try {
-        const nextProject = operation(currentProject);
-        setProjectNotice(notice);
-        return nextProject;
-      } catch (error) {
-        setProjectNotice(
-          error instanceof Error ? error.message : "Clip edit could not be applied.",
-        );
-        return currentProject;
-      }
-    });
+    applyProjectChange(operation, notice);
   }
 
   function handleMoveSelectedClip(deltaMs: number) {
@@ -275,18 +336,7 @@ function App() {
     operation: (project: ReturnType<typeof loadWorkspaceProject>) => ReturnType<typeof loadWorkspaceProject>,
     notice: string,
   ) {
-    setProject((currentProject) => {
-      try {
-        const nextProject = operation(currentProject);
-        setProjectNotice(notice);
-        return nextProject;
-      } catch (error) {
-        setProjectNotice(
-          error instanceof Error ? error.message : "Clip edit could not be applied.",
-        );
-        return currentProject;
-      }
-    });
+    applyProjectChange(operation, notice);
   }
 
   async function handleImport() {
@@ -296,7 +346,8 @@ function App() {
     try {
       const importedAssets = await importMediaFiles();
 
-      setProject((currentProject) => {
+      setHistory((currentHistory) => {
+        const currentProject = currentHistory.present;
         const existingPaths = new Set(
           currentProject.assets.map((asset) => asset.sourcePath),
         );
@@ -304,11 +355,15 @@ function App() {
           (asset) => !existingPaths.has(asset.sourcePath),
         );
 
-        return {
+        if (!newAssets.length) {
+          return currentHistory;
+        }
+
+        return commitHistory(currentHistory, {
           ...currentProject,
           assets: [...currentProject.assets, ...newAssets],
           updatedAt: new Date().toISOString(),
-        };
+        });
       });
     } catch (error) {
       setImportError(
@@ -385,6 +440,26 @@ function App() {
               <h2>{project.name}</h2>
             </div>
             <div className="toolbar-actions">
+              <button
+                aria-label="Undo"
+                className="toolbar-button"
+                disabled={!canUndo}
+                onClick={handleUndo}
+                title="Undo (Ctrl+Z)"
+                type="button"
+              >
+                ↶
+              </button>
+              <button
+                aria-label="Redo"
+                className="toolbar-button"
+                disabled={!canRedo}
+                onClick={handleRedo}
+                title="Redo (Ctrl+Y)"
+                type="button"
+              >
+                ↷
+              </button>
               <button className="toolbar-button" onClick={handleOpenProject} type="button">
                 Open
               </button>
