@@ -203,7 +203,7 @@ describe("Timeline", () => {
 
     expect(onTrimClipEnd).toHaveBeenCalledWith(
       project.tracks[0].clips[0].id,
-      8000,
+      10_000,
     );
   });
 
