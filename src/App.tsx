@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import {
   addAssetToTimeline,
@@ -45,6 +45,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const playbackTimeRef = useRef(0);
+  const timelineDurationRef = useRef(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
@@ -54,6 +55,7 @@ function App() {
   const assets = project.assets;
   const timelineDurationMs = getTimelineDurationMs(project);
   const selectedClipContext = findClipContext(project, selectedClipId);
+  timelineDurationRef.current = timelineDurationMs;
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
     timelineDurationMs,
@@ -80,36 +82,39 @@ function App() {
     }
   }
 
-  function setPlaybackTime(timeMs: number) {
-    const safeTimeMs = Math.min(Math.max(timeMs, 0), timelineDurationMs);
+  const setPlaybackTime = useCallback((timeMs: number) => {
+    const safeTimeMs = Math.min(
+      Math.max(timeMs, 0),
+      timelineDurationRef.current,
+    );
     playbackTimeRef.current = safeTimeMs;
     setCurrentTimeMs(safeTimeMs);
-  }
+  }, []);
 
-  function handleTogglePlayback() {
+  const handleTogglePlayback = useCallback(() => {
     if (isPlaying) {
       setIsPlaying(false);
       return;
     }
 
-    if (playbackTimeRef.current >= timelineDurationMs) {
+    if (playbackTimeRef.current >= timelineDurationRef.current) {
       setPlaybackTime(0);
     }
 
     setIsPlaying(true);
-  }
+  }, [isPlaying, setPlaybackTime]);
 
-  function handleStepFrame(direction: -1 | 1) {
+  const handleStepFrame = useCallback((direction: -1 | 1) => {
     setIsPlaying(false);
     setPlaybackTime(
       stepFrame(
         playbackTimeRef.current,
         project.canvas.frameRate,
-        timelineDurationMs,
+        timelineDurationRef.current,
         direction,
       ),
     );
-  }
+  }, [project.canvas.frameRate, setPlaybackTime]);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -146,7 +151,7 @@ function App() {
     animationFrameId = window.requestAnimationFrame(tick);
 
     return () => window.cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, project.canvas.frameRate, timelineDurationMs]);
+  }, [isPlaying, setPlaybackTime, timelineDurationMs]);
 
   function handleCurrentTimeChange(timeMs: number) {
     setPlaybackTime(timeMs);
@@ -272,7 +277,9 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     handleDeleteSelectedClip,
+    handleDeleteSelectedClip,
     handleRedo,
+    handleTogglePlayback,
     handleUndo,
     selectedClipId,
   ]);
