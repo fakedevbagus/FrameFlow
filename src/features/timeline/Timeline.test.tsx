@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "./commands";
@@ -48,13 +49,22 @@ describe("Timeline", () => {
   it("moves the playhead when the ruler is clicked", () => {
     const project = createVideoProject();
     const onCurrentTimeChange = vi.fn();
-    const { container } = render(
-      <Timeline
-        project={project}
-        currentTimeMs={0}
-        onCurrentTimeChange={onCurrentTimeChange}
-      />,
-    );
+    function TimelineHarness() {
+      const [currentTimeMs, setCurrentTimeMs] = useState(0);
+
+      return (
+        <Timeline
+          project={project}
+          currentTimeMs={currentTimeMs}
+          onCurrentTimeChange={(timeMs) => {
+            onCurrentTimeChange(timeMs);
+            setCurrentTimeMs(timeMs);
+          }}
+        />
+      );
+    }
+
+    const { container } = render(<TimelineHarness />);
 
     const ruler = container.querySelector(".timeline-ruler-scale");
     expect(ruler).not.toBeNull();
