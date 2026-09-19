@@ -107,6 +107,26 @@ describe("Timeline", () => {
     expect(onZoomChange).toHaveBeenCalledWith(1.25);
   });
 
+  it("toggles a track mute control", () => {
+    const project = createVideoProject();
+    const onToggleTrackMute = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onToggleTrackMute={onToggleTrackMute}
+      />,
+    );
+
+    const muteButton = screen.getByRole("button", { name: "Mute Video 1" });
+
+    expect(muteButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(muteButton);
+
+    expect(onToggleTrackMute).toHaveBeenCalledWith("video-1");
+  });
+
   it("marks the selected clip", () => {
     const project = createProject({ id: "project-2" });
     project.assets.push({
