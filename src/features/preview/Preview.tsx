@@ -27,7 +27,6 @@ export function Preview({
   const activePreview = findActivePreviewClip(project, currentTimeMs);
   const asset = activePreview?.asset ?? null;
   const activeAssetId = activePreview?.asset.id ?? null;
-  const activeClipId = activePreview?.clip.id ?? null;
   const mediaUrl = asset ? tryConvertFileSrc(asset.sourcePath) : null;
   const localTimeMs = activePreview
     ? getClipLocalTimeMs(activePreview.clip, currentTimeMs)
@@ -136,7 +135,7 @@ export function Preview({
           className="preview-audio"
           controls
           data-testid="preview-audio"
-          ref={setMediaRef}
+          ref={handleMediaRef}
           src={mediaUrl ?? ""}
           onError={() => setMediaErrorForAsset("Audio could not be loaded.")}
         />
@@ -157,7 +156,7 @@ export function Preview({
         data-testid="preview-video"
         playsInline
         preload="metadata"
-        ref={setMediaRef}
+        ref={handleMediaRef}
         src={mediaUrl ?? ""}
         onError={() => setMediaErrorForAsset("Video could not be loaded.")}
       />
@@ -170,14 +169,9 @@ export function Preview({
   );
 }
 
-function setMediaRef(element: HTMLMediaElement | null) {
-  // The preview hosts either an HTMLVideoElement or HTMLAudioElement.
-  mediaElementRef.current = element;
+function handleMediaRef(element: HTMLMediaElement | null) {
+  mediaRef.current = element;
 }
-
-const mediaElementRef = {
-  current: null as HTMLMediaElement | null,
-};
 
 function tryConvertFileSrc(path: string): string | null {
   try {
