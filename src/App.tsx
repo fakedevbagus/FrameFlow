@@ -146,7 +146,7 @@ function App() {
     animationFrameId = window.requestAnimationFrame(tick);
 
     return () => window.cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, setPlaybackTime, timelineDurationMs]);
+  }, [isPlaying, project.canvas.frameRate, timelineDurationMs]);
 
   function handleCurrentTimeChange(timeMs: number) {
     setPlaybackTime(timeMs);
