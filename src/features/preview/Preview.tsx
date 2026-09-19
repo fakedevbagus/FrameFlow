@@ -37,17 +37,17 @@ export function Preview({
       return;
     }
 
-    const targetSeconds = localTimeMs / 1000;
-
-    try {
-      if (Number.isFinite(targetSeconds)) {
-        media.currentTime = Math.max(0, targetSeconds);
-      }
-    } catch {
-      setMediaError("Preview media could not be seeked.");
-    }
-
     if (isPlaying) {
+      const targetSeconds = localTimeMs / 1000;
+
+      try {
+        if (Number.isFinite(targetSeconds)) {
+          media.currentTime = Math.max(0, targetSeconds);
+        }
+      } catch {
+        setMediaError("Preview media could not be seeked.");
+      }
+
       try {
         const playResult = media.play();
 
@@ -63,16 +63,13 @@ export function Preview({
           "Preview playback could not start in the current WebView.",
         );
       }
-    } else if (!media.paused) {
+      return;
+    }
+
+    if (!media.paused) {
       media.pause();
     }
-  }, [
-    activePreview?.asset.id,
-    activePreview?.clip.id,
-    asset,
-    isPlaying,
-    localTimeMs,
-  ]);
+  }, [activePreview?.asset.id, activePreview?.clip.id, asset, isPlaying, localTimeMs]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -150,6 +147,7 @@ export function Preview({
       <video
         className="preview-media"
         data-preview-state="video"
+        data-testid="preview-video"
         playsInline
         preload="metadata"
         ref={mediaRef}
