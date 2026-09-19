@@ -91,7 +91,7 @@ fn media_type(path: &Path) -> Result<String, String> {
 }
 
 fn probe_duration_ms(path: &Path) -> Result<u64, String> {
-  let output = Command::new("ffprobe")
+  let format_output = Command::new("ffprobe")
     .args([
       "-v",
       "error",
@@ -104,26 +104,59 @@ fn probe_duration_ms(path: &Path) -> Result<u64, String> {
     .output()
     .map_err(|error| format!("Could not run ffprobe: {error}"))?;
 
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+  if format_output.status.success() {
+    if let Some(duration_ms) = parse_duration_ms(&format_output.stdout) {
+      return Ok(duration_ms);
+    }
+  }
 
-    return Err(if detail.is_empty() {
-      "ffprobe could not read the selected media file.".to_string()
+  let stream_output = Command::new("ffprobe")
+    .args([
+      "-v",
+      "error",
+      "-show_entries",
+      "stream=duration",
+      "-of",
+      "default=noprint_wrappers=1:nokey=1",
+    ])
+    .arg(path)
+    .output()
+    .map_err(|error| format!("Could not run ffprobe for stream duration: {error}"))?;
+
+  if stream_output.status.success() {
+    if let Some(duration_ms) = parse_duration_ms(&stream_output.stdout) {
+      return Ok(duration_ms);
+    }
+  }
+
+  let detail = String::from_utf8_lossy(
+    if !format_output.stderr.is_empty() {
+      &format_output.stderr
     } else {
-      format!("ffprobe could not read the selected media file: {detail}")
-    });
-  }
+      &stream_output.stderr
+    },
+  )
+  .trim()
+  .to_string();
 
-  let duration = String::from_utf8_lossy(&output.stdout)
-    .trim()
-    .parse::<f64>()
-    .map_err(|_| "ffprobe returned an invalid duration.".to_string())?;
+  Err(if detail.is_empty() {
+    "ffprobe could not determine the selected media duration.".to_string()
+  } else {
+    format!("ffprobe could not determine the selected media duration: {detail}")
+  })
+}
 
-  if !duration.is_finite() || duration < 0.0 {
-    return Err("ffprobe returned an invalid duration.".to_string());
-  }
-
-  Ok((duration * 1000.0).round() as u64)
+fn parse_duration_ms(output: &[u8]) -> Option<u64> {
+  String::from_utf8_lossy(output)
+    .lines()
+    .filter_map(|line| line.trim().parse::<f64>().ok())
+    .find_map(|duration| {
+      if duration.is_finite() && duration >= 0.0 {
+        Some((duration * 1000.0).round() as u64)
+      } else {
+        None
+      }
+    })
 }
 
 fn project_path(value: &str) -> Result<PathBuf, String> {
