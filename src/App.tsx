@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { MediaAsset } from "./features/project/domain";
 import { MediaBin } from "./features/media/MediaBin";
 import { addAssetToTimeline } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
@@ -31,15 +30,26 @@ function App() {
   async function handleOpenProject() {
     try {
       const result = await openProjectFromDialog();
-      if (result) { setProject(result.project); setProjectNotice("Project opened."); }
-    } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Project could not be opened."); }
+      if (result) {
+        setProject(result.project);
+        setProjectNotice("Project opened.");
+      }
+    } catch (error) {
+      setProjectNotice(
+        error instanceof Error ? error.message : "Project could not be opened.",
+      );
+    }
   }
 
   async function handleSaveProject() {
     try {
       const path = await saveProjectFromDialog(project);
       if (path) setProjectNotice("Project saved.");
-    } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Project could not be saved."); }
+    } catch (error) {
+      setProjectNotice(
+        error instanceof Error ? error.message : "Project could not be saved.",
+      );
+    }
   }
 
   function handleAddAsset(assetId: string) {
@@ -49,7 +59,9 @@ function App() {
         return addAssetToTimeline(currentProject, assetId);
       } catch (error) {
         setProjectNotice(
-          error instanceof Error ? error.message : "Media could not be added to the timeline.",
+          error instanceof Error
+            ? error.message
+            : "Media could not be added to the timeline.",
         );
         return currentProject;
       }
@@ -64,8 +76,12 @@ function App() {
       const importedAssets = await importMediaFiles();
 
       setProject((currentProject) => {
-        const existingPaths = new Set(currentProject.assets.map((asset) => asset.sourcePath));
-        const newAssets = importedAssets.filter((asset) => !existingPaths.has(asset.sourcePath));
+        const existingPaths = new Set(
+          currentProject.assets.map((asset) => asset.sourcePath),
+        );
+        const newAssets = importedAssets.filter(
+          (asset) => !existingPaths.has(asset.sourcePath),
+        );
 
         return {
           ...currentProject,
@@ -75,7 +91,11 @@ function App() {
       });
     } catch (error) {
       setImportError(
-        error instanceof Error ? error.message : typeof error === "string" ? error : "Media could not be imported.",
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Media could not be imported.",
       );
     } finally {
       setIsImporting(false);
@@ -86,7 +106,9 @@ function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">F</span>
+          <span className="brand-mark" aria-hidden="true">
+            F
+          </span>
           <span>FrameFlow</span>
         </div>
         <nav className="workspace-nav" aria-label="Workspace">
@@ -115,7 +137,15 @@ function App() {
               <p className="eyebrow">Library</p>
               <h1>Media</h1>
             </div>
-            <button aria-label="Import media" className="icon-button" disabled={isImporting} onClick={handleImport} type="button">+</button>
+            <button
+              aria-label="Import media"
+              className="icon-button"
+              disabled={isImporting}
+              onClick={handleImport}
+              type="button"
+            >
+              +
+            </button>
           </div>
 
           <MediaBin
@@ -129,37 +159,83 @@ function App() {
 
         <section className="editor-area">
           <div className="editor-toolbar">
-            <div><p className="eyebrow">Project</p><h2>Untitled project</h2></div>
-            <div className="toolbar-actions"><button className="toolbar-button" onClick={handleOpenProject} type="button">Open</button><button className="toolbar-button" onClick={handleSaveProject} type="button">Save</button><button className="toolbar-button" type="button">9:16</button><button className="primary-button" type="button">Export</button></div>
-          {projectNotice ? <p className="project-notice" role="status">{projectNotice}</p> : null}</div>
-          <div className="preview-region">
-            <div className="preview-canvas"><div className="preview-content"><span>Preview</span><small>Tambahkan media ke timeline untuk mulai mengedit.</small></div></div>
-            <div className="transport-controls" aria-label="Playback controls"><button aria-label="Previous frame" className="transport-button" type="button">◀</button><button aria-label="Play" className="play-button" type="button">▶</button><button aria-label="Next frame" className="transport-button" type="button">▶</button><span className="timecode">00:00:00:00</span></div>
+            <div>
+              <p className="eyebrow">Project</p>
+              <h2>Untitled project</h2>
+            </div>
+            <div className="toolbar-actions">
+              <button className="toolbar-button" onClick={handleOpenProject} type="button">
+                Open
+              </button>
+              <button className="toolbar-button" onClick={handleSaveProject} type="button">
+                Save
+              </button>
+              <button className="toolbar-button" type="button">
+                9:16
+              </button>
+              <button className="primary-button" type="button">
+                Export
+              </button>
+            </div>
+            {projectNotice ? (
+              <p className="project-notice" role="status">
+                {projectNotice}
+              </p>
+            ) : null}
           </div>
+
+          <div className="preview-region">
+            <div className="preview-canvas">
+              <div className="preview-content">
+                <span>Preview</span>
+                <small>Tambahkan media ke timeline untuk mulai mengedit.</small>
+              </div>
+            </div>
+            <div className="transport-controls" aria-label="Playback controls">
+              <button aria-label="Previous frame" className="transport-button" type="button">
+                ◀
+              </button>
+              <button aria-label="Play" className="play-button" type="button">
+                ▶
+              </button>
+              <button aria-label="Next frame" className="transport-button" type="button">
+                ▶
+              </button>
+              <span className="timecode">00:00:00:00</span>
+            </div>
+          </div>
+
           <Timeline project={project} />
         </section>
 
         <aside className="panel inspector-panel">
-          <div className="panel-heading"><div><p className="eyebrow">Properties</p><h2>Inspector</h2></div></div>
-          <div className="inspector-empty"><strong>Pilih sebuah clip</strong><span>Posisi, ukuran, audio, dan properti lainnya akan muncul di sini.</span></div>
-          <div className="project-details"><span>Canvas</span><strong>1080 × 1920</strong><span>Frame rate</span><strong>30 fps</strong></div>
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Properties</p>
+              <h2>Inspector</h2>
+            </div>
+          </div>
+          <div className="inspector-empty">
+            <strong>Pilih sebuah clip</strong>
+            <span>
+              Posisi, ukuran, audio, dan properti lainnya akan muncul di sini.
+            </span>
+          </div>
+          <div className="project-details">
+            <span>Canvas</span>
+            <strong>1080 × 1920</strong>
+            <span>Frame rate</span>
+            <strong>30 fps</strong>
+          </div>
         </aside>
       </section>
-      <footer className="statusbar"><span>FrameFlow alpha</span><span>Offline-first video editor</span></footer>
+
+      <footer className="statusbar">
+        <span>FrameFlow alpha</span>
+        <span>Offline-first video editor</span>
+      </footer>
     </main>
   );
-}
-
-function formatAssetDetail(asset: MediaAsset): string {
-  if (asset.durationMs === null) {
-    return "Image";
-  }
-
-  const totalSeconds = Math.floor(asset.durationMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${asset.mediaType} · ${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 export default App;
