@@ -103,10 +103,48 @@ describe("moveClipOnTimeline", () => {
 
   it("rejects moving a clip before the timeline origin", () => {
     const project = createProject({ id: "move-project-2" });
+    project.assets.push({
+      id: "move-asset-2",
+      name: "move-2.mp4",
+      mediaType: "video",
+      sourcePath: "/move-2.mp4",
+      durationMs: 5000,
+    });
 
-    expect(() =>
-      moveClipOnTimeline(project, "missing-clip", -1),
-    ).toThrow("Clip does not exist in this project.");
+    const populated = addAssetToTimeline(project, "move-asset-2");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    expect(() => moveClipOnTimeline(populated, clipId, -1)).toThrow(
+      "Clip timeline position must be zero or greater.",
+    );
+  });
+
+  it("rejects editing a locked track", () => {
+    const project = createProject({ id: "locked-project" });
+    project.assets.push({
+      id: "locked-asset",
+      name: "locked.mp4",
+      mediaType: "video",
+      sourcePath: "/locked.mp4",
+      durationMs: 5000,
+    });
+
+    const populated = addAssetToTimeline(project, "locked-asset");
+    const clipId = populated.tracks[0].clips[0].id;
+    populated.tracks[0].isLocked = true;
+
+    expect(() => moveClipOnTimeline(populated, clipId, 1000)).toThrow(
+      "Track is locked.",
+    );
+    expect(() => trimClipStart(populated, clipId, 1000)).toThrow(
+      "Track is locked.",
+    );
+    expect(() => trimClipEnd(populated, clipId, 4000)).toThrow(
+      "Track is locked.",
+    );
+    expect(() => splitClipAtTime(populated, clipId, 1000)).toThrow(
+      "Track is locked.",
+    );
   });
 });
 
