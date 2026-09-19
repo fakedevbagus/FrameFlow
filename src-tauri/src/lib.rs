@@ -184,3 +184,20 @@ pub fn run() {
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
+
+
+#[cfg(test)]
+mod tests {
+  use super::{media_type, parse_duration_ms};
+  use std::path::Path;
+
+  #[test]
+  fn recognizes_mp3_as_audio() {
+    assert_eq!(media_type(Path::new("music.MP3")).unwrap(), "audio");
+  }
+
+  #[test]
+  fn parses_first_valid_duration_value() {
+    assert_eq!(parse_duration_ms(b"N/A\n42.125\n"), Some(42_125));
+  }
+}
