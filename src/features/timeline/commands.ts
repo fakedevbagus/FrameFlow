@@ -35,3 +35,25 @@ export function addAssetToTimeline(project: Project, assetId: string, now: Date 
 function clipDuration(clip: Clip): number {
   return (clip.sourceEndMs ?? clip.sourceStartMs) - clip.sourceStartMs;
 }
+
+
+export function removeClipFromTimeline(
+  project: Project,
+  clipId: string,
+  now: Date = new Date(),
+): Project {
+  const trackIndex = project.tracks.findIndex((track) =>
+    track.clips.some((clip) => clip.id === clipId),
+  );
+
+  if (trackIndex === -1) {
+    throw new Error("Clip does not exist in this project.");
+  }
+
+  const track = project.tracks[trackIndex];
+  const clips = track.clips.filter((clip) => clip.id !== clipId);
+  const tracks = [...project.tracks];
+  tracks[trackIndex] = { ...track, clips };
+
+  return { ...project, tracks, updatedAt: now.toISOString() };
+}
