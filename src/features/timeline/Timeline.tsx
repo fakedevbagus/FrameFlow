@@ -134,7 +134,13 @@ export function Timeline({
       pixelsPerSecond,
     );
     const asset = project.assets.find((candidate) => candidate.id === clip.assetId);
-    const snapCandidates = buildSnapCandidates(project, interaction.clipId);
+    const snapCandidates = buildSnapCandidates(
+      project,
+      interaction.clipId,
+      project.tracks.find((track) =>
+        track.clips.some((candidate) => candidate.id === interaction.clipId),
+      )?.id ?? null,
+    );
 
     if (interaction.mode === "move") {
       const nextStartMs = snapTimelineTime(
@@ -413,20 +419,31 @@ function TimelineTrack({
   );
 }
 
-function buildSnapCandidates(project: Project, clipId: string): number[] {
+function buildSnapCandidates(
+  project: Project,
+  clipId: string,
+  trackId: string | null,
+): number[] {
   const candidates = [0];
 
-  for (const track of project.tracks) {
-    for (const clip of track.clips) {
-      if (clip.id === clipId) {
-        continue;
-      }
+  if (!trackId) {
+    return candidates;
+  }
 
-      candidates.push(clip.timelineStartMs);
+  const track = project.tracks.find((candidate) => candidate.id === trackId);
+  if (!track) {
+    return candidates;
+  }
 
-      const durationMs = getClipDurationMs(clip);
-      candidates.push(clip.timelineStartMs + durationMs);
+  for (const clip of track.clips) {
+    if (clip.id === clipId) {
+      continue;
     }
+
+    candidates.push(clip.timelineStartMs);
+
+    const durationMs = getClipDurationMs(clip);
+    candidates.push(clip.timelineStartMs + durationMs);
   }
 
   return candidates;
