@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import type { MediaAsset } from "./features/project/domain";
+import { MediaBin } from "./features/media/MediaBin";
+import { addAssetToTimeline } from "./features/timeline/commands";
+import { Timeline } from "./features/timeline/Timeline";
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
@@ -37,6 +40,20 @@ function App() {
       const path = await saveProjectFromDialog(project);
       if (path) setProjectNotice("Project saved.");
     } catch (error) { setProjectNotice(error instanceof Error ? error.message : "Project could not be saved."); }
+  }
+
+  function handleAddAsset(assetId: string) {
+    setProject((currentProject) => {
+      try {
+        setProjectNotice(null);
+        return addAssetToTimeline(currentProject, assetId);
+      } catch (error) {
+        setProjectNotice(
+          error instanceof Error ? error.message : "Media could not be added to the timeline.",
+        );
+        return currentProject;
+      }
+    });
   }
 
   async function handleImport() {
@@ -101,35 +118,13 @@ function App() {
             <button aria-label="Import media" className="icon-button" disabled={isImporting} onClick={handleImport} type="button">+</button>
           </div>
 
-          {assets.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon" aria-hidden="true">⬡</div>
-              <strong>Belum ada media</strong>
-              <span>Import video, audio, atau gambar untuk memulai.</span>
-              <button className="secondary-button" disabled={isImporting} onClick={handleImport} type="button">
-                {isImporting ? "Mengimpor…" : "Import media"}
-              </button>
-              {importError ? <p className="import-error" role="alert">{importError}</p> : null}
-            </div>
-          ) : (
-            <div className="media-library">
-              <button className="secondary-button import-more-button" disabled={isImporting} onClick={handleImport} type="button">
-                {isImporting ? "Mengimpor…" : "Import media"}
-              </button>
-              {importError ? <p className="import-error" role="alert">{importError}</p> : null}
-              <ul className="media-list">
-                {assets.map((asset) => (
-                  <li className="media-item" key={asset.id}>
-                    <span className={`media-kind media-kind-${asset.mediaType}`}>{asset.mediaType.slice(0, 1).toUpperCase()}</span>
-                    <span className="media-item-details">
-                      <strong>{asset.name}</strong>
-                      <small>{formatAssetDetail(asset)}</small>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <MediaBin
+            assets={assets}
+            isImporting={isImporting}
+            importError={importError}
+            onImport={handleImport}
+            onAddAsset={handleAddAsset}
+          />
         </aside>
 
         <section className="editor-area">
@@ -141,12 +136,7 @@ function App() {
             <div className="preview-canvas"><div className="preview-content"><span>Preview</span><small>Tambahkan media ke timeline untuk mulai mengedit.</small></div></div>
             <div className="transport-controls" aria-label="Playback controls"><button aria-label="Previous frame" className="transport-button" type="button">◀</button><button aria-label="Play" className="play-button" type="button">▶</button><button aria-label="Next frame" className="transport-button" type="button">▶</button><span className="timecode">00:00:00:00</span></div>
           </div>
-          <section className="timeline-region" aria-label="Timeline">
-            <div className="timeline-toolbar"><span>Timeline</span><div className="timeline-actions"><button className="toolbar-button" type="button">−</button><span>100%</span><button className="toolbar-button" type="button">+</button></div></div>
-            <div className="timeline-ruler"><span>00:00</span><span>00:05</span><span>00:10</span><span>00:15</span><span>00:20</span></div>
-            <div className="track"><div className="track-label"><strong>V1</strong><span>Video</span></div><div className="track-empty">Drag media ke sini</div></div>
-            <div className="track"><div className="track-label"><strong>A1</strong><span>Audio</span></div><div className="track-empty">Drag audio ke sini</div></div>
-          </section>
+          <Timeline project={project} />
         </section>
 
         <aside className="panel inspector-panel">
