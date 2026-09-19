@@ -69,7 +69,7 @@ export function Preview({
     if (!media.paused) {
       media.pause();
     }
-  }, [activePreview?.asset.id, activePreview?.clip.id, asset, isPlaying, localTimeMs]);
+  }, [activePreview?.asset.id, activePreview?.clip.id, asset, isPlaying]);
 
   useEffect(() => {
     if (isPlaying) {
