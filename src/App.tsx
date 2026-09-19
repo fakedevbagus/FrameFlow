@@ -61,10 +61,6 @@ function App() {
     saveWorkspaceProject(project);
   }, [project]);
 
-  useEffect(() => {
-    timelineDurationRef.current = timelineDurationMs;
-  }, [timelineDurationMs]);
-
   const setPlaybackTime = useCallback((timeMs: number) => {
     const safeTimeMs = Math.min(
       Math.max(timeMs, 0),
@@ -73,6 +69,10 @@ function App() {
     playbackTimeRef.current = safeTimeMs;
     setCurrentTimeMs(safeTimeMs);
   }, []);
+
+  useEffect(() => {
+    timelineDurationRef.current = timelineDurationMs;
+  }, [timelineDurationMs]);
 
   const handleTogglePlayback = useCallback(() => {
     if (isPlaying) {
