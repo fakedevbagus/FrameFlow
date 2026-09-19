@@ -285,4 +285,20 @@ mod tests {
   fn parses_first_valid_duration_value() {
     assert_eq!(parse_duration_ms(b"N/A\n42.125\n"), Some(42_125));
   }
+
+  #[test]
+  fn parses_ffmpeg_progress_duration() {
+    assert_eq!(
+      super::parse_ffmpeg_progress(b"out_time_ms=1234567\nprogress=end\n"),
+      Some(1_234),
+    );
+  }
+
+  #[test]
+  fn ignores_unknown_ffmpeg_progress_duration() {
+    assert_eq!(
+      super::parse_ffmpeg_progress(b"out_time_ms=N/A\nprogress=end\n"),
+      None,
+    );
+  }
 }
