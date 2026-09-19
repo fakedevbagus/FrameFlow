@@ -68,9 +68,11 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Select intro.mp4 clip" }));
 
+    const selectedClip = screen.getByRole("button", { name: "Select intro.mp4 clip" });
+    expect(selectedClip).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Inspector")).toBeInTheDocument();
-    expect(screen.getByText("Video 1")).toBeInTheDocument();
-    expect(screen.getByText("00:00")).toBeInTheDocument();
+    expect(screen.getByText("Track")).toBeInTheDocument();
+    expect(screen.getByText("Duration")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete clip" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Delete clip" }));
