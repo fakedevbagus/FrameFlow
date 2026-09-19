@@ -68,32 +68,6 @@ function App() {
     timelineDurationRef.current = timelineDurationMs;
   }, [timelineDurationMs]);
 
-  async function handleOpenProject() {
-    try {
-      const result = await openProjectFromDialog();
-      if (result) {
-        setHistory(resetHistory(result.project));
-        setSelectedClipId(null);
-        setPlaybackTime(0);
-        setIsPlaying(false);
-        setProjectNotice("Project opened.");
-      }
-    } catch (error) {
-      setProjectNotice(
-        error instanceof Error ? error.message : "Project could not be opened.",
-      );
-    }
-  }
-
-  const setPlaybackTime = useCallback((timeMs: number) => {
-    const safeTimeMs = Math.min(
-      Math.max(timeMs, 0),
-      timelineDurationRef.current,
-    );
-    playbackTimeRef.current = safeTimeMs;
-    setCurrentTimeMs(safeTimeMs);
-  }, []);
-
   const handleTogglePlayback = useCallback(() => {
     if (isPlaying) {
       setIsPlaying(false);
@@ -843,4 +817,30 @@ function formatDuration(durationMs: number | null): string {
   return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0");
 }
 
-export default App;
+export default App;  const setPlaybackTime = useCallback((timeMs: number) => {
+    try {
+      const result = await openProjectFromDialog();
+      if (result) {
+        setHistory(resetHistory(result.project));
+        setSelectedClipId(null);
+        setPlaybackTime(0);
+        setIsPlaying(false);
+        setProjectNotice("Project opened.");
+      }
+    } catch (error) {
+      setProjectNotice(
+        error instanceof Error ? error.message : "Project could not be opened.",
+      );
+    }
+  }
+
+  const setPlaybackTime = useCallback((timeMs: number) => {
+    const safeTimeMs = Math.min(
+      Math.max(timeMs, 0),
+      timelineDurationRef.current,
+    );
+    playbackTimeRef.current = safeTimeMs;
+    setCurrentTimeMs(safeTimeMs);
+  }, []);
+
+
