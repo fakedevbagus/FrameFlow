@@ -76,19 +76,6 @@ function App() {
     timelineDurationRef.current = timelineDurationMs;
   }, [timelineDurationMs]);
 
-  const handleTogglePlayback = useCallback(() => {
-    if (isPlaying) {
-      setIsPlaying(false);
-      return;
-    }
-
-    if (playbackTimeRef.current >= timelineDurationRef.current) {
-      setPlaybackTime(0);
-    }
-
-    setIsPlaying(true);
-  }, [isPlaying, setPlaybackTime]);
-
   const handleStepFrame = useCallback((direction: -1 | 1) => {
     setIsPlaying(false);
     setPlaybackTime(
