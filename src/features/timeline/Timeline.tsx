@@ -117,7 +117,7 @@ export function Timeline({
   }
 
   function updateClipInteraction(event: PointerEvent<HTMLElement>) {
-    if (!interaction || event.buttons !== 1 || event.pointerId !== interaction.clipId.length) {
+    if (!interaction || event.buttons !== 1) {
       return;
     }
 
