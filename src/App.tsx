@@ -183,26 +183,43 @@ function App() {
     setProjectNotice(null);
   }
 
-  function getPreviewMediaElements(): HTMLMediaElement[] {
-    const container = document.querySelector(".preview-stage");
+  const previewCanvasRef = useRef<HTMLDivElement | null>(null);
+
+  const getPreviewMediaElements = useCallback((): HTMLMediaElement[] => {
+    const container = previewCanvasRef.current;
 
     if (!container) {
       return [];
     }
 
     return Array.from(container.querySelectorAll("video, audio"));
-  }
+  }, []);
 
-  async function startPreviewMedia(): Promise<boolean> {
+  const handleTogglePlayback = useCallback(async () => {
     const mediaElements = getPreviewMediaElements();
 
+    if (isPlaying) {
+      for (const media of mediaElements) {
+        media.pause();
+      }
+      setIsPlaying(false);
+      return;
+    }
+
+    if (playbackTimeRef.current >= timelineDurationRef.current) {
+      setPlaybackTime(0);
+    }
+
     if (mediaElements.length === 0) {
-      return true;
+      setIsPlaying(true);
+      return;
     }
 
     try {
+      // Call play() synchronously from the user-triggered handler so WebKit can
+      // associate playback with the user's activation gesture.
       await Promise.all(mediaElements.map((media) => media.play()));
-      return true;
+      setIsPlaying(true);
     } catch (error) {
       const name = error instanceof DOMException ? error.name : "";
       const message =
@@ -215,33 +232,9 @@ function App() {
               : "Preview playback could not start.";
 
       setProjectNotice(message);
-      return false;
-    }
-  }
-
-  function pausePreviewMedia() {
-    for (const media of getPreviewMediaElements()) {
-      media.pause();
-    }
-  }
-
-  async function handleTogglePlayback() {
-    if (isPlaying) {
-      pausePreviewMedia();
       setIsPlaying(false);
-      return;
     }
-
-    if (playbackTimeRef.current >= timelineDurationRef.current) {
-      setPlaybackTime(0);
-    }
-
-    const started = await startPreviewMedia();
-
-    if (started) {
-      setIsPlaying(true);
-    }
-  }
+  }, [getPreviewMediaElements, isPlaying, setPlaybackTime]);
 
   function handleToggleTrackMute(trackId: string) {
     applyProjectChange(
@@ -648,7 +641,7 @@ function App() {
           </div>
 
           <div className="preview-region">
-            <div className="preview-canvas">
+            <div className="preview-canvas" ref={previewCanvasRef}>
               <Preview
                 project={project}
                 currentTimeMs={displayedCurrentTimeMs}
