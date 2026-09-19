@@ -284,15 +284,25 @@ button:focus-visible {
 }
 
 .preview-canvas {
+  position: relative;
+  display: grid;
   width: min(268px, 42vh);
   aspect-ratio: 9 / 16;
   border: 1px solid #3a4050;
   border-radius: 5px;
+  overflow: hidden;
   background:
     linear-gradient(45deg, #1b2029 25%, transparent 25%) 0 0 / 24px 24px,
     linear-gradient(-45deg, #1b2029 25%, transparent 25%) 0 0 / 24px 24px,
     #20252e;
   box-shadow: 0 20px 45px rgb(0 0 0 / 30%);
+}
+
+.preview-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .preview-content {
@@ -301,7 +311,67 @@ button:focus-visible {
   place-items: center;
   align-content: center;
   gap: 8px;
+  padding: 20px;
   color: #cbd2df;
+}
+
+.preview-audio-container {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: #d9dfeb;
+  text-align: center;
+}
+
+.preview-audio-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid #394252;
+  border-radius: 14px;
+  color: #a99cff;
+  background: #1a1e27;
+  font-size: 28px;
+}
+
+.preview-audio-container strong {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-audio-container small {
+  color: #8993a5;
+  font-size: 10px;
+}
+
+.preview-audio {
+  width: min(100%, 230px);
+}
+
+.preview-error,
+.preview-error-overlay {
+  color: #ffb0b0;
+}
+
+.preview-error-overlay {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 3;
+  padding: 8px 10px;
+  border: 1px solid #5b353d;
+  border-radius: 6px;
+  background: rgb(42 27 32 / 92%);
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .preview-content span {
