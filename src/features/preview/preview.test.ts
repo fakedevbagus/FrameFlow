@@ -45,7 +45,25 @@ describe("preview helpers", () => {
     };
 
     project = addAssetToTimeline(project, "video-1");
-    project = addAssetToTimeline(project, "video-2");
+    const baseClip = project.tracks[0].clips[0];
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-2-track"
+          ? {
+              ...track,
+              clips: [
+                {
+                  ...baseClip,
+                  id: "clip-video-2",
+                  assetId: "video-2",
+                },
+              ],
+            }
+          : track,
+      ),
+    };
 
     const activeLayers = getActiveVisualPreviewClips(project, 2500);
     const topmost = findActivePreviewClip(project, 2500);
