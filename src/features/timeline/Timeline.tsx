@@ -13,9 +13,9 @@ import {
   pixelsToMilliseconds,
   snapTimelineTime,
 } from "./interaction";
+import { getClipDurationMs, getTimelineDurationMs } from "./metrics";
 
 const basePixelsPerSecond = 40;
-const minimumTimelineMs = 20_000;
 const rulerStepMs = 5_000;
 
 interface TimelineProps {
@@ -556,27 +556,6 @@ function snapSourceEndTime(
       maxSourceEndMs,
     ),
   );
-}
-
-function getTimelineDurationMs(project: Project): number {
-  const latestClipEndMs = project.tracks.reduce(
-    (latestTrackEnd, track) =>
-      Math.max(
-        latestTrackEnd,
-        ...track.clips.map((clip) => clip.timelineStartMs + getClipDurationMs(clip)),
-      ),
-    0,
-  );
-
-  return Math.max(minimumTimelineMs, latestClipEndMs);
-}
-
-function getClipDurationMs(clip: Clip): number {
-  if (clip.sourceEndMs === null) {
-    return 0;
-  }
-
-  return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
 }
 
 function timelineWidth(durationMs: number, zoom: number): number {

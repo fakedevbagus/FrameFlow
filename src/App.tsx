@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import {
   addAssetToTimeline,
@@ -10,6 +10,8 @@ import {
 } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
+import { getTimelineDurationMs } from "./features/timeline/metrics";
+import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
 import {
   commitHistory,
   createHistoryState,
@@ -37,7 +39,10 @@ function App() {
   );
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
+  const playbackTimeRef = useRef(0);
+  const timelineDurationRef = useRef(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
@@ -46,10 +51,94 @@ function App() {
   const canRedo = history.future.length > 0;
   const assets = project.assets;
   const selectedClipContext = findClipContext(project, selectedClipId);
+  const timelineDurationMs = getTimelineDurationMs(project);
+  const displayedCurrentTimeMs = Math.min(
+    Math.max(currentTimeMs, 0),
+    timelineDurationMs,
+  );
 
   useEffect(() => {
     saveWorkspaceProject(project);
   }, [project]);
+
+  const setPlaybackTime = useCallback((timeMs: number) => {
+    const safeTimeMs = Math.min(
+      Math.max(timeMs, 0),
+      timelineDurationRef.current,
+    );
+    playbackTimeRef.current = safeTimeMs;
+    setCurrentTimeMs(safeTimeMs);
+  }, []);
+
+  useEffect(() => {
+    timelineDurationRef.current = timelineDurationMs;
+  }, [timelineDurationMs]);
+
+  const handleTogglePlayback = useCallback(() => {
+    if (isPlaying) {
+      setIsPlaying(false);
+      return;
+    }
+
+    if (playbackTimeRef.current >= timelineDurationRef.current) {
+      setPlaybackTime(0);
+    }
+
+    setIsPlaying(true);
+  }, [isPlaying, setPlaybackTime]);
+
+  const handleStepFrame = useCallback((direction: -1 | 1) => {
+    setIsPlaying(false);
+    setPlaybackTime(
+      stepFrame(
+        playbackTimeRef.current,
+        project.canvas.frameRate,
+        timelineDurationRef.current,
+        direction,
+      ),
+    );
+  }, [project.canvas.frameRate, setPlaybackTime]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      return;
+    }
+
+    let animationFrameId = 0;
+    let lastTimestamp: number | null = null;
+
+    const tick = (timestamp: number) => {
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
+      }
+
+      const elapsedMs = Math.max(0, timestamp - lastTimestamp);
+      lastTimestamp = timestamp;
+
+      const next = stepPlaybackTime(
+        playbackTimeRef.current,
+        elapsedMs,
+        timelineDurationMs,
+      );
+
+      setPlaybackTime(next.timeMs);
+
+      if (next.reachedEnd) {
+        setIsPlaying(false);
+        return;
+      }
+
+      animationFrameId = window.requestAnimationFrame(tick);
+    };
+
+    animationFrameId = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [isPlaying, setPlaybackTime, timelineDurationMs]);
+
+  function handleCurrentTimeChange(timeMs: number) {
+    setPlaybackTime(timeMs);
+  }
 
   async function handleOpenProject() {
     try {
@@ -57,7 +146,8 @@ function App() {
       if (result) {
         setHistory(resetHistory(result.project));
         setSelectedClipId(null);
-        setCurrentTimeMs(0);
+        setPlaybackTime(0);
+        setIsPlaying(false);
         setProjectNotice("Project opened.");
       }
     } catch (error) {
@@ -167,6 +257,12 @@ function App() {
         return;
       }
 
+      if (key === " " && !modifierPressed) {
+        event.preventDefault();
+        handleTogglePlayback();
+        return;
+      }
+
       if (!selectedClipId) {
         return;
       }
@@ -182,6 +278,7 @@ function App() {
   }, [
     handleDeleteSelectedClip,
     handleRedo,
+    handleTogglePlayback,
     handleUndo,
     selectedClipId,
   ]);
@@ -488,25 +585,40 @@ function App() {
               </div>
             </div>
             <div className="transport-controls" aria-label="Playback controls">
-              <button aria-label="Previous frame" className="transport-button" type="button">
+              <button
+                aria-label="Previous frame"
+                className="transport-button"
+                onClick={() => handleStepFrame(-1)}
+                type="button"
+              >
                 ◀
               </button>
-              <button aria-label="Play" className="play-button" type="button">
-                ▶
+              <button
+                aria-label={isPlaying ? "Pause" : "Play"}
+                className="play-button"
+                onClick={handleTogglePlayback}
+                type="button"
+              >
+                {isPlaying ? "Ⅱ" : "▶"}
               </button>
-              <button aria-label="Next frame" className="transport-button" type="button">
+              <button
+                aria-label="Next frame"
+                className="transport-button"
+                onClick={() => handleStepFrame(1)}
+                type="button"
+              >
                 ▶
               </button>
               <span className="timecode">
-                {formatTimecode(currentTimeMs, project.canvas.frameRate)}
+                {formatTimecode(displayedCurrentTimeMs, project.canvas.frameRate)}
               </span>
             </div>
           </div>
 
           <Timeline
             project={project}
-            currentTimeMs={currentTimeMs}
-            onCurrentTimeChange={setCurrentTimeMs}
+            currentTimeMs={displayedCurrentTimeMs}
+            onCurrentTimeChange={handleCurrentTimeChange}
             selectedClipId={selectedClipId}
             onSelectClip={handleSelectClip}
             onMoveClip={handleDirectMoveClip}
