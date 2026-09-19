@@ -528,9 +528,40 @@ button:focus-visible {
   font-size: 10px;
 }
 
+.track-label-main {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
 .track-label strong {
   color: #d4d9e2;
   font-size: 11px;
+}
+
+.track-mute-button {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #343b48;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #8e98a8;
+  background: #1d222a;
+  font-size: 9px;
+  font-weight: 750;
+  line-height: 20px;
+}
+
+.track-mute-button:hover {
+  border-color: #566074;
+  color: #dfe4ec;
+}
+
+.track-mute-button[aria-pressed="true"] {
+  border-color: #80505d;
+  color: #ffb1c0;
+  background: #2b2025;
 }
 
 .track-empty {
