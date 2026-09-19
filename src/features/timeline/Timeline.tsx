@@ -43,6 +43,7 @@ interface ClipInteraction {
   previewTimelineStartMs: number;
   previewSourceStartMs: number;
   previewSourceEndMs: number | null;
+  hasMoved: boolean;
 }
 
 export function Timeline({
@@ -113,6 +114,7 @@ export function Timeline({
       previewTimelineStartMs: clip.timelineStartMs,
       previewSourceStartMs: clip.sourceStartMs,
       previewSourceEndMs: clip.sourceEndMs,
+      hasMoved: false,
     });
   }
 
@@ -129,10 +131,13 @@ export function Timeline({
       return;
     }
 
-    const deltaMs = pixelsToMilliseconds(
-      event.clientX - interaction.startClientX,
-      pixelsPerSecond,
-    );
+    const deltaPixels = event.clientX - interaction.startClientX;
+
+    if (Math.abs(deltaPixels) < 3) {
+      return;
+    }
+
+    const deltaMs = pixelsToMilliseconds(deltaPixels, pixelsPerSecond);
     const asset = project.assets.find((candidate) => candidate.id === clip.assetId);
     const snapCandidates = buildSnapCandidates(
       project,
@@ -150,6 +155,7 @@ export function Timeline({
 
       setInteraction({
         ...interaction,
+        hasMoved: true,
         previewTimelineStartMs: nextStartMs,
       });
       return;
@@ -176,6 +182,7 @@ export function Timeline({
 
       setInteraction({
         ...interaction,
+        hasMoved: true,
         previewTimelineStartMs: nextTimelineStartMs,
         previewSourceStartMs: nextSourceStartMs,
       });
@@ -199,12 +206,18 @@ export function Timeline({
 
     setInteraction({
       ...interaction,
+      hasMoved: true,
       previewSourceEndMs: nextSourceEndMs,
     });
   }
 
   function finishClipInteraction() {
     if (!interaction) {
+      return;
+    }
+
+    if (!interaction.hasMoved) {
+      setInteraction(null);
       return;
     }
 
