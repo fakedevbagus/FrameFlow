@@ -137,10 +137,6 @@ function App() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (!selectedClipId) {
-        return;
-      }
-
       const target = event.target;
       if (
         target instanceof HTMLElement &&
@@ -168,6 +164,10 @@ function App() {
       if (modifierPressed && key === "y") {
         event.preventDefault();
         handleRedo();
+        return;
+      }
+
+      if (!selectedClipId) {
         return;
       }
 
