@@ -12,56 +12,60 @@ interface PreviewProps {
   isPlaying: boolean;
 }
 
+interface PreviewError {
+  assetId: string;
+  message: string;
+}
+
 export function Preview({
   project,
   currentTimeMs,
   isPlaying,
 }: PreviewProps) {
   const mediaRef = useRef<HTMLMediaElement | null>(null);
-  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState<PreviewError | null>(null);
   const activePreview = findActivePreviewClip(project, currentTimeMs);
   const asset = activePreview?.asset ?? null;
-  const mediaUrl = asset ? convertFileSrc(asset.sourcePath) : null;
+  const activeAssetId = activePreview?.asset.id ?? null;
+  const activeClipId = activePreview?.clip.id ?? null;
+  const mediaUrl = asset ? tryConvertFileSrc(asset.sourcePath) : null;
   const localTimeMs = activePreview
     ? getClipLocalTimeMs(activePreview.clip, currentTimeMs)
     : 0;
+  const visibleMediaError =
+    asset && mediaError?.assetId === asset.id ? mediaError.message : null;
 
-  useEffect(() => {
-    setMediaError(null);
-  }, [asset?.id]);
+  function setMediaErrorForAsset(message: string) {
+    if (asset) {
+      setMediaError({ assetId: asset.id, message });
+    }
+  }
 
   useEffect(() => {
     const media = mediaRef.current;
 
-    if (!media || !activePreview || !asset || asset.mediaType === "image") {
+    if (!media || !activeAssetId || !asset || asset.mediaType === "image") {
       return;
     }
 
     if (isPlaying) {
-      const targetSeconds = localTimeMs / 1000;
-
-      try {
-        if (Number.isFinite(targetSeconds)) {
-          media.currentTime = Math.max(0, targetSeconds);
-        }
-      } catch {
-        setMediaError("Preview media could not be seeked.");
-      }
-
       try {
         const playResult = media.play();
 
         if (playResult) {
           void playResult.catch(() => {
-            setMediaError(
-              "Preview playback could not start in the current WebView.",
-            );
+            setMediaError({
+              assetId: activeAssetId,
+              message:
+                "Preview playback could not start in the current WebView.",
+            });
           });
         }
       } catch {
-        setMediaError(
-          "Preview playback could not start in the current WebView.",
-        );
+        setMediaError({
+          assetId: activeAssetId,
+          message: "Preview playback could not start in the current WebView.",
+        });
       }
       return;
     }
@@ -69,7 +73,7 @@ export function Preview({
     if (!media.paused) {
       media.pause();
     }
-  }, [activePreview?.asset.id, activePreview?.clip.id, asset, isPlaying]);
+  }, [activeAssetId, asset?.mediaType, isPlaying]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -78,16 +82,17 @@ export function Preview({
 
     const media = mediaRef.current;
 
-    if (!media || !activePreview || !asset || asset.mediaType === "image") {
+    if (!media || !activeAssetId || !asset || asset.mediaType === "image") {
       return;
     }
 
     try {
       media.currentTime = Math.max(0, localTimeMs / 1000);
     } catch {
-      setMediaError("Preview media could not be seeked.");
+      // Some WebView/media implementations reject seeking before metadata is ready.
+      // Native media error events provide the user-facing failure state.
     }
-  }, [activePreview?.asset.id, activePreview?.clip.id, asset, isPlaying, localTimeMs]);
+  }, [activeAssetId, asset?.mediaType, isPlaying, localTimeMs]);
 
   if (!activePreview || !asset) {
     return (
@@ -131,13 +136,13 @@ export function Preview({
           className="preview-audio"
           controls
           data-testid="preview-audio"
-          ref={mediaRef}
+          ref={setMediaRef}
           src={mediaUrl ?? ""}
-          onError={() => setMediaError("Audio could not be loaded.")}
+          onError={() => setMediaErrorForAsset("Audio could not be loaded.")}
         />
-        {mediaError ? (
+        {visibleMediaError ? (
           <small className="preview-error" role="status">
-            {mediaError}
+            {visibleMediaError}
           </small>
         ) : null}
       </div>
@@ -152,15 +157,32 @@ export function Preview({
         data-testid="preview-video"
         playsInline
         preload="metadata"
-        ref={mediaRef}
+        ref={setMediaRef}
         src={mediaUrl ?? ""}
-        onError={() => setMediaError("Video could not be loaded.")}
+        onError={() => setMediaErrorForAsset("Video could not be loaded.")}
       />
-      {mediaError ? (
+      {visibleMediaError ? (
         <div className="preview-error-overlay" role="status">
-          {mediaError}
+          {visibleMediaError}
         </div>
       ) : null}
     </>
   );
+}
+
+function setMediaRef(element: HTMLMediaElement | null) {
+  // The preview hosts either an HTMLVideoElement or HTMLAudioElement.
+  mediaElementRef.current = element;
+}
+
+const mediaElementRef = {
+  current: null as HTMLMediaElement | null,
+};
+
+function tryConvertFileSrc(path: string): string | null {
+  try {
+    return convertFileSrc(path);
+  } catch {
+    return null;
+  }
 }
