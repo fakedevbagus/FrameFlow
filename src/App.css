@@ -474,13 +474,34 @@ button:focus-visible {
 
 .media-item {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 10px;
   min-width: 0;
   padding: 9px;
   border: 1px solid #2b313c;
   border-radius: 8px;
+  color: inherit;
   background: #1c2028;
+  text-align: left;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.media-item:hover {
+  border-color: #41495a;
+  background: #202530;
+}
+
+.media-item:active {
+  background: #252b38;
+}
+
+.media-item-action {
+  margin-left: auto;
+  color: #8f99aa;
+  font-size: 15px;
 }
 
 .media-kind {
@@ -541,4 +562,116 @@ button:focus-visible {
 button:disabled {
   cursor: wait;
   opacity: 0.6;
+}
+
+
+.media-hint {
+  margin: -4px 0 0;
+  color: #747f90;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.timeline-scroll {
+  max-height: 180px;
+  overflow: auto;
+}
+
+.timeline-ruler {
+  display: grid;
+  min-width: 880px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  padding: 0;
+  border-bottom: 1px solid #272d37;
+}
+
+.timeline-track-spacer {
+  border-right: 1px solid #2c323d;
+}
+
+.timeline-ruler-scale {
+  position: relative;
+  height: 28px;
+}
+
+.timeline-ruler-scale::before {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to right,
+    #2a303a 0,
+    #2a303a 1px,
+    transparent 1px,
+    transparent 40px
+  );
+  content: "";
+  opacity: 0.7;
+}
+
+.timeline-ruler-scale span {
+  position: absolute;
+  top: 7px;
+  transform: translateX(-50%);
+  color: #697386;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.timeline-lane {
+  position: relative;
+  min-width: 808px;
+  min-height: 69px;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0,
+    transparent 39px,
+    #202631 39px,
+    #202631 40px
+  );
+}
+
+.timeline-lane > .track-empty {
+  position: absolute;
+  inset: 8px 16px;
+  margin: 0;
+}
+
+.timeline-clip {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  display: flex;
+  min-width: 72px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 7px 8px;
+  overflow: hidden;
+  border: 1px solid #576177;
+  border-radius: 5px;
+  color: #ecf0f6;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 18%);
+}
+
+.timeline-clip-video {
+  background: #35496a;
+}
+
+.timeline-clip-audio {
+  background: #2d554b;
+}
+
+.timeline-clip-name {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-clip small {
+  color: #c0c8d6;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
 }
