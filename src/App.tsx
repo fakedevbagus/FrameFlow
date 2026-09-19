@@ -226,7 +226,13 @@ function App() {
     }
 
     const clip = selectedClipContext.clip;
-    const clipEndMs = clip.timelineStartMs + (clip.sourceEndMs - clip.sourceStartMs);
+    const sourceEndMs = clip.sourceEndMs;
+
+    if (sourceEndMs === null) {
+      return false;
+    }
+
+    const clipEndMs = clip.timelineStartMs + (sourceEndMs - clip.sourceStartMs);
 
     return currentTimeMs > clip.timelineStartMs && currentTimeMs < clipEndMs;
   }
