@@ -1,26 +1,77 @@
 import type { Clip, Project, Track } from "../project/domain";
 
-const pixelsPerSecond = 40;
+const basePixelsPerSecond = 40;
 const minimumTimelineMs = 20_000;
 const rulerStepMs = 5_000;
+export const MIN_TIMELINE_ZOOM = 0.5;
+export const MAX_TIMELINE_ZOOM = 2.5;
+export const DEFAULT_TIMELINE_ZOOM = 1;
 
 interface TimelineProps {
   project: Project;
+  currentTimeMs?: number;
+  onCurrentTimeChange?: (timeMs: number) => void;
   selectedClipId?: string | null;
   onSelectClip?: (clipId: string) => void;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
 }
 
-export function Timeline({ project, selectedClipId = null, onSelectClip }: TimelineProps) {
+export function Timeline({
+  project,
+  currentTimeMs = 0,
+  onCurrentTimeChange,
+  selectedClipId = null,
+  onSelectClip,
+  zoom = DEFAULT_TIMELINE_ZOOM,
+  onZoomChange,
+}: TimelineProps) {
   const timelineDurationMs = getTimelineDurationMs(project);
+  const pixelsPerSecond = basePixelsPerSecond * zoom;
+  const clampedCurrentTimeMs = Math.min(Math.max(currentTimeMs, 0), timelineDurationMs);
+
+  function handleRulerClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (!onCurrentTimeChange) {
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = Math.min(Math.max(event.clientX - bounds.left, 0), bounds.width);
+    const timeMs = (x / pixelsPerSecond) * 1000;
+
+    onCurrentTimeChange(Math.round(Math.min(timeMs, timelineDurationMs)));
+  }
+
+  function handleZoomChange(delta: number) {
+    onZoomChange?.(
+      clampZoom(Math.round((zoom + delta) * 10) / 10),
+    );
+  }
 
   return (
     <section className="timeline-region" aria-label="Timeline">
       <div className="timeline-toolbar">
         <span>Timeline</span>
         <div className="timeline-actions">
-          <button className="toolbar-button" disabled type="button">−</button>
-          <span>100%</span>
-          <button className="toolbar-button" disabled type="button">+</button>
+          <button
+            aria-label="Zoom out timeline"
+            className="toolbar-button"
+            disabled={zoom <= MIN_TIMELINE_ZOOM}
+            onClick={() => handleZoomChange(-0.25)}
+            type="button"
+          >
+            −
+          </button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button
+            aria-label="Zoom in timeline"
+            className="toolbar-button"
+            disabled={zoom >= MAX_TIMELINE_ZOOM}
+            onClick={() => handleZoomChange(0.25)}
+            type="button"
+          >
+            +
+          </button>
         </div>
       </div>
 
@@ -29,7 +80,9 @@ export function Timeline({ project, selectedClipId = null, onSelectClip }: Timel
           <div className="timeline-track-spacer" />
           <div
             className="timeline-ruler-scale"
-            style={{ width: (timelineDurationMs / 1000 * pixelsPerSecond) + "px" }}
+            onClick={handleRulerClick}
+            role="presentation"
+            style={{ width: timelineWidth(timelineDurationMs, zoom) + "px" }}
           >
             {createRulerMarks(timelineDurationMs).map((mark) => (
               <span
@@ -39,6 +92,11 @@ export function Timeline({ project, selectedClipId = null, onSelectClip }: Timel
                 {formatTimecode(mark)}
               </span>
             ))}
+            <div
+              aria-label={"Playhead at " + formatTimecode(clampedCurrentTimeMs)}
+              className="timeline-playhead"
+              style={{ left: (clampedCurrentTimeMs / 1000 * pixelsPerSecond) + "px" }}
+            />
           </div>
         </div>
 
@@ -50,6 +108,7 @@ export function Timeline({ project, selectedClipId = null, onSelectClip }: Timel
             timelineDurationMs={timelineDurationMs}
             selectedClipId={selectedClipId}
             onSelectClip={onSelectClip}
+            zoom={zoom}
           />
         ))}
       </div>
@@ -63,6 +122,7 @@ interface TimelineTrackProps {
   timelineDurationMs: number;
   selectedClipId: string | null;
   onSelectClip?: (clipId: string) => void;
+  zoom: number;
 }
 
 function TimelineTrack({
@@ -71,7 +131,10 @@ function TimelineTrack({
   timelineDurationMs,
   selectedClipId,
   onSelectClip,
+  zoom,
 }: TimelineTrackProps) {
+  const pixelsPerSecond = basePixelsPerSecond * zoom;
+
   return (
     <div className="track">
       <div className="track-label">
@@ -80,13 +143,12 @@ function TimelineTrack({
       </div>
       <div
         className="timeline-lane"
-        style={{ width: (timelineDurationMs / 1000 * pixelsPerSecond) + "px" }}
+        style={{ width: timelineWidth(timelineDurationMs, zoom) + "px" }}
       >
         {track.clips.map((clip) => {
           const asset = project.assets.find((candidate) => candidate.id === clip.assetId);
           const durationMs = getClipDurationMs(clip);
           const width = Math.max(72, durationMs / 1000 * pixelsPerSecond);
-
           const isSelected = clip.id === selectedClipId;
 
           return (
@@ -140,6 +202,14 @@ function getClipDurationMs(clip: Clip): number {
   }
 
   return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+}
+
+function timelineWidth(durationMs: number, zoom: number): number {
+  return durationMs / 1000 * basePixelsPerSecond * zoom;
+}
+
+function clampZoom(zoom: number): number {
+  return Math.min(MAX_TIMELINE_ZOOM, Math.max(MIN_TIMELINE_ZOOM, zoom));
 }
 
 function createRulerMarks(durationMs: number): number[] {
