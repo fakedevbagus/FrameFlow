@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import {
   addAssetToTimeline,
@@ -80,13 +80,13 @@ function App() {
     }
   }
 
-  const setPlaybackTime = useCallback((timeMs: number) => {
+  function setPlaybackTime(timeMs: number) {
     const safeTimeMs = Math.min(Math.max(timeMs, 0), timelineDurationMs);
     playbackTimeRef.current = safeTimeMs;
     setCurrentTimeMs(safeTimeMs);
-  }, [timelineDurationMs]);
+  }
 
-  const handleTogglePlayback = useCallback(() => {
+  function handleTogglePlayback() {
     if (isPlaying) {
       setIsPlaying(false);
       return;
@@ -97,9 +97,9 @@ function App() {
     }
 
     setIsPlaying(true);
-  }, [isPlaying, setPlaybackTime, timelineDurationMs]);
+  }
 
-  const handleStepFrame = useCallback((direction: -1 | 1) => {
+  function handleStepFrame(direction: -1 | 1) {
     setIsPlaying(false);
     setPlaybackTime(
       stepFrame(
@@ -109,7 +109,7 @@ function App() {
         direction,
       ),
     );
-  }, [project.canvas.frameRate, setPlaybackTime, timelineDurationMs]);
+  }
 
   useEffect(() => {
     if (!isPlaying) {
@@ -273,7 +273,6 @@ function App() {
   }, [
     handleDeleteSelectedClip,
     handleRedo,
-    handleTogglePlayback,
     handleUndo,
     selectedClipId,
   ]);
