@@ -1,7 +1,32 @@
 use std::{
   fs,
   path::{Path, PathBuf},
+  process::Command,
 };
+
+use serde::Serialize;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct MediaProbe {
+  media_type: String,
+  duration_ms: Option<u64>,
+}
+
+#[tauri::command]
+fn inspect_media(path: String) -> Result<MediaProbe, String> {
+  let media_path = media_path(&path)?;
+  let media_type = media_type(&media_path)?;
+  let duration_ms = match media_type.as_str() {
+    "image" => None,
+    _ => Some(probe_duration_ms(&media_path)?),
+  };
+
+  Ok(MediaProbe {
+    media_type,
+    duration_ms,
+  })
+}
 
 #[tauri::command]
 fn open_project(path: String) -> Result<String, String> {
@@ -38,6 +63,63 @@ fn save_project(path: String, content: String) -> Result<(), String> {
   })
 }
 
+fn media_path(value: &str) -> Result<PathBuf, String> {
+  let path = PathBuf::from(value);
+
+  if !path.is_file() {
+    return Err("Selected media file does not exist.".to_string());
+  }
+
+  Ok(path)
+}
+
+fn media_type(path: &Path) -> Result<String, String> {
+  let extension = path
+    .extension()
+    .and_then(|value| value.to_str())
+    .map(str::to_ascii_lowercase)
+    .ok_or_else(|| "Selected media file has no extension.".to_string())?;
+
+  let media_type = match extension.as_str() {
+    "aac" | "flac" | "m4a" | "mp3" | "ogg" | "opus" | "wav" => "audio",
+    "avif" | "bmp" | "gif" | "jpeg" | "jpg" | "png" | "webp" => "image",
+    "avi" | "mkv" | "mov" | "mp4" | "mpeg" | "mpg" | "webm" => "video",
+    _ => return Err("Selected file type is not supported.".to_string()),
+  };
+
+  Ok(media_type.to_string())
+}
+
+fn probe_duration_ms(path: &Path) -> Result<u64, String> {
+  let output = Command::new("ffprobe")
+    .args([
+      "-v",
+      "error",
+      "-show_entries",
+      "format=duration",
+      "-of",
+      "default=noprint_wrappers=1:nokey=1",
+    ])
+    .arg(path)
+    .output()
+    .map_err(|error| format!("Could not run ffprobe: {error}"))?;
+
+  if !output.status.success() {
+    return Err("ffprobe could not read the selected media file.".to_string());
+  }
+
+  let duration = String::from_utf8_lossy(&output.stdout)
+    .trim()
+    .parse::<f64>()
+    .map_err(|_| "ffprobe returned an invalid duration.".to_string())?;
+
+  if !duration.is_finite() || duration < 0.0 {
+    return Err("ffprobe returned an invalid duration.".to_string());
+  }
+
+  Ok((duration * 1000.0).round() as u64)
+}
+
 fn project_path(value: &str) -> Result<PathBuf, String> {
   let path = PathBuf::from(value);
 
@@ -57,8 +139,9 @@ fn temporary_path(project_path: &Path) -> PathBuf {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_opener::init())
-    .invoke_handler(tauri::generate_handler![open_project, save_project])
+    .invoke_handler(tauri::generate_handler![inspect_media, open_project, save_project])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
