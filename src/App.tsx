@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MediaAsset } from "./features/project/domain";
 import { importMediaFiles } from "./features/media/import";
+import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
@@ -13,9 +14,14 @@ const navigation: Array<{ id: WorkspaceView; label: string }> = [
 
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [project, setProject] = useState(loadWorkspaceProject);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const assets = project.assets;
+
+  useEffect(() => {
+    saveWorkspaceProject(project);
+  }, [project]);
 
   async function handleImport() {
     setImportError(null);
@@ -24,11 +30,15 @@ function App() {
     try {
       const importedAssets = await importMediaFiles();
 
-      setAssets((currentAssets) => {
-        const existingPaths = new Set(currentAssets.map((asset) => asset.sourcePath));
+      setProject((currentProject) => {
+        const existingPaths = new Set(currentProject.assets.map((asset) => asset.sourcePath));
         const newAssets = importedAssets.filter((asset) => !existingPaths.has(asset.sourcePath));
 
-        return [...currentAssets, ...newAssets];
+        return {
+          ...currentProject,
+          assets: [...currentProject.assets, ...newAssets],
+          updatedAt: new Date().toISOString(),
+        };
       });
     } catch (error) {
       setImportError(
