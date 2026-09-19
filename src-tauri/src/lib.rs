@@ -105,7 +105,13 @@ fn probe_duration_ms(path: &Path) -> Result<u64, String> {
     .map_err(|error| format!("Could not run ffprobe: {error}"))?;
 
   if !output.status.success() {
-    return Err("ffprobe could not read the selected media file.".to_string());
+    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+
+    return Err(if detail.is_empty() {
+      "ffprobe could not read the selected media file.".to_string()
+    } else {
+      format!("ffprobe could not read the selected media file: {detail}")
+    });
   }
 
   let duration = String::from_utf8_lossy(&output.stdout)
