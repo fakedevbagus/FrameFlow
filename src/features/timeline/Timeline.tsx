@@ -1,12 +1,14 @@
 import type { MouseEvent } from "react";
 import type { Clip, Project, Track } from "../project/domain";
+import {
+  DEFAULT_TIMELINE_ZOOM,
+  MAX_TIMELINE_ZOOM,
+  MIN_TIMELINE_ZOOM,
+} from "./constants";
 
 const basePixelsPerSecond = 40;
 const minimumTimelineMs = 20_000;
 const rulerStepMs = 5_000;
-export const MIN_TIMELINE_ZOOM = 0.5;
-export const MAX_TIMELINE_ZOOM = 2.5;
-export const DEFAULT_TIMELINE_ZOOM = 1;
 
 interface TimelineProps {
   project: Project;
@@ -45,7 +47,7 @@ export function Timeline({
 
   function handleZoomChange(delta: number) {
     onZoomChange?.(
-      clampZoom(Math.round((zoom + delta) * 10) / 10),
+      clampZoom(Math.round((zoom + delta) * 100) / 100),
     );
   }
 
