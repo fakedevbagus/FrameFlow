@@ -37,6 +37,27 @@ function clipDuration(clip: Clip): number {
 }
 
 
+export function toggleTrackMute(
+  project: Project,
+  trackId: string,
+  now: Date = new Date(),
+): Project {
+  const trackIndex = project.tracks.findIndex((track) => track.id === trackId);
+
+  if (trackIndex === -1) {
+    throw new Error("Track does not exist in this project.");
+  }
+
+  const tracks = [...project.tracks];
+  const track = tracks[trackIndex];
+  tracks[trackIndex] = {
+    ...track,
+    isMuted: !track.isMuted,
+  };
+
+  return { ...project, tracks, updatedAt: now.toISOString() };
+}
+
 export function removeClipFromTimeline(
   project: Project,
   clipId: string,
