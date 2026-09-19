@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import { addAssetToTimeline, removeClipFromTimeline } from "./features/timeline/commands";
-import {
-  DEFAULT_TIMELINE_ZOOM,
-  Timeline,
-  getTimelineDurationMs,
-} from "./features/timeline/Timeline";
+import { Timeline } from "./features/timeline/Timeline";
+import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
@@ -33,12 +30,6 @@ function App() {
 
   useEffect(() => {
     saveWorkspaceProject(project);
-  }, [project]);
-
-  useEffect(() => {
-    const timelineDurationMs = getTimelineDurationMs(project);
-
-    setCurrentTimeMs((timeMs) => Math.min(Math.max(timeMs, 0), timelineDurationMs));
   }, [project]);
 
   async function handleOpenProject() {
