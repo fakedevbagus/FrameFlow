@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
-import { addAssetToTimeline, removeClipFromTimeline } from "./features/timeline/commands";
+import {
+  addAssetToTimeline,
+  moveClipOnTimeline,
+  removeClipFromTimeline,
+  splitClipAtTime,
+  trimClipEnd,
+  trimClipStart,
+} from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { importMediaFiles } from "./features/media/import";
@@ -126,6 +133,116 @@ function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleDeleteSelectedClip, selectedClipId]);
+
+  function updateSelectedClip(
+    operation: (project: ReturnType<typeof loadWorkspaceProject>) => ReturnType<typeof loadWorkspaceProject>,
+    notice: string,
+  ) {
+    if (!selectedClipId) {
+      return;
+    }
+
+    setProject((currentProject) => {
+      try {
+        const nextProject = operation(currentProject);
+        setProjectNotice(notice);
+        return nextProject;
+      } catch (error) {
+        setProjectNotice(
+          error instanceof Error ? error.message : "Clip edit could not be applied.",
+        );
+        return currentProject;
+      }
+    });
+  }
+
+  function handleMoveSelectedClip(deltaMs: number) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        moveClipOnTimeline(
+          currentProject,
+          selectedClipContext.clip.id,
+          Math.max(0, selectedClipContext.clip.timelineStartMs + deltaMs),
+        ),
+      deltaMs < 0 ? "Clip moved earlier." : "Clip moved later.",
+    );
+  }
+
+  function handleTrimSelectedClipStart(deltaMs: number) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        trimClipStart(
+          currentProject,
+          selectedClipContext.clip.id,
+          selectedClipContext.clip.sourceStartMs + deltaMs,
+        ),
+      deltaMs < 0 ? "Clip start extended." : "Clip start trimmed.",
+    );
+  }
+
+  function handleTrimSelectedClipEnd(deltaMs: number) {
+    if (!selectedClipContext || selectedClipContext.clip.sourceEndMs === null) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        trimClipEnd(
+          currentProject,
+          selectedClipContext.clip.id,
+          selectedClipContext.clip.sourceEndMs! + deltaMs,
+        ),
+      deltaMs < 0 ? "Clip end trimmed." : "Clip end extended.",
+    );
+  }
+
+  function handleSplitSelectedClip() {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        splitClipAtTime(
+          currentProject,
+          selectedClipContext.clip.id,
+          currentTimeMs,
+        ),
+      "Clip split.",
+    );
+  }
+
+  function canSplitSelectedClip(): boolean {
+    if (!selectedClipContext || selectedClipContext.clip.sourceEndMs === null) {
+      return false;
+    }
+
+    const clip = selectedClipContext.clip;
+    const clipEndMs = clip.timelineStartMs + (clip.sourceEndMs - clip.sourceStartMs);
+
+    return currentTimeMs > clip.timelineStartMs && currentTimeMs < clipEndMs;
+  }
+
+  function canExtendSelectedClipEnd(): boolean {
+    if (
+      !selectedClipContext ||
+      selectedClipContext.clip.sourceEndMs === null ||
+      selectedClipContext.asset?.durationMs === null ||
+      selectedClipContext.asset?.durationMs === undefined
+    ) {
+      return false;
+    }
+
+    return selectedClipContext.clip.sourceEndMs < selectedClipContext.asset.durationMs;
+  }
 
   async function handleImport() {
     setImportError(null);
@@ -304,6 +421,89 @@ function App() {
                   {formatDuration(selectedClipContext.clip.sourceStartMs)} –{" "}
                   {formatDuration(selectedClipContext.clip.sourceEndMs)}
                 </strong>
+              </div>
+
+              <div className="inspector-section">
+                <span className="inspector-section-title">Move</span>
+                <div className="inspector-button-grid">
+                  <button
+                    className="toolbar-button"
+                    disabled={selectedClipContext.clip.timelineStartMs === 0}
+                    onClick={() => handleMoveSelectedClip(-1000)}
+                    type="button"
+                  >
+                    −1s
+                  </button>
+                  <button
+                    className="toolbar-button"
+                    onClick={() => handleMoveSelectedClip(1000)}
+                    type="button"
+                  >
+                    +1s
+                  </button>
+                </div>
+              </div>
+
+              <div className="inspector-section">
+                <span className="inspector-section-title">Trim start</span>
+                <div className="inspector-button-grid">
+                  <button
+                    className="toolbar-button"
+                    disabled={selectedClipContext.clip.sourceStartMs === 0}
+                    onClick={() => handleTrimSelectedClipStart(-1000)}
+                    type="button"
+                  >
+                    −1s
+                  </button>
+                  <button
+                    className="toolbar-button"
+                    disabled={
+                      selectedClipContext.clip.sourceEndMs === null ||
+                      selectedClipContext.clip.sourceStartMs + 1000 >= selectedClipContext.clip.sourceEndMs
+                    }
+                    onClick={() => handleTrimSelectedClipStart(1000)}
+                    type="button"
+                  >
+                    +1s
+                  </button>
+                </div>
+              </div>
+
+              <div className="inspector-section">
+                <span className="inspector-section-title">Trim end</span>
+                <div className="inspector-button-grid">
+                  <button
+                    className="toolbar-button"
+                    disabled={
+                      selectedClipContext.clip.sourceEndMs === null ||
+                      selectedClipContext.clip.sourceEndMs - 1000 <= selectedClipContext.clip.sourceStartMs
+                    }
+                    onClick={() => handleTrimSelectedClipEnd(-1000)}
+                    type="button"
+                  >
+                    −1s
+                  </button>
+                  <button
+                    className="toolbar-button"
+                    disabled={!canExtendSelectedClipEnd()}
+                    onClick={() => handleTrimSelectedClipEnd(1000)}
+                    type="button"
+                  >
+                    +1s
+                  </button>
+                </div>
+              </div>
+
+              <div className="inspector-section">
+                <span className="inspector-section-title">Split</span>
+                <button
+                  className="toolbar-button split-button"
+                  disabled={!canSplitSelectedClip()}
+                  onClick={handleSplitSelectedClip}
+                  type="button"
+                >
+                  Split at playhead
+                </button>
               </div>
 
               <button
