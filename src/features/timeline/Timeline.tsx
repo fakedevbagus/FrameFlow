@@ -6,9 +6,11 @@ const rulerStepMs = 5_000;
 
 interface TimelineProps {
   project: Project;
+  selectedClipId?: string | null;
+  onSelectClip?: (clipId: string) => void;
 }
 
-export function Timeline({ project }: TimelineProps) {
+export function Timeline({ project, selectedClipId = null, onSelectClip }: TimelineProps) {
   const timelineDurationMs = getTimelineDurationMs(project);
 
   return (
@@ -57,9 +59,17 @@ interface TimelineTrackProps {
   track: Track;
   project: Project;
   timelineDurationMs: number;
+  selectedClipId: string | null;
+  onSelectClip?: (clipId: string) => void;
 }
 
-function TimelineTrack({ track, project, timelineDurationMs }: TimelineTrackProps) {
+function TimelineTrack({
+  track,
+  project,
+  timelineDurationMs,
+  selectedClipId,
+  onSelectClip,
+}: TimelineTrackProps) {
   return (
     <div className="track">
       <div className="track-label">
@@ -75,19 +85,29 @@ function TimelineTrack({ track, project, timelineDurationMs }: TimelineTrackProp
           const durationMs = getClipDurationMs(clip);
           const width = Math.max(72, durationMs / 1000 * pixelsPerSecond);
 
+          const isSelected = clip.id === selectedClipId;
+
           return (
-            <div
-              className={"timeline-clip timeline-clip-" + track.type}
+            <button
+              aria-label={"Select " + (asset?.name ?? "Missing media") + " clip"}
+              aria-pressed={isSelected}
+              className={
+                "timeline-clip timeline-clip-" +
+                track.type +
+                (isSelected ? " timeline-clip-selected" : "")
+              }
               key={clip.id}
+              onClick={() => onSelectClip?.(clip.id)}
               style={{
                 left: (clip.timelineStartMs / 1000 * pixelsPerSecond) + "px",
                 width: width + "px",
               }}
               title={asset ? asset.name + " · " + formatTimecode(durationMs) : "Missing media"}
+              type="button"
             >
               <span className="timeline-clip-name">{asset?.name ?? "Missing media"}</span>
               <small>{formatTimecode(durationMs)}</small>
-            </div>
+            </button>
           );
         })}
 
