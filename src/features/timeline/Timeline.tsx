@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import type { Clip, Project, Track } from "../project/domain";
 
 const basePixelsPerSecond = 40;
@@ -30,7 +31,7 @@ export function Timeline({
   const pixelsPerSecond = basePixelsPerSecond * zoom;
   const clampedCurrentTimeMs = Math.min(Math.max(currentTimeMs, 0), timelineDurationMs);
 
-  function handleRulerClick(event: React.MouseEvent<HTMLDivElement>) {
+  function handleRulerClick(event: MouseEvent<HTMLDivElement>) {
     if (!onCurrentTimeChange) {
       return;
     }
