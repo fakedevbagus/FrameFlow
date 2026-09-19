@@ -394,11 +394,14 @@ function TimelineTrack({
           aria-label={track.isMuted ? "Unmute " + track.name : "Mute " + track.name}
           aria-pressed={track.isMuted}
           className="track-mute-button"
-          onClick={() => onToggleTrackMute?.(track.id)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleTrackMute?.(track.id);
+          }}
           title={track.isMuted ? "Unmute track" : "Mute track"}
           type="button"
         >
-          {track.isMuted ? "M" : "M"}
+          M
         </button>
       </div>
       <div
