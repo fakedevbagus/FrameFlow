@@ -2,12 +2,47 @@ import { describe, expect, it } from "vitest";
 import { createProject } from "../project/domain";
 import {
   addAssetToTimeline,
+  toggleTrackMute,
   moveClipOnTimeline,
   removeClipFromTimeline,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
 } from "./commands";
+
+describe("toggleTrackMute", () => {
+  it("toggles a track mute state", () => {
+    const project = createProject({
+      id: "mute-command",
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+
+    const muted = toggleTrackMute(
+      project,
+      "video-1",
+      new Date("2026-09-20T00:00:01.000Z"),
+    );
+
+    expect(muted.tracks.find((track) => track.id === "video-1")?.isMuted).toBe(true);
+    expect(muted.updatedAt).toBe("2026-09-20T00:00:01.000Z");
+
+    const unmuted = toggleTrackMute(
+      muted,
+      "video-1",
+      new Date("2026-09-20T00:00:02.000Z"),
+    );
+
+    expect(unmuted.tracks.find((track) => track.id === "video-1")?.isMuted).toBe(false);
+  });
+
+  it("throws for an unknown track", () => {
+    const project = createProject({ id: "mute-missing" });
+
+    expect(() => toggleTrackMute(project, "missing-track")).toThrow(
+      "Track does not exist in this project.",
+    );
+  });
+});
 
 describe("addAssetToTimeline", () => {
   it("adds video and image assets to the video track", () => {
