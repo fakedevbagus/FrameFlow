@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import { addAssetToTimeline, removeClipFromTimeline } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
+import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
@@ -19,6 +20,8 @@ function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
   const [project, setProject] = useState(loadWorkspaceProject);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
@@ -35,6 +38,7 @@ function App() {
       if (result) {
         setProject(result.project);
         setSelectedClipId(null);
+        setCurrentTimeMs(0);
         setProjectNotice("Project opened.");
       }
     } catch (error) {
@@ -76,7 +80,7 @@ function App() {
     setProjectNotice(null);
   }
 
-  function handleDeleteSelectedClip() {
+  const handleDeleteSelectedClip = useCallback(() => {
     if (!selectedClipId) {
       return;
     }
@@ -94,7 +98,34 @@ function App() {
         return currentProject;
       }
     });
-  }
+  }, [selectedClipId]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!selectedClipId) {
+        return;
+      }
+
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT")
+      ) {
+        return;
+      }
+
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault();
+        handleDeleteSelectedClip();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleDeleteSelectedClip, selectedClipId]);
 
   async function handleImport() {
     setImportError(null);
@@ -229,14 +260,20 @@ function App() {
               <button aria-label="Next frame" className="transport-button" type="button">
                 ▶
               </button>
-              <span className="timecode">00:00:00:00</span>
+              <span className="timecode">
+                {formatTimecode(currentTimeMs, project.canvas.frameRate)}
+              </span>
             </div>
           </div>
 
           <Timeline
             project={project}
+            currentTimeMs={currentTimeMs}
+            onCurrentTimeChange={setCurrentTimeMs}
             selectedClipId={selectedClipId}
             onSelectClip={handleSelectClip}
+            zoom={timelineZoom}
+            onZoomChange={setTimelineZoom}
           />
         </section>
 
@@ -332,6 +369,22 @@ function getClipDurationMs(clip: { sourceStartMs: number; sourceEndMs: number | 
   }
 
   return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+}
+
+function formatTimecode(durationMs: number, frameRate: number): string {
+  const totalMilliseconds = Math.max(0, durationMs);
+  const totalSeconds = Math.floor(totalMilliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const frame = Math.floor((totalMilliseconds % 1000) * frameRate / 1000);
+
+  return [
+    hours.toString().padStart(2, "0"),
+    minutes.toString().padStart(2, "0"),
+    seconds.toString().padStart(2, "0"),
+    frame.toString().padStart(2, "0"),
+  ].join(":");
 }
 
 function formatDuration(durationMs: number | null): string {

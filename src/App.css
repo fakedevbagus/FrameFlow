@@ -764,3 +764,46 @@ button:disabled {
   border-color: #7a424c;
   background: #321e24;
 }
+
+
+.timeline-actions .toolbar-button:not(:disabled) {
+  cursor: pointer;
+}
+
+.timeline-ruler-scale {
+  cursor: crosshair;
+}
+
+.timeline-playhead,
+.timeline-track-playhead {
+  position: absolute;
+  z-index: 3;
+  width: 2px;
+  pointer-events: none;
+  background: #ff6f91;
+  box-shadow: 0 0 8px rgb(255 111 145 / 45%);
+}
+
+.timeline-playhead {
+  top: 0;
+  bottom: -1px;
+  transform: translateX(-1px);
+}
+
+.timeline-playhead::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #ff6f91;
+  content: "";
+  transform: translate(-50%, -1px);
+}
+
+.timeline-track-playhead {
+  top: 0;
+  bottom: 0;
+  transform: translateX(-1px);
+}
