@@ -91,59 +91,111 @@ fn media_type(path: &Path) -> Result<String, String> {
 }
 
 fn probe_duration_ms(path: &Path) -> Result<u64, String> {
-  let format_output = Command::new("ffprobe")
-    .args([
-      "-v",
-      "error",
-      "-show_entries",
-      "format=duration",
-      "-of",
-      "default=noprint_wrappers=1:nokey=1",
-    ])
-    .arg(path)
-    .output()
-    .map_err(|error| format!("Could not run ffprobe: {error}"))?;
+  let format_output = run_ffprobe(path, &[
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "default=noprint_wrappers=1:nokey=1",
+  ])?;
 
-  if format_output.status.success() {
-    if let Some(duration_ms) = parse_duration_ms(&format_output.stdout) {
-      return Ok(duration_ms);
-    }
+  if let Some(duration_ms) = parse_duration_ms(&format_output.stdout) {
+    return Ok(duration_ms);
   }
 
-  let stream_output = Command::new("ffprobe")
-    .args([
-      "-v",
-      "error",
-      "-show_entries",
-      "stream=duration",
-      "-of",
-      "default=noprint_wrappers=1:nokey=1",
-    ])
-    .arg(path)
-    .output()
-    .map_err(|error| format!("Could not run ffprobe for stream duration: {error}"))?;
+  let stream_output = run_ffprobe(path, &[
+    "-show_entries",
+    "stream=duration",
+    "-of",
+    "default=noprint_wrappers=1:nokey=1",
+  ])?;
 
-  if stream_output.status.success() {
-    if let Some(duration_ms) = parse_duration_ms(&stream_output.stdout) {
-      return Ok(duration_ms);
-    }
+  if let Some(duration_ms) = parse_duration_ms(&stream_output.stdout) {
+    return Ok(duration_ms);
   }
 
-  let detail = String::from_utf8_lossy(
-    if !format_output.stderr.is_empty() {
-      &format_output.stderr
-    } else {
-      &stream_output.stderr
-    },
-  )
-  .trim()
-  .to_string();
+  if let Some(duration_ms) = probe_duration_with_ffmpeg(path)? {
+    return Ok(duration_ms);
+  }
 
-  Err(if detail.is_empty() {
-    "ffprobe could not determine the selected media duration.".to_string()
+  let format_detail = ffprobe_detail(&format_output.stderr, &format_output.stdout);
+  let stream_detail = ffprobe_detail(&stream_output.stderr, &stream_output.stdout);
+
+  Err(if !format_detail.is_empty() {
+    format!("ffprobe could not determine the selected media duration: {format_detail}")
+  } else if !stream_detail.is_empty() {
+    format!("ffprobe could not determine the selected media duration: {stream_detail}")
   } else {
-    format!("ffprobe could not determine the selected media duration: {detail}")
+    "ffprobe could not determine the selected media duration.".to_string()
   })
+}
+
+fn run_ffprobe(path: &Path, args: &[&str]) -> Result<std::process::Output, String> {
+  Command::new("ffprobe")
+    .args(["-v", "error"])
+    .args(args)
+    .arg(path)
+    .output()
+    .map_err(|error| format!("Could not run ffprobe: {error}"))
+}
+
+fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
+  let output = Command::new("ffmpeg")
+    .args(["-hide_banner", "-i"])
+    .arg(path)
+    .args(["-f", "null", "-"])
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg: {error}"))?;
+
+  Ok(parse_ffmpeg_duration(&output.stderr))
+}
+
+fn parse_ffmpeg_duration(output: &[u8]) -> Option<u64> {
+  let text = String::from_utf8_lossy(output);
+
+  for line in text.lines() {
+    let Some(marker_index) = line.find("Duration:") else {
+      continue;
+    };
+
+    let value = line[marker_index + "Duration:".len()..]
+      .split(',')
+      .next()?
+      .trim();
+
+    if let Some(duration_ms) = parse_timestamp_ms(value) {
+      return Some(duration_ms);
+    }
+  }
+
+  None
+}
+
+fn parse_timestamp_ms(value: &str) -> Option<u64> {
+  let mut parts = value.split(':');
+
+  let hours = parts.next()?.trim().parse::<u64>().ok()?;
+  let minutes = parts.next()?.trim().parse::<u64>().ok()?;
+  let seconds = parts.next()?.trim().parse::<f64>().ok()?;
+
+  if hours > 23 || minutes > 59 || !seconds.is_finite() || seconds < 0.0 {
+    return None;
+  }
+
+  Some(
+    (hours * 3_600_000)
+      .saturating_add(minutes * 60_000)
+      .saturating_add((seconds * 1000.0).round() as u64),
+  )
+}
+
+fn ffprobe_detail(stderr: &[u8], stdout: &[u8]) -> String {
+  let stderr = String::from_utf8_lossy(stderr).trim().to_string();
+
+  if !stderr.is_empty() {
+    return stderr;
+  }
+
+  String::from_utf8_lossy(stdout).trim().to_string()
 }
 
 fn parse_duration_ms(output: &[u8]) -> Option<u64> {
