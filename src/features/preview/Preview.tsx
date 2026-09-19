@@ -107,38 +107,36 @@ function PreviewVisualLayer({
   zIndex = 1,
   onError,
 }: PreviewLayerProps) {
-  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const mediaRef = useRef<HTMLVideoElement | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
 
   useEffect(() => {
-    const media = mediaRef.current;
-
-    if (!media || layer.asset.mediaType === "image") {
+    if (isPlaying) {
       return;
     }
 
-    const initialTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
 
     try {
-      media.currentTime = Math.max(0, initialTimeMs / 1000);
+      media.currentTime = Math.max(0, localTimeMs / 1000);
     } catch {
-      // The media element may not accept seeking until metadata is available.
+      // Some WebView/media implementations reject seeking before metadata is ready.
     }
   }, [
     currentTimeMs,
-    layer.asset.id,
-    layer.asset.mediaType,
-    layer.clip.id,
-    layer.clip.sourceEndMs,
-    layer.clip.sourceStartMs,
-    layer.clip.timelineStartMs,
+    isPlaying,
+    localTimeMs,
   ]);
 
   useEffect(() => {
     const media = mediaRef.current;
 
-    if (!media || layer.asset.mediaType === "image") {
+    if (!media) {
       return;
     }
 
@@ -150,31 +148,21 @@ function PreviewVisualLayer({
     }
 
     void Promise.resolve(media.play()).catch(() => undefined);
-  }, [isPlaying, layer.asset.id, layer.asset.mediaType, layer.clip.id]);
+  }, [isPlaying, layer.asset.id, layer.clip.id]);
 
-  useEffect(() => {
-    if (isPlaying) {
-      return;
-    }
-
+  function handleLoadedMetadata() {
     const media = mediaRef.current;
 
-    if (!media || layer.asset.mediaType === "image") {
+    if (!media) {
       return;
     }
 
     try {
       media.currentTime = Math.max(0, localTimeMs / 1000);
     } catch {
-      // Some WebView/media implementations reject seeking before metadata is ready.
+      // Metadata can still be settling in some WebView implementations.
     }
-  }, [
-    isPlaying,
-    layer.asset.id,
-    layer.asset.mediaType,
-    layer.clip.id,
-    localTimeMs,
-  ]);
+  }
 
   if (layer.asset.mediaType === "image") {
     return (
@@ -194,10 +182,11 @@ function PreviewVisualLayer({
       data-preview-state="video"
       data-testid="preview-video"
       playsInline
-      preload="metadata"
-      ref={handleMediaRef}
+      preload="auto"
+      ref={mediaRef}
       src={mediaUrl ?? ""}
       style={{ zIndex }}
+      onLoadedMetadata={handleLoadedMetadata}
       onError={() =>
         onError(layer.asset.id, "Video could not be loaded.")
       }
@@ -212,40 +201,9 @@ function PreviewAudioLayer({
   showControls = false,
   onError,
 }: PreviewLayerProps) {
-  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const mediaRef = useRef<HTMLAudioElement | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
-
-  useEffect(() => {
-    const media = mediaRef.current;
-
-    if (!media) {
-      return;
-    }
-
-    try {
-      media.currentTime = Math.max(0, localTimeMs / 1000);
-    } catch {
-      // The media element may not accept seeking until metadata is available.
-    }
-  }, [layer.asset.id, layer.clip.id]);
-
-  useEffect(() => {
-    const media = mediaRef.current;
-
-    if (!media) {
-      return;
-    }
-
-    if (!isPlaying) {
-      if (!media.paused) {
-        media.pause();
-      }
-      return;
-    }
-
-    void media.play().catch(() => undefined);
-  }, [isPlaying, layer.asset.id, layer.clip.id]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -263,16 +221,57 @@ function PreviewAudioLayer({
     } catch {
       // Some WebView/media implementations reject seeking before metadata is ready.
     }
-  }, [isPlaying, layer.asset.id, layer.clip.id, localTimeMs]);
+  }, [currentTimeMs, isPlaying, localTimeMs]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
+
+    if (!isPlaying) {
+      if (!media.paused) {
+        media.pause();
+      }
+      return;
+    }
+
+    void Promise.resolve(media.play()).catch(() => undefined);
+  }, [isPlaying, layer.asset.id, layer.clip.id]);
+
+  function handleLoadedMetadata() {
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
+
+    try {
+      media.currentTime = Math.max(0, localTimeMs / 1000);
+    } catch {
+      // Metadata can still be settling in some WebView implementations.
+    }
+  }
 
   return (
     <audio
-      aria-label={showControls ? "Audio preview" : layer.asset.name + " audio layer"}
-      className={showControls ? "preview-audio-layer preview-audio-layer-controls" : "preview-audio-layer"}
+      aria-label={
+        showControls
+          ? "Audio preview"
+          : layer.asset.name + " audio layer"
+      }
+      className={
+        showControls
+          ? "preview-audio-layer preview-audio-layer-controls"
+          : "preview-audio-layer"
+      }
       controls={showControls}
       data-testid="preview-audio"
-      ref={handleMediaRef}
+      preload="auto"
+      ref={mediaRef}
       src={mediaUrl ?? ""}
+      onLoadedMetadata={handleLoadedMetadata}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
     />
   );
