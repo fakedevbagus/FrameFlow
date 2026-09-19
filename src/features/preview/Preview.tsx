@@ -127,8 +127,10 @@ export function Preview({
         <strong>{asset.name}</strong>
         <small>Audio preview</small>
         <audio
+          aria-label="Audio preview"
           className="preview-audio"
           controls
+          data-testid="preview-audio"
           ref={mediaRef}
           src={mediaUrl ?? ""}
           onError={() => setMediaError("Audio could not be loaded.")}
