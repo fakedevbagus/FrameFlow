@@ -4,6 +4,7 @@ import { addAssetToTimeline, removeClipFromTimeline } from "./features/timeline/
 import {
   DEFAULT_TIMELINE_ZOOM,
   Timeline,
+  getTimelineDurationMs,
 } from "./features/timeline/Timeline";
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
@@ -32,6 +33,12 @@ function App() {
 
   useEffect(() => {
     saveWorkspaceProject(project);
+  }, [project]);
+
+  useEffect(() => {
+    const timelineDurationMs = getTimelineDurationMs(project);
+
+    setCurrentTimeMs((timeMs) => Math.min(Math.max(timeMs, 0), timelineDurationMs));
   }, [project]);
 
   async function handleOpenProject() {
