@@ -276,7 +276,7 @@ describe("splitClipAtTime", () => {
     expect(updated.updatedAt).toBe("2026-09-20T01:03:00.000Z");
   });
 
-  it("rejects a split at the clip boundary", () => {
+  it("rejects a split at the clip start boundary", () => {
     const project = createProject({ id: "split-project-2" });
     project.assets.push({
       id: "split-asset-2",
@@ -290,6 +290,24 @@ describe("splitClipAtTime", () => {
     const clipId = populated.tracks[0].clips[0].id;
 
     expect(() => splitClipAtTime(populated, clipId, 0)).toThrow(
+      "Split time must be inside the selected clip.",
+    );
+  });
+
+  it("rejects a split at the clip end boundary", () => {
+    const project = createProject({ id: "split-project-3" });
+    project.assets.push({
+      id: "split-asset-3",
+      name: "split-3.mp4",
+      mediaType: "video",
+      sourcePath: "/split-3.mp4",
+      durationMs: 10_000,
+    });
+
+    const populated = addAssetToTimeline(project, "split-asset-3");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    expect(() => splitClipAtTime(populated, clipId, 10_000)).toThrow(
       "Split time must be inside the selected clip.",
     );
   });
