@@ -62,8 +62,23 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add intro.mp4 to timeline" }));
 
-    expect(screen.getByTitle("intro.mp4 · 00:12")).toBeInTheDocument();
+    const clip = screen.getByTitle("intro.mp4 · 00:12");
+    expect(clip).toBeInTheDocument();
     expect(screen.getByText("V1")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Select intro.mp4 clip" }));
+
+    expect(screen.getByText("Inspector")).toBeInTheDocument();
+    expect(screen.getByText("Video 1")).toBeInTheDocument();
+    expect(screen.getByText("00:00")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete clip" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete clip" }));
+
+    await waitFor(() => {
+      expect(screen.queryByTitle("intro.mp4 · 00:12")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
   });
 
 });
