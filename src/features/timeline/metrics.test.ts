@@ -29,21 +29,22 @@ describe("timeline metrics", () => {
     const populated = addAssetToTimeline(project, "asset-1");
 
     expect(getTimelineDurationMs(populated)).toBe(20_000);
-    expect(
-      getTimelineDurationMs({
-        ...populated,
-        tracks: populated.tracks.map((track) =>
-          track.type === "video"
-            ? {
-                ...track,
-                clips: track.clips.map((clip) => ({
-                  ...clip,
-                  timelineStartMs: 10_000,
-                })),
-              }
-            : track,
-        ),
+
+    const movedProject = {
+      ...populated,
+      tracks: populated.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                timelineStartMs: 10_000,
+              })),
+            }
+          : track,
       ),
-    ).toBe(25_000);
+    };
+
+    expect(getTimelineDurationMs(movedProject)).toBe(25_000);
   });
 });
