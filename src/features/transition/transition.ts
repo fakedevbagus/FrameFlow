@@ -104,10 +104,14 @@ export function sanitizeTrackTransitions(
         clip.transitionOut,
       );
 
+      const existingTransition = clip.transitionOut;
+
       if (
-        (normalized === undefined && clip.transitionOut === undefined) ||
-        (normalized?.type === clip.transitionOut?.type &&
-          normalized.durationMs === clip.transitionOut.durationMs)
+        (normalized === undefined && existingTransition === undefined) ||
+        (normalized !== undefined &&
+          existingTransition !== undefined &&
+          normalized.type === existingTransition.type &&
+          normalized.durationMs === existingTransition.durationMs)
       ) {
         return clip;
       }
