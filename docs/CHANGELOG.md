@@ -2,31 +2,29 @@
 
 ## 2026-09-21
 
-### M3.20 — Aspect-ratio crop presets — in progress
+### M3.20 — Aspect-ratio crop presets and responsive canvas — merged
 Branch: `feat/m3-20-crop-aspect-presets`
-PR #30 — draft
+PR #30 — merged
+Merge SHA: `8c366b12e6320fe8844096b0c8fda75234de4b61`
 
 Implemented:
-- Added common crop presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
-- Added intrinsic-media-dimension crop math with source-position preservation and valid-range clamping.
-- Added an atomic timeline command for applying crop and crop position together.
-- Added Inspector crop aspect-ratio controls.
-- Added media dimension lookup support for both video and image preview elements.
-- Added regression coverage for preset math, command behavior, and App/Inspector Undo workflow.
-- Added canvas aspect-ratio presets for 16:9, 9:16, 1:1, 4:5, and 4:3, committed through project history.
-- Made the preview canvas follow project canvas dimensions instead of a hardcoded 9:16 framing.
-- Hardened the fullscreen workspace so media/Inspector panels scroll internally and the editor stays inside the viewport.
-- Added App and timeline-command regression coverage for canvas aspect changes, preview framing, and Undo.
+- Added crop aspect-ratio presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
+- Derived crop insets from intrinsic video/image dimensions and preserved/clamped crop content position.
+- Applied crop and crop position atomically through the existing history engine.
+- Added canvas aspect-ratio presets: 16:9, 9:16, 1:1, 4:5, and 4:3.
+- Made the preview canvas follow project canvas dimensions and fit the available editor viewport.
+- Hardened fullscreen workspace behavior so side panels scroll internally instead of forcing document-level vertical scrolling.
+- Added regression coverage for crop preset math, crop history, canvas dimensions, preview framing, and Undo workflows.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed M3.20 local validation passed on Linux.
+- During the final validation cycle, lint passed, 17 test files / 161 tests passed, and Tauri dev started successfully. The production build initially exposed malformed CSS introduced during the viewport refactor; the offending fragments were corrected on the same branch before the user's final pass confirmation.
 
 Known limitations:
 - Crop position remains per-clip and is not keyframed.
 - Custom crop ratios are deferred.
+- Canvas presets expose fixed common output dimensions; arbitrary custom canvas dimension editing is not yet exposed.
 
-Next step:
-- User validates M3.20 locally before the draft PR is marked ready and merged.
 
 ## 2026-09-21
 
