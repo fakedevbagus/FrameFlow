@@ -17,6 +17,7 @@ The project is being built incrementally. Every milestone must be small, testabl
 - M3.17 was merged as PR #27 with merge SHA `dd4333deccc420bfe07dd68f05c2cb49ae865bdb`.
 - M3.18 was merged as PR #28 with merge SHA `f59553d3e7192bae2a00741acfa5177da94e94eb`.
 - M3.19 was merged as PR #29 with merge SHA `549b1423e365ed11116a14b1005aa5a38f7b35ad`.
+- M3.20 was merged as PR #30 with merge SHA `8c366b12e6320fe8844096b0c8fda75234de4b61`.
 - New milestone branches must be created from the updated `main` after the preceding milestone validation.
 
 ## Development environment
@@ -547,51 +548,51 @@ Known limitations:
 Next step:
 - Start M3.20 from the updated `main`, focusing on aspect-ratio crop presets while preserving the current crop viewport, crop-position, transform/anchor, keyframe, and history architecture.
 
-## M3.20 — Aspect-ratio crop presets (in progress)
+## M3.20 — Aspect-ratio crop presets and responsive canvas — completed
 
 Branch: `feat/m3-20-crop-aspect-presets`
-PR: #30 (draft)
+PR: #30
+Merge SHA: `8c366b12e6320fe8844096b0c8fda75234de4b61`
 
-Scope:
-- Add common crop aspect-ratio presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
-- Derive normalized crop insets from the actual loaded media dimensions.
-- Preserve the current crop-content source position when the new viewport permits it, clamping the position when necessary to keep the viewport covered.
-- Treat Original as a full-content crop reset and clear stored crop position.
-- Commit crop and crop-position changes as one history mutation.
-- Keep direct crop handles, direct crop-content panning, transform/anchor behavior, and keyframes intact.
+Scope delivered:
+- Added common crop aspect-ratio presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
+- Derived normalized crop insets from intrinsic video/image dimensions.
+- Preserved the current crop-content source position when possible and clamped it when the target viewport required a valid source range.
+- Treated Original as a full crop reset and cleared stored crop position.
+- Committed crop and crop-position changes as one history mutation.
+- Preserved direct crop handles, direct crop-content panning, transform/anchor behavior, keyframes, playback, and multi-layer preview behavior.
+- Added project canvas aspect-ratio presets: 16:9, 9:16, 1:1, 4:5, and 4:3.
+- Made the preview canvas follow the project canvas aspect ratio instead of a fixed 9:16 presentation.
+- Fitted the preview canvas to the measured available editor space and prevented document-level fullscreen scrolling by keeping side-panel scrolling internal.
 
 Architecture decisions:
-- Aspect-ratio math lives in `src/features/transform/transform.ts`.
-- The preset command path uses an atomic `updateClipCropWithPosition` timeline command so one preset change creates one history step.
-- The Inspector owns preset controls; Preview only exposes media dimensions through `data-clip-id` on visual media elements.
-- Presets use the intrinsic media dimensions rather than canvas dimensions, so they describe the source content itself.
-- Crop position remains a normalized per-clip source point and is not keyframed in this milestone.
+- Crop aspect-ratio math remains in `src/features/transform/transform.ts`.
+- Crop preset edits use the atomic `updateClipCropWithPosition` command and the existing history engine.
+- Canvas aspect-ratio changes use `updateCanvasDimensions` and remain project-history mutations.
+- Preview media elements expose clip identity and intrinsic dimensions through the existing DOM/media path.
+- The preview canvas uses a dedicated measured stage region with ResizeObserver and a window-resize fallback while preserving the project's aspect ratio.
+- Custom canvas dimensions loaded from a project remain representable as `Custom` in the canvas selector.
 
-Automated coverage added or updated:
-- Preset catalogue and crop-ratio math.
-- Content-position clamping when switching to a new ratio.
-- Original-preset reset behavior.
+Automated coverage:
+- Crop preset catalogue and crop-ratio math.
+- Crop-position preservation and clamping.
+- Original reset behavior.
 - Atomic crop + crop-position command behavior.
-- Inspector/App preset interaction and Undo workflow.
+- Canvas dimension command validation.
+- App/Inspector crop preset workflow and Undo.
+- App canvas aspect-ratio workflow, preview framing, and Undo.
 
 Validation:
-- Local validation is pending user verification.
-
-Manual validation planned:
-1. Import and select a video; apply 1:1, 16:9, and 9:16 presets and verify the crop window ratio.
-2. Repeat with an image and verify the same preset behavior.
-3. Move crop content, then switch ratio and confirm the content point is preserved when possible and remains fully covered.
-4. Apply Original and verify crop and stored crop position return to the uncropped default.
-5. Verify each preset is one Undo step.
-6. Verify direct crop handles and direct crop-content panning remain functional.
-7. Verify transforms, non-center anchors, keyframes, playback, and multi-layer preview remain intact.
+- User confirmed the M3.20 local validation passed on Linux.
+- The validation sequence reached lint success, 17 test files / 161 tests passing, and successful Tauri dev startup during the final validation cycle. The production build required follow-up CSS corrections before the user confirmed the milestone passed.
 
 Known limitations:
-- Crop position remains per-clip and is not keyframed in this milestone.
-- Presets are fixed common ratios; custom user-entered crop ratios are deferred.
+- Crop position remains per-clip and is not keyframed.
+- Crop presets are fixed common ratios; custom user-entered crop ratios are deferred.
+- Canvas presets use fixed common output dimensions; arbitrary custom canvas editing is not yet exposed in the UI.
 
 Next step:
-- Create the draft PR for M3.20 and have the user run local lint, tests, build, Tauri dev, and the manual checks above.
+- Continue with the next focused transform milestone from the updated `main`.
 
 ## Documentation protocol
 
