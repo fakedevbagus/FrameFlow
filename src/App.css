@@ -280,6 +280,19 @@ button:focus-visible {
   font-size: 12px;
 }
 
+.canvas-preset-select {
+  min-width: 58px;
+  min-height: 30px;
+  padding: 0 26px 0 9px;
+  border: 1px solid #2f3541;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #b9c1cf;
+  background: #252a33;
+  font: inherit;
+  font-size: 12px;
+}
+
 .preview-region {
   display: grid;
   min-width: 0;
