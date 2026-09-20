@@ -136,19 +136,14 @@ fn prepare_media_preview(
 fn stream_media_request(
   request: tauri::http::Request<Vec<u8>>,
 ) -> tauri::http::Response<Vec<u8>> {
-  let Some(query) = request.uri().query() else {
-    return response_with_status(
-      tauri::http::StatusCode::BAD_REQUEST,
-      "Missing media path.",
-    );
-  };
+  let encoded_path = request.uri().path().strip_prefix('/').unwrap_or_default();
 
-  let Some(encoded_path) = query.strip_prefix("path=") else {
+  if encoded_path.is_empty() {
     return response_with_status(
       tauri::http::StatusCode::BAD_REQUEST,
       "Missing media path.",
     );
-  };
+  }
 
   let path = match percent_decode(encoded_path) {
     Ok(path) => PathBuf::from(path),
