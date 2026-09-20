@@ -83,9 +83,9 @@ describe("clip transforms", () => {
   it("preserves crop content position while keeping the new viewport inside the source", () => {
     expect(getCropForAspectRatio(16 / 9, 1080, 1920, { x: 0.2, y: 0.9 })).toEqual({
       crop: {
-        top: 0,
+        top: 0.68359375,
         right: 0,
-        bottom: 0.68359375,
+        bottom: 0,
         left: 0,
       },
       cropPosition: {
