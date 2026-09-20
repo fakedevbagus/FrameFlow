@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getContainedContentBounds,
+  getContainedContentPercentageBounds,
   transformFromPointer,
   type CanvasPointer,
 } from "./canvasManipulation";
@@ -19,6 +20,28 @@ const rect = {
 };
 
 describe("canvas manipulation", () => {
+  it("calculates centered percentage bounds for a landscape asset", () => {
+    expect(
+      getContainedContentPercentageBounds(1080, 1920, 1920, 1080),
+    ).toEqual({
+      left: 0,
+      top: 34.375,
+      width: 100,
+      height: 31.25,
+    });
+  });
+
+  it("calculates centered percentage bounds for a portrait asset", () => {
+    expect(
+      getContainedContentPercentageBounds(1080, 1920, 1080, 1920),
+    ).toEqual({
+      left: 0,
+      top: 0,
+      width: 100,
+      height: 100,
+    });
+  });
+
   it("fits a landscape asset inside a portrait canvas", () => {
     expect(
       getContainedContentBounds(
