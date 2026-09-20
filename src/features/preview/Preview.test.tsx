@@ -209,6 +209,53 @@ describe("Preview", () => {
     expect(layers[1]).toHaveStyle({ zIndex: "2" });
   });
 
+  it("applies the clip transform anchor to the preview transform origin", async () => {
+    let project = createProject({ id: "anchor-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-anchor",
+          name: "anchor.mp4",
+          mediaType: "video",
+          sourcePath: "/media/anchor.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-anchor");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) => ({
+        ...track,
+        clips: track.clips.map((clip) =>
+          clip.id === clipId
+            ? { ...clip, transformAnchor: { x: 0, y: 1 } }
+            : clip,
+        ),
+      })),
+    };
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    const video = screen.getByTestId("preview-video");
+    expect(video.parentElement).toHaveStyle({
+      transformOrigin: "0% 100%",
+    });
+  });
+
   it("renders an image clip as the visual preview", async () => {
     let project = createProject({ id: "image-preview" });
 
