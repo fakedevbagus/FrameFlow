@@ -609,7 +609,9 @@ export function splitClipAtTime(
     : undefined;
   const firstKeyframes = hasKeyframes
     ? upsertTransformKeyframe(
-        clip.transformKeyframes,
+        (clip.transformKeyframes ?? []).filter(
+          (keyframe) => keyframe.timeMs <= splitLocalTimeMs,
+        ),
         splitLocalTimeMs,
         splitTransform ?? DEFAULT_CLIP_TRANSFORM,
       )
