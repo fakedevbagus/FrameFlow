@@ -3,7 +3,7 @@ import {
   useEffect,
   useRef,
   useState,
-  type KeyboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import type { ClipTransform } from "./features/project/domain";
@@ -70,9 +70,6 @@ function App() {
   const selectedTransform = selectedClipContext
     ? getClipTransform(selectedClipContext.clip.transform)
     : null;
-  const [transformDraft, setTransformDraft] = useState<Record<TransformField, string>>(
-    () => createTransformDraft(selectedTransform),
-  );
   const timelineDurationMs = getTimelineDurationMs(project);
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
@@ -82,21 +79,6 @@ function App() {
   useEffect(() => {
     saveWorkspaceProject(project);
   }, [project]);
-
-  useEffect(() => {
-    if (!selectedTransform) {
-      return;
-    }
-
-    setTransformDraft(createTransformDraft(selectedTransform));
-  }, [
-    selectedClipId,
-    selectedTransform?.x,
-    selectedTransform?.y,
-    selectedTransform?.scale,
-    selectedTransform?.rotation,
-    selectedTransform?.opacity,
-  ]);
 
   const setPlaybackTime = useCallback((timeMs: number) => {
     const safeTimeMs = Math.min(
@@ -516,37 +498,34 @@ function App() {
   }
 
   function handleTransformInputKeyDown(
-    field: TransformField,
-    event: KeyboardEvent<HTMLInputElement>,
+    event: ReactKeyboardEvent<HTMLInputElement>,
   ) {
     if (event.key === "Enter") {
       event.currentTarget.blur();
     }
   }
 
-  function handleTransformInputChange(field: TransformField, value: string) {
-    setTransformDraft((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  }
-
-  function commitTransformInput(field: TransformField) {
+  function commitTransformInput(
+    field: TransformField,
+    rawValue: string,
+    input: HTMLInputElement,
+  ) {
     if (!selectedClipContext || !selectedTransform) {
       return;
     }
 
-    const rawValue = transformDraft[field].trim();
+    const value = rawValue.trim();
+    const restoreValue = getTransformInputValue(field, selectedTransform);
 
-    if (!rawValue) {
-      setTransformDraft(createTransformDraft(selectedTransform));
+    if (!value) {
+      input.value = restoreValue;
       return;
     }
 
-    const parsedValue = Number(rawValue);
+    const parsedValue = Number(value);
 
     if (!Number.isFinite(parsedValue)) {
-      setTransformDraft(createTransformDraft(selectedTransform));
+      input.value = restoreValue;
       return;
     }
 
@@ -557,7 +536,7 @@ function App() {
     });
 
     if (nextTransform[field] === selectedTransform[field]) {
-      setTransformDraft(createTransformDraft(nextTransform));
+      input.value = getTransformInputValue(field, nextTransform);
       return;
     }
 
@@ -901,7 +880,20 @@ function App() {
                     </button>
                   </div>
 
-                  <div className="inspector-transform-input-grid">
+                  <div
+                    key={
+                      selectedTransform
+                        ? [
+                            selectedTransform.x,
+                            selectedTransform.y,
+                            selectedTransform.scale,
+                            selectedTransform.rotation,
+                            selectedTransform.opacity,
+                          ].join("|")
+                        : "none"
+                    }
+                    className="inspector-transform-input-grid"
+                  >
                     <label className="inspector-transform-field">
                       <span>X</span>
                       <div className="inspector-transform-input-wrap">
@@ -912,12 +904,15 @@ function App() {
                           min="-100"
                           step="0.5"
                           type="number"
-                          value={transformDraft.x}
-                          onBlur={() => commitTransformInput("x")}
-                          onKeyDown={(event) => handleTransformInputKeyDown("x", event)}
-                          onChange={(event) =>
-                            handleTransformInputChange("x", event.target.value)
+                          defaultValue={selectedTransform?.x ?? 0}
+                          onBlur={(event) =>
+                            commitTransformInput(
+                              "x",
+                              event.currentTarget.value,
+                              event.currentTarget,
+                            )
                           }
+                          onKeyDown={handleTransformInputKeyDown}
                         />
                         <span>%</span>
                       </div>
@@ -932,12 +927,15 @@ function App() {
                           min="-100"
                           step="0.5"
                           type="number"
-                          value={transformDraft.y}
-                          onBlur={() => commitTransformInput("y")}
-                          onKeyDown={(event) => handleTransformInputKeyDown("y", event)}
-                          onChange={(event) =>
-                            handleTransformInputChange("y", event.target.value)
+                          defaultValue={selectedTransform?.y ?? 0}
+                          onBlur={(event) =>
+                            commitTransformInput(
+                              "y",
+                              event.currentTarget.value,
+                              event.currentTarget,
+                            )
                           }
+                          onKeyDown={handleTransformInputKeyDown}
                         />
                         <span>%</span>
                       </div>
@@ -952,12 +950,15 @@ function App() {
                           min="0.05"
                           step="0.05"
                           type="number"
-                          value={transformDraft.scale}
-                          onBlur={() => commitTransformInput("scale")}
-                          onKeyDown={(event) => handleTransformInputKeyDown("scale", event)}
-                          onChange={(event) =>
-                            handleTransformInputChange("scale", event.target.value)
+                          defaultValue={selectedTransform?.scale ?? 1}
+                          onBlur={(event) =>
+                            commitTransformInput(
+                              "scale",
+                              event.currentTarget.value,
+                              event.currentTarget,
+                            )
                           }
+                          onKeyDown={handleTransformInputKeyDown}
                         />
                         <span>×</span>
                       </div>
@@ -972,17 +973,15 @@ function App() {
                           min="-180"
                           step="1"
                           type="number"
-                          value={transformDraft.rotation}
-                          onBlur={() => commitTransformInput("rotation")}
-                          onKeyDown={(event) =>
-                            handleTransformInputKeyDown("rotation", event)
-                          }
-                          onChange={(event) =>
-                            handleTransformInputChange(
+                          defaultValue={selectedTransform?.rotation ?? 0}
+                          onBlur={(event) =>
+                            commitTransformInput(
                               "rotation",
-                              event.target.value,
+                              event.currentTarget.value,
+                              event.currentTarget,
                             )
                           }
+                          onKeyDown={handleTransformInputKeyDown}
                         />
                         <span>°</span>
                       </div>
@@ -997,17 +996,17 @@ function App() {
                           min="0"
                           step="1"
                           type="number"
-                          value={transformDraft.opacity}
-                          onBlur={() => commitTransformInput("opacity")}
-                          onKeyDown={(event) =>
-                            handleTransformInputKeyDown("opacity", event)
-                          }
-                          onChange={(event) =>
-                            handleTransformInputChange(
+                          defaultValue={Math.round(
+                            (selectedTransform?.opacity ?? 1) * 100,
+                          )}
+                          onBlur={(event) =>
+                            commitTransformInput(
                               "opacity",
-                              event.target.value,
+                              event.currentTarget.value,
+                              event.currentTarget,
                             )
                           }
+                          onKeyDown={handleTransformInputKeyDown}
                         />
                         <span>%</span>
                       </div>
@@ -1269,30 +1268,15 @@ function formatTimecode(durationMs: number, frameRate: number): string {
   ].join(":");
 }
 
-function formatSignedPercent(value: number): string {
-  return (value >= 0 ? "+" : "") + value.toFixed(0) + "%";
-}
-
-function createTransformDraft(
-  transform: ClipTransform | null,
-): Record<TransformField, string> {
-  if (!transform) {
-    return {
-      x: "0",
-      y: "0",
-      scale: "1",
-      rotation: "0",
-      opacity: "100",
-    };
+function getTransformInputValue(
+  field: TransformField,
+  transform: ClipTransform,
+): string {
+  if (field === "opacity") {
+    return String(Math.round(transform.opacity * 100));
   }
 
-  return {
-    x: String(transform.x),
-    y: String(transform.y),
-    scale: String(transform.scale),
-    rotation: String(transform.rotation),
-    opacity: String(Math.round(transform.opacity * 100)),
-  };
+  return String(transform[field]);
 }
 
 function formatDuration(durationMs: number | null): string {
