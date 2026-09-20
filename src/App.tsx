@@ -509,6 +509,15 @@ function App() {
     );
   }
 
+  function handleTransformInputKeyDown(
+    field: TransformField,
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) {
+    if (event.key === "Enter") {
+      event.currentTarget.blur();
+    }
+  }
+
   function handleTransformInputChange(field: TransformField, value: string) {
     setTransformDraft((current) => ({
       ...current,
@@ -899,6 +908,7 @@ function App() {
                           type="number"
                           value={transformDraft.x}
                           onBlur={() => commitTransformInput("x")}
+                          onKeyDown={(event) => handleTransformInputKeyDown("x", event)}
                           onChange={(event) =>
                             handleTransformInputChange("x", event.target.value)
                           }
@@ -918,6 +928,7 @@ function App() {
                           type="number"
                           value={transformDraft.y}
                           onBlur={() => commitTransformInput("y")}
+                          onKeyDown={(event) => handleTransformInputKeyDown("y", event)}
                           onChange={(event) =>
                             handleTransformInputChange("y", event.target.value)
                           }
@@ -937,6 +948,7 @@ function App() {
                           type="number"
                           value={transformDraft.scale}
                           onBlur={() => commitTransformInput("scale")}
+                          onKeyDown={(event) => handleTransformInputKeyDown("scale", event)}
                           onChange={(event) =>
                             handleTransformInputChange("scale", event.target.value)
                           }
@@ -956,6 +968,9 @@ function App() {
                           type="number"
                           value={transformDraft.rotation}
                           onBlur={() => commitTransformInput("rotation")}
+                          onKeyDown={(event) =>
+                            handleTransformInputKeyDown("rotation", event)
+                          }
                           onChange={(event) =>
                             handleTransformInputChange(
                               "rotation",
@@ -978,6 +993,9 @@ function App() {
                           type="number"
                           value={transformDraft.opacity}
                           onBlur={() => commitTransformInput("opacity")}
+                          onKeyDown={(event) =>
+                            handleTransformInputKeyDown("opacity", event)
+                          }
                           onChange={(event) =>
                             handleTransformInputChange(
                               "opacity",
