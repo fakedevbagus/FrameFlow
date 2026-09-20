@@ -1398,7 +1398,7 @@ function App() {
                               <span>{label}</span>
                               <div className="inspector-transform-input-wrap">
                                 <input
-                                  aria-label={"Crop position " + field}
+                                  aria-label={"Crop position " + label}
                                   className="inspector-transform-input"
                                   max="100"
                                   min="0"
