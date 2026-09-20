@@ -1,5 +1,10 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
 import type { ClipTransform, Project } from "../project/domain";
 import { getClipTransform, normalizeClipTransform } from "../transform/transform";
 import {
@@ -208,7 +213,7 @@ function PreviewVisualLayer({
 
   function beginGesture(
     mode: CanvasManipulationMode,
-    event: React.PointerEvent,
+    event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
   ) {
     if (event.button !== 0) {
       return;
@@ -248,7 +253,7 @@ function PreviewVisualLayer({
     });
   }
 
-  function handlePointerMove(event: React.PointerEvent) {
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
     setGesture((currentGesture) => {
       if (
         !currentGesture ||
@@ -287,7 +292,7 @@ function PreviewVisualLayer({
     });
   }
 
-  function finishGesture(event: React.PointerEvent) {
+  function finishGesture(event: PointerEvent<HTMLDivElement>) {
     if (!gesture || gesture.pointerId !== event.pointerId) {
       return;
     }
@@ -308,7 +313,7 @@ function PreviewVisualLayer({
     }
   }
 
-  function cancelGesture(event: React.PointerEvent) {
+  function cancelGesture(event: PointerEvent<HTMLDivElement>) {
     if (!gesture || gesture.pointerId !== event.pointerId) {
       return;
     }
