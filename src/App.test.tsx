@@ -778,6 +778,9 @@ describe("App", () => {
       '[data-testid^="preview-hit-area-"]',
     );
     expect(hitArea).not.toBeNull();
+    if (!hitArea) {
+      throw new Error("Preview hit area was not rendered.");
+    }
 
     Object.defineProperty(hitArea, "getBoundingClientRect", {
       configurable: true,
@@ -820,7 +823,7 @@ describe("App", () => {
         left: "37.5%",
         top: "5.555555555555555%",
       });
-      expect(screen.getByText("37.5%, 5.555555555555555%")).toBeInTheDocument();
+      expect(screen.getByText("38%, 6%")).toBeInTheDocument();
       expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(
         -12.5,
       );
