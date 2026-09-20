@@ -1264,7 +1264,19 @@ function App() {
                       <span>Crop</span>
                       <small>Per-clip, not keyframed</small>
                     </div>
-                    <div className="inspector-crop-grid">
+                    <div
+                      className="inspector-crop-grid"
+                      key={
+                        selectedCrop
+                          ? [
+                              selectedCrop.top,
+                              selectedCrop.right,
+                              selectedCrop.bottom,
+                              selectedCrop.left,
+                            ].join("|")
+                          : "none"
+                      }
+                    >
                       {([
                         ["top", "Top"],
                         ["right", "Right"],
