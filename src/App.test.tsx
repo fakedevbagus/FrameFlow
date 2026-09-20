@@ -674,6 +674,13 @@ describe("App", () => {
     });
     fireEvent.loadedMetadata(video);
 
+    await waitFor(() =>
+      expect(screen.getByTestId("preview-video")).toHaveAttribute(
+        "data-media-width",
+        "1920",
+      ),
+    );
+
     fireEvent.change(screen.getByRole("spinbutton", { name: "Scale" }), {
       target: { value: "2" },
     });
