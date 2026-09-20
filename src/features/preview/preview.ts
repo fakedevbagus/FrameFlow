@@ -2,7 +2,6 @@ import type { Clip, MediaAsset, Project, Track } from "../project/domain";
 import {
   getClipTransition,
   getDissolveOpacities,
-  getNextClipForTransition,
   isTransitionAdjacent,
 } from "../transition/transition";
 
