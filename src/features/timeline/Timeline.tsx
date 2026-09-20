@@ -882,7 +882,7 @@ function TimelineTrack({
                       if (event.key === "Escape") {
                         event.preventDefault();
                         event.stopPropagation();
-                        cancelKeyframeInteraction(event);
+                        onCancelKeyframeInteraction();
                         return;
                       }
 
