@@ -162,15 +162,17 @@ function PreviewVisualLayer({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
-  const streamUrl = createMediaStreamUrl(layer.asset.sourcePath);
+  const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
     height: number;
   } | null>(null);
-  const [videoSourceUrl, setVideoSourceUrl] = useState(streamUrl);
-  const [isPreparingPreview, setIsPreparingPreview] = useState(false);
-  const [previewFallbackAttempted, setPreviewFallbackAttempted] = useState(false);
+  const [isPreparingPreview, setIsPreparingPreview] = useState(
+    layer.asset.mediaType === "video",
+  );
+  const onErrorRef = useRef(onError);
+
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const transformTimeMs = Math.min(
     Math.max(currentTimeMs - layer.clip.timelineStartMs, 0),
@@ -211,6 +213,55 @@ function PreviewVisualLayer({
     height: `${contentBoundsPercent.height}%`,
     transformOrigin: "center center",
   };
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    if (layer.asset.mediaType !== "video") {
+      return;
+    }
+
+    let cancelled = false;
+
+    setIsPreparingPreview(true);
+    setVideoSourceUrl(null);
+
+    void invoke<string>("prepare_media_preview", {
+      path: layer.asset.sourcePath,
+    })
+      .then((previewPath) =>
+        invoke<string>("get_media_http_url", {
+          path: previewPath,
+        }),
+      )
+      .then((url) => {
+        if (cancelled) {
+          return;
+        }
+
+        setVideoSourceUrl(url);
+        setIsPreparingPreview(false);
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+
+        setIsPreparingPreview(false);
+        onErrorRef.current(
+          layer.asset.id,
+          error instanceof Error
+            ? error.message
+            : "A compatible video preview could not be prepared.",
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [layer.asset.id, layer.asset.mediaType, layer.asset.sourcePath]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -262,7 +313,6 @@ function PreviewVisualLayer({
       width: media.videoWidth,
       height: media.videoHeight,
     });
-    setIsPreparingPreview(false);
 
     try {
       media.currentTime = Math.max(0, localTimeMs / 1000);
@@ -271,43 +321,16 @@ function PreviewVisualLayer({
     }
   }
 
-  async function handleVideoError() {
-    if (previewFallbackAttempted || isPreparingPreview) {
-      setIsPreparingPreview(false);
-      const mediaError = mediaRef.current?.error;
-      const errorCode = mediaError?.code ? ` (media error code ${mediaError.code})` : "";
+  function handleVideoError() {
+    const mediaError = mediaRef.current?.error;
+    const errorCode = mediaError?.code
+      ? ` (media error code ${mediaError.code})`
+      : "";
 
-      onError(
-        layer.asset.id,
-        `Video preview could not be loaded${errorCode}. The Linux WebView could not decode the preview stream.`,
-      );
-      return;
-    }
-
-    setPreviewFallbackAttempted(true);
-    setIsPreparingPreview(true);
-
-    try {
-      const previewPath = await invoke<string>("prepare_media_preview", {
-        path: layer.asset.sourcePath,
-      });
-      const previewUrl = createMediaStreamUrl(previewPath);
-
-      if (!previewUrl) {
-        throw new Error("Generated preview path could not be loaded.");
-      }
-
-      setMediaSize(null);
-      setVideoSourceUrl(previewUrl);
-    } catch (error) {
-      setIsPreparingPreview(false);
-      onError(
-        layer.asset.id,
-        error instanceof Error
-          ? error.message
-          : "A compatible video preview could not be generated.",
-      );
-    }
+    onError(
+      layer.asset.id,
+      `Video preview could not be loaded${errorCode}. The local preview server could not deliver a playable stream.`,
+    );
   }
 
   function handleImageLoad() {
@@ -501,7 +524,7 @@ function PreviewVisualLayer({
     );
   }
 
-  if (!mediaUrl) {
+  if (layer.asset.mediaType === "image" && !mediaUrl) {
     return (
       <div
         className="preview-interaction-layer preview-layer-error"
@@ -575,7 +598,7 @@ function PreviewVisualLayer({
           playsInline
           preload="auto"
           ref={mediaRef}
-          src={videoSourceUrl ?? streamUrl}
+          src={videoSourceUrl ?? undefined}
           style={{
             width: "100%",
             height: "100%",
@@ -605,7 +628,39 @@ function PreviewAudioLayer({
 }: PreviewLayerProps) {
   const mediaRef = useRef<HTMLAudioElement | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
-  const mediaUrl = createMediaStreamUrl(layer.asset.sourcePath);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void invoke<string>("get_media_http_url", {
+      path: layer.asset.sourcePath,
+    })
+      .then((url) => {
+        if (!cancelled) {
+          setMediaUrl(url);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          onErrorRef.current(
+            layer.asset.id,
+            error instanceof Error
+              ? error.message
+              : "Audio preview could not be prepared.",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [layer.asset.id, layer.asset.sourcePath]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -683,7 +738,7 @@ function PreviewAudioLayer({
       data-testid="preview-audio"
       preload="auto"
       ref={mediaRef}
-      src={mediaUrl}
+      src={mediaUrl ?? undefined}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
     />
@@ -708,6 +763,4 @@ function getClipDurationMsForTransform(clip: ActivePreviewClip["clip"]): number 
 }
 
 
-function createMediaStreamUrl(path: string): string {
-  return `stream://localhost/${encodeURIComponent(path)}`;
-}
+
