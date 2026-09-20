@@ -274,9 +274,12 @@ function PreviewVisualLayer({
   async function handleVideoError() {
     if (previewFallbackAttempted || isPreparingPreview) {
       setIsPreparingPreview(false);
+      const mediaError = mediaRef.current?.error;
+      const errorCode = mediaError?.code ? ` (media error code ${mediaError.code})` : "";
+
       onError(
         layer.asset.id,
-        "Video preview could not be loaded. Try converting the source to a browser-compatible format.",
+        `Video preview could not be loaded${errorCode}. The Linux WebView could not decode the preview stream.`,
       );
       return;
     }
