@@ -337,6 +337,25 @@ Do not jump directly into a large CapCut-scale feature set. Build in vertical sl
 
 The exact next milestone should be based on the actual current repository state after the preceding validation.
 
+## Next milestone — M3.14
+
+Title: Keyframe UX hardening
+Branch: `feat/m3-14-keyframe-ux-hardening`
+
+Scope:
+- Preserve the existing keyframe model and history architecture.
+- Make keyboard focus on a keyframe marker select its owning clip.
+- Expose the active keyframe state through `aria-current`.
+- Allow Escape to cancel an in-progress keyframe drag without committing a move.
+- Add focused regression coverage for these interactions.
+
+Validation status:
+- Implementation is in progress.
+- Local validation has not yet been reported for M3.14.
+
+Next step:
+- Run lint, tests, build, then manual keyframe interaction checks before preparing the PR for merge.
+
 ## Documentation protocol
 
 For every milestone or meaningful bug fix, update:
