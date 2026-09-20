@@ -14,6 +14,7 @@ The project is being built incrementally. Every milestone must be small, testabl
 - M3.14 was merged as PR #24 with merge SHA `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`.
 - M3.15 was merged as PR #25 with merge SHA `69c2b5edee8e4ea5e5d530c2402e0c9ce7281abc`.
 - M3.16 was merged as PR #26 with merge SHA `cb61fb6277d8b800f30978098ba5abfaf2acc97f`.
+- M3.17 was merged as PR #27 with merge SHA `dd4333deccc420bfe07dd68f05c2cb49ae865bdb`.
 - New milestone branches must be created from the updated `main` after the preceding milestone validation.
 
 ## Development environment
@@ -420,38 +421,40 @@ Known limitation:
 Next step:
 - Start the next focused transform-interaction milestone from updated `main`, prioritizing direct crop-handle manipulation while preserving the current history and transform architecture.
 
-## M3.17 — Direct crop handle manipulation (in progress)
+## M3.17 — Direct crop handle manipulation — completed
 
 Branch: `feat/m3-17-direct-crop-handles`
 PR: #27
+Merge SHA: `dd4333deccc420bfe07dd68f05c2cb49ae865bdb`
 
-Scope:
-- Add direct Top, Right, Bottom, and Left crop handles to the selected visual preview.
-- Convert pointer coordinates back through the active transform and anchor so crop edits target the underlying media content rather than the transformed screen rectangle.
-- Keep direct crop edits temporary during pointer movement and commit a single crop history operation on pointer release.
-- Preserve existing Inspector crop editing, transform controls, keyframes, playback behavior, and split preservation.
+Scope delivered:
+- Added direct Top, Right, Bottom, and Left crop handles to the selected visual preview.
+- Converted pointer coordinates through the active transform and anchor so crop editing targets the underlying media content.
+- Added live crop feedback during pointer movement.
+- Committed a single crop history operation on pointer release.
+- Preserved existing Inspector crop editing, transform controls, keyframes, playback behavior, and split preservation.
 
 Architecture decisions:
 - Crop remains stored as normalized per-edge insets on the existing `Clip.crop` model.
-- Direct crop math is isolated in `src/features/preview/canvasManipulation.ts` and reuses the existing transform/anchor domain helpers.
-- Crop handles are rendered as an interaction overlay rather than applying pointer events to the clipped media element.
+- Direct crop math lives in `src/features/preview/canvasManipulation.ts`.
+- Crop handles are rendered as an interaction overlay.
 - Crop commits continue through the existing App history engine and `updateClipCrop` command.
 
-Automated coverage added:
+Automated coverage:
 - Direct crop pointer mapping without transform.
-- Crop pointer mapping through scale, rotation, translation, and non-center anchor.
+- Crop mapping through scale, rotation, translation, and non-center anchor.
 - Protection against removing all visible content.
-- Preview crop-handle drag callback.
-- App crop-handle history workflow including Undo.
+- Preview crop-handle interaction.
+- App crop history and Undo workflow.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local lint, test, build, Tauri dev, and the requested M3.17 manual crop-handle checks passed on Linux.
 
 Known limitation:
 - Aspect-ratio crop presets and crop-position translation compensation remain future work.
 
 Next step:
-- Run local lint, test, build, Tauri dev, and direct crop-handle manual checks before merging PR #27.
+- Start M3.18 with crop-position translation compensation so changing the crop can optionally preserve the visible content position.
 
 ## Documentation protocol
 
