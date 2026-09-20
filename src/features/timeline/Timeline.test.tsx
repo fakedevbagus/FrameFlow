@@ -531,7 +531,6 @@ describe("Timeline", () => {
 
   it("cancels clip movement and trimming with Escape", () => {
     const project = createVideoProject();
-    const clipId = project.tracks[0].clips[0].id;
     const onMoveClip = vi.fn();
     const onTrimClipStart = vi.fn();
     const onTrimClipEnd = vi.fn();
