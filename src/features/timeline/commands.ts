@@ -109,12 +109,21 @@ export function addTrack(
   type: TrackType,
   now: Date = new Date(),
 ): Project {
-  const trackCount = project.tracks.filter((track) => track.type === type).length;
   const label = type === "video" ? "Video" : "Audio";
+  const existingNames = new Set(
+    project.tracks
+      .filter((track) => track.type === type)
+      .map((track) => track.name),
+  );
+  let nextNumber = 1;
+
+  while (existingNames.has(`${label} ${nextNumber}`)) {
+    nextNumber += 1;
+  }
 
   const track = {
     id: crypto.randomUUID(),
-    name: `${label} ${trackCount + 1}`,
+    name: `${label} ${nextNumber}`,
     type,
     isLocked: false,
     isMuted: false,
