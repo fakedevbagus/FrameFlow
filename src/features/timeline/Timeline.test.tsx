@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
@@ -198,14 +198,16 @@ describe("Timeline", () => {
       getData: vi.fn(() => "asset-overlay"),
     };
 
-    fireEvent.drop(secondLane, {
-      dataTransfer,
-      clientX: 120,
+    const dropEvent = createEvent.drop(secondLane, { dataTransfer });
+    Object.defineProperty(dropEvent, "clientX", {
+      configurable: true,
+      value: 120,
     });
+    fireEvent(secondLane, dropEvent);
 
     expect(onAddAssetToTrack).toHaveBeenCalledWith(
       "asset-overlay",
-      project.tracks[2].id,
+      project.tracks[1].id,
       3000,
     );
   });
@@ -232,7 +234,7 @@ describe("Timeline", () => {
       screen.getByRole("button", { name: "Remove Video 2 track" }),
     );
     expect(onRemoveTrack).toHaveBeenCalledWith(
-      extraTrack.tracks[2].id,
+      extraTrack.tracks[1].id,
     );
   });
 

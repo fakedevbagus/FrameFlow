@@ -7,7 +7,9 @@ import {
   moveClipOnTimeline,
   removeClipFromTimeline,
   removeTrack,
+  resetClipTransform,
   toggleTrackMute,
+  updateClipTransform,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -16,6 +18,7 @@ import { Timeline } from "./features/timeline/Timeline";
 import { Preview } from "./features/preview/Preview";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
+import { getClipTransform } from "./features/transform/transform";
 import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
 import {
   commitHistory,
@@ -56,6 +59,9 @@ function App() {
   const canRedo = history.future.length > 0;
   const assets = project.assets;
   const selectedClipContext = findClipContext(project, selectedClipId);
+  const selectedTransform = selectedClipContext
+    ? getClipTransform(selectedClipContext.clip.transform)
+    : null;
   const timelineDurationMs = getTimelineDurationMs(project);
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
@@ -457,6 +463,49 @@ function App() {
     );
   }
 
+  function handleAdjustSelectedTransform(
+    field: "x" | "y" | "scale" | "rotation" | "opacity",
+    delta: number,
+  ) {
+    if (
+      !selectedClipContext ||
+      !selectedClipContext.asset ||
+      (selectedClipContext.asset.mediaType !== "video" &&
+        selectedClipContext.asset.mediaType !== "image")
+    ) {
+      return;
+    }
+
+    const currentTransform = getClipTransform(
+      selectedClipContext.clip.transform,
+    );
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipTransform(currentProject, selectedClipContext.clip.id, {
+          [field]: currentTransform[field] + delta,
+        }),
+      "Transform updated.",
+    );
+  }
+
+  function handleResetSelectedTransform() {
+    if (
+      !selectedClipContext ||
+      !selectedClipContext.asset ||
+      (selectedClipContext.asset.mediaType !== "video" &&
+        selectedClipContext.asset.mediaType !== "image")
+    ) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        resetClipTransform(currentProject, selectedClipContext.clip.id),
+      "Transform reset.",
+    );
+  }
+
   function canSplitSelectedClip(): boolean {
     if (!selectedClipContext || selectedClipContext.clip.sourceEndMs === null) {
       return false;
@@ -742,6 +791,119 @@ function App() {
                 </strong>
               </div>
 
+              {(selectedClipContext.asset?.mediaType === "video" ||
+                selectedClipContext.asset?.mediaType === "image") ? (
+                <div className="inspector-section">
+                  <div className="inspector-section-header">
+                    <span className="inspector-section-title">Transform</span>
+                    <button
+                      aria-label="Reset transform"
+                      className="inspector-inline-button"
+                      onClick={handleResetSelectedTransform}
+                      type="button"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <div className="inspector-transform-readout">
+                    <span>X</span>
+                    <strong>{formatSignedPercent(selectedTransform?.x ?? 0)}</strong>
+                    <span>Y</span>
+                    <strong>{formatSignedPercent(selectedTransform?.y ?? 0)}</strong>
+                    <span>Scale</span>
+                    <strong>{(selectedTransform?.scale ?? 1).toFixed(2)}×</strong>
+                    <span>Rotation</span>
+                    <strong>{selectedTransform?.rotation ?? 0}°</strong>
+                    <span>Opacity</span>
+                    <strong>{Math.round((selectedTransform?.opacity ?? 1) * 100)}%</strong>
+                  </div>
+
+                  <div className="inspector-transform-grid">
+                    <button
+                      aria-label="Move visual left"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("x", -5)}
+                      type="button"
+                    >
+                      X −5%
+                    </button>
+                    <button
+                      aria-label="Move visual right"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("x", 5)}
+                      type="button"
+                    >
+                      X +5%
+                    </button>
+                    <button
+                      aria-label="Move visual up"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("y", -5)}
+                      type="button"
+                    >
+                      Y −5%
+                    </button>
+                    <button
+                      aria-label="Move visual down"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("y", 5)}
+                      type="button"
+                    >
+                      Y +5%
+                    </button>
+                    <button
+                      aria-label="Scale visual down"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("scale", -0.1)}
+                      type="button"
+                    >
+                      Scale −
+                    </button>
+                    <button
+                      aria-label="Scale visual up"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("scale", 0.1)}
+                      type="button"
+                    >
+                      Scale +
+                    </button>
+                    <button
+                      aria-label="Rotate visual left"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("rotation", -15)}
+                      type="button"
+                    >
+                      ↺ 15°
+                    </button>
+                    <button
+                      aria-label="Rotate visual right"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("rotation", 15)}
+                      type="button"
+                    >
+                      ↻ 15°
+                    </button>
+                    <button
+                      aria-label="Decrease visual opacity"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("opacity", -0.1)}
+                      type="button"
+                    >
+                      Opacity −
+                    </button>
+                    <button
+                      aria-label="Increase visual opacity"
+                      className="toolbar-button"
+                      onClick={() => handleAdjustSelectedTransform("opacity", 0.1)}
+                      type="button"
+                    >
+                      Opacity +
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="inspector-section">
                 <span className="inspector-section-title">Move</span>
                 <div className="inspector-button-grid">
@@ -910,6 +1072,10 @@ function formatTimecode(durationMs: number, frameRate: number): string {
     seconds.toString().padStart(2, "0"),
     frame.toString().padStart(2, "0"),
   ].join(":");
+}
+
+function formatSignedPercent(value: number): string {
+  return (value >= 0 ? "+" : "") + value.toFixed(0) + "%";
 }
 
 function formatDuration(durationMs: number | null): string {

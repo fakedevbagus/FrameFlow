@@ -5,7 +5,9 @@ import {
   addAssetToTrack,
   addTrack,
   removeTrack,
+  resetClipTransform,
   toggleTrackMute,
+  updateClipTransform,
   moveClipOnTimeline,
   removeClipFromTimeline,
   splitClipAtTime,
@@ -26,8 +28,8 @@ describe("track management", () => {
     expect(updated.tracks.map((track) => track.name)).toEqual([
       "Video 1",
       "Video 2",
-      "Audio 1",
       "Video 3",
+      "Audio 1",
     ]);
     expect(updated.tracks[3].clips).toHaveLength(0);
   });
@@ -35,7 +37,7 @@ describe("track management", () => {
   it("removes only empty tracks and keeps the last track of a type", () => {
     const project = addTrack(createProject({ id: "track-remove" }), "video");
 
-    const removableId = project.tracks[2].id;
+    const removableId = project.tracks[1].id;
     const updated = removeTrack(
       project,
       removableId,
@@ -87,15 +89,15 @@ describe("track management", () => {
     };
 
     project = addTrack(project, "video");
-    project = addAssetToTrack(project, "video", project.tracks[2].id, 6000);
-    project = addAssetToTrack(project, "image", project.tracks[2].id, 12000);
-    project = addAssetToTrack(project, "audio", project.tracks[1].id, 3000);
+    project = addAssetToTrack(project, "video", project.tracks[1].id, 6000);
+    project = addAssetToTrack(project, "image", project.tracks[1].id, 12000);
+    project = addAssetToTrack(project, "audio", project.tracks[2].id, 3000);
 
-    expect(project.tracks[2].clips.map((clip) => clip.timelineStartMs)).toEqual([
+    expect(project.tracks[1].clips.map((clip) => clip.timelineStartMs)).toEqual([
       6000,
       12000,
     ]);
-    expect(project.tracks[1].clips[0].timelineStartMs).toBe(3000);
+    expect(project.tracks[2].clips[0].timelineStartMs).toBe(3000);
   });
 
   it("rejects incompatible media, locked tracks, and overlapping drops", () => {
@@ -140,6 +142,79 @@ describe("track management", () => {
     expect(() =>
       addAssetToTrack(populated, "video", "video-1", 2000),
     ).toThrow("Media cannot overlap another clip on the same track.");
+  });
+});
+
+describe("clip transforms", () => {
+  it("updates and clamps visual clip transforms", () => {
+    let project = createProject({ id: "transform-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipTransform(project, clipId, {
+      x: 25,
+      y: -10,
+      scale: 1.5,
+      rotation: 45,
+      opacity: 0.7,
+    });
+
+    expect(updated.tracks[0].clips[0].transform).toEqual({
+      x: 25,
+      y: -10,
+      scale: 1.5,
+      rotation: 45,
+      opacity: 0.7,
+    });
+
+    const reset = resetClipTransform(updated, clipId);
+
+    expect(reset.tracks[0].clips[0].transform).toEqual({
+      x: 0,
+      y: 0,
+      scale: 1,
+      rotation: 0,
+      opacity: 1,
+    });
+  });
+
+  it("rejects transform updates for audio clips", () => {
+    let project = createProject({ id: "audio-transform-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "audio",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music.mp3",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "audio");
+
+    expect(() =>
+      updateClipTransform(project, project.tracks[1].clips[0].id, {
+        scale: 2,
+      }),
+    ).toThrow("Transform controls are only available for visual media.");
   });
 });
 

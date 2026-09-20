@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { importMediaFiles } from "./features/media/import";
 
+vi.mock("@tauri-apps/api/core", () => ({
+  convertFileSrc: (path: string) => "asset://" + path,
+}));
+
 vi.mock("./features/media/import", () => ({
   importMediaFiles: vi.fn(),
 }));
@@ -168,6 +172,71 @@ describe("App", () => {
 
     expect(clip).toBeInTheDocument();
     expect(container.querySelector(".timeline-playhead")).not.toBeNull();
+  });
+
+  it("applies visual transform controls and resets them", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-transform-ui",
+        name: "transform-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/transform-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("transform-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add transform-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select transform-ui.mp4 clip",
+      }),
+    );
+
+    expect(screen.getByText("Transform")).toBeInTheDocument();
+    expect(container).toHaveTextContent("X");
+    expect(container).toHaveTextContent("Y");
+    expect(container).toHaveTextContent("1.00×");
+    expect(container).toHaveTextContent("0°");
+    expect(container).toHaveTextContent("100%");
+
+    fireEvent.click(screen.getByRole("button", { name: "Move visual right" }));
+    fireEvent.click(screen.getByRole("button", { name: "Scale visual up" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rotate visual right" }));
+    fireEvent.click(screen.getByRole("button", { name: "Decrease visual opacity" }));
+
+    await waitFor(() => {
+      expect(container).toHaveTextContent("+5%");
+      expect(container).toHaveTextContent("1.10×");
+      expect(container).toHaveTextContent("15°");
+      expect(container).toHaveTextContent("90%");
+    });
+
+    const previewVideo = screen.getByTestId("preview-video");
+    expect(previewVideo).toHaveStyle({
+      transform: "translate(5%, 0%) scale(1.1) rotate(15deg)",
+      opacity: "0.9",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset transform" }));
+
+    await waitFor(() => {
+      expect(container).toHaveTextContent("+0%");
+      expect(container).toHaveTextContent("1.00×");
+      expect(container).toHaveTextContent("0°");
+      expect(container).toHaveTextContent("100%");
+    });
   });
 
   it("undoes and redoes a timeline edit with keyboard shortcuts", async () => {
