@@ -23,6 +23,21 @@ const { invokeMock } = await import("@tauri-apps/api/core").then((module) => ({
 beforeEach(() => {
   vi.restoreAllMocks();
   invokeMock.mockReset();
+  invokeMock.mockImplementation((command: string) => {
+    if (command === "prepare_media_preview") {
+      return Promise.resolve(
+        "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/default.mp4",
+      );
+    }
+
+    if (command === "get_media_http_url") {
+      return Promise.resolve(
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fdefault.mp4",
+      );
+    }
+
+    return Promise.resolve(undefined);
+  });
 });
 
 describe("Preview", () => {
@@ -60,10 +75,14 @@ describe("Preview", () => {
     );
   });
 
-  it("falls back to a compatible preview when the source video cannot be decoded", async () => {
-    invokeMock.mockResolvedValueOnce(
-      "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/video-preview.mp4",
-    );
+  it("prepares a compatible preview for the video layer", async () => {
+    invokeMock
+      .mockResolvedValueOnce(
+        "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/video-preview.mp4",
+      )
+      .mockResolvedValueOnce(
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
+      );
 
     let project = createProject({ id: "video-preview-fallback" });
 
@@ -91,17 +110,17 @@ describe("Preview", () => {
     );
 
     const video = screen.getByTestId("preview-video");
-    await act(async () => {
-      fireEvent.error(video);
-    });
 
     await vi.waitFor(() => {
       expect(invokeMock).toHaveBeenCalledWith("prepare_media_preview", {
         path: "/media/unsupported.mp4",
       });
+      expect(invokeMock).toHaveBeenCalledWith("get_media_http_url", {
+        path: "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/video-preview.mp4",
+      });
       expect(video).toHaveAttribute(
         "src",
-        "stream://localhost/%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
       );
     });
   });
