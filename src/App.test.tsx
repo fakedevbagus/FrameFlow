@@ -270,6 +270,96 @@ describe("App", () => {
     });
   });
 
+  it("commits direct crop-handle edits into project history", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-canvas-crop",
+        name: "canvas-crop.mp4",
+        mediaType: "video",
+        sourcePath: "/media/canvas-crop.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("canvas-crop.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add canvas-crop.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select canvas-crop.mp4 clip",
+      }),
+    );
+
+    const hitArea = screen.getByTestId(
+      /preview-hit-area-/,
+    );
+
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const handle = screen.getByRole("button", { name: "Crop top" });
+
+    fireEvent.pointerDown(handle, {
+      button: 0,
+      pointerId: 11,
+      clientX: 100,
+      clientY: 0,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 11,
+      clientX: 100,
+      clientY: 40,
+    });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 11,
+      clientX: 100,
+      clientY: 40,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(10);
+      expect(screen.getByTestId("preview-video")).toHaveStyle({
+        clipPath: "inset(10% 0% 0% 0%)",
+      });
+    });
+
+    expect(container).toHaveTextContent("Canvas crop updated.");
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(0);
+      expect(screen.getByTestId("preview-video")).toHaveStyle({
+        clipPath: "inset(0% 0% 0% 0%)",
+      });
+    });
+  });
+
   it("applies visual transform controls and resets them", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
