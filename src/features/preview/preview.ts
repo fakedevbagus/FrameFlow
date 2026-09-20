@@ -1,23 +1,112 @@
 import type { Clip, MediaAsset, Project, Track } from "../project/domain";
+import {
+  getClipTransition,
+  getDissolveOpacities,
+  getNextClipForTransition,
+  isTransitionAdjacent,
+} from "../transition/transition";
 
 export interface ActivePreviewClip {
   asset: MediaAsset;
   clip: Clip;
   track: Track;
   trackIndex: number;
+  transitionOpacity?: number;
 }
 
 export function getActiveVisualPreviewClips(
   project: Project,
   timelineTimeMs: number,
 ): ActivePreviewClip[] {
-  return getActivePreviewClips(
-    project,
-    timelineTimeMs,
-    (track, asset) =>
-      track.type === "video" &&
-      (asset.mediaType === "video" || asset.mediaType === "image"),
-  );
+  const safeTimeMs = Math.max(0, timelineTimeMs);
+  const activeLayers: ActivePreviewClip[] = [];
+
+  project.tracks.forEach((track, trackIndex) => {
+    if (track.isMuted || track.type !== "video") {
+      return;
+    }
+
+    const orderedClips = [...track.clips].sort(
+      (left, right) => left.timelineStartMs - right.timelineStartMs,
+    );
+
+    for (let index = 0; index < orderedClips.length; index += 1) {
+      const outgoingClip = orderedClips[index];
+      const outgoingAsset = project.assets.find(
+        (candidate) => candidate.id === outgoingClip.assetId,
+      );
+
+      if (
+        !outgoingAsset ||
+        (outgoingAsset.mediaType !== "video" &&
+          outgoingAsset.mediaType !== "image")
+      ) {
+        continue;
+      }
+
+      const incomingClip = orderedClips[index + 1];
+
+      if (incomingClip) {
+        const incomingAsset = project.assets.find(
+          (candidate) => candidate.id === incomingClip.assetId,
+        );
+        const transition = getClipTransition(outgoingClip.transitionOut);
+
+        if (
+          incomingAsset &&
+          (incomingAsset.mediaType === "video" ||
+            incomingAsset.mediaType === "image") &&
+          transition &&
+          isTransitionAdjacent(outgoingClip, incomingClip)
+        ) {
+          const opacities = getDissolveOpacities(
+            safeTimeMs,
+            outgoingClip,
+            incomingClip,
+            transition,
+          );
+
+          if (opacities) {
+            activeLayers.push({
+              asset: outgoingAsset,
+              clip: outgoingClip,
+              track,
+              trackIndex,
+              transitionOpacity: opacities.outgoingOpacity,
+            });
+            activeLayers.push({
+              asset: incomingAsset,
+              clip: incomingClip,
+              track,
+              trackIndex,
+              transitionOpacity: opacities.incomingOpacity,
+            });
+            return;
+          }
+        }
+      }
+
+      const clipDurationMs =
+        outgoingClip.sourceEndMs === null
+          ? Number.POSITIVE_INFINITY
+          : Math.max(0, outgoingClip.sourceEndMs - outgoingClip.sourceStartMs);
+      const clipEndMs = outgoingClip.timelineStartMs + clipDurationMs;
+
+      if (
+        safeTimeMs >= outgoingClip.timelineStartMs &&
+        safeTimeMs < clipEndMs
+      ) {
+        activeLayers.push({
+          asset: outgoingAsset,
+          clip: outgoingClip,
+          track,
+          trackIndex,
+        });
+      }
+    }
+  });
+
+  return activeLayers;
 }
 
 export function getActiveAudioPreviewClips(
