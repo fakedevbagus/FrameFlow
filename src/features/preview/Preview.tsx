@@ -161,7 +161,8 @@ function PreviewVisualLayer({
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
-  const mediaUrl = createMediaStreamUrl(layer.asset.sourcePath);
+  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+  const streamUrl = createMediaStreamUrl(layer.asset.sourcePath);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
@@ -571,7 +572,7 @@ function PreviewVisualLayer({
           playsInline
           preload="auto"
           ref={mediaRef}
-          src={videoSourceUrl ?? mediaUrl}
+          src={videoSourceUrl ?? streamUrl}
           style={{
             width: "100%",
             height: "100%",
