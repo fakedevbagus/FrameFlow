@@ -2,7 +2,11 @@ import type { Clip, Project, TrackType } from "../project/domain";
 
 const defaultImageDurationMs = 3000;
 
-export function addAssetToTimeline(project: Project, assetId: string, now: Date = new Date()): Project {
+export function addAssetToTimeline(
+  project: Project,
+  assetId: string,
+  now: Date = new Date(),
+): Project {
   const asset = project.assets.find((candidate) => candidate.id === assetId);
 
   if (!asset) {
@@ -10,26 +14,150 @@ export function addAssetToTimeline(project: Project, assetId: string, now: Date 
   }
 
   const trackType: TrackType = asset.mediaType === "audio" ? "audio" : "video";
-  const trackIndex = project.tracks.findIndex((track) => track.type === trackType);
+  const track = project.tracks.find((candidate) => candidate.type === trackType);
 
-  if (trackIndex === -1) {
+  if (!track) {
     throw new Error(`Project has no ${trackType} track.`);
   }
 
+  const timelineStartMs = track.clips.reduce(
+    (latest, clip) =>
+      Math.max(latest, clip.timelineStartMs + clipDuration(clip)),
+    0,
+  );
+
+  return addAssetToTrack(project, assetId, track.id, timelineStartMs, now);
+}
+
+export function addAssetToTrack(
+  project: Project,
+  assetId: string,
+  trackId: string,
+  timelineStartMs: number | null = null,
+  now: Date = new Date(),
+): Project {
+  const asset = project.assets.find((candidate) => candidate.id === assetId);
+  const trackIndex = project.tracks.findIndex((candidate) => candidate.id === trackId);
+
+  if (!asset) {
+    throw new Error("Asset does not exist in this project.");
+  }
+
+  if (trackIndex === -1) {
+    throw new Error("Track does not exist in this project.");
+  }
+
   const track = project.tracks[trackIndex];
-  const timelineStartMs = track.clips.reduce((latest, clip) => Math.max(latest, clip.timelineStartMs + clipDuration(clip)), 0);
+
+  if (track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const compatible =
+    track.type === "audio"
+      ? asset.mediaType === "audio"
+      : asset.mediaType === "video" || asset.mediaType === "image";
+
+  if (!compatible) {
+    throw new Error(
+      `Cannot add ${asset.mediaType} media to a ${track.type} track.`,
+    );
+  }
+
   const durationMs = asset.durationMs ?? defaultImageDurationMs;
+  const requestedStartMs =
+    timelineStartMs === null
+      ? track.clips.reduce(
+          (latest, clip) =>
+            Math.max(latest, clip.timelineStartMs + clipDuration(clip)),
+          0,
+        )
+      : Math.max(0, timelineStartMs);
+
+  const candidateEndMs = requestedStartMs + durationMs;
+
+  if (
+    hasTimelineOverlap(
+      track,
+      "",
+      requestedStartMs,
+      candidateEndMs,
+    )
+  ) {
+    throw new Error("Media cannot overlap another clip on the same track.");
+  }
+
   const clip: Clip = {
     id: crypto.randomUUID(),
     assetId: asset.id,
-    timelineStartMs,
+    timelineStartMs: requestedStartMs,
     sourceStartMs: 0,
     sourceEndMs: durationMs,
   };
-  const tracks = [...project.tracks];
-  tracks[trackIndex] = { ...track, clips: [...track.clips, clip] };
+
+  const tracks = project.tracks.map((candidate, index) =>
+    index === trackIndex
+      ? { ...candidate, clips: [...candidate.clips, clip] }
+      : candidate,
+  );
 
   return { ...project, tracks, updatedAt: now.toISOString() };
+}
+
+export function addTrack(
+  project: Project,
+  type: TrackType,
+  now: Date = new Date(),
+): Project {
+  const trackCount = project.tracks.filter((track) => track.type === type).length;
+  const label = type === "video" ? "Video" : "Audio";
+
+  const track = {
+    id: crypto.randomUUID(),
+    name: `${label} ${trackCount + 1}`,
+    type,
+    isLocked: false,
+    isMuted: false,
+    clips: [],
+  } satisfies Project["tracks"][number];
+
+  return {
+    ...project,
+    tracks: [...project.tracks, track],
+    updatedAt: now.toISOString(),
+  };
+}
+
+export function removeTrack(
+  project: Project,
+  trackId: string,
+  now: Date = new Date(),
+): Project {
+  const trackIndex = project.tracks.findIndex((track) => track.id === trackId);
+
+  if (trackIndex === -1) {
+    throw new Error("Track does not exist in this project.");
+  }
+
+  const track = project.tracks[trackIndex];
+
+  if (track.clips.length > 0) {
+    throw new Error("Track must be empty before it can be removed.");
+  }
+
+  const remainingSameType = project.tracks.filter(
+    (candidate) => candidate.type === track.type,
+  );
+
+  if (remainingSameType.length <= 1) {
+    throw new Error("The last track of this type cannot be removed.");
+  }
+
+  return {
+    ...project,
+    tracks: project.tracks.filter((_, index) => index !== trackIndex),
+    updatedAt: now.toISOString(),
+  };
 }
 
 function clipDuration(clip: Clip): number {
