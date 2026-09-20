@@ -1,4 +1,4 @@
-import type { ClipTransform, TransformKeyframe } from "../project/domain";
+import type { TransformKeyframe } from "../project/domain";
 
 export interface ClipTransform {
   x: number;
