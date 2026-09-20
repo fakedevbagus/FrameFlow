@@ -37,7 +37,7 @@ describe("track management", () => {
   it("removes only empty tracks and keeps the last track of a type", () => {
     const project = addTrack(createProject({ id: "track-remove" }), "video");
 
-    const removableId = project.tracks[2].id;
+    const removableId = project.tracks[1].id;
     const updated = removeTrack(
       project,
       removableId,
@@ -89,15 +89,15 @@ describe("track management", () => {
     };
 
     project = addTrack(project, "video");
-    project = addAssetToTrack(project, "video", project.tracks[2].id, 6000);
-    project = addAssetToTrack(project, "image", project.tracks[2].id, 12000);
-    project = addAssetToTrack(project, "audio", project.tracks[1].id, 3000);
+    project = addAssetToTrack(project, "video", project.tracks[1].id, 6000);
+    project = addAssetToTrack(project, "image", project.tracks[1].id, 12000);
+    project = addAssetToTrack(project, "audio", project.tracks[2].id, 3000);
 
-    expect(project.tracks[2].clips.map((clip) => clip.timelineStartMs)).toEqual([
+    expect(project.tracks[1].clips.map((clip) => clip.timelineStartMs)).toEqual([
       6000,
       12000,
     ]);
-    expect(project.tracks[1].clips[0].timelineStartMs).toBe(3000);
+    expect(project.tracks[2].clips[0].timelineStartMs).toBe(3000);
   });
 
   it("rejects incompatible media, locked tracks, and overlapping drops", () => {
