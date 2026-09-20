@@ -4,6 +4,7 @@ import {
   getContainedContentPercentageBounds,
   cropFromPointer,
   cropPositionFromPointer,
+  transformAnchorFromPointer,
   transformFromPointer,
   type CanvasPointer,
 } from "./canvasManipulation";
@@ -71,6 +72,38 @@ describe("canvas manipulation", () => {
       top: 0,
       width: 112.5,
       height: 200,
+    });
+  });
+
+  it("maps a pointer position into the visual transform anchor", () => {
+    expect(
+      transformAnchorFromPointer(
+        { x: 50, y: 100 },
+        { left: 0, top: 0, width: 200, height: 400 },
+        200,
+        400,
+        base,
+        { x: 0.5, y: 0.5 },
+      ),
+    ).toEqual({
+      x: 0.25,
+      y: 0.25,
+    });
+  });
+
+  it("maps anchor dragging through scale and rotation", () => {
+    expect(
+      transformAnchorFromPointer(
+        { x: 100, y: 100 },
+        { left: 50, top: 50, width: 200, height: 200 },
+        400,
+        400,
+        { ...base, scale: 2, rotation: 90, x: 0, y: 0 },
+        { x: 0.5, y: 0.5 },
+      ),
+    ).toMatchObject({
+      x: 0.75,
+      y: 0.75,
     });
   });
 
