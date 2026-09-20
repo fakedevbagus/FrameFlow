@@ -4,11 +4,20 @@ import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "../timeline/commands";
 import { Preview } from "./Preview";
 
-const invokeMock = vi.fn();
+vi.mock("@tauri-apps/api/core", async () => {
+  const actual = await vi.importActual<typeof import("@tauri-apps/api/core")>(
+    "@tauri-apps/api/core",
+  );
 
-vi.mock("@tauri-apps/api/core", () => ({
-  convertFileSrc: (path: string) => "asset://" + path,
-  invoke: invokeMock,
+  return {
+    ...actual,
+    convertFileSrc: (path: string) => "asset://" + path,
+    invoke: vi.fn(),
+  };
+});
+
+const { invokeMock } = await import("@tauri-apps/api/core").then((module) => ({
+  invokeMock: module.invoke as ReturnType<typeof vi.fn>,
 }));
 
 beforeEach(() => {
