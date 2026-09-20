@@ -795,7 +795,7 @@ describe("App", () => {
       });
     });
     await act(async () => {
-      fireEvent.pointerMove(hitArea, {
+      fireEvent.pointerMove(surface, {
         buttons: 1,
         pointerId: 13,
         clientX: 120,
@@ -803,7 +803,7 @@ describe("App", () => {
       });
     });
     await act(async () => {
-      fireEvent.pointerUp(hitArea, {
+      fireEvent.pointerUp(surface, {
         button: 0,
         pointerId: 13,
         clientX: 120,
