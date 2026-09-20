@@ -629,38 +629,54 @@ Known limitation:
 Next step:
 - Start M3.22 from the updated `main`, focusing on direct on-canvas anchor manipulation.
 
-## M3.22 — Direct on-canvas anchor manipulation (in progress)
+## M3.22 — Direct on-canvas anchor manipulation — completed
 
 Branch: `feat/m3-22-direct-anchor-manipulation`
-PR: pending
+PR: #33
+Merge SHA: `0dcae3d91fd298b36b99393921601e34a0e217c0`
 
-Scope:
-- Add a visible transform-anchor handle to the selected visual layer.
-- Allow the anchor to be dragged directly on the canvas.
-- Preview anchor movement live while preserving the visual position through the existing anchor-compensation math.
-- Commit one atomic anchor/transform history mutation on completed drag.
-- Keep the Inspector anchor grid as an alternate precision control.
+Scope delivered:
+- Added a visible transform-anchor handle to selected visual preview layers.
+- Added direct pointer dragging for the transform anchor.
+- Resolved pointer coordinates into transformed content space.
+- Preserved the rendered visual position during live anchor movement using M3.21 compensation.
+- Committed completed anchor changes through the existing compensated anchor history command as one project/history mutation.
+- Preserved the Inspector anchor grid as the precision control.
+- Preserved existing crop, transform, keyframe, playback, and multi-layer preview architecture.
 
 Architecture decisions:
 - Pointer-to-anchor mapping lives in `src/features/preview/canvasManipulation.ts`.
-- Preview uses the existing contained media bounds and the M3.21 compensation helper for live feedback.
+- Live anchor transforms reuse `compensateTransformForAnchorChange`; no parallel transform pipeline was introduced.
+- Intrinsic media dimensions are reported from Preview to editor state and cached in a synchronous ref so anchor compensation uses current dimensions even before the next React render.
 - The existing timeline anchor-compensation command remains the single history commit path.
 - The direct anchor handle is rendered inside the transformed content layer so it tracks the actual pivot location.
 
-Automated coverage added:
+Automated coverage:
 - Pointer-to-anchor mapping without and with scale/rotation.
 - Preview direct anchor-drag commit.
-- App-level direct anchor drag, compensation, and Undo.
+- App-level direct anchor drag, compensation, media-dimension readiness, and Undo.
+- Full suite validation completed at 169 tests.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local validation passed on Linux after the final anchor-compensation regression assertion correction.
+- `npm run lint` passed.
+- `npm run test` passed with 17 test files / 169 tests.
+- `npm run build` passed.
+- `npm run tauri dev` started successfully.
+- User also confirmed the requested manual anchor/transform/crop/keyframe/Undo checks passed.
 
-Known limitation:
-- Anchor drag remains disabled while playback is active.
-- If intrinsic media dimensions are unavailable, the existing anchor fallback behavior applies.
+Known limitations:
+- Anchor dragging remains disabled while playback is active.
+- If intrinsic media dimensions are unavailable, the existing fallback anchor command is used and rendered-position preservation may not apply.
+
+UI/layout direction:
+- The current workspace layout is intentionally kept stable while core editor behavior is being built and hardened.
+- The preview canvas already follows the selected project aspect ratio, including portrait and landscape modes.
+- A later dedicated responsive-workspace milestone should reflow the editor when the project is portrait/landscape, including moving/resizing the preview relative to the Inspector and timeline rather than introducing this large layout change inside a transform milestone.
+- That responsive redesign is planned as a UX/layout phase after the core editing primitives are sufficiently stable.
 
 Next step:
-- User validates M3.22 locally before merge.
+- Start M3.23 from the updated `main`, focusing on the next small transform/crop interaction hardening slice.
 
 ## Documentation protocol
 
