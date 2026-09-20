@@ -164,6 +164,7 @@ interface CanvasGesture {
 interface CropPositionGesture {
   pointerId: number;
   startPointer: { x: number; y: number };
+  basePosition: CropPosition;
   position: CropPosition;
   manipulationBounds: ContentBounds;
   hasMoved: boolean;
@@ -200,6 +201,7 @@ function PreviewVisualLayer({
   const [cropGesture, setCropGesture] = useState<CropGesture | null>(null);
   const [cropPositionGesture, setCropPositionGesture] =
     useState<CropPositionGesture | null>(null);
+  const cropPositionGestureRef = useRef<CropPositionGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
     height: number;
@@ -577,46 +579,53 @@ function PreviewVisualLayer({
       // Pointer capture is not implemented in every runtime.
     }
 
-    setCropPositionGesture({
+    const nextGesture = {
       pointerId: event.pointerId,
       startPointer: {
         x: event.clientX,
         y: event.clientY,
       },
+      basePosition: cropPosition,
       position: cropPosition,
       manipulationBounds: contentBounds,
       hasMoved: false,
-    });
+    } satisfies CropPositionGesture;
+
+    cropPositionGestureRef.current = nextGesture;
+    setCropPositionGesture(nextGesture);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (cropPositionGesture && cropPositionGesture.pointerId === event.pointerId) {
-      setCropPositionGesture((currentGesture) => {
-        if (!currentGesture || currentGesture.pointerId !== event.pointerId) {
-          return currentGesture;
-        }
+    const activeCropPositionGesture = cropPositionGestureRef.current;
 
-        const nextPosition = cropPositionFromPointer(
-          currentGesture.position,
-          currentGesture.startPointer,
-          { x: event.clientX, y: event.clientY },
-          normalizeClipCrop(crop),
-          currentGesture.manipulationBounds,
-          canvasWidth,
-          canvasHeight,
-          currentTransform,
-          anchor,
-        );
-        const moved =
-          Math.abs(nextPosition.x - currentGesture.position.x) > 0.0001 ||
-          Math.abs(nextPosition.y - currentGesture.position.y) > 0.0001;
+    if (
+      activeCropPositionGesture &&
+      activeCropPositionGesture.pointerId === event.pointerId
+    ) {
+      const nextPosition = cropPositionFromPointer(
+        activeCropPositionGesture.basePosition,
+        activeCropPositionGesture.startPointer,
+        { x: event.clientX, y: event.clientY },
+        normalizeClipCrop(crop),
+        activeCropPositionGesture.manipulationBounds,
+        canvasWidth,
+        canvasHeight,
+        currentTransform,
+        anchor,
+      );
+      const nextGesture = {
+        ...activeCropPositionGesture,
+        position: nextPosition,
+        hasMoved:
+          activeCropPositionGesture.hasMoved ||
+          Math.abs(nextPosition.x - activeCropPositionGesture.basePosition.x) >
+            0.0001 ||
+          Math.abs(nextPosition.y - activeCropPositionGesture.basePosition.y) >
+            0.0001,
+      };
 
-        return {
-          ...currentGesture,
-          position: nextPosition,
-          hasMoved: currentGesture.hasMoved || moved,
-        };
-      });
+      cropPositionGestureRef.current = nextGesture;
+      setCropPositionGesture(nextGesture);
       return;
     }
 
@@ -694,9 +703,11 @@ function PreviewVisualLayer({
   }
 
   function finishGesture(event: PointerEvent<HTMLDivElement>) {
+    const activeCropPositionGesture = cropPositionGestureRef.current;
+
     if (
-      cropPositionGesture &&
-      cropPositionGesture.pointerId === event.pointerId
+      activeCropPositionGesture &&
+      activeCropPositionGesture.pointerId === event.pointerId
     ) {
       try {
         interactionRef.current?.releasePointerCapture(event.pointerId);
@@ -704,9 +715,10 @@ function PreviewVisualLayer({
         // Pointer capture may be unavailable in tests.
       }
 
-      const shouldCommit = cropPositionGesture.hasMoved;
-      const nextPosition = cropPositionGesture.position;
+      const shouldCommit = activeCropPositionGesture.hasMoved;
+      const nextPosition = activeCropPositionGesture.position;
 
+      cropPositionGestureRef.current = null;
       setCropPositionGesture(null);
 
       if (shouldCommit) {
@@ -754,10 +766,13 @@ function PreviewVisualLayer({
   }
 
   function cancelGesture(event: PointerEvent<HTMLDivElement>) {
+    const activeCropPositionGesture = cropPositionGestureRef.current;
+
     if (
-      cropPositionGesture &&
-      cropPositionGesture.pointerId === event.pointerId
+      activeCropPositionGesture &&
+      activeCropPositionGesture.pointerId === event.pointerId
     ) {
+      cropPositionGestureRef.current = null;
       setCropPositionGesture(null);
 
       try {
