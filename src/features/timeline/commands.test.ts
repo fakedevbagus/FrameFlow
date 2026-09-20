@@ -1336,6 +1336,174 @@ describe("clip transitions", () => {
     ).toThrow("Transition duration cannot exceed either clip duration.");
   });
 
+  it("clears a transition when moving the outgoing or incoming clip breaks adjacency", () => {
+    const project = createProject({ id: "transition-move-clear" });
+    project.assets.push(
+      {
+        id: "transition-move-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 3000,
+      },
+      {
+        id: "transition-move-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    let populated = addAssetToTimeline(project, "transition-move-a");
+    populated = addAssetToTimeline(populated, "transition-move-b");
+    const firstClipId = populated.tracks[0].clips[0].id;
+    const secondClipId = populated.tracks[0].clips[1].id;
+
+    populated = updateClipTransition(
+      populated,
+      firstClipId,
+      { type: "dissolve", durationMs: 500 },
+    );
+
+    const movedIncoming = moveClipOnTimeline(
+      populated,
+      secondClipId,
+      5000,
+    );
+
+    expect(movedIncoming.tracks[0].clips[0].transitionOut).toBeUndefined();
+
+    const restored = moveClipOnTimeline(
+      movedIncoming,
+      secondClipId,
+      3000,
+    );
+    const movedOutgoing = moveClipOnTimeline(
+      updateClipTransition(
+        restored,
+        firstClipId,
+        { type: "dissolve", durationMs: 500 },
+      ),
+      firstClipId,
+      5000,
+    );
+
+    expect(movedOutgoing.tracks[0].clips[0].transitionOut).toBeUndefined();
+  });
+
+  it("clears a previous transition when the incoming clip is deleted", () => {
+    const project = createProject({ id: "transition-delete-clear" });
+    project.assets.push(
+      {
+        id: "transition-delete-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 3000,
+      },
+      {
+        id: "transition-delete-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    let populated = addAssetToTimeline(project, "transition-delete-a");
+    populated = addAssetToTimeline(populated, "transition-delete-b");
+    const firstClipId = populated.tracks[0].clips[0].id;
+    const secondClipId = populated.tracks[0].clips[1].id;
+
+    populated = updateClipTransition(
+      populated,
+      firstClipId,
+      { type: "dissolve", durationMs: 500 },
+    );
+
+    const deleted = removeClipFromTimeline(populated, secondClipId);
+
+    expect(deleted.tracks[0].clips[0].transitionOut).toBeUndefined();
+  });
+
+  it("keeps a transition on the second half when splitting an outgoing clip", () => {
+    const project = createProject({ id: "transition-split" });
+    project.assets.push(
+      {
+        id: "transition-split-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 6000,
+      },
+      {
+        id: "transition-split-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    let populated = addAssetToTimeline(project, "transition-split-a");
+    populated = addAssetToTimeline(populated, "transition-split-b");
+    const firstClipId = populated.tracks[0].clips[0].id;
+
+    populated = updateClipTransition(
+      populated,
+      firstClipId,
+      { type: "dissolve", durationMs: 500 },
+    );
+
+    const split = splitClipAtTime(populated, firstClipId, 3000);
+    const first = split.tracks[0].clips[0];
+    const second = split.tracks[0].clips[1];
+
+    expect(first.transitionOut).toBeUndefined();
+    expect(second.transitionOut).toEqual({
+      type: "dissolve",
+      durationMs: 500,
+    });
+  });
+
+  it("clamps a transition when trimming an adjacent clip shorter", () => {
+    const project = createProject({ id: "transition-trim-clamp" });
+    project.assets.push(
+      {
+        id: "transition-trim-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 3000,
+      },
+      {
+        id: "transition-trim-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    let populated = addAssetToTimeline(project, "transition-trim-a");
+    populated = addAssetToTimeline(populated, "transition-trim-b");
+    const firstClipId = populated.tracks[0].clips[0].id;
+
+    populated = updateClipTransition(
+      populated,
+      firstClipId,
+      { type: "dissolve", durationMs: 800 },
+    );
+
+    const trimmed = trimClipEnd(populated, firstClipId, 400);
+
+    expect(trimmed.tracks[0].clips[0].transitionOut).toEqual({
+      type: "dissolve",
+      durationMs: 400,
+    });
+  });
+
   it("clears an existing transition", () => {
     const project = createProject({ id: "transition-clear" });
     project.assets.push(
