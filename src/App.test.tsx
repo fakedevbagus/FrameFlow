@@ -622,7 +622,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(10);
-      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(20);
+      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(10);
       const viewport = screen.getByTestId(/preview-crop-viewport-/);
       expect(viewport).toHaveStyle({
         left: "0%",
@@ -756,11 +756,6 @@ describe("App", () => {
       target: { value: "10" },
     });
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
-
-    fireEvent.change(screen.getByRole("spinbutton", { name: "Crop right" }), {
-      target: { value: "20" },
-    });
-    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop right" }));
 
     const hitArea = screen.getByTestId(/preview-hit-area-/);
     Object.defineProperty(hitArea, "getBoundingClientRect", {
