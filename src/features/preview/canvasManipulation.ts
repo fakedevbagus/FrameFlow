@@ -1,6 +1,6 @@
-import type { TransformAnchor } from "../project/domain";
+import type { ClipCrop, TransformAnchor } from "../project/domain";
 import type { ClipTransform } from "../transform/transform";
-import { normalizeClipTransform } from "../transform/transform";
+import { normalizeClipCrop, normalizeClipTransform } from "../transform/transform";
 
 export type CanvasManipulationMode = "move" | "scale" | "rotate";
 
@@ -159,6 +159,113 @@ export function transformFromPointer(
     ...baseTransform,
     rotation: baseTransform.rotation + rotationDelta,
   });
+}
+
+export type CropEdge = "top" | "right" | "bottom" | "left";
+
+export function cropFromPointer(
+  edge: CropEdge,
+  baseCrop: ClipCrop,
+  pointer: CanvasPointer,
+  contentBounds: ContentBounds,
+  canvasWidth: number,
+  canvasHeight: number,
+  transform: ClipTransform,
+  anchor: TransformAnchor = { x: 0.5, y: 0.5 },
+): ClipCrop {
+  if (
+    contentBounds.width <= 0 ||
+    contentBounds.height <= 0 ||
+    canvasWidth <= 0 ||
+    canvasHeight <= 0
+  ) {
+    return normalizeClipCrop(baseCrop);
+  }
+
+  const point = pointerToContentPoint(
+    pointer,
+    contentBounds,
+    canvasWidth,
+    canvasHeight,
+    transform,
+    anchor,
+  );
+  const x = clampRatio(point.x / contentBounds.width);
+  const y = clampRatio(point.y / contentBounds.height);
+  const nextCrop = normalizeClipCrop(baseCrop);
+  const minimumVisibleRatio = 0.001;
+
+  switch (edge) {
+    case "top":
+      nextCrop.top = Math.min(
+        y,
+        Math.max(0, 1 - nextCrop.bottom - minimumVisibleRatio),
+      );
+      break;
+    case "right":
+      nextCrop.right = Math.min(
+        1 - x,
+        Math.max(0, 1 - nextCrop.left - minimumVisibleRatio),
+      );
+      break;
+    case "bottom":
+      nextCrop.bottom = Math.min(
+        1 - y,
+        Math.max(0, 1 - nextCrop.top - minimumVisibleRatio),
+      );
+      break;
+    case "left":
+      nextCrop.left = Math.min(
+        x,
+        Math.max(0, 1 - nextCrop.right - minimumVisibleRatio),
+      );
+      break;
+  }
+
+  return normalizeClipCrop(nextCrop);
+}
+
+function pointerToContentPoint(
+  pointer: CanvasPointer,
+  contentBounds: ContentBounds,
+  canvasWidth: number,
+  canvasHeight: number,
+  transform: ClipTransform,
+  anchor: TransformAnchor,
+): CanvasPointer {
+  const safeScale = Math.max(0.05, transform.scale);
+  const anchorX = clampRatio(anchor.x);
+  const anchorY = clampRatio(anchor.y);
+  const originX = contentBounds.width * anchorX;
+  const originY = contentBounds.height * anchorY;
+  const translationX = (transform.x / 100) * canvasWidth;
+  const translationY = (transform.y / 100) * canvasHeight;
+  const angle = (transform.rotation * Math.PI) / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  const transformedX =
+    pointer.x - contentBounds.left - translationX - originX;
+  const transformedY =
+    pointer.y - contentBounds.top - translationY - originY;
+
+  const scaledX =
+    (transformedX * cos + transformedY * sin) / safeScale;
+  const scaledY =
+    (-transformedX * sin + transformedY * cos) / safeScale;
+
+  return {
+    x: originX + scaledX,
+    y: originY + scaledY,
+  };
+}
+
+function clampRatio(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(1, Math.max(0, value));
 }
 
 function distance(a: CanvasPointer, b: CanvasPointer): number {
