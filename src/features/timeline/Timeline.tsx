@@ -595,6 +595,7 @@ export function Timeline({
             onToggleTrackMute={onToggleTrackMute}
             onRemoveTrack={onRemoveTrack}
             onRemoveTransformKeyframe={onRemoveTransformKeyframe}
+            onCurrentTimeChange={onCurrentTimeChange}
             zoom={zoom}
             interaction={interaction}
             dragOverTrackId={dragOverTrackId}
@@ -634,6 +635,7 @@ interface TimelineTrackProps {
     clipId: string,
     timeMs: number,
   ) => void;
+  onCurrentTimeChange?: (timeMs: number) => void;
   zoom: number;
   dragOverTrackId: string | null;
   onDragOverTrack: (event: DragEvent<HTMLDivElement>) => void;
@@ -685,6 +687,8 @@ function TimelineTrack({
   onToggleTrackMute,
   onRemoveTrack,
   onRemoveTransformKeyframe,
+  onCurrentTimeChange,
+  onMoveTransformKeyframe,
   zoom,
   dragOverTrackId,
   onDragOverTrack,
