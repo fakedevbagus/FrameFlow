@@ -1,22 +1,32 @@
 ## 2026-09-21
 
-### M3.23 — Transform/crop interaction hardening — in progress
+### M3.23 — Transform/crop interaction hardening — merged
 Branch: `feat/m3-23-transform-crop-interaction-hardening`
+PR #34 — merged
+Merge SHA: `e12a86d1041dfa9a67b962ec95fbdbf9340eba30`
 
 Implemented:
 - Added Escape cancellation for direct transform movement.
 - Added Escape cancellation for direct transform-anchor dragging.
-- Added Escape cancellation for crop-edge and crop-content gestures.
-- Release pointer capture during cancellation without committing project history.
-- Added Preview regression coverage for cancellation behavior.
+- Added Escape cancellation for crop-edge dragging.
+- Added Escape cancellation for crop-content panning.
+- Released pointer capture during cancellation without committing project history.
+- Added Preview regression coverage for all direct manipulation cancellation paths.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local Linux validation passed.
+- `npm run lint` passed.
+- `npm run test` passed.
+- `npm run build` passed.
+- `npm run tauri dev` started successfully.
+- User confirmed normal completed gestures and Escape cancellation behavior worked as expected.
+
+Known scope:
+- No workspace layout change was introduced.
+- Portrait/landscape responsive workspace remains a future dedicated UX milestone.
 
 Next step:
-- User validates M3.23 locally before merge.
-
-
+- Start the next focused editor feature from updated `main`.
 
 ### M3.22 — Direct on-canvas anchor manipulation — merged
 Branch: `feat/m3-22-direct-anchor-manipulation`
