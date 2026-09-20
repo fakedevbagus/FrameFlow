@@ -333,9 +333,11 @@ button:focus-visible {
   border-radius: 5px;
   overflow: hidden;
   background:
+    linear-gradient(45deg, #1b2029 25%, transparent 25%) 0 0 / 24px 24px,
+    linear-gradient(-45deg, #1b2029 25%, transparent 25%) 0 0 / 24px 24px,
+    #20252e;
   box-shadow: 0 20px 45px rgb(0 0 0 / 30%);
 }
-
 .preview-stage {
   position: relative;
   width: 100%;
