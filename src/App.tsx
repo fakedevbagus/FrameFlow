@@ -248,9 +248,9 @@ function App() {
       return [];
     }
 
-    return Array.from(container.querySelectorAll("video, audio")).filter(
-      (media) => Boolean(media.getAttribute("src")),
-    );
+    return Array.from(
+      container.querySelectorAll<HTMLVideoElement | HTMLAudioElement>("video, audio"),
+    ).filter((media) => Boolean(media.getAttribute("src"))) as HTMLMediaElement[];
   }, []);
 
   const handleTogglePlayback = useCallback(async () => {
