@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import type { FocusEvent } from "react";
 import {
   DEFAULT_DISSOLVE_DURATION_MS,
   type ClipTransition,
@@ -16,23 +16,13 @@ export function TransitionInspector({
   onChange,
 }: TransitionInspectorProps) {
   const isDissolve = transition?.type === "dissolve";
-  const [durationMs, setDurationMs] = useState(
-    transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS,
-  );
+  const durationMs = transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS;
 
-  useEffect(() => {
-    setDurationMs(
-      transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS,
-    );
-  }, [transition?.durationMs]);
-
-  function commitDuration() {
-    const value = Number(durationMs);
+  function commitDuration(event: FocusEvent<HTMLInputElement>) {
+    const value = Number(event.currentTarget.value);
 
     if (!Number.isFinite(value)) {
-      setDurationMs(
-        transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS,
-      );
+      event.currentTarget.value = String(durationMs);
       return;
     }
 
@@ -91,16 +81,10 @@ export function TransitionInspector({
               max="2000"
               min="50"
               step="50"
+              key={String(transition?.durationMs ?? "default")}
               type="number"
               disabled={!canTransition}
-              value={durationMs}
-              onChange={(event) => {
-                setDurationMs(
-                  Number.isFinite(Number(event.currentTarget.value))
-                    ? Number(event.currentTarget.value)
-                    : DEFAULT_DISSOLVE_DURATION_MS,
-                );
-              }}
+              defaultValue={durationMs}
               onBlur={commitDuration}
             />
             <span>ms</span>
