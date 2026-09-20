@@ -1606,10 +1606,7 @@ button:disabled {
 .timeline-trim-handle:hover::after {
   background: rgb(255 255 255 / 85%);
 }
-  box-shadow: 0 20px 45px rgb(0 0 0 / 30%);
-}
 
-.preview-stage {
   position: relative;
   width: 100%;
   height: 100%;
