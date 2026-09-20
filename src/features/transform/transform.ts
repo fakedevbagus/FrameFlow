@@ -1,4 +1,10 @@
-import type { CropPosition, TransformAnchor, TransformEasing, TransformKeyframe, ClipCrop } from "../project/domain";
+import type {
+  ClipCrop,
+  CropPosition,
+  TransformAnchor,
+  TransformEasing,
+  TransformKeyframe,
+} from "../project/domain";
 
 export interface ClipTransform {
   x: number;
@@ -32,6 +38,21 @@ export const DEFAULT_CLIP_TRANSFORM: ClipTransform = {
   rotation: 0,
   opacity: 1,
 };
+
+export interface CropAspectRatioPreset {
+  id: string;
+  label: string;
+  ratio: number | null;
+}
+
+export const CROP_ASPECT_RATIO_PRESETS: CropAspectRatioPreset[] = [
+  { id: "original", label: "Original", ratio: null },
+  { id: "16-9", label: "16:9", ratio: 16 / 9 },
+  { id: "9-16", label: "9:16", ratio: 9 / 16 },
+  { id: "1-1", label: "1:1", ratio: 1 },
+  { id: "4-5", label: "4:5", ratio: 4 / 5 },
+  { id: "4-3", label: "4:3", ratio: 4 / 3 },
+];
 
 export function getClipTransformAnchor(
   anchor: Partial<TransformAnchor> | undefined,
@@ -110,6 +131,63 @@ export function normalizeClipCropPosition(
   position: Partial<CropPosition> | undefined,
 ): CropPosition {
   return getClipCropPosition(crop, position);
+}
+
+export function getCropForAspectRatio(
+  targetRatio: number | null,
+  mediaWidth: number,
+  mediaHeight: number,
+  position: Partial<CropPosition> | undefined,
+): { crop: ClipCrop; cropPosition?: CropPosition } {
+  if (
+    targetRatio === null ||
+    !Number.isFinite(targetRatio) ||
+    targetRatio <= 0 ||
+    !Number.isFinite(mediaWidth) ||
+    !Number.isFinite(mediaHeight) ||
+    mediaWidth <= 0 ||
+    mediaHeight <= 0
+  ) {
+    return {
+      crop: { ...DEFAULT_CLIP_CROP },
+      cropPosition: undefined,
+    };
+  }
+
+  const sourceRatio = mediaWidth / mediaHeight;
+  let visibleWidth = 1;
+  let visibleHeight = 1;
+
+  if (targetRatio > sourceRatio) {
+    visibleHeight = sourceRatio / targetRatio;
+  } else if (targetRatio < sourceRatio) {
+    visibleWidth = targetRatio / sourceRatio;
+  }
+
+  visibleWidth = clamp(visibleWidth, 0.001, 1);
+  visibleHeight = clamp(visibleHeight, 0.001, 1);
+
+  const basePosition = getClipCropPosition(undefined, position);
+  const minX = visibleWidth / 2;
+  const maxX = 1 - visibleWidth / 2;
+  const minY = visibleHeight / 2;
+  const maxY = 1 - visibleHeight / 2;
+  const cropPosition = {
+    x: clamp(basePosition.x, minX, maxX),
+    y: clamp(basePosition.y, minY, maxY),
+  };
+
+  const crop: ClipCrop = {
+    left: cropPosition.x - visibleWidth / 2,
+    right: 1 - cropPosition.x - visibleWidth / 2,
+    top: cropPosition.y - visibleHeight / 2,
+    bottom: 1 - cropPosition.y - visibleHeight / 2,
+  };
+
+  return {
+    crop: normalizeClipCrop(crop),
+    cropPosition,
+  };
 }
 
 
