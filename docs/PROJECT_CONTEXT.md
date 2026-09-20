@@ -384,7 +384,34 @@ Known limitation:
 - This milestone establishes anchor state and pivot behavior but does not yet provide visual anchor dragging or compensating translation to keep the visible content stationary when changing the pivot.
 
 Next step:
-- Start the next focused transform milestone from updated `main`, centered on crop/transform polish.
+- Continue M3.16 crop foundation validation before merge.
+
+## M3.16 — Crop foundation (in progress)
+
+Branch: `feat/m3-16-crop-foundation`
+
+Scope:
+- Add a backward-compatible per-clip crop model with zero-crop as the default.
+- Expose Top, Right, Bottom, and Left crop controls in the Transform Inspector.
+- Apply crop in the preview using media-element clipping.
+- Keep crop edits in the existing project history engine and separate from transform keyframes for this milestone.
+- Preserve crop state across clip splitting.
+- Add transform-domain, timeline-command, preview, and App regression coverage.
+
+Architecture decisions:
+- Crop is represented as normalized per-edge insets (0..1) on the clip.
+- Horizontal and vertical crop totals must remain below 1 so the entire visual content cannot be removed.
+- Crop is applied before the existing clip transform effect on the media element, leaving transform handles available outside the clipped media.
+- Legacy clips without crop data render with zero crop.
+
+Validation:
+- Automated and manual local validation is pending user verification for this branch.
+
+Known limitation:
+- This milestone provides Inspector-based crop values only. Direct crop-handle manipulation, aspect-ratio presets, and crop-position translation compensation are future work.
+
+Next step:
+- Run local lint, test, build, Tauri dev, and the requested manual crop checks on Linux before merging.
 
 ## Documentation protocol
 
