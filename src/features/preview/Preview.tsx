@@ -9,6 +9,7 @@ import type { ClipTransform, Project } from "../project/domain";
 import { getClipTransform, normalizeClipTransform } from "../transform/transform";
 import {
   getContainedContentBounds,
+  getContainedContentPercentageBounds,
   transformFromPointer,
   type CanvasManipulationMode,
   type ContentBounds,
@@ -74,6 +75,8 @@ export function Preview({
           currentTimeMs={currentTimeMs}
           isPlaying={isPlaying}
           zIndex={index + 1}
+          canvasWidth={project.canvas.width}
+          canvasHeight={project.canvas.height}
           isSelected={selectedClipId === layer.clip.id}
           onSelectClip={onSelectClip}
           onTransformCommit={onTransformCommit}
@@ -123,6 +126,8 @@ interface PreviewLayerProps {
 }
 
 interface PreviewVisualLayerProps extends PreviewLayerProps {
+  canvasWidth: number;
+  canvasHeight: number;
   isSelected: boolean;
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
@@ -143,6 +148,8 @@ function PreviewVisualLayer({
   currentTimeMs,
   isPlaying,
   zIndex = 1,
+  canvasWidth,
+  canvasHeight,
   isSelected,
   onSelectClip,
   onTransformCommit,
@@ -160,10 +167,34 @@ function PreviewVisualLayer({
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const baseTransform = getClipTransform(layer.clip.transform);
   const activeTransform = gesture?.transform ?? baseTransform;
+  const mediaWidth = mediaSize?.width ?? 0;
+  const mediaHeight = mediaSize?.height ?? 0;
+  const contentBoundsPercent = getContainedContentPercentageBounds(
+    canvasWidth,
+    canvasHeight,
+    mediaWidth,
+    mediaHeight,
+  );
+  const translateXPercent =
+    contentBoundsPercent.width > 0
+      ? (activeTransform.x * 100) / contentBoundsPercent.width
+      : activeTransform.x;
+  const translateYPercent =
+    contentBoundsPercent.height > 0
+      ? (activeTransform.y * 100) / contentBoundsPercent.height
+      : activeTransform.y;
   const layerStyle = {
     zIndex,
-    transform: `translate(${activeTransform.x}%, ${activeTransform.y}%) scale(${activeTransform.scale}) rotate(${activeTransform.rotation}deg)`,
+    transform: `translate(${translateXPercent}%, ${translateYPercent}%) scale(${activeTransform.scale}) rotate(${activeTransform.rotation}deg)`,
     opacity: activeTransform.opacity,
+  };
+  const contentLayerStyle = {
+    position: "absolute" as const,
+    left: `${contentBoundsPercent.left}%`,
+    top: `${contentBoundsPercent.top}%`,
+    width: `${contentBoundsPercent.width}%`,
+    height: `${contentBoundsPercent.height}%`,
+    transformOrigin: "center center",
   };
 
   useEffect(() => {
@@ -330,8 +361,8 @@ function PreviewVisualLayer({
 
       const moved =
         Math.hypot(
-          event.clientX - (currentGesture.startPointer.x + bounds.left),
-          event.clientY - (currentGesture.startPointer.y + bounds.top),
+          event.clientX - currentGesture.startPointer.x,
+          event.clientY - currentGesture.startPointer.y,
         ) >= 2;
 
       return {
