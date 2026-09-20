@@ -403,6 +403,87 @@ describe("App", () => {
     expect(container).toHaveTextContent("Transform updated.");
   });
 
+  it("animates transform values between keyframes", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-keyframe-ui",
+        name: "keyframe-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/keyframe-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("keyframe-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add keyframe-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select keyframe-ui.mp4 clip",
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add keyframe" }));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "X position" }), {
+      target: { value: "40" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "X position" }));
+
+    const ruler = container.querySelector(".timeline-ruler-scale");
+    expect(ruler).not.toBeNull();
+
+    Object.defineProperty(ruler, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 0,
+        height: 28,
+        left: 0,
+        right: 800,
+        top: 0,
+        width: 800,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 160 });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Playhead at 00:04")).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "X position" }), {
+      target: { value: "80" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "X position" }));
+
+    expect(screen.getByText("2 keyframes")).toBeInTheDocument();
+
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 80 });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Playhead at 00:02")).toBeInTheDocument();
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(60);
+      expect(screen.getByText("Animated transform at 00:02.000")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove keyframe" }));
+    await waitFor(() => {
+      expect(screen.getByText("Animated transform at 00:02.000")).toBeInTheDocument();
+    });
+  });
+
   it("undoes and redoes a timeline edit with keyboard shortcuts", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
