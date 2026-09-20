@@ -478,9 +478,18 @@ describe("App", () => {
       expect(screen.getByText("Animated transform at 00:02.000")).toBeInTheDocument();
     });
 
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 160 });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Playhead at 00:04")).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "Remove keyframe" })).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: "Remove keyframe" }));
+
     await waitFor(() => {
-      expect(screen.getByText("Animated transform at 00:02.000")).toBeInTheDocument();
+      expect(screen.getByText("1 keyframe")).toBeInTheDocument();
+      expect(screen.getByText("Static transform at 00:04.000")).toBeInTheDocument();
     });
   });
 
