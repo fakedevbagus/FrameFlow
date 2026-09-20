@@ -29,11 +29,6 @@ interface TimelineProps {
   onTrimClipStart?: (clipId: string, sourceStartMs: number) => void;
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
   onToggleTrackMute?: (trackId: string) => void;
-  onAddAssetToTrack?: (
-    assetId: string,
-    trackId: string,
-    timelineStartMs: number,
-  ) => void;
   onAddTrack?: (type: "audio" | "video") => void;
   onRemoveTrack?: (trackId: string) => void;
   zoom?: number;
@@ -387,12 +382,11 @@ export function Timeline({
           </div>
         </div>
 
-        {project.tracks.map((track, index) => (
+        {project.tracks.map((track) => (
           <TimelineTrack
             key={track.id}
             track={track}
             trackLabel={getTrackLabel(project.tracks, track)}
-            trackIndex={index}
             project={project}
             timelineDurationMs={timelineDurationMs}
             currentTimeMs={clampedCurrentTimeMs}
@@ -422,7 +416,6 @@ export function Timeline({
 interface TimelineTrackProps {
   track: Track;
   trackLabel: string;
-  trackIndex: number;
   project: Project;
   timelineDurationMs: number;
   currentTimeMs: number;
@@ -462,7 +455,6 @@ function TimelineTrack({
   selectedClipId,
   onSelectClip,
   onToggleTrackMute,
-  onAddAssetToTrack,
   onRemoveTrack,
   zoom,
   dragOverTrackId,
