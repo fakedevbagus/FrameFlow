@@ -376,8 +376,9 @@ Scope:
 - Add domain, command, preview, manipulation, and App regression coverage.
 
 Validation:
-- Implementation complete on the feature branch.
-- Local lint, tests, build, and manual validation have not yet been reported.
+- Initial local validation found one App assertion mismatch caused by case-sensitive accessibility-name matching and one unused import causing TypeScript failure.
+- Both issues have been corrected on the branch.
+- A clean local lint, test, build, and manual validation run is still required.
 
 Next step:
 - Run local validation on Linux before merging.
