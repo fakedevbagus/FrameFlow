@@ -13,6 +13,10 @@ Implemented:
 - Added Inspector crop aspect-ratio controls.
 - Added media dimension lookup support for both video and image preview elements.
 - Added regression coverage for preset math, command behavior, and App/Inspector Undo workflow.
+- Added canvas aspect-ratio presets for 16:9, 9:16, 1:1, 4:5, and 4:3, committed through project history.
+- Made the preview canvas follow project canvas dimensions instead of a hardcoded 9:16 framing.
+- Hardened the fullscreen workspace so media/Inspector panels scroll internally and the editor stays inside the viewport.
+- Added App and timeline-command regression coverage for canvas aspect changes, preview framing, and Undo.
 
 Validation:
 - Local validation is pending user verification.
