@@ -391,7 +391,11 @@ describe("App", () => {
       expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(73);
     });
 
-    expect(screen.getByTestId("preview-video")).toHaveStyle({
+    const previewVideo = screen.getByTestId("preview-video");
+    const previewContentLayer = previewVideo.parentElement;
+
+    expect(previewContentLayer).not.toBeNull();
+    expect(previewContentLayer).toHaveStyle({
       transform: "translate(12.5%, -7.5%) scale(1.25) rotate(-22deg)",
       opacity: "0.73",
     });
