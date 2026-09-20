@@ -168,7 +168,7 @@ function PreviewVisualLayer({
     width: number;
     height: number;
   } | null>(null);
-  const [videoSourceUrl, setVideoSourceUrl] = useState(mediaUrl);
+  const [videoSourceUrl, setVideoSourceUrl] = useState(streamUrl);
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
   const [previewFallbackAttempted, setPreviewFallbackAttempted] = useState(false);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
