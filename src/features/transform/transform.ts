@@ -69,6 +69,49 @@ export function normalizeTransformAnchor(
   return getClipTransformAnchor(anchor);
 }
 
+export interface TransformAnchorCompensationBounds {
+  widthPercent: number;
+  heightPercent: number;
+}
+
+export function compensateTransformForAnchorChange(
+  transform: ClipTransform,
+  currentAnchor: TransformAnchor,
+  nextAnchor: TransformAnchor,
+  contentBounds: TransformAnchorCompensationBounds,
+): ClipTransform {
+  const from = getClipTransformAnchor(currentAnchor);
+  const to = getClipTransformAnchor(nextAnchor);
+  const widthPercent = Number.isFinite(contentBounds.widthPercent)
+    ? Math.max(0, contentBounds.widthPercent)
+    : 0;
+  const heightPercent = Number.isFinite(contentBounds.heightPercent)
+    ? Math.max(0, contentBounds.heightPercent)
+    : 0;
+
+  const deltaAnchorX = (to.x - from.x) * widthPercent;
+  const deltaAnchorY = (to.y - from.y) * heightPercent;
+
+  const safeTransform = getClipTransform(transform);
+  const angle = (safeTransform.rotation * Math.PI) / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const scale = safeTransform.scale;
+
+  const compensatedDeltaX =
+    (scale * cos - 1) * deltaAnchorX -
+    scale * sin * deltaAnchorY;
+  const compensatedDeltaY =
+    scale * sin * deltaAnchorX +
+    (scale * cos - 1) * deltaAnchorY;
+
+  return normalizeClipTransform({
+    ...safeTransform,
+    x: safeTransform.x + compensatedDeltaX,
+    y: safeTransform.y + compensatedDeltaY,
+  });
+}
+
 export function getClipCrop(
   crop: Partial<ClipCrop> | undefined,
 ): ClipCrop {
