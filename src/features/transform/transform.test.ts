@@ -75,6 +75,57 @@ describe("transform keyframes", () => {
     });
   });
 
+  it("defaults legacy keyframes to linear easing", () => {
+    const normalized = normalizeTransformKeyframes([
+      {
+        timeMs: 0,
+        transform: DEFAULT_CLIP_TRANSFORM,
+      },
+    ]);
+
+    expect(normalized[0].easing).toBe("linear");
+  });
+
+  it("applies ease-in interpolation to the destination keyframe", () => {
+    const keyframes = [
+      {
+        timeMs: 0,
+        transform: DEFAULT_CLIP_TRANSFORM,
+        easing: "linear" as const,
+      },
+      {
+        timeMs: 1000,
+        transform: {
+          ...DEFAULT_CLIP_TRANSFORM,
+          x: 100,
+        },
+        easing: "ease-in" as const,
+      },
+    ];
+
+    expect(getClipTransformAtTime(undefined, keyframes, 500).x).toBe(25);
+  });
+
+  it("applies ease-out interpolation to the destination keyframe", () => {
+    const keyframes = [
+      {
+        timeMs: 0,
+        transform: DEFAULT_CLIP_TRANSFORM,
+        easing: "linear" as const,
+      },
+      {
+        timeMs: 1000,
+        transform: {
+          ...DEFAULT_CLIP_TRANSFORM,
+          x: 100,
+        },
+        easing: "ease-out" as const,
+      },
+    ];
+
+    expect(getClipTransformAtTime(undefined, keyframes, 500).x).toBe(75);
+  });
+
   it("interpolates transforms at the playhead", () => {
     const keyframes = [
       {
@@ -132,6 +183,7 @@ describe("transform keyframes", () => {
         rotation: 12,
         opacity: 0.8,
       },
+      easing: "linear",
     });
 
     expect(removeTransformKeyframe(updated, 500)).toEqual([]);
