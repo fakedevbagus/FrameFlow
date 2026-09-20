@@ -1,5 +1,35 @@
 # FrameFlow Changelog
 
+## 2026-09-21
+
+### M3.19 — Direct crop-content panning — merged
+Branch: `feat/m3-19-direct-crop-content-panning`
+PR #29 — merged
+Merge SHA: `549b1423e365ed11116a14b1005aa5a38f7b35ad`
+
+Implemented:
+- Added direct crop-content panning inside the fixed M3.18 crop viewport.
+- Added transform-aware crop-position pointer math for scale, rotation, translation, and anchor.
+- Constrained the source content position so the crop viewport stays covered by the source media.
+- Kept completed pan gestures as one history mutation through the existing crop-position command.
+- Preserved the existing canvas move gesture for uncropped visuals and kept crop edge handles separate.
+- Added Preview and App regression coverage for direct pan interaction and Undo behavior.
+
+Architecture:
+- Reused the existing transformed pointer-to-content mapping for crop-position dragging.
+- Kept the pan surface separate from crop edge handles and the existing uncropped canvas move interaction.
+- Kept live gesture state separate from project history; only the completed gesture is committed.
+
+Validation:
+- User confirmed M3.19 local validation passed on Linux after the final crop-pan regression fixture correction.
+
+Known limitations:
+- Aspect-ratio crop presets remain future work.
+- Crop position remains per-clip and is not keyframed in this milestone.
+
+Next step:
+- M3.20: aspect-ratio crop presets.
+
 ## 2026-09-20
 
 ### M3.16 — Crop foundation — merged
