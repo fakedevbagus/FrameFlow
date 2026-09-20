@@ -217,6 +217,121 @@ describe("Preview", () => {
     expect(screen.getByTestId("preview-audio")).not.toHaveAttribute("controls");
   });
 
+  it("moves a selected visual directly on the canvas", async () => {
+    let project = createProject({ id: "canvas-move-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-1",
+          name: "move.mp4",
+          mediaType: "video",
+          sourcePath: "/media/move.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-1");
+    const clipId = project.tracks[0].clips[0].id;
+    const onSelectClip = vi.fn();
+    const onTransformCommit = vi.fn();
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+        onSelectClip={onSelectClip}
+        onTransformCommit={onTransformCommit}
+      />,
+    );
+
+    const hitArea = screen.getByTestId(`preview-hit-area-${clipId}`);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    fireEvent.pointerDown(hitArea, {
+      button: 0,
+      pointerId: 1,
+      clientX: 50,
+      clientY: 100,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 1,
+      clientX: 90,
+      clientY: 60,
+    });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 1,
+      clientX: 90,
+      clientY: 60,
+    });
+
+    await vi.waitFor(() => {
+      expect(onSelectClip).toHaveBeenCalledWith(clipId);
+      expect(onTransformCommit).toHaveBeenCalledWith(
+        clipId,
+        expect.objectContaining({
+          x: 20,
+          y: -10,
+        }),
+      );
+    });
+  });
+
+  it("shows direct manipulation handles for the selected visual", () => {
+    let project = createProject({ id: "canvas-handles-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-1",
+          name: "handles.mp4",
+          mediaType: "video",
+          sourcePath: "/media/handles.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-1");
+    const clipId = project.tracks[0].clips[0].id;
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Rotate selected visual" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Scale selected visual" }),
+    ).toBeInTheDocument();
+  });
+
   it("starts media playback when transport playback is active", async () => {
     const playMock = vi
       .spyOn(HTMLMediaElement.prototype, "play")

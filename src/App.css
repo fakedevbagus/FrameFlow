@@ -315,6 +315,69 @@ button:focus-visible {
   object-fit: contain;
   pointer-events: none;
   background: transparent;
+  transform-origin: center center;
+}
+
+.preview-interaction-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.preview-interaction-layer:active {
+  cursor: grabbing;
+}
+
+.preview-interaction-layer[data-selected="true"] {
+  cursor: move;
+}
+
+.preview-transform-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.preview-transform-bounds {
+  position: absolute;
+  inset: 8px;
+  border: 1px dashed rgb(169 156 255 / 88%);
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgb(18 21 26 / 75%);
+}
+
+.preview-transform-handle {
+  position: absolute;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #8175dc;
+  border-radius: 6px;
+  cursor: pointer;
+  pointer-events: auto;
+  color: #f4f2ff;
+  background: #262238;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 24%);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.preview-transform-rotate-handle {
+  top: -4px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.preview-transform-scale-handle {
+  right: -4px;
+  bottom: -4px;
 }
 
 .preview-audio-layer {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
+import type { ClipTransform } from "./features/project/domain";
 import {
   addAssetToTimeline,
   addAssetToTrack,
@@ -506,6 +507,17 @@ function App() {
     );
   }
 
+  function handleCanvasTransformCommit(
+    clipId: string,
+    transform: ClipTransform,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        updateClipTransform(currentProject, clipId, transform),
+      "Canvas transform updated.",
+    );
+  }
+
   function canSplitSelectedClip(): boolean {
     if (!selectedClipContext || selectedClipContext.clip.sourceEndMs === null) {
       return false;
@@ -711,6 +723,9 @@ function App() {
                 project={project}
                 currentTimeMs={displayedCurrentTimeMs}
                 isPlaying={isPlaying}
+                selectedClipId={selectedClipId}
+                onSelectClip={handleSelectClip}
+                onTransformCommit={handleCanvasTransformCommit}
               />
             </div>
             <div className="transport-controls" aria-label="Playback controls">

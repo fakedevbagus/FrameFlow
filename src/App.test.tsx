@@ -174,6 +174,89 @@ describe("App", () => {
     expect(container.querySelector(".timeline-playhead")).not.toBeNull();
   });
 
+  it("commits direct canvas movement into project history", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-canvas-move",
+        name: "canvas-move.mp4",
+        mediaType: "video",
+        sourcePath: "/media/canvas-move.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("canvas-move.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add canvas-move.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select canvas-move.mp4 clip",
+      }),
+    );
+
+    const hitArea = container.querySelector(
+      '[data-testid^="preview-hit-area-"]',
+    );
+
+    expect(hitArea).not.toBeNull();
+
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    fireEvent.pointerDown(hitArea as HTMLDivElement, {
+      button: 0,
+      pointerId: 7,
+      clientX: 50,
+      clientY: 100,
+    });
+    fireEvent.pointerMove(hitArea as HTMLDivElement, {
+      buttons: 1,
+      pointerId: 7,
+      clientX: 70,
+      clientY: 80,
+    });
+    fireEvent.pointerUp(hitArea as HTMLDivElement, {
+      button: 0,
+      pointerId: 7,
+      clientX: 70,
+      clientY: 80,
+    });
+
+    await waitFor(() =>
+      expect(container).toHaveTextContent("+10%"),
+    );
+
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(container).toHaveTextContent("+0%");
+    });
+  });
+
   it("applies visual transform controls and resets them", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {

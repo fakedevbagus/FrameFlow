@@ -1,7 +1,16 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { useEffect, useRef, useState } from "react";
-import type { Project } from "../project/domain";
-import { getClipTransform } from "../transform/transform";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
+import type { ClipTransform, Project } from "../project/domain";
+import { getClipTransform, normalizeClipTransform } from "../transform/transform";
+import {
+  transformFromPointer,
+  type CanvasManipulationMode,
+} from "./canvasManipulation";
 import {
   getActiveAudioPreviewClips,
   getActiveVisualPreviewClips,
@@ -13,6 +22,9 @@ interface PreviewProps {
   project: Project;
   currentTimeMs: number;
   isPlaying: boolean;
+  selectedClipId?: string | null;
+  onSelectClip?: (clipId: string) => void;
+  onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
 }
 
 interface PreviewError {
@@ -24,6 +36,9 @@ export function Preview({
   project,
   currentTimeMs,
   isPlaying,
+  selectedClipId = null,
+  onSelectClip,
+  onTransformCommit,
 }: PreviewProps) {
   const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
   const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
@@ -48,6 +63,7 @@ export function Preview({
     <div
       className="preview-stage"
       data-preview-state={hasVisualPreview ? "video" : "audio"}
+      data-testid="preview-stage"
     >
       {visualClips.map((layer, index) => (
         <PreviewVisualLayer
@@ -56,6 +72,9 @@ export function Preview({
           currentTimeMs={currentTimeMs}
           isPlaying={isPlaying}
           zIndex={index + 1}
+          isSelected={selectedClipId === layer.clip.id}
+          onSelectClip={onSelectClip}
+          onTransformCommit={onTransformCommit}
           onError={handleMediaError}
         />
       ))}
@@ -101,21 +120,42 @@ interface PreviewLayerProps {
   onError: (assetId: string, message: string) => void;
 }
 
+interface PreviewVisualLayerProps extends PreviewLayerProps {
+  isSelected: boolean;
+  onSelectClip?: (clipId: string) => void;
+  onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
+}
+
+interface CanvasGesture {
+  mode: CanvasManipulationMode;
+  pointerId: number;
+  startPointer: { x: number; y: number };
+  baseTransform: ClipTransform;
+  transform: ClipTransform;
+  hasMoved: boolean;
+}
+
 function PreviewVisualLayer({
   layer,
   currentTimeMs,
   isPlaying,
   zIndex = 1,
+  isSelected,
+  onSelectClip,
+  onTransformCommit,
   onError,
-}: PreviewLayerProps) {
+}: PreviewVisualLayerProps) {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
+  const interactionRef = useRef<HTMLDivElement | null>(null);
+  const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
-  const transform = getClipTransform(layer.clip.transform);
+  const baseTransform = getClipTransform(layer.clip.transform);
+  const activeTransform = gesture?.transform ?? baseTransform;
   const layerStyle = {
     zIndex,
-    transform: `translate(${transform.x}%, ${transform.y}%) scale(${transform.scale}) rotate(${transform.rotation}deg)`,
-    opacity: transform.opacity,
+    transform: `translate(${activeTransform.x}%, ${activeTransform.y}%) scale(${activeTransform.scale}) rotate(${activeTransform.rotation}deg)`,
+    opacity: activeTransform.opacity,
   };
 
   useEffect(() => {
@@ -171,10 +211,158 @@ function PreviewVisualLayer({
     }
   }
 
+  function beginGesture(
+    mode: CanvasManipulationMode,
+    event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    onSelectClip?.(layer.clip.id);
+
+    if (isPlaying || !interactionRef.current) {
+      return;
+    }
+
+    const bounds = interactionRef.current.getBoundingClientRect();
+
+    if (bounds.width <= 0 || bounds.height <= 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+      interactionRef.current.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is not implemented in every runtime.
+    }
+
+    setGesture({
+      mode,
+      pointerId: event.pointerId,
+      startPointer: {
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      },
+      baseTransform,
+      transform: baseTransform,
+      hasMoved: false,
+    });
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    setGesture((currentGesture) => {
+      if (
+        !currentGesture ||
+        currentGesture.pointerId !== event.pointerId ||
+        !interactionRef.current
+      ) {
+        return currentGesture;
+      }
+
+      const bounds = interactionRef.current.getBoundingClientRect();
+      const nextTransform = transformFromPointer(
+        currentGesture.mode,
+        currentGesture.baseTransform,
+        currentGesture.startPointer,
+        {
+          x: event.clientX - bounds.left,
+          y: event.clientY - bounds.top,
+        },
+        {
+          width: bounds.width,
+          height: bounds.height,
+        },
+      );
+
+      const moved =
+        Math.hypot(
+          event.clientX - (currentGesture.startPointer.x + bounds.left),
+          event.clientY - (currentGesture.startPointer.y + bounds.top),
+        ) >= 2;
+
+      return {
+        ...currentGesture,
+        transform: normalizeClipTransform(nextTransform),
+        hasMoved: currentGesture.hasMoved || moved,
+      };
+    });
+  }
+
+  function finishGesture(event: PointerEvent<HTMLDivElement>) {
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    try {
+      interactionRef.current?.releasePointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture may be unavailable in tests.
+    }
+
+    const shouldCommit = gesture.hasMoved;
+    const nextTransform = gesture.transform;
+
+    setGesture(null);
+
+    if (shouldCommit) {
+      onTransformCommit?.(layer.clip.id, nextTransform);
+    }
+  }
+
+  function cancelGesture(event: PointerEvent<HTMLDivElement>) {
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    setGesture(null);
+
+    try {
+      interactionRef.current?.releasePointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture may be unavailable in tests.
+    }
+  }
+
+  function renderManipulationControls() {
+    if (!isSelected || isPlaying) {
+      return null;
+    }
+
+    return (
+      <div
+        className="preview-transform-controls"
+        data-testid="preview-transform-controls"
+        aria-label="Transform controls"
+      >
+        <div className="preview-transform-bounds" />
+        <button
+          aria-label="Rotate selected visual"
+          className="preview-transform-handle preview-transform-rotate-handle"
+          onPointerDown={(event) => beginGesture("rotate", event)}
+          type="button"
+        >
+          ↻
+        </button>
+        <button
+          aria-label="Scale selected visual"
+          className="preview-transform-handle preview-transform-scale-handle"
+          onPointerDown={(event) => beginGesture("scale", event)}
+          type="button"
+        >
+          ◩
+        </button>
+      </div>
+    );
+  }
+
   if (!mediaUrl) {
     return (
       <div
-        className="preview-layer-error"
+        className="preview-interaction-layer preview-layer-error"
         role="status"
         style={{ zIndex }}
       >
@@ -185,31 +373,57 @@ function PreviewVisualLayer({
 
   if (layer.asset.mediaType === "image") {
     return (
-      <img
-        alt={layer.asset.name}
-        className="preview-layer preview-image-layer"
-        data-preview-state="image"
-        src={mediaUrl}
-        style={layerStyle}
-      />
+      <div
+        className="preview-interaction-layer"
+        data-testid={`preview-hit-area-${layer.clip.id}`}
+        data-selected={isSelected}
+        ref={interactionRef}
+        style={{ zIndex: zIndex + 10 }}
+        onPointerDown={(event) => beginGesture("move", event)}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishGesture}
+        onPointerCancel={cancelGesture}
+      >
+        <img
+          alt={layer.asset.name}
+          className="preview-layer preview-image-layer"
+          data-preview-state="image"
+          src={mediaUrl}
+          style={layerStyle}
+        />
+        {renderManipulationControls()}
+      </div>
     );
   }
 
   return (
-    <video
-      className="preview-layer preview-video-layer"
-      data-preview-state="video"
-      data-testid="preview-video"
-      playsInline
-      preload="auto"
-      ref={mediaRef}
-      src={mediaUrl}
-      style={layerStyle}
-      onLoadedMetadata={handleLoadedMetadata}
-      onError={() =>
-        onError(layer.asset.id, "Video could not be loaded.")
-      }
-    />
+    <div
+      className="preview-interaction-layer"
+      data-testid={`preview-hit-area-${layer.clip.id}`}
+      data-selected={isSelected}
+      ref={interactionRef}
+      style={{ zIndex: zIndex + 10 }}
+      onPointerDown={(event) => beginGesture("move", event)}
+      onPointerMove={handlePointerMove}
+      onPointerUp={finishGesture}
+      onPointerCancel={cancelGesture}
+    >
+      <video
+        className="preview-layer preview-video-layer"
+        data-preview-state="video"
+        data-testid="preview-video"
+        playsInline
+        preload="auto"
+        ref={mediaRef}
+        src={mediaUrl}
+        style={layerStyle}
+        onLoadedMetadata={handleLoadedMetadata}
+        onError={() =>
+          onError(layer.asset.id, "Video could not be loaded.")
+        }
+      />
+      {renderManipulationControls()}
+    </div>
   );
 }
 
