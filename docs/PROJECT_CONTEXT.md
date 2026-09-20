@@ -406,7 +406,11 @@ Architecture decisions:
 - Legacy clips without crop data render with zero crop.
 
 Validation:
-- Automated and manual local validation is pending user verification for this branch.
+- Initial local validation found one unused TypeScript import in `src/features/timeline/commands.ts`; the import has been removed.
+- The test suite itself passed: 17 test files, 136 tests.
+- `npm run build` failed only because of the same unused import.
+- `npm run tauri dev` launched successfully despite the prior TypeScript build failure.
+- A clean lint/build rerun and manual validation are still required.
 
 Known limitation:
 - This milestone provides Inspector-based crop values only. Direct crop-handle manipulation, aspect-ratio presets, and crop-position translation compensation are future work.
