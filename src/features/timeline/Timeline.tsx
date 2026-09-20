@@ -604,7 +604,9 @@ export function Timeline({
       return;
     }
 
-    event.currentTarget.setPointerCapture(event.pointerId);
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     transitionInteractionTargetRef.current = event.currentTarget;
 
     setTransitionInteraction({
