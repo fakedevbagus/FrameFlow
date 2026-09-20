@@ -2,9 +2,11 @@
 
 ## 2026-09-20
 
-### M3.13 — Playback stability (in progress)
+### M3.13 — Playback stability — merged
 Branch: `feat/m3-13-playback-stability`
-PR #23 (draft)
+PR #23 — merged
+
+Merge SHA: `595f7498e503aab19052279979fb389ae8300691`
 
 Implemented:
 - Playback no longer waits for every media `play()` promise before entering the playing state.
@@ -27,11 +29,11 @@ Follow-up playback smoothness correction:
 - Prevent the video preview effect from seeking `currentTime` on every transport tick while playback is active.
 - Keep playback-start re-alignment for replay/start synchronization.
 - Added regression coverage for transport ticks during active playback.
-- Local validation remains pending.
+- User reported successful local validation on Linux, including the playback behavior targeted by this milestone.
 
 Validation:
-- Not yet validated locally by the user.
-- Do not merge until lint, tests, build, `tauri dev`, and manual playback checks pass.
+- User confirmed the M3.13 validation succeeded locally.
+- PR #23 was then marked ready and squash-merged.
 
 ### M3.12 — Keyframe keyboard nudging
 PR #21 — merged.
