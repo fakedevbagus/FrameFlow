@@ -506,7 +506,7 @@ describe("App", () => {
     });
 
     expect(screen.getByText("keyframe-delete.mp4")).toBeInTheDocument();
-    expect(container).toHaveTextContent("0 keyframes");
+    expect(container).toHaveTextContent("Static transform at 00:00.000");
   });
 
   it("animates transform values between keyframes", async () => {
