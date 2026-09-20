@@ -161,7 +161,7 @@ function PreviewVisualLayer({
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
-  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+  const mediaUrl = createMediaStreamUrl(layer.asset.sourcePath);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
@@ -287,7 +287,7 @@ function PreviewVisualLayer({
       const previewPath = await invoke<string>("prepare_media_preview", {
         path: layer.asset.sourcePath,
       });
-      const previewUrl = tryConvertFileSrc(previewPath);
+      const previewUrl = createMediaStreamUrl(previewPath);
 
       if (!previewUrl) {
         throw new Error("Generated preview path could not be loaded.");
@@ -601,7 +601,7 @@ function PreviewAudioLayer({
 }: PreviewLayerProps) {
   const mediaRef = useRef<HTMLAudioElement | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
-  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+  const mediaUrl = createMediaStreamUrl(layer.asset.sourcePath);
 
   useEffect(() => {
     if (isPlaying) {
@@ -701,4 +701,9 @@ function getClipDurationMsForTransform(clip: ActivePreviewClip["clip"]): number 
   }
 
   return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+}
+
+
+function createMediaStreamUrl(path: string): string {
+  return `stream://localhost/?path=${encodeURIComponent(path)}`;
 }
