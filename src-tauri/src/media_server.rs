@@ -270,7 +270,7 @@ fn read_request(stream: &mut TcpStream) -> Result<String, String> {
 
     buffer.extend_from_slice(&chunk[..read]);
 
-    if buffer.windows(4).any(|window| window == b"\\r\\n\\r\\n") {
+    if buffer.windows(4).any(|window| window == b"\r\n\r\n") {
       break;
     }
 
@@ -291,21 +291,21 @@ fn write_headers(
   content_range: Option<String>,
 ) -> Result<(), String> {
   let mut headers = format!(
-    "HTTP/1.1 {status} {reason}\\r\\n\
-Content-Type: {content_type}\\r\\n\
-Content-Length: {content_length}\\r\\n\
-Cache-Control: no-store\\r\\n\
-Accept-Ranges: bytes\\r\\n\
-Access-Control-Allow-Origin: *\\r\\n\
-Access-Control-Expose-Headers: Accept-Ranges, Content-Length, Content-Range, Content-Type\\r\\n\
-Connection: close\\r\\n"
+    "HTTP/1.1 {status} {reason}\r\n\
+Content-Type: {content_type}\r\n\
+Content-Length: {content_length}\r\n\
+Cache-Control: no-store\r\n\
+Accept-Ranges: bytes\r\n\
+Access-Control-Allow-Origin: *\r\n\
+Access-Control-Expose-Headers: Accept-Ranges, Content-Length, Content-Range, Content-Type\r\n\
+Connection: close\r\n"
   );
 
   if let Some(content_range) = content_range {
-    headers.push_str(&format!("Content-Range: {content_range}\\r\\n"));
+    headers.push_str(&format!("Content-Range: {content_range}\r\n"));
   }
 
-  headers.push_str("\\r\\n");
+  headers.push_str("\r\n");
 
   stream
     .write_all(headers.as_bytes())
@@ -337,12 +337,12 @@ fn write_range_not_satisfiable(
   len: u64,
 ) -> Result<(), String> {
   let headers = format!(
-    "HTTP/1.1 416 Range Not Satisfiable\\r\\n\
-Content-Length: 0\\r\\n\
-Content-Range: bytes */{len}\\r\\n\
-Access-Control-Allow-Origin: *\\r\\n\
-Connection: close\\r\\n\
-\\r\\n"
+    "HTTP/1.1 416 Range Not Satisfiable\r\n\
+Content-Length: 0\r\n\
+Content-Range: bytes */{len}\r\n\
+Access-Control-Allow-Origin: *\r\n\
+Connection: close\r\n\
+\r\n"
   );
 
   stream
@@ -459,7 +459,7 @@ mod tests {
   #[test]
   fn parses_single_media_range() {
     assert!(matches!(
-      parse_range_header("GET /media HTTP/1.1\\r\\nRange: bytes=100-199\\r\\n\\r\\n", 1000),
+      parse_range_header("GET /media HTTP/1.1\r\nRange: bytes=100-199\r\n\r\n", 1000),
       RangeResult::Single(100, 199)
     ));
   }
@@ -467,7 +467,7 @@ mod tests {
   #[test]
   fn parses_open_ended_media_range() {
     assert!(matches!(
-      parse_range_header("GET /media HTTP/1.1\\r\\nRange: bytes=100-\\r\\n\\r\\n", 1000),
+      parse_range_header("GET /media HTTP/1.1\r\nRange: bytes=100-\r\n\r\n", 1000),
       RangeResult::Single(100, 999)
     ));
   }
@@ -475,7 +475,7 @@ mod tests {
   #[test]
   fn parses_suffix_media_range() {
     assert!(matches!(
-      parse_range_header("GET /media HTTP/1.1\\r\\nRange: bytes=-100\\r\\n\\r\\n", 1000),
+      parse_range_header("GET /media HTTP/1.1\r\nRange: bytes=-100\r\n\r\n", 1000),
       RangeResult::Single(900, 999)
     ));
   }
@@ -483,7 +483,7 @@ mod tests {
   #[test]
   fn detects_multiple_media_ranges() {
     assert!(matches!(
-      parse_range_header("GET /media HTTP/1.1\\r\\nRange: bytes=0-99,200-299\\r\\n\\r\\n", 1000),
+      parse_range_header("GET /media HTTP/1.1\r\nRange: bytes=0-99,200-299\r\n\r\n", 1000),
       RangeResult::Multiple
     ));
   }
