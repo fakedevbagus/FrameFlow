@@ -558,7 +558,7 @@ function PreviewVisualLayer({
             className="preview-layer preview-image-layer"
             data-preview-state="image"
             ref={imageRef}
-            src={mediaUrl}
+            src={mediaUrl ?? undefined}
             onLoad={handleImageLoad}
             style={{ width: "100%", height: "100%", objectFit: "fill", zIndex }}
           />
