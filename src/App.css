@@ -1126,6 +1126,64 @@ button:disabled {
   color: #dce1eb;
 }
 
+.inspector-transform-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.inspector-transform-field {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  color: #7f899a;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.inspector-transform-input-wrap {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid #343b48;
+  border-radius: 6px;
+  color: #7f899a;
+  background: #1a1e25;
+}
+
+.inspector-transform-input-wrap:focus-within {
+  border-color: #6e63b9;
+  box-shadow: 0 0 0 1px rgb(144 133 255 / 22%);
+}
+
+.inspector-transform-input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: #dce1eb;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.inspector-transform-input::-webkit-inner-spin-button,
+.inspector-transform-input::-webkit-outer-spin-button {
+  margin: 0;
+}
+
+.inspector-transform-input-wrap > span {
+  flex: 0 0 auto;
+  color: #697386;
+  font-size: 9px;
+  font-weight: 700;
+}
+
 .inspector-transform-readout {
   display: grid;
   grid-template-columns: 1fr auto;
