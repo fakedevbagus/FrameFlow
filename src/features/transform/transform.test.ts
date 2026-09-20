@@ -7,6 +7,7 @@ import {
   getClipTransformAnchor,
   getClipTransformAtTime,
   getCropForAspectRatio,
+  compensateTransformForAnchorChange,
   getTransformKeyframeAtTime,
   normalizeClipTransform,
   normalizeTransformKeyframes,
@@ -52,6 +53,49 @@ describe("clip transforms", () => {
 
   it("normalizes negative rotations without changing their direction", () => {
     expect(normalizeClipTransform({ rotation: -450 }).rotation).toBe(-90);
+  });
+
+  it("compensates translation when changing the transform anchor", () => {
+    expect(
+      compensateTransformForAnchorChange(
+        {
+          x: 0,
+          y: 0,
+          scale: 2,
+          rotation: 0,
+          opacity: 1,
+        },
+        { x: 0.5, y: 0.5 },
+        { x: 0, y: 0 },
+        { widthPercent: 100, heightPercent: 100 },
+      ),
+    ).toEqual({
+      x: -50,
+      y: -50,
+      scale: 2,
+      rotation: 0,
+      opacity: 1,
+    });
+  });
+
+  it("compensates anchor changes through rotation", () => {
+    expect(
+      compensateTransformForAnchorChange(
+        {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 90,
+          opacity: 1,
+        },
+        { x: 0.5, y: 0.5 },
+        { x: 0, y: 0 },
+        { widthPercent: 100, heightPercent: 100 },
+      ),
+    ).toMatchObject({
+      x: 100,
+      y: 0,
+    });
   });
 
   it("lists the supported crop aspect ratio presets", () => {
