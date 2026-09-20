@@ -4,6 +4,41 @@ import { normalizeClipCrop, normalizeClipTransform } from "../transform/transfor
 
 export type CanvasManipulationMode = "move" | "scale" | "rotate";
 
+export function transformAnchorFromPointer(
+  pointer: CanvasPointer,
+  contentBounds: ContentBounds,
+  canvasWidth: number,
+  canvasHeight: number,
+  transform: ClipTransform,
+  anchor: TransformAnchor = { x: 0.5, y: 0.5 },
+): TransformAnchor {
+  if (
+    contentBounds.width <= 0 ||
+    contentBounds.height <= 0 ||
+    canvasWidth <= 0 ||
+    canvasHeight <= 0
+  ) {
+    return {
+      x: clampRatio(anchor.x),
+      y: clampRatio(anchor.y),
+    };
+  }
+
+  const point = pointerToContentPoint(
+    pointer,
+    contentBounds,
+    canvasWidth,
+    canvasHeight,
+    transform,
+    anchor,
+  );
+
+  return {
+    x: clampRatio(point.x / contentBounds.width),
+    y: clampRatio(point.y / contentBounds.height),
+  };
+}
+
 export interface CanvasPointer {
   x: number;
   y: number;

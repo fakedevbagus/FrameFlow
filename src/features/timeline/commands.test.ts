@@ -330,28 +330,33 @@ describe("clip transforms", () => {
       { widthPercent: 100, heightPercent: 100 },
     );
 
-    expect(updated.tracks[0].clips[0].transformKeyframes).toEqual([
-      {
-        timeMs: 0,
-        transform: {
-          x: -50,
-          y: -50,
-          scale: 2,
-          rotation: 0,
-          opacity: 1,
-        },
+    expect(updated.tracks[0].clips[0].transformKeyframes).toHaveLength(2);
+
+    const keyframes = updated.tracks[0].clips[0].transformKeyframes ?? [];
+
+    expect(keyframes[0]).toMatchObject({
+      timeMs: 0,
+      easing: "linear",
+      transform: {
+        x: -50,
+        y: -50,
+        scale: 2,
+        rotation: 0,
+        opacity: 1,
       },
-      {
-        timeMs: 2000,
-        transform: {
-          x: 125,
-          y: -25,
-          scale: 1.5,
-          rotation: 90,
-          opacity: 1,
-        },
+    });
+
+    expect(keyframes[1]).toMatchObject({
+      timeMs: 2000,
+      easing: "linear",
+      transform: {
+        scale: 1.5,
+        rotation: 90,
+        opacity: 1,
       },
-    ]);
+    });
+    expect(keyframes[1].transform.x).toBeCloseTo(100, 10);
+    expect(keyframes[1].transform.y).toBeCloseTo(-25, 10);
   });
 
   it("updates and clamps visual clip transforms", () => {

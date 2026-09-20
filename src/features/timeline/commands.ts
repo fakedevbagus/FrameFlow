@@ -10,6 +10,7 @@ import type {
 } from "../project/domain";
 import {
   DEFAULT_CLIP_TRANSFORM,
+  getClipTransform,
   getClipTransformAtTime,
   getClipTransformAnchor,
   getTransformKeyframeAtTime,
@@ -83,7 +84,7 @@ export function updateClipTransformAnchorWithCompensation(
   }
 
   const transform = compensateTransformForAnchorChange(
-    location.clip.transform,
+    getClipTransform(location.clip.transform),
     currentAnchor,
     nextAnchor,
     contentBounds,

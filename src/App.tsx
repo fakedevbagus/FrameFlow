@@ -114,6 +114,12 @@ function App() {
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
+  const [visualMediaDimensions, setVisualMediaDimensions] = useState<
+    Record<string, { width: number; height: number }>
+  >({});
+  const visualMediaDimensionsRef = useRef<
+    Record<string, { width: number; height: number }>
+  >({});
   const project = history.present;
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
@@ -271,6 +277,8 @@ function App() {
       if (result) {
         setHistory(resetHistory(result.project));
         setSelectedClipId(null);
+        setVisualMediaDimensions({});
+        visualMediaDimensionsRef.current = {};
         setPlaybackTime(0);
         setIsPlaying(false);
         setProjectNotice("Project opened.");
@@ -662,6 +670,32 @@ function App() {
     );
   }
 
+  const handleVisualMediaDimensionsChange = useCallback(
+    (clipId: string, dimensions: { width: number; height: number }) => {
+      visualMediaDimensionsRef.current = {
+        ...visualMediaDimensionsRef.current,
+        [clipId]: dimensions,
+      };
+
+      setVisualMediaDimensions((current) => {
+        const previous = current[clipId];
+
+        if (
+          previous?.width === dimensions.width &&
+          previous?.height === dimensions.height
+        ) {
+          return current;
+        }
+
+        return {
+          ...current,
+          [clipId]: dimensions,
+        };
+      });
+    },
+    [],
+  );
+
   function handleSetSelectedTransformAnchor(anchor: TransformAnchor) {
     if (!selectedClipContext) {
       return;
@@ -726,14 +760,26 @@ function App() {
   }
 
   function getSelectedVisualMediaDimensions(): { width: number; height: number } | null {
-    if (!selectedClipContext || !previewCanvasRef.current) {
+    if (!selectedClipContext) {
+      return null;
+    }
+
+    const cached =
+      visualMediaDimensionsRef.current[selectedClipContext.clip.id] ??
+      visualMediaDimensions[selectedClipContext.clip.id];
+
+    if (cached) {
+      return cached;
+    }
+
+    if (!previewCanvasRef.current) {
       return null;
     }
 
     const media = Array.from(
-      previewCanvasRef.current.querySelectorAll<HTMLVideoElement | HTMLImageElement>(
-        "video, img",
-      ),
+      previewCanvasRef.current.querySelectorAll<
+        HTMLVideoElement | HTMLImageElement
+      >("video, img"),
     ).find(
       (candidate) =>
         candidate.getAttribute("data-clip-id") === selectedClipContext.clip.id,
@@ -741,6 +787,22 @@ function App() {
 
     if (!media) {
       return null;
+    }
+
+    const dataWidth = Number.parseFloat(
+      media.getAttribute("data-media-width") ?? "",
+    );
+    const dataHeight = Number.parseFloat(
+      media.getAttribute("data-media-height") ?? "",
+    );
+
+    if (
+      Number.isFinite(dataWidth) &&
+      dataWidth > 0 &&
+      Number.isFinite(dataHeight) &&
+      dataHeight > 0
+    ) {
+      return { width: dataWidth, height: dataHeight };
     }
 
     if ("videoWidth" in media) {
@@ -1378,6 +1440,12 @@ function App() {
                 selectedClipId={selectedClipId}
                 onSelectClip={handleSelectClip}
                 onTransformCommit={handleCanvasTransformCommit}
+                onTransformAnchorCommit={(_, anchor) =>
+                  handleSetSelectedTransformAnchor(anchor)
+                }
+                onVisualMediaDimensionsChange={
+                  handleVisualMediaDimensionsChange
+                }
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
                 />

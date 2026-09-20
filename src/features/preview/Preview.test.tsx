@@ -567,6 +567,92 @@ describe("Preview", () => {
     });
   });
 
+  it("commits a direct on-canvas anchor drag", async () => {
+    let project = createProject({ id: "anchor-drag-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-anchor-drag",
+          name: "anchor-drag.mp4",
+          mediaType: "video",
+          sourcePath: "/media/anchor-drag.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-anchor-drag");
+    const clipId = project.tracks[0].clips[0].id;
+    const onSelectClip = vi.fn();
+    const onTransformAnchorCommit = vi.fn();
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+        onSelectClip={onSelectClip}
+        onTransformAnchorCommit={onTransformAnchorCommit}
+      />,
+    );
+
+    const hitArea = screen.getByTestId(`preview-hit-area-${clipId}`);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const anchorHandle = screen.getByTestId("preview-transform-anchor-handle");
+
+    expect(anchorHandle).toHaveStyle({
+      left: "50%",
+      top: "50%",
+    });
+
+    fireEvent.pointerDown(anchorHandle, {
+      button: 0,
+      pointerId: 13,
+      clientX: 100,
+      clientY: 200,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 13,
+      clientX: 50,
+      clientY: 100,
+    });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 13,
+      clientX: 50,
+      clientY: 100,
+    });
+
+    await vi.waitFor(() => {
+      expect(onSelectClip).toHaveBeenCalledWith(clipId);
+      expect(onTransformAnchorCommit).toHaveBeenCalledWith(
+        clipId,
+        expect.objectContaining({
+          x: 0.25,
+          y: 0.25,
+        }),
+      );
+    });
+  });
+
   it("shows direct manipulation handles for the selected visual", () => {
     let project = createProject({ id: "canvas-handles-preview" });
 
