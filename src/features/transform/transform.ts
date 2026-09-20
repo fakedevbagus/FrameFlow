@@ -1,4 +1,4 @@
-import type { TransformEasing, TransformKeyframe } from "../project/domain";
+import type { TransformAnchor, TransformEasing, TransformKeyframe } from "../project/domain";
 
 export interface ClipTransform {
   x: number;
@@ -8,6 +8,11 @@ export interface ClipTransform {
   opacity: number;
 }
 
+export const DEFAULT_TRANSFORM_ANCHOR: TransformAnchor = {
+  x: 0.5,
+  y: 0.5,
+};
+
 export const DEFAULT_CLIP_TRANSFORM: ClipTransform = {
   x: 0,
   y: 0,
@@ -15,6 +20,21 @@ export const DEFAULT_CLIP_TRANSFORM: ClipTransform = {
   rotation: 0,
   opacity: 1,
 };
+
+export function getClipTransformAnchor(
+  anchor: Partial<TransformAnchor> | undefined,
+): TransformAnchor {
+  return {
+    x: clamp(finiteOrDefault(anchor?.x, DEFAULT_TRANSFORM_ANCHOR.x), 0, 1),
+    y: clamp(finiteOrDefault(anchor?.y, DEFAULT_TRANSFORM_ANCHOR.y), 0, 1),
+  };
+}
+
+export function normalizeTransformAnchor(
+  anchor: Partial<TransformAnchor>,
+): TransformAnchor {
+  return getClipTransformAnchor(anchor);
+}
 
 export function getClipTransform(
   transform: Partial<ClipTransform> | undefined,
