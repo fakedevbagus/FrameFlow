@@ -4,7 +4,7 @@ import {
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
   normalizeClipTransform,
-  removeTransformKeyframe,
+  removeTransformKeyframe as removeTransformKeyframeAtTime,
   upsertTransformKeyframe,
 } from "../transform/transform";
 
@@ -377,7 +377,7 @@ export function removeTransformKeyframe(
     throw new Error("No transform keyframe exists at this time.");
   }
 
-  const keyframes = removeTransformKeyframe(
+  const keyframes = removeTransformKeyframeAtTime(
     location.clip.transformKeyframes,
     timeMs,
   );
