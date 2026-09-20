@@ -628,13 +628,13 @@ describe("App", () => {
     expect(container).toHaveTextContent("Transform updated.");
   });
 
-  it("changes the selected visual transform anchor", async () => {
+  it("preserves the visual position when changing the transform anchor", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
-        id: "asset-transform-anchor-ui",
-        name: "anchor-ui.mp4",
+        id: "asset-transform-anchor-compensated-ui",
+        name: "anchor-compensated-ui.mp4",
         mediaType: "video",
-        sourcePath: "/media/anchor-ui.mp4",
+        sourcePath: "/media/anchor-compensated-ui.mp4",
         durationMs: 8000,
       },
     ]);
@@ -644,40 +644,70 @@ describe("App", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
 
     await waitFor(() =>
-      expect(screen.getByText("anchor-ui.mp4")).toBeInTheDocument(),
+      expect(
+        screen.getByText("anchor-compensated-ui.mp4"),
+      ).toBeInTheDocument(),
     );
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Add anchor-ui.mp4 to timeline",
+        name: "Add anchor-compensated-ui.mp4 to timeline",
       }),
     );
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Select anchor-ui.mp4 clip",
+        name: "Select anchor-compensated-ui.mp4 clip",
       }),
+    );
+
+    const video = screen.getByTestId("preview-video");
+    Object.defineProperty(video, "videoWidth", {
+      configurable: true,
+      value: 1920,
+    });
+    Object.defineProperty(video, "videoHeight", {
+      configurable: true,
+      value: 1080,
+    });
+    fireEvent.loadedMetadata(video);
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Scale" }), {
+      target: { value: "2" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Scale" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(2),
     );
 
     const anchorButton = screen.getByRole("button", {
       name: /Set anchor top left/i,
     });
 
-    expect(anchorButton).toHaveAttribute("aria-pressed", "false");
-
     fireEvent.click(anchorButton);
 
     await waitFor(() => {
       expect(anchorButton).toHaveAttribute("aria-pressed", "true");
-      expect(container).toHaveTextContent("0%, 0%");
-      const previewContentLayer = screen.getByTestId("preview-video").closest(
-        ".preview-content-layer",
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(
+        -50,
       );
+      expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(
+        -15.8203125,
+      );
+
+      const previewContentLayer = screen
+        .getByTestId("preview-video")
+        .closest(".preview-content-layer");
+
       expect(previewContentLayer).not.toBeNull();
       expect(previewContentLayer).toHaveStyle({
         transformOrigin: "0% 0%",
+        transform:
+          "translate(-50%, -15.8203125%) scale(2) rotate(0deg)",
       });
     });
 
+    expect(container).toHaveTextContent("Transform anchor updated.");
     expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
 
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
@@ -686,6 +716,8 @@ describe("App", () => {
       expect(
         screen.getByRole("button", { name: /Set anchor center/i }),
       ).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(0);
     });
   });
 
