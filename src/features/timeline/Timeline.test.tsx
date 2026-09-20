@@ -88,6 +88,7 @@ describe("Timeline", () => {
     render(
       <Timeline
         project={project}
+        currentTimeMs={2000}
         onSelectClip={onSelectClip}
       />,
     );
