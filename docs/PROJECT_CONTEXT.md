@@ -752,6 +752,42 @@ Known limitations:
 Next step:
 - User validates M3.28 locally before merge.
 
+## M3.28 — Transition lifecycle integrity — completed
+
+Branch: `feat/m3-28-transition-lifecycle-integrity`
+PR: #39
+Merge SHA: `2e77190ef6474b3ede1ad72af0682a9c5bfb7c61`
+
+Scope delivered:
+- Added transition-pair normalization and edited-track sanitization helpers.
+- Cleared stale transition metadata when move, remove, or trim operations break adjacency.
+- Clamped an existing transition when trimming an adjacent clip reduces the available duration.
+- Preserved an outgoing transition on the second split segment instead of duplicating it across both split segments.
+- Scoped lifecycle sanitization to the edited track.
+- Added regression coverage for transition cleanup across move, delete, trim-start, trim-end, and split operations.
+
+Architecture decisions:
+- Transition lifecycle integrity is enforced through existing timeline-edit commands and shared transition helpers rather than a second transition state manager.
+- Sanitization is limited to the edited track to avoid unrelated project mutations.
+- Existing history behavior remains the single mutation path for timeline edits.
+
+Automated coverage:
+- Transition cleanup after move, delete, incoming trim-start, outgoing trim-end, and split operations.
+- Transition duration clamping after adjacent clip shortening.
+- Preservation of the outgoing transition on the correct split segment.
+
+Validation:
+- User confirmed local Linux validation passed.
+- User confirmed the M3.28 lint/test/build/Tauri validation and requested transition lifecycle manual checks passed.
+
+Known limitations:
+- Only dissolve transitions are supported.
+- No transition browser, drag-and-drop transition placement, or audio transitions yet.
+- Transition placement remains tied to directly adjacent clips.
+
+Next step:
+- Start the next focused editor milestone from updated `main`; verify current transition behavior before extending scope.
+
 ## M3.27 — Direct timeline transition-duration manipulation — completed
 
 Branch: `feat/m3-27-direct-transition-duration`
