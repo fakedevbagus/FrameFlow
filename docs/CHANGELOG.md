@@ -2,7 +2,7 @@
 
 ## 2026-09-20
 
-### M3.14 — Keyframe UX hardening (in progress)
+### M3.14 — Keyframe UX hardening — merged
 Branch: `feat/m3-14-keyframe-ux-hardening`
 
 Implemented:
@@ -11,10 +11,11 @@ Implemented:
 - Escape cancels an active keyframe drag and avoids committing an unintended keyframe move.
 - Added Timeline regression coverage for focus/selection and Escape cancellation.
 
+Merge SHA: `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`
+
 Validation:
-- Initial validation reported one lint error and one test failure; both were traced to implementation defects and corrected on the branch.
-- Awaiting a clean local lint/test/build/manual validation run.
-- Do not merge until the rerun passes.
+- User reported successful local validation after fixes.
+- PR #24 was marked ready and squash-merged.
 
 ### M3.13 — Playback stability — merged
 Branch: `feat/m3-13-playback-stability`
