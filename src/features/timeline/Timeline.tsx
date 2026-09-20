@@ -20,6 +20,11 @@ import {
   snapTimelineTime,
 } from "./interaction";
 import { getClipDurationMs, getTimelineDurationMs } from "./metrics";
+import {
+  getClipTransition,
+  getNextClipForTransition,
+  isTransitionAdjacent,
+} from "../transition/transition";
 
 const basePixelsPerSecond = 40;
 const rulerStepMs = 5_000;
