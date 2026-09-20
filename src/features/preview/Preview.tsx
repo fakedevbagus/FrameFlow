@@ -709,5 +709,5 @@ function getClipDurationMsForTransform(clip: ActivePreviewClip["clip"]): number 
 
 
 function createMediaStreamUrl(path: string): string {
-  return `stream://localhost/?path=${encodeURIComponent(path)}`;
+  return `stream://localhost/${encodeURIComponent(path)}`;
 }
