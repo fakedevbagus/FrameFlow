@@ -11,6 +11,104 @@ export interface CanvasPointer {
 export interface CanvasRect {
   width: number;
   height: number;
+  left?: number;
+  top?: number;
+}
+
+export interface ContentBounds {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export function getContainedContentPercentageBounds(
+  canvasWidth: number,
+  canvasHeight: number,
+  mediaWidth: number,
+  mediaHeight: number,
+): ContentBounds {
+  if (
+    canvasWidth <= 0 ||
+    canvasHeight <= 0 ||
+    mediaWidth <= 0 ||
+    mediaHeight <= 0
+  ) {
+    return {
+      left: 0,
+      top: 0,
+      width: 100,
+      height: 100,
+    };
+  }
+
+  const canvasAspect = canvasWidth / canvasHeight;
+  const mediaAspect = mediaWidth / mediaHeight;
+
+  if (mediaAspect > canvasAspect) {
+    const height = (canvasAspect / mediaAspect) * 100;
+
+    return {
+      left: 0,
+      top: (100 - height) / 2,
+      width: 100,
+      height,
+    };
+  }
+
+  const width = (mediaAspect / canvasAspect) * 100;
+
+  return {
+    left: (100 - width) / 2,
+    top: 0,
+    width,
+    height: 100,
+  };
+}
+
+export function getContainedContentBounds(
+  stage: CanvasRect,
+  mediaWidth: number,
+  mediaHeight: number,
+): ContentBounds {
+  if (
+    stage.width <= 0 ||
+    stage.height <= 0 ||
+    mediaWidth <= 0 ||
+    mediaHeight <= 0
+  ) {
+    return {
+      left: 0,
+      top: 0,
+      width: Math.max(0, stage.width),
+      height: Math.max(0, stage.height),
+    };
+  }
+
+  const mediaAspect = mediaWidth / mediaHeight;
+  const stageAspect = stage.width / stage.height;
+
+  if (mediaAspect > stageAspect) {
+    const width = stage.width;
+    const height = width / mediaAspect;
+
+    return {
+      left: 0,
+      top: (stage.height - height) / 2,
+      width,
+      height,
+    };
+  }
+
+  const height = stage.height;
+  const width = height * mediaAspect;
+
+  return {
+    left: (stage.width - width) / 2,
+    top: 0,
+    width,
+    height,
+  };
 }
 
 export function transformFromPointer(
@@ -33,8 +131,8 @@ export function transformFromPointer(
   }
 
   const center = {
-    x: rect.width / 2,
-    y: rect.height / 2,
+    x: (rect.left ?? 0) + rect.width / 2,
+    y: (rect.top ?? 0) + rect.height / 2,
   };
 
   if (mode === "scale") {
