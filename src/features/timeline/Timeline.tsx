@@ -1,5 +1,6 @@
 import {
   useState,
+  type DragEvent,
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
@@ -28,6 +29,13 @@ interface TimelineProps {
   onTrimClipStart?: (clipId: string, sourceStartMs: number) => void;
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
   onToggleTrackMute?: (trackId: string) => void;
+  onAddAssetToTrack?: (
+    assetId: string,
+    trackId: string,
+    timelineStartMs: number,
+  ) => void;
+  onAddTrack?: (type: "audio" | "video") => void;
+  onRemoveTrack?: (trackId: string) => void;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
 }
@@ -58,10 +66,14 @@ export function Timeline({
   onTrimClipStart,
   onTrimClipEnd,
   onToggleTrackMute,
+  onAddAssetToTrack,
+  onAddTrack,
+  onRemoveTrack,
   zoom = DEFAULT_TIMELINE_ZOOM,
   onZoomChange,
 }: TimelineProps) {
   const [interaction, setInteraction] = useState<ClipInteraction | null>(null);
+  const [dragOverTrackId, setDragOverTrackId] = useState<string | null>(null);
   const timelineDurationMs = getTimelineDurationMs(project);
   const pixelsPerSecond = basePixelsPerSecond * zoom;
   const clampedCurrentTimeMs = Math.min(Math.max(currentTimeMs, 0), timelineDurationMs);
@@ -80,6 +92,45 @@ export function Timeline({
 
   function handleZoomChange(delta: number) {
     onZoomChange?.(clampZoom(Math.round((zoom + delta) * 100) / 100));
+  }
+
+  function handleTrackDragOver(event: DragEvent<HTMLDivElement>, trackId: string) {
+    if (!onAddAssetToTrack) {
+      return;
+    }
+
+    if (event.dataTransfer.types.includes("application/x-frameflow-asset-id")) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      setDragOverTrackId(trackId);
+    }
+  }
+
+  function handleTrackDrop(event: DragEvent<HTMLDivElement>, trackId: string) {
+    if (!onAddAssetToTrack) {
+      return;
+    }
+
+    event.preventDefault();
+    setDragOverTrackId(null);
+
+    const assetId = event.dataTransfer.getData(
+      "application/x-frameflow-asset-id",
+    );
+
+    if (!assetId) {
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = Math.min(Math.max(event.clientX - bounds.left, 0), bounds.width);
+    const requestedTimeMs = (x / pixelsPerSecond) * 1000;
+
+    onAddAssetToTrack(
+      assetId,
+      trackId,
+      Math.max(0, snapTimelineTime(Math.round(requestedTimeMs))),
+    );
   }
 
   function getDisplayClip(clip: Clip): Clip {
@@ -274,6 +325,22 @@ export function Timeline({
         <span>Timeline</span>
         <div className="timeline-actions">
           <button
+            aria-label="Add video track"
+            className="toolbar-button track-add-button"
+            onClick={() => onAddTrack?.("video")}
+            type="button"
+          >
+            + V
+          </button>
+          <button
+            aria-label="Add audio track"
+            className="toolbar-button track-add-button"
+            onClick={() => onAddTrack?.("audio")}
+            type="button"
+          >
+            + A
+          </button>
+          <button
             aria-label="Zoom out timeline"
             className="toolbar-button"
             disabled={zoom <= MIN_TIMELINE_ZOOM}
@@ -320,18 +387,26 @@ export function Timeline({
           </div>
         </div>
 
-        {project.tracks.map((track) => (
+        {project.tracks.map((track, index) => (
           <TimelineTrack
             key={track.id}
             track={track}
+            trackLabel={getTrackLabel(project.tracks, track)}
+            trackIndex={index}
             project={project}
             timelineDurationMs={timelineDurationMs}
             currentTimeMs={clampedCurrentTimeMs}
             selectedClipId={selectedClipId}
             onSelectClip={onSelectClip}
             onToggleTrackMute={onToggleTrackMute}
+            onAddAssetToTrack={onAddAssetToTrack}
+            onRemoveTrack={onRemoveTrack}
             zoom={zoom}
             interaction={interaction}
+            dragOverTrackId={dragOverTrackId}
+            onDragOverTrack={(event) => handleTrackDragOver(event, track.id)}
+            onDragLeaveTrack={() => setDragOverTrackId(null)}
+            onDropOnTrack={(event) => handleTrackDrop(event, track.id)}
             getDisplayClip={getDisplayClip}
             onBeginClipInteraction={beginClipInteraction}
             onUpdateClipInteraction={updateClipInteraction}
@@ -346,13 +421,25 @@ export function Timeline({
 
 interface TimelineTrackProps {
   track: Track;
+  trackLabel: string;
+  trackIndex: number;
   project: Project;
   timelineDurationMs: number;
   currentTimeMs: number;
   selectedClipId: string | null;
   onSelectClip?: (clipId: string) => void;
   onToggleTrackMute?: (trackId: string) => void;
+  onAddAssetToTrack?: (
+    assetId: string,
+    trackId: string,
+    timelineStartMs: number,
+  ) => void;
+  onRemoveTrack?: (trackId: string) => void;
   zoom: number;
+  dragOverTrackId: string | null;
+  onDragOverTrack: (event: DragEvent<HTMLDivElement>) => void;
+  onDragLeaveTrack: () => void;
+  onDropOnTrack: (event: DragEvent<HTMLDivElement>) => void;
   interaction: ClipInteraction | null;
   getDisplayClip: (clip: Clip) => Clip;
   onBeginClipInteraction: (
@@ -367,13 +454,21 @@ interface TimelineTrackProps {
 
 function TimelineTrack({
   track,
+  trackLabel,
+  trackIndex,
   project,
   timelineDurationMs,
   currentTimeMs,
   selectedClipId,
   onSelectClip,
   onToggleTrackMute,
+  onAddAssetToTrack,
+  onRemoveTrack,
   zoom,
+  dragOverTrackId,
+  onDragOverTrack,
+  onDragLeaveTrack,
+  onDropOnTrack,
   interaction,
   getDisplayClip,
   onBeginClipInteraction,
@@ -387,25 +482,49 @@ function TimelineTrack({
     <div className="track">
       <div className="track-label">
         <div className="track-label-main">
-          <strong>{track.type === "video" ? "V1" : "A1"}</strong>
+          <strong>{trackLabel}</strong>
           <span>{track.name}</span>
         </div>
-        <button
-          aria-label={track.isMuted ? "Unmute " + track.name : "Mute " + track.name}
-          aria-pressed={track.isMuted}
-          className="track-mute-button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleTrackMute?.(track.id);
-          }}
-          title={track.isMuted ? "Unmute track" : "Mute track"}
-          type="button"
-        >
-          {track.isMuted ? "🔇" : "🔊"}
-        </button>
+        <div className="track-label-actions">
+          <button
+            aria-label={track.isMuted ? "Unmute " + track.name : "Mute " + track.name}
+            aria-pressed={track.isMuted}
+            className="track-mute-button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleTrackMute?.(track.id);
+            }}
+            title={track.isMuted ? "Unmute track" : "Mute track"}
+            type="button"
+          >
+            {track.isMuted ? "🔇" : "🔊"}
+          </button>
+          <button
+            aria-label={"Remove " + track.name + " track"}
+            className="track-remove-button"
+            disabled={
+              track.clips.length > 0 ||
+              project.tracks.filter((candidate) => candidate.type === track.type).length <= 1
+            }
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemoveTrack?.(track.id);
+            }}
+            title="Remove track"
+            type="button"
+          >
+            ×
+          </button>
+        </div>
       </div>
       <div
-        className="timeline-lane"
+        className={
+          "timeline-lane" +
+          (dragOverTrackId === track.id ? " timeline-lane-drop-target" : "")
+        }
+        onDragOver={onDragOverTrack}
+        onDragLeave={onDragLeaveTrack}
+        onDrop={onDropOnTrack}
         style={{ width: timelineWidth(timelineDurationMs, zoom) + "px" }}
       >
         {track.clips.map((sourceClip) => {
@@ -576,6 +695,13 @@ function snapSourceEndTime(
       maxSourceEndMs,
     ),
   );
+}
+
+function getTrackLabel(tracks: Track[], track: Track): string {
+  const sameTypeTracks = tracks.filter((candidate) => candidate.type === track.type);
+  const typeIndex = sameTypeTracks.findIndex((candidate) => candidate.id === track.id);
+
+  return (track.type === "video" ? "V" : "A") + (typeIndex + 1);
 }
 
 function timelineWidth(durationMs: number, zoom: number): number {
