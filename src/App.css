@@ -1110,6 +1110,37 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+}
+
+.inspector-section-title-group,
+.inspector-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inspector-keyframe-count {
+  color: #696f7e;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.inspector-keyframe-status {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 7px;
+  border: 1px solid #2f3541;
+  border-radius: 5px;
+  color: #788294;
+  background: #191d24;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.inspector-keyframe-status:has(+ .inspector-transform-input-grid) {
+  margin-bottom: 2px;
 }
 
 .inspector-inline-button {
