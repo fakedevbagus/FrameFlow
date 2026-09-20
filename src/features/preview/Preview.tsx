@@ -272,6 +272,7 @@ function PreviewVisualLayer({
 
   async function handleVideoError() {
     if (previewFallbackAttempted || isPreparingPreview) {
+      setIsPreparingPreview(false);
       onError(
         layer.asset.id,
         "Video preview could not be loaded. Try converting the source to a browser-compatible format.",
@@ -295,6 +296,7 @@ function PreviewVisualLayer({
       setMediaSize(null);
       setVideoSourceUrl(previewUrl);
     } catch (error) {
+      setIsPreparingPreview(false);
       onError(
         layer.asset.id,
         error instanceof Error
