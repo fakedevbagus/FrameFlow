@@ -98,7 +98,7 @@ describe("Preview", () => {
       });
       expect(video).toHaveAttribute(
         "src",
-        "asset:///home/test/.cache/frameflow/previews-v3/video-preview.mp4",
+        "asset:///home/test/.cache/com.fakedevbagus.frameflow/previews-v4/video-preview.mp4",
       );
     });
   });
