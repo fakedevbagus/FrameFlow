@@ -94,7 +94,7 @@ describe("canvas manipulation", () => {
   it("maps anchor dragging through scale and rotation", () => {
     expect(
       transformAnchorFromPointer(
-        { x: 100, y: 100 },
+        { x: 100, y: 200 },
         { left: 50, top: 50, width: 200, height: 200 },
         400,
         400,
@@ -103,7 +103,7 @@ describe("canvas manipulation", () => {
       ),
     ).toMatchObject({
       x: 0.75,
-      y: 0.75,
+      y: 0.25,
     });
   });
 
