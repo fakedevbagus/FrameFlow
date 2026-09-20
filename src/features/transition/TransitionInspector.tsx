@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import type { ClipTransition } from "./transition";
-import { DEFAULT_DISSOLVE_DURATION_MS } from "./transition";
+import {
+  DEFAULT_DISSOLVE_DURATION_MS,
+  type ClipTransition,
+} from "./transition";
 
 interface TransitionInspectorProps {
   canTransition: boolean;
