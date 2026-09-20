@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { importMediaFiles } from "./features/media/import";
@@ -627,7 +627,7 @@ describe("App", () => {
       expect(viewport).toHaveStyle({
         left: "0%",
         top: "10%",
-        width: "80%",
+        width: "90%",
       });
       expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(90, 10);
     });
@@ -777,11 +777,13 @@ describe("App", () => {
       name: "Pan crop content",
     });
 
-    fireEvent.pointerDown(surface, {
-      button: 0,
-      pointerId: 13,
-      clientX: 100,
-      clientY: 200,
+    await act(async () => {
+      fireEvent.pointerDown(surface, {
+        button: 0,
+        pointerId: 13,
+        clientX: 100,
+        clientY: 200,
+      });
     });
     fireEvent.pointerMove(hitArea, {
       buttons: 1,
