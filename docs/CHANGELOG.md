@@ -1,5 +1,28 @@
 ## 2026-09-21
 
+### M3.21 — Transform anchor compensation — merged
+Branch: `feat/m3-21-anchor-compensation`
+PR #32 — merged
+Merge SHA: `0da298e3f5c047e13c7c43c7ac391ba31f33a181`
+
+Implemented:
+- Preserved visual position when changing a transform anchor.
+- Compensated X/Y using anchor delta, scale/rotation, and contained media bounds.
+- Applied the same compensation to all transform keyframes.
+- Integrated the compensated anchor command into the Inspector workflow.
+- Added regression coverage for domain math, command behavior, keyframes, App interaction, and Undo.
+
+Validation:
+- User confirmed M3.21 local validation passed on Linux.
+- Final validation reached lint success, 17 test files / 161 tests passing, successful production build after CSS corrections, and successful Tauri dev startup.
+
+Known limitation:
+- Anchor changes before intrinsic media metadata is available use the legacy anchor command and may not preserve the rendered position.
+
+Next step:
+- M3.22: direct on-canvas anchor manipulation.
+## 2026-09-21
+
 ### M3.21 — Transform anchor compensation — in progress
 Branch: `feat/m3-21-anchor-compensation`
 PR #31 — draft
