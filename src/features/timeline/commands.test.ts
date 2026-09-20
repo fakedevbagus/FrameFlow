@@ -19,6 +19,7 @@ import {
   trimClipEnd,
   trimClipStart,
   updateClipTransformAnchor,
+  updateClipTransformAnchorWithCompensation,
   updateClipCrop,
   updateClipCropPosition,
   updateClipCropWithPosition,
@@ -221,6 +222,51 @@ describe("clip transforms", () => {
     expect(updated.updatedAt).toBe("2026-09-20T02:10:00.000Z");
   });
 
+  it("compensates the visual transform when changing its anchor", () => {
+    let project = createProject({ id: "transform-anchor-compensated" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = updateClipTransformAtTime(project, clipId, 0, {
+      scale: 2,
+    });
+
+    const updated = updateClipTransformAnchorWithCompensation(
+      project,
+      clipId,
+      { x: 0, y: 0 },
+      { widthPercent: 100, heightPercent: 100 },
+      new Date("2026-09-21T03:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].transformAnchor).toEqual({
+      x: 0,
+      y: 0,
+    });
+    expect(updated.tracks[0].clips[0].transform).toEqual({
+      x: -50,
+      y: -50,
+      scale: 2,
+      rotation: 0,
+      opacity: 1,
+    });
+    expect(updated.updatedAt).toBe("2026-09-21T03:00:00.000Z");
+  });
+
   it("resets a visual clip transform anchor with the transform reset", () => {
     let project = createProject({ id: "transform-anchor-reset" });
 
@@ -248,6 +294,64 @@ describe("clip transforms", () => {
     const reset = resetClipTransform(project, clipId);
 
     expect(reset.tracks[0].clips[0].transformAnchor).toBeUndefined();
+  });
+
+  it("compensates every transform keyframe when the anchor changes", () => {
+    let project = createProject({ id: "transform-anchor-keyframes" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 0);
+    project = updateClipTransformAtTime(project, clipId, 0, { scale: 2 });
+    project = addTransformKeyframe(project, clipId, 2000);
+    project = updateClipTransformAtTime(project, clipId, 2000, {
+      scale: 1.5,
+      rotation: 90,
+    });
+
+    const updated = updateClipTransformAnchorWithCompensation(
+      project,
+      clipId,
+      { x: 0, y: 0 },
+      { widthPercent: 100, heightPercent: 100 },
+    );
+
+    expect(updated.tracks[0].clips[0].transformKeyframes).toEqual([
+      {
+        timeMs: 0,
+        transform: {
+          x: -50,
+          y: -50,
+          scale: 2,
+          rotation: 0,
+          opacity: 1,
+        },
+      },
+      {
+        timeMs: 2000,
+        transform: {
+          x: 125,
+          y: -25,
+          scale: 1.5,
+          rotation: 90,
+          opacity: 1,
+        },
+      },
+    ]);
   });
 
   it("updates and clamps visual clip transforms", () => {

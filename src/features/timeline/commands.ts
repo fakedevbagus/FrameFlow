@@ -11,10 +11,12 @@ import type {
 import {
   DEFAULT_CLIP_TRANSFORM,
   getClipTransformAtTime,
+  getClipTransformAnchor,
   getTransformKeyframeAtTime,
   isValidClipCrop,
   normalizeClipTransform,
   normalizeTransformAnchor,
+  compensateTransformForAnchorChange,
   normalizeClipCrop,
   normalizeClipCropPosition,
   removeTransformKeyframe as removeTransformKeyframeAtTime,
@@ -49,6 +51,65 @@ export function updateCanvasDimensions(
     },
     updatedAt: now.toISOString(),
   };
+}
+
+export function updateClipTransformAnchorWithCompensation(
+  project: Project,
+  clipId: string,
+  anchor: TransformAnchor,
+  contentBounds: { widthPercent: number; heightPercent: number },
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform anchors are only available for visual media.");
+  }
+
+  const currentAnchor = getClipTransformAnchor(location.clip.transformAnchor);
+  const nextAnchor = normalizeTransformAnchor(anchor);
+
+  if (
+    currentAnchor.x === nextAnchor.x &&
+    currentAnchor.y === nextAnchor.y
+  ) {
+    return project;
+  }
+
+  const transform = compensateTransformForAnchorChange(
+    location.clip.transform,
+    currentAnchor,
+    nextAnchor,
+    contentBounds,
+  );
+  const normalizedKeyframes = location.clip.transformKeyframes
+    ? location.clip.transformKeyframes.map((keyframe) => ({
+        ...keyframe,
+        transform: compensateTransformForAnchorChange(
+          keyframe.transform,
+          currentAnchor,
+          nextAnchor,
+          contentBounds,
+        ),
+      }))
+    : undefined;
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      transformAnchor: nextAnchor,
+      transform,
+      transformKeyframes: normalizedKeyframes,
+    },
+    now,
+  );
 }
 
 export function updateClipTransformAnchor(
