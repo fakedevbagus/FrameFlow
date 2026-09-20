@@ -7,6 +7,8 @@ import {
   getNextClipForTransition,
   isTransitionAdjacent,
   normalizeClipTransition,
+  normalizeTransitionForAdjacentClips,
+  sanitizeTrackTransitions,
 } from "./transition";
 
 function createClip(id: string, timelineStartMs: number, durationMs: number): Clip {
@@ -74,6 +76,53 @@ describe("transition helpers", () => {
         timelineStartMs: 4500,
       }),
     ).toBe(false);
+  });
+
+  it("normalizes a transition against the duration of both adjacent clips", () => {
+    const first = createClip("first", 0, 400);
+    const second = createClip("second", 400, 250);
+
+    expect(
+      normalizeTransitionForAdjacentClips(
+        first,
+        second,
+        { type: "dissolve", durationMs: 600 },
+      ),
+    ).toEqual({
+      type: "dissolve",
+      durationMs: 250,
+    });
+
+    expect(
+      normalizeTransitionForAdjacentClips(
+        first,
+        { ...second, timelineStartMs: 500 },
+        { type: "dissolve", durationMs: 300 },
+      ),
+    ).toBeUndefined();
+  });
+
+  it("clears stale transitions when a track is no longer structurally eligible", () => {
+    const first = createClip("first", 0, 4000);
+    const second = createClip("second", 5000, 3000);
+
+    first.transitionOut = {
+      type: "dissolve",
+      durationMs: 800,
+    };
+
+    const track = {
+      id: "video-1",
+      name: "Video 1",
+      type: "video" as const,
+      isLocked: false,
+      isMuted: false,
+      clips: [first, second],
+    };
+
+    const sanitized = sanitizeTrackTransitions(track, () => true);
+
+    expect(sanitized.clips[0].transitionOut).toBeUndefined();
   });
 
   it("calculates a linear dissolve across the transition window", () => {
