@@ -63,7 +63,7 @@ export function getClipCrop(
   };
 }
 
-export function normalizeClipCrop(crop: Partial<ClipCrop>): ClipCrop {
+export function normalizeClipCrop(crop: Partial<ClipCrop> | undefined): ClipCrop {
   return getClipCrop(crop);
 }
 
