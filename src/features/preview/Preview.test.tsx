@@ -4,12 +4,16 @@ import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "../timeline/commands";
 import { Preview } from "./Preview";
 
+const invokeMock = vi.fn();
+
 vi.mock("@tauri-apps/api/core", () => ({
   convertFileSrc: (path: string) => "asset://" + path,
+  invoke: invokeMock,
 }));
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  invokeMock.mockReset();
 });
 
 describe("Preview", () => {
@@ -42,6 +46,50 @@ describe("Preview", () => {
     const video = screen.getByTestId("preview-video");
 
     expect(video).toHaveAttribute("src", "asset:///media/intro.mp4");
+  });
+
+  it("falls back to a compatible preview when the source video cannot be decoded", async () => {
+    invokeMock.mockResolvedValueOnce(
+      "/home/test/.cache/frameflow/previews/video-preview.webm",
+    );
+
+    let project = createProject({ id: "video-preview-fallback" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-fallback",
+          name: "unsupported.mp4",
+          mediaType: "video",
+          sourcePath: "/media/unsupported.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-fallback");
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    const video = screen.getByTestId("preview-video");
+    fireEvent.error(video);
+
+    await vi.waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith("prepare_media_preview", {
+        path: "/media/unsupported.mp4",
+      });
+      expect(video).toHaveAttribute(
+        "src",
+        "asset:///home/test/.cache/frameflow/previews/video-preview.webm",
+      );
+    });
   });
 
   it("renders multiple active visual layers in track order", () => {
