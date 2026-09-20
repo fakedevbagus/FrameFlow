@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
-import { addAssetToTimeline, addAssetToTrack, addTrack } from "./commands";
+import { addAssetToTimeline, addTrack } from "./commands";
 import { Timeline } from "./Timeline";
 
 describe("Timeline", () => {
@@ -212,15 +212,7 @@ describe("Timeline", () => {
 
   it("disables removal for populated tracks and exposes removal for empty extra tracks", () => {
     const project = createVideoProject();
-    const extraTrack = addTrack(
-      {
-        ...project,
-        tracks: project.tracks.map((track) =>
-          track.type === "video" ? { ...track, clips: [] } : track,
-        ),
-      },
-      "video",
-    );
+    const extraTrack = addTrack(project, "video");
     const onRemoveTrack = vi.fn();
 
     render(
