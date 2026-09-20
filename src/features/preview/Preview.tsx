@@ -296,8 +296,15 @@ function PreviewVisualLayer({
       return;
     }
 
+    try {
+      // Re-align the media element whenever transport playback starts.
+      media.currentTime = Math.max(0, localTimeMs / 1000);
+    } catch {
+      // Some WebView/media implementations reject seeking before metadata is ready.
+    }
+
     void Promise.resolve(media.play()).catch(() => undefined);
-  }, [isPlaying, layer.asset.id, layer.clip.id]);
+  }, [isPlaying, layer.asset.id, layer.clip.id, localTimeMs]);
 
   function handleLoadedMetadata() {
     const media = mediaRef.current;
@@ -595,6 +602,7 @@ function PreviewVisualLayer({
           playsInline
           preload="auto"
           ref={mediaRef}
+          data-clip-id={layer.clip.id}
           src={videoSourceUrl ?? undefined}
           style={{
             width: "100%",
@@ -735,6 +743,7 @@ function PreviewAudioLayer({
       data-testid="preview-audio"
       preload="auto"
       ref={mediaRef}
+      data-clip-id={layer.clip.id}
       src={mediaUrl ?? undefined}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
