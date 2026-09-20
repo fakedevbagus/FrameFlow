@@ -473,6 +473,72 @@ describe("App", () => {
     });
   });
 
+  it("edits and resets the selected visual crop", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-crop-ui",
+        name: "crop-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/crop-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("crop-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add crop-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select crop-ui.mp4 clip",
+      }),
+    );
+
+    expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Crop bottom" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Crop left" })).toHaveValue(0);
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Crop top" }), {
+      target: { value: "10" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Crop right" }), {
+      target: { value: "20" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop right" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(10);
+      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(20);
+      expect(screen.getByTestId("preview-video")).toHaveStyle({
+        clipPath: "inset(10% 20% 0% 0%)",
+      });
+    });
+
+    expect(container).toHaveTextContent("Crop updated.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset crop" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(0);
+      expect(screen.getByTestId("preview-video")).toHaveStyle({
+        clipPath: "inset(0% 0% 0% 0%)",
+      });
+    });
+  });
+
   it("changes keyframe interpolation from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {

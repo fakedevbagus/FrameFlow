@@ -42,6 +42,13 @@ export interface TransformAnchor {
   y: number;
 }
 
+export interface ClipCrop {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 export interface Clip {
   id: string;
   assetId: string;
@@ -50,6 +57,7 @@ export interface Clip {
   sourceEndMs: number | null;
   transform?: ClipTransform;
   transformAnchor?: TransformAnchor;
+  crop?: ClipCrop;
   transformKeyframes?: TransformKeyframe[];
 }
 

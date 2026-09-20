@@ -256,6 +256,60 @@ describe("Preview", () => {
     });
   });
 
+  it("applies the clip crop to the visual media", async () => {
+    let project = createProject({ id: "crop-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-crop",
+          name: "crop.mp4",
+          mediaType: "video",
+          sourcePath: "/media/crop.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-crop");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) => ({
+        ...track,
+        clips: track.clips.map((clip) =>
+          clip.id === clipId
+            ? {
+                ...clip,
+                crop: {
+                  top: 0.1,
+                  right: 0.2,
+                  bottom: 0.3,
+                  left: 0.05,
+                },
+              }
+            : clip,
+        ),
+      })),
+    };
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    expect(screen.getByTestId("preview-video")).toHaveStyle({
+      clipPath: "inset(10% 20% 30% 5%)",
+    });
+  });
+
   it("renders an image clip as the visual preview", async () => {
     let project = createProject({ id: "image-preview" });
 

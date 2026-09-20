@@ -19,6 +19,7 @@ import {
   trimClipEnd,
   trimClipStart,
   updateClipTransformAnchor,
+  updateClipCrop,
 } from "./commands";
 
 describe("track management", () => {
@@ -871,4 +872,107 @@ describe("transform keyframe commands", () => {
     ]);
     expect(second.transformKeyframes?.[0].transform.x).toBe(60);
   });
+
+  it("updates and clamps a visual clip crop", () => {
+    let project = createProject({ id: "crop-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "crop.mp4",
+          mediaType: "video",
+          sourcePath: "/crop.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipCrop(
+      project,
+      clipId,
+      {
+        top: -0.2,
+        right: 0.1,
+        bottom: 0.2,
+        left: 0.3,
+      },
+      new Date("2026-09-20T03:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].crop).toEqual({
+      top: 0,
+      right: 0.1,
+      bottom: 0.2,
+      left: 0.3,
+    });
+  });
+
+  it("rejects a crop that removes the entire visual content", () => {
+    let project = createProject({ id: "crop-invalid-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "image",
+          name: "crop.png",
+          mediaType: "image",
+          sourcePath: "/crop.png",
+          durationMs: 3000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "image");
+    const clipId = project.tracks[0].clips[0].id;
+
+    expect(() =>
+      updateClipCrop(project, clipId, {
+        top: 0.5,
+        right: 0,
+        bottom: 0.5,
+        left: 0,
+      }),
+    ).toThrow("Crop cannot remove the entire visual content.");
+  });
+
+  it("preserves crop settings when splitting a visual clip", () => {
+    let project = createProject({ id: "crop-split-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "crop-split.mp4",
+          mediaType: "video",
+          sourcePath: "/crop-split.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+    project = updateClipCrop(project, clipId, {
+      top: 0.1,
+      right: 0.2,
+      bottom: 0.15,
+      left: 0.05,
+    });
+
+    const split = splitClipAtTime(project, clipId, 3000);
+    expect(split.tracks[0].clips[0].crop).toEqual({
+      top: 0.1,
+      right: 0.2,
+      bottom: 0.15,
+      left: 0.05,
+    });
+    expect(split.tracks[0].clips[1].crop).toEqual({
+      top: 0.1,
+      right: 0.2,
+      bottom: 0.15,
+      left: 0.05,
+    });
+  });
+
 });

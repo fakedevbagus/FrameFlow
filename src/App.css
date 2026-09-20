@@ -1277,6 +1277,22 @@ button:disabled {
   line-height: 1;
 }
 
+.inspector-crop-section {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid #2f3541;
+  border-radius: 6px;
+  background: #191d24;
+}
+
+.inspector-crop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .inspector-keyframe-status {
   display: flex;
   align-items: center;

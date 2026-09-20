@@ -1,4 +1,4 @@
-import type { TransformAnchor, TransformEasing, TransformKeyframe } from "../project/domain";
+import type { TransformAnchor, TransformEasing, TransformKeyframe, ClipCrop } from "../project/domain";
 
 export interface ClipTransform {
   x: number;
@@ -11,6 +11,13 @@ export interface ClipTransform {
 export const DEFAULT_TRANSFORM_ANCHOR: TransformAnchor = {
   x: 0.5,
   y: 0.5,
+};
+
+export const DEFAULT_CLIP_CROP: ClipCrop = {
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
 };
 
 export const DEFAULT_CLIP_TRANSFORM: ClipTransform = {
@@ -34,6 +41,29 @@ export function normalizeTransformAnchor(
   anchor: Partial<TransformAnchor>,
 ): TransformAnchor {
   return getClipTransformAnchor(anchor);
+}
+
+export function getClipCrop(
+  crop: Partial<ClipCrop> | undefined,
+): ClipCrop {
+  return {
+    top: clamp(finiteOrDefault(crop?.top, DEFAULT_CLIP_CROP.top), 0, 0.99),
+    right: clamp(finiteOrDefault(crop?.right, DEFAULT_CLIP_CROP.right), 0, 0.99),
+    bottom: clamp(
+      finiteOrDefault(crop?.bottom, DEFAULT_CLIP_CROP.bottom),
+      0,
+      0.99,
+    ),
+    left: clamp(finiteOrDefault(crop?.left, DEFAULT_CLIP_CROP.left), 0, 0.99),
+  };
+}
+
+export function normalizeClipCrop(crop: Partial<ClipCrop>): ClipCrop {
+  return getClipCrop(crop);
+}
+
+export function isValidClipCrop(crop: ClipCrop): boolean {
+  return crop.left + crop.right < 1 && crop.top + crop.bottom < 1;
 }
 
 export function getClipTransform(

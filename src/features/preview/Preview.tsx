@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { ClipTransform, Project } from "../project/domain";
 import {
+  getClipCrop,
   getClipTransformAnchor,
   getClipTransformAtTime,
   normalizeClipTransform,
@@ -185,6 +186,7 @@ function PreviewVisualLayer({
     transformTimeMs,
   );
   const anchor = getClipTransformAnchor(layer.clip.transformAnchor);
+  const crop = getClipCrop(layer.clip.crop);
   const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
@@ -214,6 +216,9 @@ function PreviewVisualLayer({
     width: `${contentBoundsPercent.width}%`,
     height: `${contentBoundsPercent.height}%`,
     transformOrigin: `${anchor.x * 100}% ${anchor.y * 100}%`,
+  };
+  const cropStyle = {
+    clipPath: `inset(${crop.top * 100}% ${crop.right * 100}% ${crop.bottom * 100}% ${crop.left * 100}%)`,
   };
 
   useEffect(() => {
@@ -577,7 +582,13 @@ function PreviewVisualLayer({
             ref={imageRef}
             src={mediaUrl ?? undefined}
             onLoad={handleImageLoad}
-            style={{ width: "100%", height: "100%", objectFit: "fill", zIndex }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "fill",
+              zIndex,
+              ...cropStyle,
+            }}
           />
           {renderManipulationControls()}
         </div>
@@ -619,6 +630,7 @@ function PreviewVisualLayer({
             height: "100%",
             objectFit: "fill",
             zIndex,
+            ...cropStyle,
           }}
           onLoadedMetadata={handleLoadedMetadata}
           onError={() => void handleVideoError()}

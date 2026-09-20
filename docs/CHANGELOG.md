@@ -2,6 +2,23 @@
 
 ## 2026-09-20
 
+### M3.16 — Crop foundation — in progress
+Branch: `feat/m3-16-crop-foundation`
+PR #26 — draft
+
+Implemented:
+- Added a backward-compatible per-clip crop model with zero-crop defaults.
+- Added Top, Right, Bottom, and Left crop controls to the Transform Inspector.
+- Applied crop clipping to visual preview media while keeping transform controls available.
+- Preserved crop state when splitting a clip.
+- Added regression coverage for crop normalization, command validation/preservation, preview clipping, and App workflow.
+
+Validation:
+- Local lint, test, build, Tauri dev, and manual validation are pending user verification.
+
+Known limitation:
+- Direct crop-handle manipulation, aspect-ratio presets, and crop-position translation compensation are not part of this milestone.
+
 ### M3.15 — Transform anchor foundation — merged
 Branch: `feat/m3-15-transform-anchor-foundation`
 PR #25 — merged

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import type {
+  ClipCrop,
   ClipTransform,
   TransformEasing,
   TransformAnchor,
@@ -26,6 +27,7 @@ import {
   toggleTrackMute,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
+  updateClipCrop,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -35,9 +37,11 @@ import { Preview } from "./features/preview/Preview";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
+  getClipCrop,
   getClipTransformAnchor,
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
+  normalizeClipCrop,
   normalizeClipTransform,
 } from "./features/transform/transform";
 import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
@@ -55,6 +59,7 @@ import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
 type TransformField = "x" | "y" | "scale" | "rotation" | "opacity";
+type CropField = keyof ClipCrop;
 
 const transformAnchorPresets: Array<{
   id: string;
@@ -108,6 +113,9 @@ function App() {
     : 0;
   const selectedAnchor = selectedClipContext
     ? getClipTransformAnchor(selectedClipContext.clip.transformAnchor)
+    : null;
+  const selectedCrop = selectedClipContext
+    ? getClipCrop(selectedClipContext.clip.crop)
     : null;
   const selectedTransform = selectedClipContext
     ? getClipTransformAtTime(
@@ -575,6 +583,72 @@ function App() {
           anchor,
         ),
       "Transform anchor updated.",
+    );
+  }
+
+  function handleResetSelectedCrop() {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipCrop(
+          currentProject,
+          selectedClipContext.clip.id,
+          { top: 0, right: 0, bottom: 0, left: 0 },
+        ),
+      "Crop reset.",
+    );
+  }
+
+  function commitCropInput(
+    field: CropField,
+    rawValue: string,
+    input: HTMLInputElement,
+  ) {
+    if (!selectedClipContext || !selectedCrop) {
+      return;
+    }
+
+    const restoreValue = getCropInputValue(field, selectedCrop);
+    const value = rawValue.trim();
+
+    if (!value) {
+      input.value = restoreValue;
+      return;
+    }
+
+    const parsedValue = Number(value);
+
+    if (!Number.isFinite(parsedValue) || parsedValue < 0 || parsedValue > 99) {
+      input.value = restoreValue;
+      setProjectNotice("Crop values must be between 0% and 99%.");
+      return;
+    }
+
+    const nextCrop = normalizeClipCrop({
+      ...selectedCrop,
+      [field]: parsedValue / 100,
+    });
+
+    const horizontalTotal = nextCrop.left + nextCrop.right;
+    const verticalTotal = nextCrop.top + nextCrop.bottom;
+
+    if (horizontalTotal >= 1 || verticalTotal >= 1) {
+      input.value = restoreValue;
+      setProjectNotice("Crop cannot remove the entire visual content.");
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipCrop(
+          currentProject,
+          selectedClipContext.clip.id,
+          nextCrop,
+        ),
+      "Crop updated.",
     );
   }
 
@@ -1185,6 +1259,69 @@ function App() {
                     </div>
                   </div>
 
+                  <div className="inspector-crop-section">
+                    <div className="inspector-anchor-header">
+                      <span>Crop</span>
+                      <small>Per-clip, not keyframed</small>
+                    </div>
+                    <div
+                      className="inspector-crop-grid"
+                      key={
+                        selectedCrop
+                          ? [
+                              selectedCrop.top,
+                              selectedCrop.right,
+                              selectedCrop.bottom,
+                              selectedCrop.left,
+                            ].join("|")
+                          : "none"
+                      }
+                    >
+                      {([
+                        ["top", "Top"],
+                        ["right", "Right"],
+                        ["bottom", "Bottom"],
+                        ["left", "Left"],
+                      ] as Array<[CropField, string]>).map(([field, label]) => (
+                        <label className="inspector-transform-field" key={field}>
+                          <span>{label}</span>
+                          <div className="inspector-transform-input-wrap">
+                            <input
+                              aria-label={"Crop " + field}
+                              className="inspector-transform-input"
+                              max="99"
+                              min="0"
+                              step="1"
+                              type="number"
+                              defaultValue={
+                                selectedCrop
+                                  ? Math.round(selectedCrop[field] * 100)
+                                  : 0
+                              }
+                              onBlur={(event) =>
+                                commitCropInput(
+                                  field,
+                                  event.currentTarget.value,
+                                  event.currentTarget,
+                                )
+                              }
+                              onKeyDown={handleTransformInputKeyDown}
+                            />
+                            <span>%</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    <button
+                      aria-label="Reset crop"
+                      className="inspector-inline-button"
+                      onClick={handleResetSelectedCrop}
+                      type="button"
+                    >
+                      Reset crop
+                    </button>
+                  </div>
+
                   <div className="inspector-keyframe-status">
                     <span>
                       {selectedKeyframe
@@ -1582,6 +1719,13 @@ function formatTimecode(durationMs: number, frameRate: number): string {
     seconds.toString().padStart(2, "0"),
     frame.toString().padStart(2, "0"),
   ].join(":");
+}
+
+function getCropInputValue(
+  field: CropField,
+  crop: ClipCrop,
+): string {
+  return String(Math.round(crop[field] * 100));
 }
 
 function getTransformInputValue(
