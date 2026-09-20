@@ -731,9 +731,9 @@ function App() {
     }
 
     const media = Array.from(
-      previewCanvasRef.current.querySelectorAll<HTMLVideoElement | HTMLImageElement>(
-        "video, img",
-      ),
+      previewCanvasRef.current.querySelectorAll<
+        HTMLVideoElement | HTMLImageElement
+      >("video, img"),
     ).find(
       (candidate) =>
         candidate.getAttribute("data-clip-id") === selectedClipContext.clip.id,
@@ -741,6 +741,22 @@ function App() {
 
     if (!media) {
       return null;
+    }
+
+    const dataWidth = Number.parseFloat(
+      media.getAttribute("data-media-width") ?? "",
+    );
+    const dataHeight = Number.parseFloat(
+      media.getAttribute("data-media-height") ?? "",
+    );
+
+    if (
+      Number.isFinite(dataWidth) &&
+      dataWidth > 0 &&
+      Number.isFinite(dataHeight) &&
+      dataHeight > 0
+    ) {
+      return { width: dataWidth, height: dataHeight };
     }
 
     if ("videoWidth" in media) {
