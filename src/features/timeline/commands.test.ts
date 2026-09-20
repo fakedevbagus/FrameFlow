@@ -1531,7 +1531,8 @@ describe("clip transitions", () => {
       { type: "dissolve", durationMs: 800 },
     );
 
-    const trimmed = trimClipEnd(populated, firstClipId, 400);
+    const secondClipId = populated.tracks[0].clips[1].id;
+    const trimmed = trimClipEnd(populated, secondClipId, 400);
 
     expect(trimmed.tracks[0].clips[0].transitionOut).toEqual({
       type: "dissolve",
