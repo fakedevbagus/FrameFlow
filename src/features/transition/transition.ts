@@ -36,6 +36,94 @@ export function getClipTransition(
   return normalizeClipTransition(transition);
 }
 
+export function getClipDurationMs(clip: Clip): number {
+  if (clip.sourceEndMs === null) {
+    return 0;
+  }
+
+  return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+}
+
+export function normalizeTransitionForAdjacentClips(
+  outgoingClip: Clip,
+  incomingClip: Clip,
+  transition: ClipTransition | null | undefined,
+): ClipTransition | undefined {
+  const normalized = normalizeClipTransition(transition);
+
+  if (!normalized || !isTransitionAdjacent(outgoingClip, incomingClip)) {
+    return undefined;
+  }
+
+  const maxDurationMs = Math.min(
+    MAX_DISSOLVE_DURATION_MS,
+    getClipDurationMs(outgoingClip),
+    getClipDurationMs(incomingClip),
+  );
+
+  if (maxDurationMs < MIN_DISSOLVE_DURATION_MS) {
+    return undefined;
+  }
+
+  return {
+    type: DISSOLVE_TRANSITION_TYPE,
+    durationMs: Math.min(normalized.durationMs, maxDurationMs),
+  };
+}
+
+export function sanitizeTrackTransitions(
+  track: Track,
+  isVisualClip: (clip: Clip) => boolean,
+): Track {
+  const orderedClips = [...track.clips].sort(
+    (left, right) => left.timelineStartMs - right.timelineStartMs,
+  );
+
+  const nextByClipId = new Map<string, Clip | null>();
+  for (let index = 0; index < orderedClips.length; index += 1) {
+    nextByClipId.set(
+      orderedClips[index].id,
+      orderedClips[index + 1] ?? null,
+    );
+  }
+
+  return {
+    ...track,
+    clips: track.clips.map((clip) => {
+      const nextClip = nextByClipId.get(clip.id) ?? null;
+
+      if (!nextClip || !isVisualClip(clip) || !isVisualClip(nextClip)) {
+        return clip.transitionOut === undefined
+          ? clip
+          : { ...clip, transitionOut: undefined };
+      }
+
+      const normalized = normalizeTransitionForAdjacentClips(
+        clip,
+        nextClip,
+        clip.transitionOut,
+      );
+
+      const existingTransition = clip.transitionOut;
+
+      if (
+        (normalized === undefined && existingTransition === undefined) ||
+        (normalized !== undefined &&
+          existingTransition !== undefined &&
+          normalized.type === existingTransition.type &&
+          normalized.durationMs === existingTransition.durationMs)
+      ) {
+        return clip;
+      }
+
+      return {
+        ...clip,
+        transitionOut: normalized,
+      };
+    }),
+  };
+}
+
 export function getNextClipForTransition(
   track: Track,
   clipId: string,
