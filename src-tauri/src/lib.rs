@@ -34,7 +34,15 @@ fn prepare_media_preview(path: String) -> Result<String, String> {
   let metadata = fs::metadata(&source_path)
     .map_err(|error| format!("Could not inspect media metadata: {error}"))?;
 
-  let cache_root = std::env::temp_dir().join("frameflow-previews");
+  let home = std::env::var_os("HOME")
+    .map(PathBuf::from)
+    .ok_or_else(|| "Could not determine the home directory for preview caching.".to_string())?;
+  let cache_root = std::env::var_os("XDG_CACHE_HOME")
+    .map(PathBuf::from)
+    .unwrap_or_else(|| home.join(".cache"))
+    .join("frameflow")
+    .join("previews");
+
   fs::create_dir_all(&cache_root).map_err(|error| {
     format!(
       "Could not create preview cache directory '{}': {error}",
