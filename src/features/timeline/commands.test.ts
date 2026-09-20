@@ -632,6 +632,7 @@ describe("transform keyframe commands", () => {
           rotation: 0,
           opacity: 1,
         },
+        easing: "linear",
       },
       {
         timeMs: 2000,
@@ -642,6 +643,7 @@ describe("transform keyframe commands", () => {
           rotation: 0,
           opacity: 0.5,
         },
+        easing: "linear",
       },
     ]);
   });
@@ -681,6 +683,7 @@ describe("transform keyframe commands", () => {
           rotation: 15,
           opacity: 1,
         },
+        easing: "linear",
       },
     ]);
   });
