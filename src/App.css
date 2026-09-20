@@ -424,6 +424,22 @@ button:focus-visible {
   line-height: 1;
 }
 
+.preview-transform-anchor-handle {
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: crosshair;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.preview-transform-anchor-handle:hover {
+  background: #342e52;
+}
+
 .preview-transform-rotate-handle {
   top: -10px;
   left: 50%;
