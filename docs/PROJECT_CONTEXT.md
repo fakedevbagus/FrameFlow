@@ -456,40 +456,42 @@ Known limitation:
 Next step:
 - Start M3.18 with crop-position translation compensation so changing the crop can optionally preserve the visible content position.
 
-## M3.18 — Crop position and translation compensation (in progress)
+## M3.18 — Crop position and translation compensation — completed
 
 Branch: `feat/m3-18-crop-position-compensation`
+PR: #28
+Merge SHA: `f59553d3e7192bae2a00741acfa5177da94e94eb`
 
-Scope:
-- Add a backward-compatible per-clip crop content-position model.
-- Keep legacy clips without `cropPosition` visually aligned to the existing crop window instead of shifting their source content.
-- Add crop position X/Y controls to the Inspector.
-- Render a fixed crop viewport with the media content positioned inside it.
-- Reset crop position to a centered content point through the Inspector.
-- Keep crop position edits inside the existing history engine.
+Scope delivered:
+- Added a backward-compatible per-clip crop content-position model.
+- Kept legacy clips without `cropPosition` aligned to the existing crop window by deriving the source point from the crop insets.
+- Added Crop position X/Y controls and a Center content action to the Inspector.
+- Reworked preview crop rendering to use a fixed crop viewport with separately positioned media content.
+- Kept crop-position mutations inside the existing project history engine.
+- Cleared stored crop position when crop is fully reset.
 
 Architecture decisions:
-- `Clip.cropPosition` stores the normalized source point (0..1) that should align with the center of the crop viewport.
-- When `cropPosition` is absent, the preview derives the crop-window center from the existing edge insets. This preserves the established M3.16/M3.17 crop behavior for legacy clips.
-- Crop clipping is now represented by a fixed viewport wrapper; the media element is positioned inside that viewport rather than using `clip-path` directly on the media.
-- Existing transform/keyframe math continues to operate on the outer content layer.
+- `Clip.cropPosition` stores the normalized source point (0..1) aligned to the center of the crop viewport.
+- Missing `cropPosition` is interpreted from the existing crop window center, preserving legacy M3.16/M3.17 visual behavior.
+- Crop clipping is represented by a fixed viewport wrapper; the media element is positioned inside that viewport.
+- Existing transform/keyframe behavior remains owned by the outer content layer and is not mixed with crop-position history.
 
-Automated coverage added:
-- Crop-position default derivation from crop insets.
-- Crop-position normalization and command behavior.
-- Clearing stored crop position when crop is fully reset.
-- Preview rendering for backward-compatible crop alignment.
-- Preview rendering with explicit crop position.
-- App-level Inspector crop-position workflow.
+Automated coverage added or updated:
+- Crop-position derivation, normalization, and command behavior.
+- Clearing stored crop position on crop reset.
+- Preview crop viewport dimensions and explicit source-content positioning.
+- App-level Crop position X/Y and Center content workflow.
+- Regression assertions updated for the post-M3.18 preview DOM structure.
 
 Validation:
-- Local lint, test, build, Tauri dev, and manual validation are pending user verification.
+- User confirmed local lint, test, build, Tauri dev, and requested M3.18 manual checks passed on Linux.
+- User also confirmed the follow-up regression fixes passed validation before this milestone was merged.
 
 Known limitation:
 - Direct crop-content panning with pointer dragging and aspect-ratio crop presets remain future work.
 
 Next step:
-- Run local validation on PR #28 before merging M3.18.
+- Start M3.19 from the updated `main`, focusing on direct crop-content panning while preserving crop, transform, anchor, keyframe, and history behavior.
 
 ## Documentation protocol
 
