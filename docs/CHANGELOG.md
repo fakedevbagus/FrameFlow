@@ -1,5 +1,23 @@
 ## 2026-09-21
 
+### M3.23 — Transform/crop interaction hardening — in progress
+Branch: `feat/m3-23-transform-crop-interaction-hardening`
+
+Implemented:
+- Added Escape cancellation for direct transform movement.
+- Added Escape cancellation for direct transform-anchor dragging.
+- Added Escape cancellation for crop-edge and crop-content gestures.
+- Release pointer capture during cancellation without committing project history.
+- Added Preview regression coverage for cancellation behavior.
+
+Validation:
+- Local validation is pending user verification.
+
+Next step:
+- User validates M3.23 locally before merge.
+
+
+
 ### M3.22 — Direct on-canvas anchor manipulation — merged
 Branch: `feat/m3-22-direct-anchor-manipulation`
 PR #33 — merged

@@ -678,6 +678,34 @@ UI/layout direction:
 Next step:
 - Start M3.23 from the updated `main`, focusing on the next small transform/crop interaction hardening slice.
 
+
+## M3.23 — Transform/crop interaction hardening (in progress)
+
+Branch: `feat/m3-23-transform-crop-interaction-hardening`
+PR: pending
+
+Scope:
+- Allow Escape to cancel an active direct preview manipulation gesture without creating a project-history mutation.
+- Cover direct transform movement, transform-anchor dragging, crop-edge dragging, and crop-content panning.
+- Release pointer capture when an active gesture is cancelled.
+- Keep live manipulation state separate from project history.
+
+Architecture decisions:
+- Escape cancellation is owned by `PreviewVisualLayer`, where all direct canvas gesture state already lives.
+- Cancellation clears live gesture state and releases pointer capture; it does not call any project mutation callback.
+- Existing completed-gesture history commit paths remain unchanged.
+
+Automated coverage added:
+- Escape cancellation for direct transform movement.
+- Escape cancellation for direct anchor dragging.
+- Escape cancellation for crop-edge and crop-content gestures.
+
+Validation:
+- Local validation is pending user verification.
+
+Next step:
+- User validates M3.23 locally before merge.
+
 ## Documentation protocol
 
 For every milestone or meaningful bug fix, update:

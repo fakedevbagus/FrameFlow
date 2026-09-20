@@ -653,6 +653,270 @@ describe("Preview", () => {
     });
   });
 
+  it("cancels a direct transform drag with Escape without committing", async () => {
+    let project = createProject({ id: "escape-transform-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-escape-transform",
+          name: "escape-transform.mp4",
+          mediaType: "video",
+          sourcePath: "/media/escape-transform.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-escape-transform");
+    const clipId = project.tracks[0].clips[0].id;
+    const onTransformCommit = vi.fn();
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+        onTransformCommit={onTransformCommit}
+      />,
+    );
+
+    const hitArea = screen.getByTestId(`preview-hit-area-${clipId}`);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    fireEvent.pointerDown(hitArea, {
+      button: 0,
+      pointerId: 21,
+      clientX: 50,
+      clientY: 100,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 21,
+      clientX: 90,
+      clientY: 60,
+    });
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 21,
+      clientX: 90,
+      clientY: 60,
+    });
+
+    expect(onTransformCommit).not.toHaveBeenCalled();
+  });
+
+  it("cancels a direct anchor drag with Escape without committing", async () => {
+    let project = createProject({ id: "escape-anchor-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-escape-anchor",
+          name: "escape-anchor.mp4",
+          mediaType: "video",
+          sourcePath: "/media/escape-anchor.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-escape-anchor");
+    const clipId = project.tracks[0].clips[0].id;
+    const onTransformAnchorCommit = vi.fn();
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+        onTransformAnchorCommit={onTransformAnchorCommit}
+      />,
+    );
+
+    const hitArea = screen.getByTestId(`preview-hit-area-${clipId}`);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const anchorHandle = screen.getByTestId("preview-transform-anchor-handle");
+
+    fireEvent.pointerDown(anchorHandle, {
+      button: 0,
+      pointerId: 22,
+      clientX: 100,
+      clientY: 200,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 22,
+      clientX: 50,
+      clientY: 100,
+    });
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 22,
+      clientX: 50,
+      clientY: 100,
+    });
+
+    expect(onTransformAnchorCommit).not.toHaveBeenCalled();
+  });
+
+  it("cancels crop edge and content panning with Escape without committing", async () => {
+    let project = createProject({ id: "escape-crop-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-escape-crop",
+          name: "escape-crop.mp4",
+          mediaType: "video",
+          sourcePath: "/media/escape-crop.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-escape-crop");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) => ({
+        ...track,
+        clips: track.clips.map((clip) =>
+          clip.id === clipId
+            ? {
+                ...clip,
+                crop: {
+                  top: 0.1,
+                  right: 0.1,
+                  bottom: 0.1,
+                  left: 0.1,
+                },
+              }
+            : clip,
+        ),
+      })),
+    };
+
+    const onCropCommit = vi.fn();
+    const onCropPositionCommit = vi.fn();
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+        onCropCommit={onCropCommit}
+        onCropPositionCommit={onCropPositionCommit}
+      />,
+    );
+
+    const hitArea = screen.getByTestId(`preview-hit-area-${clipId}`);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const cropHandle = screen.getByTestId("preview-crop-handle-top");
+
+    fireEvent.pointerDown(cropHandle, {
+      button: 0,
+      pointerId: 23,
+      clientX: 100,
+      clientY: 0,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 23,
+      clientX: 100,
+      clientY: 40,
+    });
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 23,
+      clientX: 100,
+      clientY: 40,
+    });
+
+    expect(onCropCommit).not.toHaveBeenCalled();
+
+    const surface = screen.getByTestId(
+      `preview-crop-pan-surface-${clipId}`,
+    );
+
+    fireEvent.pointerDown(surface, {
+      button: 0,
+      pointerId: 24,
+      clientX: 100,
+      clientY: 200,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 24,
+      clientX: 140,
+      clientY: 160,
+    });
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 24,
+      clientX: 140,
+      clientY: 160,
+    });
+
+    expect(onCropPositionCommit).not.toHaveBeenCalled();
+  });
+
   it("shows direct manipulation handles for the selected visual", () => {
     let project = createProject({ id: "canvas-handles-preview" });
 
