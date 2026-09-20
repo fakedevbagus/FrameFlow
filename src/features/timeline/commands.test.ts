@@ -670,6 +670,12 @@ describe("transform keyframe commands", () => {
       x: 25,
       rotation: 15,
     });
+    project = updateTransformKeyframeEasing(
+      project,
+      clipId,
+      1000,
+      "ease-in-out",
+    );
 
     project = moveTransformKeyframe(project, clipId, 1000, 2500);
 
@@ -683,7 +689,7 @@ describe("transform keyframe commands", () => {
           rotation: 15,
           opacity: 1,
         },
-        easing: "linear",
+        easing: "ease-in-out",
       },
     ]);
   });
