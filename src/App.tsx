@@ -114,6 +114,9 @@ function App() {
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [projectNotice, setProjectNotice] = useState<string | null>(null);
+  const [visualMediaDimensions, setVisualMediaDimensions] = useState<
+    Record<string, { width: number; height: number }>
+  >({});
   const project = history.present;
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
@@ -271,6 +274,7 @@ function App() {
       if (result) {
         setHistory(resetHistory(result.project));
         setSelectedClipId(null);
+        setVisualMediaDimensions({});
         setPlaybackTime(0);
         setIsPlaying(false);
         setProjectNotice("Project opened.");
@@ -662,6 +666,27 @@ function App() {
     );
   }
 
+  const handleVisualMediaDimensionsChange = useCallback(
+    (clipId: string, dimensions: { width: number; height: number }) => {
+      setVisualMediaDimensions((current) => {
+        const previous = current[clipId];
+
+        if (
+          previous?.width === dimensions.width &&
+          previous?.height === dimensions.height
+        ) {
+          return current;
+        }
+
+        return {
+          ...current,
+          [clipId]: dimensions,
+        };
+      });
+    },
+    [],
+  );
+
   function handleSetSelectedTransformAnchor(anchor: TransformAnchor) {
     if (!selectedClipContext) {
       return;
@@ -726,7 +751,17 @@ function App() {
   }
 
   function getSelectedVisualMediaDimensions(): { width: number; height: number } | null {
-    if (!selectedClipContext || !previewCanvasRef.current) {
+    if (!selectedClipContext) {
+      return null;
+    }
+
+    const cached = visualMediaDimensions[selectedClipContext.clip.id];
+
+    if (cached) {
+      return cached;
+    }
+
+    if (!previewCanvasRef.current) {
       return null;
     }
 
@@ -1396,6 +1431,9 @@ function App() {
                 onTransformCommit={handleCanvasTransformCommit}
                 onTransformAnchorCommit={(_, anchor) =>
                   handleSetSelectedTransformAnchor(anchor)
+                }
+                onVisualMediaDimensionsChange={
+                  handleVisualMediaDimensionsChange
                 }
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
