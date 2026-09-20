@@ -344,8 +344,8 @@ describe("clip transforms", () => {
       {
         timeMs: 2000,
         transform: {
-          x: 100,
-          y: -50,
+          x: 125,
+          y: -25,
           scale: 1.5,
           rotation: 90,
           opacity: 1,
