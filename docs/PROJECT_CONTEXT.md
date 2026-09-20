@@ -720,6 +720,38 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
+## M3.28 — Transition lifecycle integrity — in progress
+
+Branch: `feat/m3-28-transition-lifecycle-integrity`
+PR: pending
+
+Scope:
+- Keep transition metadata consistent when timeline structure changes.
+- Clear stale transitions when move/remove/trim operations break adjacency.
+- Clamp an existing transition when trimming an adjacent clip reduces the available duration.
+- Preserve an outgoing transition on the second half of a clip split instead of duplicating it on both halves.
+- Sanitize the edited track through the existing transition rules without introducing a second transition state.
+
+Architecture decisions:
+- Transition validity remains derived from clip ordering, adjacency, visual-media compatibility, and duration bounds.
+- Structural timeline commands sanitize only the track they mutate; unrelated tracks are not rewritten.
+- Split semantics keep the transition attached to the timeline segment that remains adjacent to the original incoming clip.
+- Existing transition history and preview paths remain unchanged.
+
+Automated coverage:
+- Unit coverage for adjacent-pair normalization and stale-transition cleanup.
+- Command coverage for move, remove, trim-start, trim-end, and split transition lifecycle behavior.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Only dissolve transitions are supported.
+- Legacy projects with transition metadata are repaired only when the affected track is structurally edited.
+
+Next step:
+- User validates M3.28 locally before merge.
+
 ## M3.27 — Direct timeline transition-duration manipulation — completed
 
 Branch: `feat/m3-27-direct-transition-duration`
