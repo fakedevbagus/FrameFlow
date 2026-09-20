@@ -503,7 +503,7 @@ describe("App", () => {
     });
 
     const previewVideo = screen.getByTestId("preview-video");
-    const previewContentLayer = previewVideo.parentElement;
+    const previewContentLayer = previewVideo.closest(".preview-content-layer");
 
     expect(previewContentLayer).not.toBeNull();
     expect(previewContentLayer).toHaveStyle({
