@@ -171,13 +171,25 @@ function PreviewVisualLayer({
     }
   }
 
+  if (!mediaUrl) {
+    return (
+      <div
+        className="preview-layer-error"
+        role="status"
+        style={{ zIndex }}
+      >
+        Preview unavailable
+      </div>
+    );
+  }
+
   if (layer.asset.mediaType === "image") {
     return (
       <img
         alt={layer.asset.name}
         className="preview-layer preview-image-layer"
         data-preview-state="image"
-        src={mediaUrl ?? ""}
+        src={mediaUrl}
         style={layerStyle}
       />
     );
@@ -191,7 +203,7 @@ function PreviewVisualLayer({
       playsInline
       preload="auto"
       ref={mediaRef}
-      src={mediaUrl ?? ""}
+      src={mediaUrl}
       style={layerStyle}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() =>
@@ -261,6 +273,17 @@ function PreviewAudioLayer({
     }
   }
 
+  if (!mediaUrl) {
+    return (
+      <div
+        className="preview-layer-error"
+        role="status"
+      >
+        Audio preview unavailable
+      </div>
+    );
+  }
+
   return (
     <audio
       aria-label={
@@ -277,7 +300,7 @@ function PreviewAudioLayer({
       data-testid="preview-audio"
       preload="auto"
       ref={mediaRef}
-      src={mediaUrl ?? ""}
+      src={mediaUrl}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
     />
