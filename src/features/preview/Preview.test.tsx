@@ -305,9 +305,80 @@ describe("Preview", () => {
 
     await flushPreviewEffects();
 
-    expect(screen.getByTestId("preview-video")).toHaveStyle({
+    const viewport = screen.getByTestId(
+      `preview-crop-viewport-${clipId}`,
+    );
+    expect(viewport).toHaveStyle({
+      left: "5%",
+      top: "10%",
+      width: "75%",
+      height: "60%",
+    });
+
+    const video = screen.getByTestId("preview-video");
+    expect(video).not.toHaveStyle({
       clipPath: "inset(10% 20% 30% 5%)",
     });
+    expect(Number.parseFloat(video.style.left)).toBeCloseTo(-6.6667, 3);
+    expect(Number.parseFloat(video.style.top)).toBeCloseTo(-16.6667, 3);
+    expect(Number.parseFloat(video.style.width)).toBeCloseTo(133.3333, 3);
+    expect(Number.parseFloat(video.style.height)).toBeCloseTo(166.6667, 3);
+  });
+
+  it("uses an explicit crop position to reposition content inside the crop window", async () => {
+    let project = createProject({ id: "crop-position-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-crop-position",
+          name: "crop-position.mp4",
+          mediaType: "video",
+          sourcePath: "/media/crop-position.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-crop-position");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) => ({
+        ...track,
+        clips: track.clips.map((clip) =>
+          clip.id === clipId
+            ? {
+                ...clip,
+                crop: { top: 0.1, right: 0.1, bottom: 0.1, left: 0.1 },
+                cropPosition: { x: 0.25, y: 0.75 },
+              }
+            : clip,
+        ),
+      })),
+    };
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    const video = screen.getByTestId("preview-video");
+    expect(Number.parseFloat(video.style.left)).toBeCloseTo(
+      50 - (0.25 / 0.8) * 100,
+      5,
+    );
+    expect(Number.parseFloat(video.style.top)).toBeCloseTo(
+      50 - (0.75 / 0.8) * 100,
+      5,
+    );
   });
 
   it("renders an image clip as the visual preview", async () => {
