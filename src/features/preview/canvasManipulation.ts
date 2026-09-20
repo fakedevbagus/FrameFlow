@@ -22,6 +22,50 @@ export interface ContentBounds {
   height: number;
 }
 
+export function getContainedContentPercentageBounds(
+  canvasWidth: number,
+  canvasHeight: number,
+  mediaWidth: number,
+  mediaHeight: number,
+): ContentBounds {
+  if (
+    canvasWidth <= 0 ||
+    canvasHeight <= 0 ||
+    mediaWidth <= 0 ||
+    mediaHeight <= 0
+  ) {
+    return {
+      left: 0,
+      top: 0,
+      width: 100,
+      height: 100,
+    };
+  }
+
+  const canvasAspect = canvasWidth / canvasHeight;
+  const mediaAspect = mediaWidth / mediaHeight;
+
+  if (mediaAspect > canvasAspect) {
+    const height = (canvasAspect / mediaAspect) * 100;
+
+    return {
+      left: 0,
+      top: (100 - height) / 2,
+      width: 100,
+      height,
+    };
+  }
+
+  const width = (mediaAspect / canvasAspect) * 100;
+
+  return {
+    left: (100 - width) / 2,
+    top: 0,
+    width,
+    height: 100,
+  };
+}
+
 export function getContainedContentBounds(
   stage: CanvasRect,
   mediaWidth: number,
