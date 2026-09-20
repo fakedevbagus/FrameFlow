@@ -150,20 +150,22 @@ export function upsertTransformKeyframe(
   keyframes: TransformKeyframe[] | undefined,
   timeMs: number,
   transform: ClipTransform,
+  easing?: TransformEasing,
 ): TransformKeyframe[] {
   if (!Number.isFinite(timeMs) || timeMs < 0) {
     throw new Error("Transform keyframe time must be zero or greater.");
   }
 
-  const next = {
-    timeMs,
-    transform: normalizeClipTransform(transform),
-    easing: "linear" as const,
-  };
   const normalized = normalizeTransformKeyframes(keyframes);
   const existingIndex = normalized.findIndex(
     (keyframe) => keyframe.timeMs === timeMs,
   );
+  const existing = existingIndex === -1 ? undefined : normalized[existingIndex];
+  const next = {
+    timeMs,
+    transform: normalizeClipTransform(transform),
+    easing: normalizeTransformEasing(easing ?? existing?.easing),
+  };
 
   if (existingIndex === -1) {
     normalized.push(next);
