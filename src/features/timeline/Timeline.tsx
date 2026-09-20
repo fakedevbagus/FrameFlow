@@ -686,7 +686,6 @@ function TimelineTrack({
   onFinishClipInteraction,
   onCancelClipInteraction,
   onKeyframeClick,
-  onMoveTransformKeyframe,
   keyframeInteraction,
   onBeginKeyframeInteraction,
   onUpdateKeyframeInteraction,
