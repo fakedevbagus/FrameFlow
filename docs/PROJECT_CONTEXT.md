@@ -10,10 +10,9 @@ The project is being built incrementally. Every milestone must be small, testabl
 
 - GitHub: https://github.com/fakedevbagus/FrameFlow
 - Current default branch: `main`
-- Current main commit at the time this document was refreshed: `9c745f798b73b34fdbf70ca04837de0eaa085036`
-- Current milestone work branch: `feat/m3-13-playback-stability`
-- Current open work: M3.13 playback startup/replay synchronization fix (PR #23, draft)
-- M3.12 was already merged as PR #21.
+- Current main commit at the time this document was refreshed: `595f7498e503aab19052279979fb389ae8300691`
+- M3.13 was merged as PR #23 with merge SHA `595f7498e503aab19052279979fb389ae8300691`.
+- Next milestone branch will be created from the updated `main` after M3.13 validation.
 
 ## Development environment
 
@@ -248,12 +247,15 @@ The current investigation found a concrete race in the transport/preview interac
 3. The preview playback effect started media playback but did not explicitly re-align the media element to the current transport position when `isPlaying` changed to true.
 4. This can cause delayed transport UI startup, replay from a stale end position, or a mismatch between the timeline clock and the media element.
 
-## M3.13 — Playback stability fix (PR #23, draft)
+## M3.13 — Playback stability fix (PR #23, merged)
 
 Branch:
 `feat/m3-13-playback-stability`
 
 PR: https://github.com/fakedevbagus/FrameFlow/pull/23
+
+Merge SHA:
+`595f7498e503aab19052279979fb389ae8300691`
 
 Current changes:
 
@@ -278,15 +280,19 @@ Branch commits:
 - `e8f4de5a546661ee6a042595574491be281a1e6f` — changelog documentation
 - `7cf18d1c4d7cb3c6a2fdb1f0901eb5aea1eedc67` — new-chat handoff prompt
 
+Validation:
+- User reported the M3.13 fix successfully validated locally on Linux.
+- Playback startup/replay synchronization and playback smoothness were reported working.
+
 Important: these changes were implemented from current `main` after M3.12 was already merged. The earlier temporary branch `feat/m3-12-keyframe-keyboard-nudging` was intentionally not used for the final playback fix.
 
 ## Current validation status
 
-The user has not yet reported validation for M3.13.
+M3.13 has been validated locally by the user.
 
-Follow-up issue found during manual playback: while transport playback was active, the preview video effect depended on the changing clip-local transport time and therefore could seek the video element on every animation-frame update. The M3.13 follow-up correction removes the per-tick seek and keeps re-alignment limited to playback start or active-clip changes. Automated regression coverage was added; local validation remains pending.
+During M3.13 work, a follow-up playback smoothness issue was fixed: the preview video effect previously depended on changing clip-local transport time and could seek the video element on every animation-frame update. The correction keeps re-alignment limited to playback start or active-clip changes, with regression coverage.
 
-Run locally on the M3.13 branch:
+Historical M3.13 validation commands:
 
 ```bash
 git fetch origin
