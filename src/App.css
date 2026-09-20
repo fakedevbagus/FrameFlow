@@ -1119,9 +1119,66 @@ button:disabled {
   background: #a99cff;
 }
 
+.timeline-transition-region {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.timeline-transition-region::before {
+  position: absolute;
+  inset: 2px 0;
+  border: 1px solid #71669a;
+  border-radius: 4px;
+  pointer-events: none;
+  background: rgb(116 103 169 / 12%);
+  content: "";
+}
+
+.timeline-transition-duration-handle {
+  position: absolute;
+  top: 50%;
+  left: -5px;
+  z-index: 2;
+  width: 10px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #7e74aa;
+  border-radius: 3px;
+  cursor: ew-resize;
+  pointer-events: auto;
+  background: #252231;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 30%);
+  transform: translateY(-50%);
+}
+
+.timeline-transition-duration-handle::before {
+  position: absolute;
+  top: 7px;
+  left: 3px;
+  width: 2px;
+  height: 14px;
+  border-radius: 1px;
+  background: #b7adf0;
+  content: "";
+}
+
+.timeline-transition-duration-handle:hover {
+  border-color: #aaa0db;
+  background: #302a42;
+}
+
+.timeline-transition-duration-handle:focus-visible {
+  outline: 2px solid #b9b0ff;
+  outline-offset: 2px;
+}
+
 .timeline-transition-indicator {
   position: absolute;
   top: 50%;
+  pointer-events: auto;
   z-index: 8;
   display: grid;
   width: 20px;
