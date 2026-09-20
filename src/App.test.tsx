@@ -712,8 +712,7 @@ describe("App", () => {
       expect(previewContentLayer).not.toBeNull();
       expect(previewContentLayer).toHaveStyle({
         transformOrigin: "0% 0%",
-        transform:
-          "translate(-50%, -15.8203125%) scale(2) rotate(0deg)",
+        transform: "translate(-50%, -50%) scale(2) rotate(0deg)",
       });
     });
 
