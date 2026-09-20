@@ -205,7 +205,7 @@ describe("Timeline", () => {
 
     expect(onAddAssetToTrack).toHaveBeenCalledWith(
       "asset-overlay",
-      project.tracks[2].id,
+      project.tracks[1].id,
       3000,
     );
   });
@@ -232,7 +232,7 @@ describe("Timeline", () => {
       screen.getByRole("button", { name: "Remove Video 2 track" }),
     );
     expect(onRemoveTrack).toHaveBeenCalledWith(
-      extraTrack.tracks[2].id,
+      extraTrack.tracks[1].id,
     );
   });
 
