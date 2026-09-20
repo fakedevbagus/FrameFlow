@@ -41,7 +41,7 @@ fn prepare_media_preview(path: String) -> Result<String, String> {
     .map(PathBuf::from)
     .unwrap_or_else(|| home.join(".cache"))
     .join("frameflow")
-    .join("previews");
+    .join("previews-v2");
 
   fs::create_dir_all(&cache_root).map_err(|error| {
     format!(
