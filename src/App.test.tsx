@@ -245,7 +245,7 @@ describe("App", () => {
     });
 
     await waitFor(() =>
-      expect(container).toHaveTextContent("+10%"),
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(10),
     );
 
     expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
@@ -253,7 +253,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
 
     await waitFor(() => {
-      expect(container).toHaveTextContent("+0%");
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(0);
     });
   });
 
@@ -290,9 +290,11 @@ describe("App", () => {
     expect(screen.getByText("Transform")).toBeInTheDocument();
     expect(container).toHaveTextContent("X");
     expect(container).toHaveTextContent("Y");
-    expect(container).toHaveTextContent("1.00×");
-    expect(container).toHaveTextContent("0°");
-    expect(container).toHaveTextContent("100%");
+    expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(1);
+    expect(screen.getByRole("spinbutton", { name: "Rotation" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(100);
 
     fireEvent.click(screen.getByRole("button", { name: "Move visual right" }));
     fireEvent.click(screen.getByRole("button", { name: "Scale visual up" }));
@@ -300,10 +302,10 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Decrease visual opacity" }));
 
     await waitFor(() => {
-      expect(container).toHaveTextContent("+5%");
-      expect(container).toHaveTextContent("1.10×");
-      expect(container).toHaveTextContent("15°");
-      expect(container).toHaveTextContent("90%");
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(5);
+      expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(1.1);
+      expect(screen.getByRole("spinbutton", { name: "Rotation" })).toHaveValue(15);
+      expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(90);
     });
 
     const previewVideo = screen.getByTestId("preview-video");
@@ -315,10 +317,11 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset transform" }));
 
     await waitFor(() => {
-      expect(container).toHaveTextContent("+0%");
-      expect(container).toHaveTextContent("1.00×");
-      expect(container).toHaveTextContent("0°");
-      expect(container).toHaveTextContent("100%");
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(1);
+      expect(screen.getByRole("spinbutton", { name: "Rotation" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(100);
     });
   });
 
@@ -355,23 +358,26 @@ describe("App", () => {
     fireEvent.change(screen.getByRole("spinbutton", { name: "X position" }), {
       target: { value: "12.5" },
     });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "X position" }));
+
     fireEvent.change(screen.getByRole("spinbutton", { name: "Y position" }), {
       target: { value: "-7.5" },
     });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Y position" }));
+
     fireEvent.change(screen.getByRole("spinbutton", { name: "Scale" }), {
       target: { value: "1.25" },
     });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Scale" }));
+
     fireEvent.change(screen.getByRole("spinbutton", { name: "Rotation" }), {
       target: { value: "-22" },
     });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Rotation" }));
+
     fireEvent.change(screen.getByRole("spinbutton", { name: "Opacity" }), {
       target: { value: "73" },
     });
-
-    fireEvent.blur(screen.getByRole("spinbutton", { name: "X position" }));
-    fireEvent.blur(screen.getByRole("spinbutton", { name: "Y position" }));
-    fireEvent.blur(screen.getByRole("spinbutton", { name: "Scale" }));
-    fireEvent.blur(screen.getByRole("spinbutton", { name: "Rotation" }));
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Opacity" }));
 
     await waitFor(() => {
