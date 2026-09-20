@@ -530,6 +530,86 @@ describe("Preview", () => {
     ).toBeInTheDocument();
   });
 
+  it("commits a direct crop-handle drag", async () => {
+    let project = createProject({ id: "crop-handles-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-crop-handle",
+          name: "crop-handles.mp4",
+          mediaType: "video",
+          sourcePath: "/media/crop-handles.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-crop-handle");
+    const clipId = project.tracks[0].clips[0].id;
+    const onCropCommit = vi.fn();
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+        onCropCommit={onCropCommit}
+      />,
+    );
+
+    const hitArea = screen.getByTestId(`preview-hit-area-${clipId}`);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const handle = screen.getByTestId("preview-crop-handle-top");
+
+    fireEvent.pointerDown(handle, {
+      button: 0,
+      pointerId: 9,
+      clientX: 100,
+      clientY: 0,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 9,
+      clientX: 100,
+      clientY: 40,
+    });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 9,
+      clientX: 100,
+      clientY: 40,
+    });
+
+    await vi.waitFor(() => {
+      expect(onCropCommit).toHaveBeenCalledWith(
+        clipId,
+        expect.objectContaining({
+          top: 0.1,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        }),
+      );
+    });
+  });
+
   it("re-aligns video to the transport position when playback starts", async () => {
     let project = createProject({ id: "replay-alignment-preview" });
 

@@ -5,19 +5,22 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import type { ClipTransform, Project } from "../project/domain";
+import type { ClipCrop, ClipTransform, Project } from "../project/domain";
 import {
   getClipCrop,
   getClipTransformAnchor,
   getClipTransformAtTime,
   normalizeClipTransform,
+  normalizeClipCrop,
 } from "../transform/transform";
 import {
   getContainedContentBounds,
   getContainedContentPercentageBounds,
   transformFromPointer,
+  cropFromPointer,
   type CanvasManipulationMode,
   type ContentBounds,
+  type CropEdge,
 } from "./canvasManipulation";
 import {
   getActiveAudioPreviewClips,
@@ -33,6 +36,7 @@ interface PreviewProps {
   selectedClipId?: string | null;
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
+  onCropCommit?: (clipId: string, crop: ClipCrop) => void;
 }
 
 interface PreviewError {
@@ -47,6 +51,7 @@ export function Preview({
   selectedClipId = null,
   onSelectClip,
   onTransformCommit,
+  onCropCommit,
 }: PreviewProps) {
   const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
   const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
@@ -85,6 +90,7 @@ export function Preview({
           isSelected={selectedClipId === layer.clip.id}
           onSelectClip={onSelectClip}
           onTransformCommit={onTransformCommit}
+          onCropCommit={onCropCommit}
           onError={handleMediaError}
         />
       ))}
@@ -136,6 +142,7 @@ interface PreviewVisualLayerProps extends PreviewLayerProps {
   isSelected: boolean;
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
+  onCropCommit?: (clipId: string, crop: ClipCrop) => void;
 }
 
 interface CanvasGesture {
@@ -144,6 +151,14 @@ interface CanvasGesture {
   startPointer: { x: number; y: number };
   baseTransform: ClipTransform;
   transform: ClipTransform;
+  manipulationBounds: ContentBounds;
+  hasMoved: boolean;
+}
+
+interface CropGesture {
+  edge: CropEdge;
+  pointerId: number;
+  crop: ClipCrop;
   manipulationBounds: ContentBounds;
   hasMoved: boolean;
 }
@@ -158,6 +173,7 @@ function PreviewVisualLayer({
   isSelected,
   onSelectClip,
   onTransformCommit,
+  onCropCommit,
   onError,
 }: PreviewVisualLayerProps) {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
@@ -166,6 +182,7 @@ function PreviewVisualLayer({
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
+  const [cropGesture, setCropGesture] = useState<CropGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
     height: number;
@@ -187,6 +204,7 @@ function PreviewVisualLayer({
   );
   const anchor = getClipTransformAnchor(layer.clip.transformAnchor);
   const crop = getClipCrop(layer.clip.crop);
+  const activeCrop = cropGesture?.crop ?? crop;
   const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
@@ -218,7 +236,7 @@ function PreviewVisualLayer({
     transformOrigin: `${anchor.x * 100}% ${anchor.y * 100}%`,
   };
   const cropStyle = {
-    clipPath: `inset(${crop.top * 100}% ${crop.right * 100}% ${crop.bottom * 100}% ${crop.left * 100}%)`,
+    clipPath: `inset(${activeCrop.top * 100}% ${activeCrop.right * 100}% ${activeCrop.bottom * 100}% ${activeCrop.left * 100}%)`,
   };
 
   useEffect(() => {
@@ -440,7 +458,84 @@ function PreviewVisualLayer({
     });
   }
 
+  function beginCropGesture(
+    edge: CropEdge,
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    onSelectClip?.(layer.clip.id);
+
+    if (isPlaying || !interactionRef.current) {
+      return;
+    }
+
+    const bounds = interactionRef.current.getBoundingClientRect();
+    const contentBounds = getInteractionContentBounds(bounds);
+
+    if (contentBounds.width <= 0 || contentBounds.height <= 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+      interactionRef.current.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is not implemented in every runtime.
+    }
+
+    setCropGesture({
+      edge,
+      pointerId: event.pointerId,
+      crop: normalizeClipCrop(crop),
+      manipulationBounds: contentBounds,
+      hasMoved: false,
+    });
+  }
+
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (cropGesture && cropGesture.pointerId === event.pointerId) {
+      setCropGesture((currentGesture) => {
+        if (
+          !currentGesture ||
+          currentGesture.pointerId !== event.pointerId
+        ) {
+          return currentGesture;
+        }
+
+        const nextCrop = cropFromPointer(
+          currentGesture.edge,
+          currentGesture.crop,
+          {
+            x: event.clientX,
+            y: event.clientY,
+          },
+          currentGesture.manipulationBounds,
+          canvasWidth,
+          canvasHeight,
+          activeTransform,
+          anchor,
+        );
+
+        const moved =
+          Math.abs(nextCrop.top - currentGesture.crop.top) > 0.0001 ||
+          Math.abs(nextCrop.right - currentGesture.crop.right) > 0.0001 ||
+          Math.abs(nextCrop.bottom - currentGesture.crop.bottom) > 0.0001 ||
+          Math.abs(nextCrop.left - currentGesture.crop.left) > 0.0001;
+
+        return {
+          ...currentGesture,
+          crop: nextCrop,
+          hasMoved: currentGesture.hasMoved || moved,
+        };
+      });
+      return;
+    }
+
     setGesture((currentGesture) => {
       if (
         !currentGesture ||
@@ -477,6 +572,24 @@ function PreviewVisualLayer({
   }
 
   function finishGesture(event: PointerEvent<HTMLDivElement>) {
+    if (cropGesture && cropGesture.pointerId === event.pointerId) {
+      try {
+        interactionRef.current?.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may be unavailable in tests.
+      }
+
+      const shouldCommit = cropGesture.hasMoved;
+      const nextCrop = cropGesture.crop;
+
+      setCropGesture(null);
+
+      if (shouldCommit) {
+        onCropCommit?.(layer.clip.id, nextCrop);
+      }
+      return;
+    }
+
     if (!gesture || gesture.pointerId !== event.pointerId) {
       return;
     }
@@ -498,6 +611,17 @@ function PreviewVisualLayer({
   }
 
   function cancelGesture(event: PointerEvent<HTMLDivElement>) {
+    if (cropGesture && cropGesture.pointerId === event.pointerId) {
+      setCropGesture(null);
+
+      try {
+        interactionRef.current?.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may be unavailable in tests.
+      }
+      return;
+    }
+
     if (!gesture || gesture.pointerId !== event.pointerId) {
       return;
     }
@@ -509,6 +633,62 @@ function PreviewVisualLayer({
     } catch {
       // Pointer capture may be unavailable in tests.
     }
+  }
+
+  function renderCropControls() {
+    if (!isSelected || isPlaying) {
+      return null;
+    }
+
+    return (
+      <div
+        className="preview-crop-controls"
+        data-testid="preview-crop-controls"
+        aria-label="Crop controls"
+      >
+        <div
+          className="preview-crop-boundary"
+          style={{
+            top: activeCrop.top * 100 + "%",
+            right: activeCrop.right * 100 + "%",
+            bottom: activeCrop.bottom * 100 + "%",
+            left: activeCrop.left * 100 + "%",
+          }}
+        />
+        <button
+          aria-label="Crop top"
+          className="preview-crop-handle preview-crop-handle-top"
+          data-testid="preview-crop-handle-top"
+          onPointerDown={(event) => beginCropGesture("top", event)}
+          type="button"
+          style={{ top: activeCrop.top * 100 + "%" }}
+        />
+        <button
+          aria-label="Crop right"
+          className="preview-crop-handle preview-crop-handle-right"
+          data-testid="preview-crop-handle-right"
+          onPointerDown={(event) => beginCropGesture("right", event)}
+          type="button"
+          style={{ right: activeCrop.right * 100 + "%" }}
+        />
+        <button
+          aria-label="Crop bottom"
+          className="preview-crop-handle preview-crop-handle-bottom"
+          data-testid="preview-crop-handle-bottom"
+          onPointerDown={(event) => beginCropGesture("bottom", event)}
+          type="button"
+          style={{ bottom: activeCrop.bottom * 100 + "%" }}
+        />
+        <button
+          aria-label="Crop left"
+          className="preview-crop-handle preview-crop-handle-left"
+          data-testid="preview-crop-handle-left"
+          onPointerDown={(event) => beginCropGesture("left", event)}
+          type="button"
+          style={{ left: activeCrop.left * 100 + "%" }}
+        />
+      </div>
+    );
   }
 
   function renderManipulationControls() {
@@ -523,6 +703,7 @@ function PreviewVisualLayer({
         aria-label="Transform controls"
       >
         <div className="preview-transform-bounds" />
+        {renderCropControls()}
         <button
           aria-label="Rotate selected visual"
           className="preview-transform-handle preview-transform-rotate-handle"

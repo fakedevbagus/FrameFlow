@@ -208,6 +208,28 @@ Merge SHA:
 ### M1–M2.5
 Foundation, media import, Media Bin to Timeline, selection/Inspector/delete, timeline interaction foundation, and core edit commands were completed before the recorded M2.6 merge point. Use repository history when exact older SHAs are needed.
 
+### M3.17 — Direct crop handle manipulation — in progress
+Branch: `feat/m3-17-direct-crop-handles`
+PR #27 — draft
+
+Implemented:
+- Added direct Top, Right, Bottom, and Left crop handles to selected visual preview layers.
+- Added transformed pointer-to-content crop math so handles remain meaningful with scale, rotation, translation, and custom transform anchors.
+- Added live crop preview during dragging.
+- Kept the completed crop interaction as one history edit on pointer release.
+- Preserved existing Inspector crop editing and transform/keyframe controls.
+
+Automated coverage:
+- Added direct crop pointer-math tests.
+- Added Preview crop-handle interaction coverage.
+- Added App-level crop history/Undo coverage.
+
+Validation:
+- Local lint, test, build, Tauri dev, and manual validation are pending user verification.
+
+Known limitation:
+- Aspect-ratio crop presets and crop-position translation compensation are not part of this milestone.
+
 ## Documentation rule
 
 Every future milestone or meaningful bug fix must add a dated entry here and update `docs/PROJECT_CONTEXT.md`. Record factual validation only after the user reports it.

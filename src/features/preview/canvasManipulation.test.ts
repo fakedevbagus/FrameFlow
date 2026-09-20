@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getContainedContentBounds,
   getContainedContentPercentageBounds,
+  cropFromPointer,
   transformFromPointer,
   type CanvasPointer,
 } from "./canvasManipulation";
@@ -153,5 +154,54 @@ describe("canvas manipulation", () => {
         rect,
       ).opacity,
     ).toBe(0.4);
+  });
+
+  it("maps direct crop dragging onto untransformed content coordinates", () => {
+    const crop = cropFromPointer(
+      "top",
+      { top: 0, right: 0, bottom: 0.2, left: 0 },
+      { x: 100, y: 40 },
+      { left: 0, top: 0, width: 200, height: 400 },
+      200,
+      400,
+      base,
+    );
+
+    expect(crop).toEqual({
+      top: 0.1,
+      right: 0,
+      bottom: 0.2,
+      left: 0,
+    });
+  });
+
+  it("maps crop dragging through the active scale, rotation, and anchor", () => {
+    const crop = cropFromPointer(
+      "left",
+      { top: 0, right: 0, bottom: 0, left: 0.1 },
+      { x: 90, y: 230 },
+      { left: 50, top: 50, width: 200, height: 200 },
+      400,
+      400,
+      { ...base, scale: 2, rotation: 90, x: 10, y: -5 },
+      { x: 0, y: 0 },
+    );
+
+    expect(crop.left).toBeCloseTo(0.5, 5);
+  });
+
+  it("keeps a dragged crop edge away from removing all visible content", () => {
+    const crop = cropFromPointer(
+      "right",
+      { top: 0, right: 0, bottom: 0, left: 0.4 },
+      { x: -200, y: 100 },
+      { left: 0, top: 0, width: 200, height: 200 },
+      200,
+      200,
+      base,
+    );
+
+    expect(crop.left + crop.right).toBeLessThan(1);
+    expect(crop.right).toBeLessThanOrEqual(0.599);
   });
 });

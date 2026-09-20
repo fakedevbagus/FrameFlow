@@ -383,6 +383,58 @@ button:focus-visible {
   bottom: -10px;
 }
 
+
+.preview-crop-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 105;
+  pointer-events: none;
+}
+
+.preview-crop-boundary {
+  position: absolute;
+  z-index: 1;
+  border: 1px solid rgb(241 238 255 / 92%);
+  box-shadow: 0 0 0 9999px rgb(7 9 13 / 28%);
+}
+
+.preview-crop-handle {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  pointer-events: auto;
+  cursor: crosshair;
+  background: rgb(169 156 255 / 92%);
+  box-shadow: 0 1px 5px rgb(0 0 0 / 32%);
+}
+
+.preview-crop-handle:hover {
+  background: rgb(244 241 255 / 98%);
+}
+
+.preview-crop-handle-top,
+.preview-crop-handle-bottom {
+  right: 0;
+  left: 0;
+  height: 7px;
+  transform: translateY(-50%);
+}
+
+.preview-crop-handle-right,
+.preview-crop-handle-left {
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  transform: translateX(50%);
+}
+
+.preview-crop-handle-left {
+  transform: translateX(-50%);
+}
+
 .preview-transcode-status {
   position: absolute;
   top: 50%;
