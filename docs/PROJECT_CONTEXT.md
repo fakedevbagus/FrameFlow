@@ -629,6 +629,39 @@ Known limitation:
 Next step:
 - Start M3.22 from the updated `main`, focusing on direct on-canvas anchor manipulation.
 
+## M3.22 — Direct on-canvas anchor manipulation (in progress)
+
+Branch: `feat/m3-22-direct-anchor-manipulation`
+PR: pending
+
+Scope:
+- Add a visible transform-anchor handle to the selected visual layer.
+- Allow the anchor to be dragged directly on the canvas.
+- Preview anchor movement live while preserving the visual position through the existing anchor-compensation math.
+- Commit one atomic anchor/transform history mutation on completed drag.
+- Keep the Inspector anchor grid as an alternate precision control.
+
+Architecture decisions:
+- Pointer-to-anchor mapping lives in `src/features/preview/canvasManipulation.ts`.
+- Preview uses the existing contained media bounds and the M3.21 compensation helper for live feedback.
+- The existing timeline anchor-compensation command remains the single history commit path.
+- The direct anchor handle is rendered inside the transformed content layer so it tracks the actual pivot location.
+
+Automated coverage added:
+- Pointer-to-anchor mapping without and with scale/rotation.
+- Preview direct anchor-drag commit.
+- App-level direct anchor drag, compensation, and Undo.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitation:
+- Anchor drag remains disabled while playback is active.
+- If intrinsic media dimensions are unavailable, the existing anchor fallback behavior applies.
+
+Next step:
+- User validates M3.22 locally before merge.
+
 ## Documentation protocol
 
 For every milestone or meaningful bug fix, update:
