@@ -177,6 +177,33 @@ fn save_project(path: String, content: String) -> Result<(), String> {
   })
 }
 
+fn media_path(value: &str) -> Result<PathBuf, String> {
+  let path = PathBuf::from(value);
+
+  if !path.is_file() {
+    return Err("Selected media file does not exist.".to_string());
+  }
+
+  Ok(path)
+}
+
+fn media_type(path: &Path) -> Result<String, String> {
+  let extension = path
+    .extension()
+    .and_then(|value| value.to_str())
+    .map(str::to_ascii_lowercase)
+    .ok_or_else(|| "Selected media file has no extension.".to_string())?;
+
+  let media_type = match extension.as_str() {
+    "aac" | "flac" | "m4a" | "mp3" | "ogg" | "opus" | "wav" => "audio",
+    "avif" | "bmp" | "gif" | "jpeg" | "jpg" | "png" | "webp" => "image",
+    "avi" | "mkv" | "mov" | "mp4" | "mpeg" | "mpg" | "webm" => "video",
+    _ => return Err("Selected file type is not supported.".to_string()),
+  };
+
+  Ok(media_type.to_string())
+}
+
 fn probe_duration_ms(path: &Path) -> Result<u64, String> {
   let format_output = run_ffprobe(path, &[
     "-show_entries",
