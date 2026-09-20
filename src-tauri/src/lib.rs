@@ -736,6 +736,21 @@ mod tests {
   }
 
   #[test]
+  fn parses_open_ended_media_range() {
+    assert_eq!(super::parse_single_range("bytes=100-", 1000), Some((100, 999)));
+  }
+
+  #[test]
+  fn parses_bounded_media_range() {
+    assert_eq!(super::parse_single_range("bytes=100-199", 1000), Some((100, 199)));
+  }
+
+  #[test]
+  fn parses_suffix_media_range() {
+    assert_eq!(super::parse_single_range("bytes=-100", 1000), Some((900, 999)));
+  }
+
+  #[test]
   fn preview_cache_key_changes_when_media_changes() {
     let first = preview_cache_key(
       Path::new("/media/video.mp4"),
