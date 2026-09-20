@@ -616,7 +616,7 @@ describe("App", () => {
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
 
     fireEvent.change(screen.getByRole("spinbutton", { name: "Crop right" }), {
-      target: { value: "20" },
+      target: { value: "10" },
     });
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop right" }));
 
@@ -804,7 +804,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("spinbutton", { name: "Crop position X" }),
-      ).toHaveValue(30);
+      ).toHaveValue(50);
       expect(
         screen.getByRole("spinbutton", { name: "Crop position Y" }),
       ).toHaveValue(55);
