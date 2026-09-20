@@ -251,7 +251,9 @@ describe("Preview", () => {
     await flushPreviewEffects();
 
     const video = screen.getByTestId("preview-video");
-    expect(video.parentElement).toHaveStyle({
+    const contentLayer = video.closest(".preview-content-layer");
+    expect(contentLayer).not.toBeNull();
+    expect(contentLayer).toHaveStyle({
       transformOrigin: "0% 100%",
     });
   });
@@ -312,8 +314,8 @@ describe("Preview", () => {
       left: "5%",
       top: "10%",
       width: "75%",
-      height: "60%",
     });
+    expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(60, 10);
 
     const video = screen.getByTestId("preview-video");
     expect(video).not.toHaveStyle({
