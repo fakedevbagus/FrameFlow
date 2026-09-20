@@ -322,13 +322,18 @@ export function Timeline({
     setKeyframeInteraction(null);
   }
 
-  function cancelKeyframeInteraction(event?: KeyboardEvent<HTMLButtonElement>) {
-    if (
-      event &&
-      "hasPointerCapture" in event.currentTarget &&
-      event.currentTarget.hasPointerCapture(event.pointerId)
-    ) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+  function cancelKeyframeInteraction(
+    event?: KeyboardEvent<HTMLButtonElement>,
+  ) {
+    if (event && keyframeInteraction) {
+      const target = event.currentTarget;
+
+      if (
+        "hasPointerCapture" in target &&
+        target.hasPointerCapture(keyframeInteraction.pointerId)
+      ) {
+        target.releasePointerCapture(keyframeInteraction.pointerId);
+      }
     }
 
     setKeyframeInteraction(null);
