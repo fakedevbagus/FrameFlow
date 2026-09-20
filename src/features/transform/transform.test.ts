@@ -79,20 +79,6 @@ describe("clip transforms", () => {
   });
 
   it("compensates anchor changes through rotation", () => {
-    expect(
-      compensateTransformForAnchorChange(
-        {
-          x: 0,
-          y: 0,
-          scale: 1,
-          rotation: 90,
-          opacity: 1,
-        },
-        { x: 0.5, y: 0.5 },
-        { x: 0, y: 0 },
-        { widthPercent: 100, heightPercent: 100 },
-      ),
-    );
     const compensated = compensateTransformForAnchorChange(
       {
         x: 0,
