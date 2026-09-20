@@ -679,32 +679,46 @@ Next step:
 - Start M3.23 from the updated `main`, focusing on the next small transform/crop interaction hardening slice.
 
 
-## M3.23 — Transform/crop interaction hardening (in progress)
+## M3.23 — Transform/crop interaction hardening — completed
 
 Branch: `feat/m3-23-transform-crop-interaction-hardening`
-PR: pending
+PR: #34
+Merge SHA: `e12a86d1041dfa9a67b962ec95fbdbf9340eba30`
 
-Scope:
-- Allow Escape to cancel an active direct preview manipulation gesture without creating a project-history mutation.
-- Cover direct transform movement, transform-anchor dragging, crop-edge dragging, and crop-content panning.
-- Release pointer capture when an active gesture is cancelled.
-- Keep live manipulation state separate from project history.
+Scope delivered:
+- Added Escape cancellation for direct transform movement.
+- Added Escape cancellation for direct transform-anchor dragging.
+- Added Escape cancellation for crop-edge dragging.
+- Added Escape cancellation for crop-content panning.
+- Released pointer capture during cancellation.
+- Kept cancellation out of project history by clearing live gesture state without invoking commit callbacks.
+- Preserved normal completed gesture commit behavior.
 
 Architecture decisions:
-- Escape cancellation is owned by `PreviewVisualLayer`, where all direct canvas gesture state already lives.
-- Cancellation clears live gesture state and releases pointer capture; it does not call any project mutation callback.
-- Existing completed-gesture history commit paths remain unchanged.
+- Escape cancellation is owned by `PreviewVisualLayer`, where the direct manipulation state already lives.
+- Cancellation changes only transient gesture state; it does not introduce a second history or transform pathway.
+- Existing transform, anchor, crop, crop-position, and history commands remain unchanged.
 
-Automated coverage added:
+Automated coverage:
 - Escape cancellation for direct transform movement.
 - Escape cancellation for direct anchor dragging.
-- Escape cancellation for crop-edge and crop-content gestures.
+- Escape cancellation for crop-edge dragging.
+- Escape cancellation for crop-content panning.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local validation passed on Linux.
+- `npm run lint` passed.
+- `npm run test` passed.
+- `npm run build` passed.
+- `npm run tauri dev` started successfully.
+- User confirmed the manual cancellation and normal-commit checks passed.
+
+UI/layout direction:
+- No workspace reflow was introduced in this milestone.
+- Portrait/landscape responsive workspace behavior remains planned as a dedicated UX/layout milestone.
 
 Next step:
-- User validates M3.23 locally before merge.
+- Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
 ## Documentation protocol
 
