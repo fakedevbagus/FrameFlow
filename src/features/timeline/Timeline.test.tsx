@@ -2,7 +2,7 @@ import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
-import { addAssetToTimeline, addTrack } from "./commands";
+import { addAssetToTimeline, addTransformKeyframe, addTrack } from "./commands";
 import { Timeline } from "./Timeline";
 
 describe("Timeline", () => {
@@ -44,6 +44,37 @@ describe("Timeline", () => {
     expect(screen.getByText("00:00")).toBeInTheDocument();
     expect(screen.getByText("00:05")).toBeInTheDocument();
     expect(screen.getByText("00:10")).toBeInTheDocument();
+  });
+
+  it("renders transform keyframe markers and jumps the playhead to a marker", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 2000);
+    project = addTransformKeyframe(project, clipId, 7000);
+
+    const onCurrentTimeChange = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={2000}
+        onCurrentTimeChange={onCurrentTimeChange}
+      />,
+    );
+
+    const markers = screen.getAllByRole("button", {
+      name: /Go to transform keyframe for intro.mp4/,
+    });
+
+    expect(markers).toHaveLength(2);
+    expect(markers[0]).toHaveAttribute("title", "00:02.000");
+    expect(markers[1]).toHaveAttribute("title", "00:07.000");
+    expect(markers[0].className).toContain("timeline-keyframe-marker-active");
+
+    fireEvent.click(markers[1]);
+
+    expect(onCurrentTimeChange).toHaveBeenCalledWith(7000);
   });
 
   it("moves the playhead when the ruler is clicked", () => {
