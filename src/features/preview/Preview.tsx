@@ -5,7 +5,13 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import type { ClipCrop, ClipTransform, CropPosition, Project } from "../project/domain";
+import type {
+  ClipCrop,
+  ClipTransform,
+  CropPosition,
+  Project,
+  TransformAnchor,
+} from "../project/domain";
 import {
   getClipCrop,
   getClipCropPosition,
@@ -152,6 +158,7 @@ interface PreviewVisualLayerProps extends PreviewLayerProps {
   isSelected: boolean;
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
+  onTransformAnchorCommit?: (clipId: string, anchor: TransformAnchor) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
 }
