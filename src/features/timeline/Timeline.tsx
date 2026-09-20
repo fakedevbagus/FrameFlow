@@ -1,5 +1,6 @@
 import {
   Fragment,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -516,7 +517,7 @@ export function Timeline({
     setInteraction(null);
   }
 
-  function cancelClipInteraction() {
+  const cancelClipInteraction = useCallback(() => {
     const target = clipInteractionTargetRef.current;
 
     if (
@@ -530,7 +531,7 @@ export function Timeline({
 
     clipInteractionTargetRef.current = null;
     setInteraction(null);
-  }
+  }, [interaction]);
 
   useEffect(() => {
     if (!interaction) {
@@ -548,7 +549,7 @@ export function Timeline({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [interaction]);
+  }, [interaction, cancelClipInteraction]);
 
   function handleKeyframeClick(event: MouseEvent<HTMLButtonElement>, clip: Clip, keyframeTimeMs: number) {
     event.stopPropagation();
