@@ -29,6 +29,11 @@ interface TimelineProps {
   onTrimClipStart?: (clipId: string, sourceStartMs: number) => void;
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
   onToggleTrackMute?: (trackId: string) => void;
+  onAddAssetToTrack?: (
+    assetId: string,
+    trackId: string,
+    timelineStartMs: number,
+  ) => void;
   onAddTrack?: (type: "audio" | "video") => void;
   onRemoveTrack?: (trackId: string) => void;
   zoom?: number;
