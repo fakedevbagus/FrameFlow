@@ -177,7 +177,7 @@ fn stream_media_request(
   let len = metadata.len();
   let content_type = media_content_type(&path);
 
-  let mut response = tauri::http::Response::builder()
+  let response = tauri::http::Response::builder()
     .header(tauri::http::header::CONTENT_TYPE, content_type)
     .header(tauri::http::header::ACCEPT_RANGES, "bytes")
     .header(tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*");
