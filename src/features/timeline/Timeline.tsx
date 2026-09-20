@@ -329,6 +329,21 @@ export function Timeline({
     setInteraction(null);
   }
 
+  function handleKeyframeClick(event: PointerEvent<HTMLButtonElement>, clip: Clip, keyframeTimeMs: number) {
+    event.stopPropagation();
+
+    if (!onCurrentTimeChange) {
+      return;
+    }
+
+    onCurrentTimeChange(
+      Math.min(
+        Math.max(clip.timelineStartMs + keyframeTimeMs, 0),
+        timelineDurationMs,
+      ),
+    );
+  }
+
   return (
     <section className="timeline-region" aria-label="Timeline">
       <div className="timeline-toolbar">
@@ -452,6 +467,11 @@ interface TimelineTrackProps {
   onUpdateClipInteraction: (event: PointerEvent<HTMLElement>) => void;
   onFinishClipInteraction: (event?: PointerEvent<HTMLElement>) => void;
   onCancelClipInteraction: () => void;
+  onKeyframeClick: (
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    keyframeTimeMs: number,
+  ) => void;
 }
 
 function TimelineTrack({
@@ -475,6 +495,7 @@ function TimelineTrack({
   onUpdateClipInteraction,
   onFinishClipInteraction,
   onCancelClipInteraction,
+  onKeyframeClick,
 }: TimelineTrackProps) {
   const pixelsPerSecond = basePixelsPerSecond * zoom;
 
@@ -585,6 +606,57 @@ function TimelineTrack({
                 }
                 role="presentation"
               />
+            </div>
+          );
+
+          const keyframes = clip.transformKeyframes ?? [];
+          const assetSupportsTransformKeyframes =
+            asset?.mediaType === "video" || asset?.mediaType === "image";
+
+          return (
+            <div
+              aria-hidden="true"
+              className="timeline-clip-keyframes"
+              key={clip.id + "-keyframes"}
+            >
+              {assetSupportsTransformKeyframes
+                ? keyframes.map((keyframe) => {
+                    const keyframeOffsetPx =
+                      keyframe.timeMs / 1000 * pixelsPerSecond;
+                    const absoluteTimeMs = clip.timelineStartMs + keyframe.timeMs;
+                    const isActive =
+                      Math.abs(currentTimeMs - absoluteTimeMs) <=
+                      500 / project.canvas.frameRate;
+
+                    return (
+                      <button
+                        aria-label={
+                          "Go to transform keyframe for " +
+                          (asset?.name ?? "Missing media") +
+                          " at " +
+                          formatKeyframeTime(keyframe.timeMs)
+                        }
+                        className={
+                          "timeline-keyframe-marker" +
+                          (isActive ? " timeline-keyframe-marker-active" : "")
+                        }
+                        key={keyframe.timeMs}
+                        onClick={(event) =>
+                          onKeyframeClick(event, clip, keyframe.timeMs)
+                        }
+                        style={{
+                          left:
+                            clip.timelineStartMs / 1000 * pixelsPerSecond +
+                            keyframeOffsetPx +
+                            "px",
+                        }}
+                        type="button"
+                      >
+                        <span aria-hidden="true" />
+                      </button>
+                    );
+                  })
+                : null}
             </div>
           );
         })}
@@ -729,3 +801,20 @@ function formatTimecode(durationMs: number): string {
 
   return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0");
 }
+
+function formatKeyframeTime(timeMs: number): string {
+  const safeMs = Math.max(0, Math.round(timeMs));
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const milliseconds = safeMs % 1000;
+
+  return (
+    minutes.toString().padStart(2, "0") +
+    ":" +
+    seconds.toString().padStart(2, "0") +
+    "." +
+    milliseconds.toString().padStart(3, "0")
+  );
+}
+
