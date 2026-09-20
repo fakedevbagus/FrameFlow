@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import {
   addAssetToTimeline,
+  addAssetToTrack,
+  addTrack,
   moveClipOnTimeline,
   removeClipFromTimeline,
+  removeTrack,
   toggleTrackMute,
   splitClipAtTime,
   trimClipEnd,
@@ -168,6 +171,32 @@ function App() {
   function handleSelectClip(clipId: string) {
     setSelectedClipId(clipId);
     setProjectNotice(null);
+  }
+
+  function handleAddAssetToTrack(
+    assetId: string,
+    trackId: string,
+    timelineStartMs: number,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        addAssetToTrack(currentProject, assetId, trackId, timelineStartMs),
+      "Media added to selected track.",
+    );
+  }
+
+  function handleAddTrack(type: "audio" | "video") {
+    applyProjectChange(
+      (currentProject) => addTrack(currentProject, type),
+      type === "video" ? "Video track added." : "Audio track added.",
+    );
+  }
+
+  function handleRemoveTrack(trackId: string) {
+    applyProjectChange(
+      (currentProject) => removeTrack(currentProject, trackId),
+      "Track removed.",
+    );
   }
 
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
@@ -676,6 +705,9 @@ function App() {
             onTrimClipStart={handleDirectTrimClipStart}
             onTrimClipEnd={handleDirectTrimClipEnd}
             onToggleTrackMute={handleToggleTrackMute}
+            onAddAssetToTrack={handleAddAssetToTrack}
+            onAddTrack={handleAddTrack}
+            onRemoveTrack={handleRemoveTrack}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
           />
