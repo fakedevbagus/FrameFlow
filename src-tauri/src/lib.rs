@@ -29,6 +29,97 @@ fn inspect_media(path: String) -> Result<MediaProbe, String> {
 }
 
 #[tauri::command]
+fn prepare_media_preview(path: String) -> Result<String, String> {
+  let source_path = media_path(&path)?;
+  let metadata = fs::metadata(&source_path)
+    .map_err(|error| format!("Could not inspect media metadata: {error}"))?;
+
+  let cache_root = std::env::temp_dir().join("frameflow-previews");
+  fs::create_dir_all(&cache_root).map_err(|error| {
+    format!(
+      "Could not create preview cache directory '{}': {error}",
+      cache_root.display()
+    )
+  })?;
+
+  let cache_key = preview_cache_key(&source_path, metadata.len(), metadata.modified().ok());
+  let output_path = cache_root.join(format!("{cache_key}.webm"));
+  let temporary_path = cache_root.join(format!("{cache_key}.partial.webm"));
+
+  if output_path.is_file() {
+    return Ok(output_path.to_string_lossy().into_owned());
+  }
+
+  let output = Command::new("ffmpeg")
+    .args([
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+    ])
+    .arg(&source_path)
+    .args([
+      "-map",
+      "0:v:0",
+      "-map",
+      "0:a:0?",
+      "-vf",
+      "scale='min(1280,iw)':'min(1280,ih)':force_original_aspect_ratio=decrease",
+      "-c:v",
+      "libvpx",
+      "-deadline",
+      "realtime",
+      "-cpu-used",
+      "8",
+      "-crf",
+      "34",
+      "-b:v",
+      "0",
+      "-c:a",
+      "libopus",
+      "-b:a",
+      "96k",
+      "-f",
+      "webm",
+    ])
+    .arg(&temporary_path)
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg for preview generation: {error}"))?;
+
+  if !output.status.success() {
+    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let _ = fs::remove_file(&temporary_path);
+
+    return Err(if detail.is_empty() {
+      "FFmpeg could not create a browser-compatible preview.".to_string()
+    } else {
+      format!("FFmpeg could not create a browser-compatible preview: {detail}")
+    });
+  }
+
+  let metadata = fs::metadata(&temporary_path).map_err(|error| {
+    let _ = fs::remove_file(&temporary_path);
+    format!("Generated preview file could not be inspected: {error}")
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&temporary_path);
+    return Err("Generated preview file is empty.".to_string());
+  }
+
+  fs::rename(&temporary_path, &output_path).map_err(|error| {
+    let _ = fs::remove_file(&temporary_path);
+    format!(
+      "Could not finalize preview cache file '{}': {error}",
+      output_path.display()
+    )
+  })?;
+
+  Ok(output_path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
 fn open_project(path: String) -> Result<String, String> {
   let project_path = project_path(&path)?;
 
@@ -298,6 +389,31 @@ fn parse_duration_ms(output: &[u8]) -> Option<u64> {
     })
 }
 
+fn preview_cache_key(path: &Path, size: u64, modified: Option<std::time::SystemTime>) -> String {
+  let mut hash = 0xcbf29ce484222325u64;
+
+  for byte in path.to_string_lossy().as_bytes() {
+    hash ^= *byte as u64;
+    hash = hash.wrapping_mul(0x100000001b3);
+  }
+
+  for byte in size.to_le_bytes() {
+    hash ^= byte as u64;
+    hash = hash.wrapping_mul(0x100000001b3);
+  }
+
+  if let Some(modified) = modified {
+    if let Ok(duration) = modified.duration_since(std::time::UNIX_EPOCH) {
+      for byte in duration.as_nanos().to_le_bytes() {
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+      }
+    }
+  }
+
+  format!("{hash:016x}")
+}
+
 fn project_path(value: &str) -> Result<PathBuf, String> {
   let path = PathBuf::from(value);
 
@@ -319,7 +435,12 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_opener::init())
-    .invoke_handler(tauri::generate_handler![inspect_media, open_project, save_project])
+    .invoke_handler(tauri::generate_handler![
+      inspect_media,
+      prepare_media_preview,
+      open_project,
+      save_project
+    ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
@@ -327,7 +448,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-  use super::{media_type, parse_duration_ms};
+  use super::{media_type, parse_duration_ms, preview_cache_key};
   use std::path::Path;
 
   #[test]
@@ -354,5 +475,21 @@ mod tests {
       super::parse_ffmpeg_progress(b"out_time_ms=N/A\nprogress=end\n"),
       None,
     );
+  }
+
+  #[test]
+  fn preview_cache_key_changes_when_media_changes() {
+    let first = preview_cache_key(
+      Path::new("/media/video.mp4"),
+      10,
+      Some(std::time::UNIX_EPOCH),
+    );
+    let second = preview_cache_key(
+      Path::new("/media/video.mp4"),
+      20,
+      Some(std::time::UNIX_EPOCH),
+    );
+
+    assert_ne!(first, second);
   }
 }
