@@ -550,6 +550,244 @@ describe("Timeline", () => {
     expect(onSelectClip).toHaveBeenCalledWith(outgoing.id);
   });
 
+  it("adjusts dissolve duration by dragging the timeline handle and commits once", () => {
+    let project = createVideoProject();
+    project.assets.push(
+      {
+        id: "outgoing-transition",
+        name: "outgoing.mp4",
+        mediaType: "video",
+        sourcePath: "/outgoing.mp4",
+        durationMs: 5000,
+      },
+      {
+        id: "incoming-transition",
+        name: "incoming.mp4",
+        mediaType: "video",
+        sourcePath: "/incoming.mp4",
+        durationMs: 4000,
+      },
+    );
+
+    const outgoing = project.tracks[0].clips[0];
+    project = {
+      ...project,
+      tracks: [
+        {
+          ...project.tracks[0],
+          clips: [
+            {
+              ...outgoing,
+              assetId: "outgoing-transition",
+              sourceEndMs: 5000,
+              transitionOut: {
+                type: "dissolve" as const,
+                durationMs: 300,
+              },
+            },
+            {
+              ...outgoing,
+              id: "incoming-clip",
+              assetId: "incoming-transition",
+              timelineStartMs: 5000,
+              sourceEndMs: 9000,
+            },
+          ],
+        },
+        project.tracks[1],
+      ],
+    };
+
+    const onUpdateClipTransition = vi.fn();
+    render(
+      <Timeline
+        project={project}
+        onUpdateClipTransition={onUpdateClipTransition}
+      />,
+    );
+
+    const handle = screen.getByRole("button", {
+      name: "Adjust dissolve duration for outgoing.mp4 to 300 ms",
+    });
+
+    fireEvent.pointerDown(handle, {
+      button: 0,
+      clientX: 188,
+      pointerId: 41,
+    });
+    fireEvent.pointerMove(handle, {
+      buttons: 1,
+      clientX: 168,
+      pointerId: 41,
+    });
+    fireEvent.pointerUp(handle, {
+      button: 0,
+      clientX: 168,
+      pointerId: 41,
+    });
+
+    expect(onUpdateClipTransition).toHaveBeenCalledTimes(1);
+    expect(onUpdateClipTransition).toHaveBeenCalledWith(
+      outgoing.id,
+      {
+        type: "dissolve",
+        durationMs: 800,
+      },
+    );
+  });
+
+  it("cancels direct transition duration editing with Escape", () => {
+    let project = createVideoProject();
+    project.assets.push(
+      {
+        id: "outgoing-transition",
+        name: "outgoing.mp4",
+        mediaType: "video",
+        sourcePath: "/outgoing.mp4",
+        durationMs: 5000,
+      },
+      {
+        id: "incoming-transition",
+        name: "incoming.mp4",
+        mediaType: "video",
+        sourcePath: "/incoming.mp4",
+        durationMs: 4000,
+      },
+    );
+
+    const outgoing = project.tracks[0].clips[0];
+    project = {
+      ...project,
+      tracks: [
+        {
+          ...project.tracks[0],
+          clips: [
+            {
+              ...outgoing,
+              assetId: "outgoing-transition",
+              sourceEndMs: 5000,
+              transitionOut: {
+                type: "dissolve" as const,
+                durationMs: 300,
+              },
+            },
+            {
+              ...outgoing,
+              id: "incoming-clip",
+              assetId: "incoming-transition",
+              timelineStartMs: 5000,
+              sourceEndMs: 9000,
+            },
+          ],
+        },
+        project.tracks[1],
+      ],
+    };
+
+    const onUpdateClipTransition = vi.fn();
+    render(
+      <Timeline
+        project={project}
+        onUpdateClipTransition={onUpdateClipTransition}
+      />,
+    );
+
+    const handle = screen.getByRole("button", {
+      name: "Adjust dissolve duration for outgoing.mp4 to 300 ms",
+    });
+
+    fireEvent.pointerDown(handle, {
+      button: 0,
+      clientX: 188,
+      pointerId: 42,
+    });
+    fireEvent.pointerMove(handle, {
+      buttons: 1,
+      clientX: 168,
+      pointerId: 42,
+    });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(handle, {
+      button: 0,
+      clientX: 168,
+      pointerId: 42,
+    });
+
+    expect(onUpdateClipTransition).not.toHaveBeenCalled();
+  });
+
+  it("nudges dissolve duration with the keyboard handle", () => {
+    let project = createVideoProject();
+    project.assets.push(
+      {
+        id: "outgoing-transition",
+        name: "outgoing.mp4",
+        mediaType: "video",
+        sourcePath: "/outgoing.mp4",
+        durationMs: 5000,
+      },
+      {
+        id: "incoming-transition",
+        name: "incoming.mp4",
+        mediaType: "video",
+        sourcePath: "/incoming.mp4",
+        durationMs: 4000,
+      },
+    );
+
+    const outgoing = project.tracks[0].clips[0];
+    project = {
+      ...project,
+      tracks: [
+        {
+          ...project.tracks[0],
+          clips: [
+            {
+              ...outgoing,
+              assetId: "outgoing-transition",
+              sourceEndMs: 5000,
+              transitionOut: {
+                type: "dissolve" as const,
+                durationMs: 300,
+              },
+            },
+            {
+              ...outgoing,
+              id: "incoming-clip",
+              assetId: "incoming-transition",
+              timelineStartMs: 5000,
+              sourceEndMs: 9000,
+            },
+          ],
+        },
+        project.tracks[1],
+      ],
+    };
+
+    const onUpdateClipTransition = vi.fn();
+    render(
+      <Timeline
+        project={project}
+        onUpdateClipTransition={onUpdateClipTransition}
+      />,
+    );
+
+    fireEvent.keyDown(
+      screen.getByRole("button", {
+        name: "Adjust dissolve duration for outgoing.mp4 to 300 ms",
+      }),
+      { key: "ArrowLeft" },
+    );
+
+    expect(onUpdateClipTransition).toHaveBeenCalledWith(
+      outgoing.id,
+      {
+        type: "dissolve",
+        durationMs: 350,
+      },
+    );
+  });
+
   it("does not commit a move for a simple click", () => {
     const project = createVideoProject();
     const onMoveClip = vi.fn();

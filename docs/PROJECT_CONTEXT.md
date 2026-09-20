@@ -720,6 +720,41 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
+## M3.27 — Direct timeline transition-duration manipulation (in progress)
+
+Branch: `feat/m3-27-direct-transition-duration`
+PR: pending
+
+Scope:
+- Expose a draggable duration handle on the existing dissolve transition indicator.
+- Preview the transition duration live while dragging.
+- Commit one transition-duration history mutation on pointer release.
+- Support Escape cancellation without creating history.
+- Support ArrowLeft/ArrowRight duration nudging from the focused handle.
+- Preserve the Inspector as the precise configuration surface.
+
+Architecture decisions:
+- Transition duration editing remains derived from the existing `ClipTransition` metadata.
+- Timeline interaction owns only transient drag state; the project mutation still goes through the existing App/history update path.
+- Duration is clamped to the existing dissolve bounds and both adjacent clip durations.
+- No second transition model or preview pipeline is introduced.
+
+Automated coverage:
+- Pointer drag commits exactly one duration update.
+- Escape cancels without a duration update.
+- Keyboard nudge updates duration in 50 ms steps.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Only dissolve transitions are supported.
+- The duration handle is not a draggable transition block with arbitrary transition placement.
+- Duration changes remain limited by the existing 50–2000 ms dissolve range.
+
+Next step:
+- User validates M3.27 locally before merge.
+
 ## M3.26 — Timeline transition indicator — completed
 
 Branch: `feat/m3-26-transition-timeline-indicator`

@@ -9,7 +9,12 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import type { Clip, Project, Track } from "../project/domain";
+import type {
+  Clip,
+  ClipTransition,
+  Project,
+  Track,
+} from "../project/domain";
 import {
   DEFAULT_TIMELINE_ZOOM,
   MAX_TIMELINE_ZOOM,
@@ -24,6 +29,8 @@ import {
   getClipTransition,
   getNextClipForTransition,
   isTransitionAdjacent,
+  MAX_DISSOLVE_DURATION_MS,
+  MIN_DISSOLVE_DURATION_MS,
 } from "../transition/transition";
 
 const basePixelsPerSecond = 40;
@@ -55,6 +62,10 @@ interface TimelineProps {
     fromTimeMs: number,
     toTimeMs: number,
   ) => void;
+  onUpdateClipTransition?: (
+    clipId: string,
+    transition: ClipTransition | undefined,
+  ) => void;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
 }
@@ -67,6 +78,16 @@ interface KeyframeInteraction {
   keyframeTimeMs: number;
   startClientX: number;
   previewTimeMs: number;
+  hasMoved: boolean;
+}
+
+interface TransitionInteraction {
+  clipId: string;
+  pointerId: number;
+  startClientX: number;
+  originalDurationMs: number;
+  previewDurationMs: number;
+  maxDurationMs: number;
   hasMoved: boolean;
 }
 
@@ -99,11 +120,15 @@ export function Timeline({
   onRemoveTrack,
   onRemoveTransformKeyframe,
   onMoveTransformKeyframe,
+  onUpdateClipTransition,
   zoom = DEFAULT_TIMELINE_ZOOM,
   onZoomChange,
 }: TimelineProps) {
   const [interaction, setInteraction] = useState<ClipInteraction | null>(null);
   const clipInteractionTargetRef = useRef<HTMLElement | null>(null);
+  const [transitionInteraction, setTransitionInteraction] =
+    useState<TransitionInteraction | null>(null);
+  const transitionInteractionTargetRef = useRef<HTMLElement | null>(null);
   const [keyframeInteraction, setKeyframeInteraction] =
     useState<KeyframeInteraction | null>(null);
   const [dragOverTrackId, setDragOverTrackId] = useState<string | null>(null);
@@ -556,6 +581,150 @@ export function Timeline({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [interaction, cancelClipInteraction]);
 
+  function beginTransitionInteraction(
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    transition: ClipTransition,
+    nextClip: Clip,
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.stopPropagation();
+    onSelectClip?.(clip.id);
+
+    const maxDurationMs = getTransitionMaxDurationMs(clip, nextClip);
+    const durationMs = Math.min(
+      Math.max(transition.durationMs, MIN_DISSOLVE_DURATION_MS),
+      maxDurationMs,
+    );
+
+    if (maxDurationMs < MIN_DISSOLVE_DURATION_MS) {
+      return;
+    }
+
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    transitionInteractionTargetRef.current = event.currentTarget;
+
+    setTransitionInteraction({
+      clipId: clip.id,
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      originalDurationMs: durationMs,
+      previewDurationMs: durationMs,
+      maxDurationMs,
+      hasMoved: false,
+    });
+  }
+
+  function updateTransitionInteraction(
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (
+      !transitionInteraction ||
+      event.buttons !== 1 ||
+      event.pointerId !== transitionInteraction.pointerId
+    ) {
+      return;
+    }
+
+    const deltaPixels =
+      transitionInteraction.startClientX - event.clientX;
+
+    if (Math.abs(deltaPixels) < 2) {
+      return;
+    }
+
+    const deltaMs = pixelsToMilliseconds(
+      deltaPixels,
+      pixelsPerSecond,
+    );
+    const nextDurationMs = clampTransitionDuration(
+      transitionInteraction.originalDurationMs + deltaMs,
+      transitionInteraction.maxDurationMs,
+    );
+
+    setTransitionInteraction({
+      ...transitionInteraction,
+      hasMoved: true,
+      previewDurationMs: nextDurationMs,
+    });
+  }
+
+  function finishTransitionInteraction(
+    event?: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (!transitionInteraction) {
+      return;
+    }
+
+    const target =
+      event?.currentTarget ?? transitionInteractionTargetRef.current;
+
+    if (
+      target &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(transitionInteraction.pointerId)
+    ) {
+      target.releasePointerCapture(transitionInteraction.pointerId);
+    }
+
+    if (
+      !transitionInteraction.hasMoved ||
+      transitionInteraction.previewDurationMs ===
+        transitionInteraction.originalDurationMs
+    ) {
+      transitionInteractionTargetRef.current = null;
+      setTransitionInteraction(null);
+      return;
+    }
+
+    onUpdateClipTransition?.(transitionInteraction.clipId, {
+      type: "dissolve",
+      durationMs: transitionInteraction.previewDurationMs,
+    });
+
+    transitionInteractionTargetRef.current = null;
+    setTransitionInteraction(null);
+  }
+
+  const cancelTransitionInteraction = useCallback(() => {
+    const target = transitionInteractionTargetRef.current;
+
+    if (
+      target &&
+      transitionInteraction &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(transitionInteraction.pointerId)
+    ) {
+      target.releasePointerCapture(transitionInteraction.pointerId);
+    }
+
+    transitionInteractionTargetRef.current = null;
+    setTransitionInteraction(null);
+  }, [transitionInteraction]);
+
+  useEffect(() => {
+    if (!transitionInteraction) {
+      return;
+    }
+
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      event.preventDefault();
+      cancelTransitionInteraction();
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [transitionInteraction, cancelTransitionInteraction]);
+
   function handleKeyframeClick(event: MouseEvent<HTMLButtonElement>, clip: Clip, keyframeTimeMs: number) {
     event.stopPropagation();
 
@@ -666,6 +835,12 @@ export function Timeline({
             onCancelClipInteraction={cancelClipInteraction}
             onKeyframeClick={handleKeyframeClick}
             onMoveTransformKeyframe={onMoveTransformKeyframe}
+            onUpdateClipTransition={onUpdateClipTransition}
+            transitionInteraction={transitionInteraction}
+            onBeginTransitionInteraction={beginTransitionInteraction}
+            onUpdateTransitionInteraction={updateTransitionInteraction}
+            onFinishTransitionInteraction={finishTransitionInteraction}
+            onCancelTransitionInteraction={cancelTransitionInteraction}
             keyframeInteraction={keyframeInteraction}
             onBeginKeyframeInteraction={beginKeyframeInteraction}
             onUpdateKeyframeInteraction={updateKeyframeInteraction}
@@ -718,6 +893,24 @@ interface TimelineTrackProps {
     fromTimeMs: number,
     toTimeMs: number,
   ) => void;
+  onUpdateClipTransition?: (
+    clipId: string,
+    transition: ClipTransition | undefined,
+  ) => void;
+  transitionInteraction: TransitionInteraction | null;
+  onBeginTransitionInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    transition: ClipTransition,
+    nextClip: Clip,
+  ) => void;
+  onUpdateTransitionInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onFinishTransitionInteraction: (
+    event?: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onCancelTransitionInteraction: () => void;
   keyframeInteraction: KeyframeInteraction | null;
   onBeginKeyframeInteraction: (
     event: PointerEvent<HTMLButtonElement>,
@@ -746,6 +939,12 @@ function TimelineTrack({
   onRemoveTransformKeyframe,
   onCurrentTimeChange,
   onMoveTransformKeyframe,
+  onUpdateClipTransition,
+  transitionInteraction,
+  onBeginTransitionInteraction,
+  onUpdateTransitionInteraction,
+  onFinishTransitionInteraction,
+  onCancelTransitionInteraction,
   zoom,
   dragOverTrackId,
   onDragOverTrack,
@@ -910,26 +1109,99 @@ function TimelineTrack({
 
                 const boundaryLeftPx =
                   sourceClip.timelineStartMs / 1000 * pixelsPerSecond + width;
+                const activeInteraction =
+                  transitionInteraction?.clipId === sourceClip.id
+                    ? transitionInteraction
+                    : null;
+                const displayDurationMs =
+                  activeInteraction?.previewDurationMs ?? transition.durationMs;
+                const displayDurationWidthPx =
+                  displayDurationMs / 1000 * pixelsPerSecond;
 
                 return (
-                  <button
-                    aria-label={
-                      "Select " +
-                      (asset?.name ?? "Missing media") +
-                      " dissolve transition to " +
-                      nextAsset.name
-                    }
-                    className="timeline-transition-indicator"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onSelectClip?.(sourceClip.id);
+                  <div
+                    className="timeline-transition-region"
+                    style={{
+                      left:
+                        boundaryLeftPx - displayDurationWidthPx + "px",
+                      width: displayDurationWidthPx + "px",
                     }}
-                    style={{ left: boundaryLeftPx + "px" }}
-                    title={"Dissolve · " + transition.durationMs + " ms"}
-                    type="button"
                   >
-                    <span aria-hidden="true">◆</span>
-                  </button>
+                    <button
+                      aria-label={
+                        "Adjust dissolve duration for " +
+                        (asset?.name ?? "Missing media") +
+                        " to " +
+                        displayDurationMs +
+                        " ms"
+                      }
+                      className="timeline-transition-duration-handle"
+                      onKeyDown={(event) => {
+                        if (
+                          event.key !== "ArrowLeft" &&
+                          event.key !== "ArrowRight"
+                        ) {
+                          return;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        const maxDurationMs = getTransitionMaxDurationMs(
+                          sourceClip,
+                          nextClip,
+                        );
+                        const stepMs = 50;
+                        const deltaMs =
+                          event.key === "ArrowLeft" ? stepMs : -stepMs;
+                        const nextDurationMs = clampTransitionDuration(
+                          transition.durationMs + deltaMs,
+                          maxDurationMs,
+                        );
+
+                        if (nextDurationMs !== transition.durationMs) {
+                          onUpdateClipTransition?.(sourceClip.id, {
+                            type: "dissolve",
+                            durationMs: nextDurationMs,
+                          });
+                        }
+                      }}
+                      onPointerDown={(event) =>
+                        onBeginTransitionInteraction(
+                          event,
+                          sourceClip,
+                          transition,
+                          nextClip,
+                        )
+                      }
+                      onPointerMove={onUpdateTransitionInteraction}
+                      onPointerUp={onFinishTransitionInteraction}
+                      onPointerCancel={onCancelTransitionInteraction}
+                      style={{ left: "0px" }}
+                      title="Drag to change dissolve duration"
+                      type="button"
+                    >
+                      <span aria-hidden="true" />
+                    </button>
+                    <button
+                      aria-label={
+                        "Select " +
+                        (asset?.name ?? "Missing media") +
+                        " dissolve transition to " +
+                        nextAsset.name
+                      }
+                      className="timeline-transition-indicator"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onSelectClip?.(sourceClip.id);
+                      }}
+                      style={{ right: "0px" }}
+                      title={"Dissolve · " + displayDurationMs + " ms"}
+                      type="button"
+                    >
+                      <span aria-hidden="true">◆</span>
+                    </button>
+                  </div>
                 );
               })()}
 
@@ -1101,6 +1373,30 @@ function TimelineTrack({
         />
       </div>
     </div>
+  );
+}
+
+function clampTransitionDuration(
+  durationMs: number,
+  maxDurationMs: number,
+): number {
+  const safeMax = Math.max(MIN_DISSOLVE_DURATION_MS, maxDurationMs);
+  const snapped = Math.round(durationMs / 50) * 50;
+
+  return Math.min(
+    safeMax,
+    Math.max(MIN_DISSOLVE_DURATION_MS, snapped),
+  );
+}
+
+function getTransitionMaxDurationMs(
+  outgoingClip: Clip,
+  incomingClip: Clip,
+): number {
+  return Math.min(
+    MAX_DISSOLVE_DURATION_MS,
+    getClipDurationMs(outgoingClip),
+    getClipDurationMs(incomingClip),
   );
 }
 

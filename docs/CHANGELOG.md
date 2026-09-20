@@ -1,5 +1,27 @@
 ## 2026-09-21
 
+### M3.27 — Direct timeline transition-duration manipulation — in progress
+Branch: `feat/m3-27-direct-transition-duration`
+
+Implemented:
+- Added a draggable duration handle to the existing dissolve timeline indicator.
+- Previewed duration changes during the drag gesture.
+- Committed one duration update on pointer release.
+- Added Escape cancellation without project history.
+- Added keyboard duration nudging in 50 ms steps.
+- Added Timeline regression coverage for drag, cancellation, and keyboard editing.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Only dissolve transitions are supported.
+- The Inspector remains the primary precision-editing surface.
+
+Next step:
+- User validates M3.27 locally before merge.
+
+
 ### M3.26 — Timeline transition indicator — in progress
 Branch: `feat/m3-26-transition-timeline-indicator`
 
