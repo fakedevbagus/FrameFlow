@@ -4,6 +4,7 @@
 
 ### M3.13 — Playback stability (in progress)
 Branch: `feat/m3-13-playback-stability`
+PR #23 (draft)
 
 Implemented:
 - Playback no longer waits for every media `play()` promise before entering the playing state.
@@ -12,6 +13,15 @@ Implemented:
 - Preview video re-aligns itself to the transport position whenever playback begins.
 - Video and audio elements expose their clip ID to the transport controller.
 - Added regression coverage for replay alignment.
+
+Implementation commits:
+- `bc1f2b870d83e245cbc986b99ca76410e68e7357` — App playback startup/replay fix
+- `94a01ec0892c32a6ed980ef464fcb985815d220e` — Preview playback alignment fix
+- `030a17a8f4100537fbe72a18a27c25fb763b3a9e` — replay alignment regression test
+- `fa630787122cd4133628e6cbcf71863517fb3b5e` — project context documentation
+- `e8f4de5a546661ee6a042595574491be281a1e6f` — changelog documentation
+- `7cf18d1c4d7cb3c6a2fdb1f0901eb5aea1eedc67` — new-chat handoff prompt
+- `fc5ed54ca8bcfb91fe0df8294fd64e34852cd1a6` — context updated with PR #23
 
 Validation:
 - Not yet validated locally by the user.
