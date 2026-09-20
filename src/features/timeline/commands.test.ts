@@ -1421,7 +1421,7 @@ describe("clip transitions", () => {
         { type: "dissolve", durationMs: 500 },
       ),
       firstClipId,
-      5000,
+      6000,
     );
 
     expect(movedOutgoing.tracks[0].clips[0].transitionOut).toBeUndefined();
