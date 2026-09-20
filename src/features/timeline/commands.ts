@@ -10,7 +10,6 @@ import {
   DEFAULT_CLIP_TRANSFORM,
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
-  getClipTransformAnchor,
   normalizeClipTransform,
   normalizeTransformAnchor,
   removeTransformKeyframe as removeTransformKeyframeAtTime,
