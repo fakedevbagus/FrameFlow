@@ -844,7 +844,7 @@ function TimelineTrack({
                     width: width + "px",
                   }}
                 >
-                  {keyframes.map((keyframe) => {
+                  {keyframes.map((keyframe, keyframeIndex) => {
                     const displayTimeMs =
                       keyframeInteraction?.clipId === clip.id &&
                       keyframeInteraction.keyframeTimeMs === keyframe.timeMs
@@ -948,7 +948,7 @@ function TimelineTrack({
                           "timeline-keyframe-marker" +
                           (isActive ? " timeline-keyframe-marker-active" : "")
                         }
-                        key={keyframe.timeMs}
+                        key={clip.id + "-keyframe-" + keyframeIndex}
                         onClick={(event) =>
                           onKeyframeClick(event, clip, keyframe.timeMs)
                         }
