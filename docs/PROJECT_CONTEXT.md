@@ -108,6 +108,8 @@ Visual clips may contain:
 - static transform
 - optional transform keyframes
 - transform keyframe easing metadata
+- optional transform anchor point
+- optional per-edge crop insets
 
 Current transform fields:
 
@@ -417,6 +419,38 @@ Known limitation:
 
 Next step:
 - Start the next focused transform-interaction milestone from updated `main`, prioritizing direct crop-handle manipulation while preserving the current history and transform architecture.
+
+## M3.17 — Direct crop handle manipulation (in progress)
+
+Branch: `feat/m3-17-direct-crop-handles`
+
+Scope:
+- Add direct Top, Right, Bottom, and Left crop handles to the selected visual preview.
+- Convert pointer coordinates back through the active transform and anchor so crop edits target the underlying media content rather than the transformed screen rectangle.
+- Keep direct crop edits temporary during pointer movement and commit a single crop history operation on pointer release.
+- Preserve existing Inspector crop editing, transform controls, keyframes, playback behavior, and split preservation.
+
+Architecture decisions:
+- Crop remains stored as normalized per-edge insets on the existing `Clip.crop` model.
+- Direct crop math is isolated in `src/features/preview/canvasManipulation.ts` and reuses the existing transform/anchor domain helpers.
+- Crop handles are rendered as an interaction overlay rather than applying pointer events to the clipped media element.
+- Crop commits continue through the existing App history engine and `updateClipCrop` command.
+
+Automated coverage added:
+- Direct crop pointer mapping without transform.
+- Crop pointer mapping through scale, rotation, translation, and non-center anchor.
+- Protection against removing all visible content.
+- Preview crop-handle drag callback.
+- App crop-handle history workflow including Undo.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitation:
+- Aspect-ratio crop presets and crop-position translation compensation remain future work.
+
+Next step:
+- Run local lint, test, build, Tauri dev, and direct crop-handle manual checks before merging PR for M3.17.
 
 ## Documentation protocol
 
