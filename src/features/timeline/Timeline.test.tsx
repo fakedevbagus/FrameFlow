@@ -484,6 +484,72 @@ describe("Timeline", () => {
     expect(clip.className).toContain("timeline-clip-selected");
   });
 
+  it("shows a dissolve transition indicator between adjacent visual clips", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "outgoing-transition",
+      name: "outgoing.mp4",
+      mediaType: "video",
+      sourcePath: "/outgoing.mp4",
+      durationMs: 5000,
+    });
+    project.assets.push({
+      id: "incoming-transition",
+      name: "incoming.mp4",
+      mediaType: "video",
+      sourcePath: "/incoming.mp4",
+      durationMs: 4000,
+    });
+
+    const outgoing = project.tracks[0].clips[0];
+    const nextProject = {
+      ...project,
+      tracks: [
+        {
+          ...project.tracks[0],
+          clips: [
+            {
+              ...outgoing,
+              assetId: "outgoing-transition",
+              sourceEndMs: 5000,
+              transitionOut: {
+                type: "dissolve" as const,
+                durationMs: 300,
+              },
+            },
+            {
+              ...outgoing,
+              id: "incoming-clip",
+              assetId: "incoming-transition",
+              timelineStartMs: 5000,
+              sourceEndMs: 9000,
+            },
+          ],
+        },
+        project.tracks[1],
+      ],
+    };
+
+    const onSelectClip = vi.fn();
+
+    render(
+      <Timeline
+        project={nextProject}
+        onSelectClip={onSelectClip}
+      />,
+    );
+
+    const indicator = screen.getByRole("button", {
+      name: "Select outgoing.mp4 dissolve transition to incoming.mp4",
+    });
+
+    expect(indicator).toHaveAttribute("title", "Dissolve · 300 ms");
+
+    fireEvent.click(indicator);
+
+    expect(onSelectClip).toHaveBeenCalledWith(outgoing.id);
+  });
+
   it("does not commit a move for a simple click", () => {
     const project = createVideoProject();
     const onMoveClip = vi.fn();

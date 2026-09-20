@@ -20,6 +20,11 @@ import {
   snapTimelineTime,
 } from "./interaction";
 import { getClipDurationMs, getTimelineDurationMs } from "./metrics";
+import {
+  getClipTransition,
+  getNextClipForTransition,
+  isTransitionAdjacent,
+} from "../transition/transition";
 
 const basePixelsPerSecond = 40;
 const rulerStepMs = 5_000;
@@ -881,6 +886,52 @@ function TimelineTrack({
                   role="presentation"
                 />
               </div>
+
+              {(() => {
+                const transition = getClipTransition(sourceClip.transitionOut);
+                const nextClip = getNextClipForTransition(track, sourceClip.id);
+                const nextAsset = nextClip
+                  ? project.assets.find(
+                      (candidate) => candidate.id === nextClip.assetId,
+                    )
+                  : null;
+                const canShowTransition =
+                  Boolean(transition) &&
+                  Boolean(nextClip) &&
+                  Boolean(nextAsset) &&
+                  (asset?.mediaType === "video" || asset?.mediaType === "image") &&
+                  (nextAsset?.mediaType === "video" ||
+                    nextAsset?.mediaType === "image") &&
+                  Boolean(nextClip && isTransitionAdjacent(sourceClip, nextClip));
+
+                if (!canShowTransition || !transition || !nextClip || !nextAsset) {
+                  return null;
+                }
+
+                const boundaryLeftPx =
+                  sourceClip.timelineStartMs / 1000 * pixelsPerSecond + width;
+
+                return (
+                  <button
+                    aria-label={
+                      "Select " +
+                      (asset?.name ?? "Missing media") +
+                      " dissolve transition to " +
+                      nextAsset.name
+                    }
+                    className="timeline-transition-indicator"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelectClip?.(sourceClip.id);
+                    }}
+                    style={{ left: boundaryLeftPx + "px" }}
+                    title={"Dissolve · " + transition.durationMs + " ms"}
+                    type="button"
+                  >
+                    <span aria-hidden="true">◆</span>
+                  </button>
+                );
+              })()}
 
               {assetSupportsTransformKeyframes ? (
                 <div

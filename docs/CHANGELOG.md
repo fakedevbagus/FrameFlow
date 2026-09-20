@@ -1,5 +1,25 @@
 ## 2026-09-21
 
+### M3.26 — Timeline transition indicator — in progress
+Branch: `feat/m3-26-transition-timeline-indicator`
+
+Implemented:
+- Added a timeline boundary indicator for active outgoing dissolve transitions.
+- Made the indicator keyboard accessible and clickable.
+- Clicking the indicator selects the outgoing clip so the existing Inspector remains the configuration surface.
+- Reused transition metadata and adjacency helpers without adding duplicate state.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- No draggable transition block yet.
+- Only dissolve is represented.
+
+Next step:
+- User validates M3.26 locally before merge.
+
+
 ### M3.25 — Dissolve transition foundation — merged
 Branch: `feat/m3-25-dissolve-transition-foundation`
 PR #36

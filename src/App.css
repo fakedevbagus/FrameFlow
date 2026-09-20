@@ -1119,6 +1119,41 @@ button:disabled {
   background: #a99cff;
 }
 
+.timeline-transition-indicator {
+  position: absolute;
+  top: 50%;
+  z-index: 8;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #4a5363;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #c8beff;
+  background: #1d2028;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+  font-size: 8px;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+
+.timeline-transition-indicator:hover {
+  border-color: #a99cff;
+  color: #f0edff;
+  background: #2a2740;
+}
+
+.timeline-transition-indicator:focus-visible {
+  outline: 2px solid #b9b0ff;
+  outline-offset: 2px;
+}
+
+.timeline-transition-indicator span {
+  transform: translateY(-0.5px);
+}
+
 .timeline-clip {
   position: absolute;
   top: 8px;
