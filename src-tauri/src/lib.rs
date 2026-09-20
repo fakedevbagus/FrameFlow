@@ -824,6 +824,19 @@ mod tests {
   }
 
   #[test]
+  fn parses_multiple_media_ranges() {
+    assert_eq!(
+      super::parse_media_ranges("bytes=0-99,200-299", 1000),
+      Some(vec![(0, 99), (200, 299)]),
+    );
+  }
+
+  #[test]
+  fn rejects_unsatisfiable_media_ranges() {
+    assert_eq!(super::parse_media_ranges("bytes=1000-1100", 1000), None);
+  }
+
+  #[test]
   fn parses_open_ended_media_range() {
     assert_eq!(super::parse_single_range("bytes=100-", 1000), Some((100, 999)));
   }
