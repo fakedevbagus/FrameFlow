@@ -56,7 +56,7 @@ describe("Preview", () => {
 
     expect(video).toHaveAttribute(
       "src",
-      "stream://localhost/?path=%2Fmedia%2Fintro.mp4",
+      "stream://localhost/%2Fmedia%2Fintro.mp4",
     );
   });
 
@@ -101,7 +101,7 @@ describe("Preview", () => {
       });
       expect(video).toHaveAttribute(
         "src",
-        "stream://localhost/?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
+        "stream://localhost/%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
       );
     });
   });
