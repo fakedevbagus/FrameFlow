@@ -18,6 +18,7 @@ import {
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
+  updateClipTransformAnchor,
 } from "./commands";
 
 describe("track management", () => {
@@ -151,6 +152,68 @@ describe("track management", () => {
 });
 
 describe("clip transforms", () => {
+  it("updates and clamps a visual clip transform anchor", () => {
+    let project = createProject({ id: "transform-anchor-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipTransformAnchor(
+      project,
+      clipId,
+      { x: 2, y: -1 },
+      new Date("2026-09-20T02:10:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].transformAnchor).toEqual({
+      x: 1,
+      y: 0,
+    });
+    expect(updated.updatedAt).toBe("2026-09-20T02:10:00.000Z");
+  });
+
+  it("resets a visual clip transform anchor with the transform reset", () => {
+    let project = createProject({ id: "transform-anchor-reset" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = updateClipTransformAnchor(project, clipId, {
+      x: 0,
+      y: 1,
+    });
+
+    const reset = resetClipTransform(project, clipId);
+
+    expect(reset.tracks[0].clips[0].transformAnchor).toBeUndefined();
+  });
+
   it("updates and clamps visual clip transforms", () => {
     let project = createProject({ id: "transform-command" });
 
