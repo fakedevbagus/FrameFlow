@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "../timeline/commands";
@@ -88,7 +88,9 @@ describe("Preview", () => {
     );
 
     const video = screen.getByTestId("preview-video");
-    fireEvent.error(video);
+    await act(async () => {
+      fireEvent.error(video);
+    });
 
     await vi.waitFor(() => {
       expect(invokeMock).toHaveBeenCalledWith("prepare_media_preview", {
