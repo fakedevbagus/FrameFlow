@@ -17,12 +17,21 @@ export interface MediaAsset {
   durationMs: number | null;
 }
 
+export interface ClipTransform {
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+  opacity: number;
+}
+
 export interface Clip {
   id: string;
   assetId: string;
   timelineStartMs: number;
   sourceStartMs: number;
   sourceEndMs: number | null;
+  transform?: ClipTransform;
 }
 
 export interface Track {
