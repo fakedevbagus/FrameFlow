@@ -51,6 +51,7 @@ export function Preview({
   selectedClipId = null,
   onSelectClip,
   onTransformCommit,
+  onCropCommit,
 }: PreviewProps) {
   const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
   const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
