@@ -720,10 +720,11 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
-## M3.26 — Timeline transition indicator (in progress)
+## M3.26 — Timeline transition indicator — completed
 
 Branch: `feat/m3-26-transition-timeline-indicator`
-PR: pending
+PR: #37
+Merge SHA: `74ebee88b79b99fe9be7c2b8cd641cb28194a7ae`
 
 Scope:
 - Show a compact transition indicator at the boundary of an active outgoing dissolve transition.
@@ -737,15 +738,16 @@ Automated coverage:
 - Existing timeline interaction behavior remains covered by the existing suite.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local Linux validation passed.
+- User confirmed lint, tests, build, Tauri dev, and the requested manual transition-indicator checks passed.
 
 Known limitations:
-- The indicator is not itself a draggable transition block.
+- The indicator is not itself a draggable transition-duration control.
 - Only dissolve transitions are represented.
 - Transition configuration remains in the Inspector.
 
 Next step:
-- User validates M3.26 locally before merge.
+- Start M3.27 from the updated `main`, focusing on direct timeline transition-duration manipulation.
 
 ## M3.25 — Dissolve transition foundation — completed
 
