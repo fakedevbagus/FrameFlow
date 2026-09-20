@@ -12,7 +12,8 @@ The project is being built incrementally. Every milestone must be small, testabl
 - Current default branch: `main`
 - Current main commit at the time this document was refreshed: `595f7498e503aab19052279979fb389ae8300691`
 - M3.13 was merged as PR #23 with merge SHA `595f7498e503aab19052279979fb389ae8300691`.
-- Next milestone branch will be created from the updated `main` after M3.13 validation.
+- M3.14 was merged as PR #24 with merge SHA `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`.
+- Next milestone branch will be created from the updated `main` after M3.14 validation.
 
 ## Development environment
 
@@ -337,10 +338,12 @@ Do not jump directly into a large CapCut-scale feature set. Build in vertical sl
 
 The exact next milestone should be based on the actual current repository state after the preceding validation.
 
-## Next milestone — M3.14
+## Completed milestone — M3.14
 
 Title: Keyframe UX hardening
 Branch: `feat/m3-14-keyframe-ux-hardening`
+PR: #24
+Merge SHA: `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`
 
 Scope:
 - Preserve the existing keyframe model and history architecture.
@@ -350,16 +353,15 @@ Scope:
 - Add focused regression coverage for these interactions.
 
 Validation status:
-- Initial local validation found one Preview ref lint error and one Timeline Escape regression defect.
-- Both issues have been corrected on this branch.
-- Local validation must be rerun before M3.14 can be considered complete.
+- User reported successful local validation after the implementation fixes.
+- PR #24 was marked ready and squash-merged.
 
 M3.14 validation correction:
 - Updated the preview time ref inside a React effect to satisfy the React refs lint rule without reintroducing per-tick media seeking.
 - Corrected Escape handling to call the Timeline-owned cancellation callback instead of an undefined child-scope function.
 
 Next step:
-- Rerun lint, tests, build, then manual keyframe interaction checks before preparing the PR for merge.
+- Continue with the next focused transform milestone from updated `main`.
 
 ## Documentation protocol
 
