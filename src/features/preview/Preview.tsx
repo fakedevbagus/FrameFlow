@@ -6,7 +6,10 @@ import {
   type PointerEvent,
 } from "react";
 import type { ClipTransform, Project } from "../project/domain";
-import { getClipTransform, normalizeClipTransform } from "../transform/transform";
+import {
+  getClipTransformAtTime,
+  normalizeClipTransform,
+} from "../transform/transform";
 import {
   getContainedContentBounds,
   getContainedContentPercentageBounds,
@@ -165,8 +168,12 @@ function PreviewVisualLayer({
   } | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
-  const baseTransform = getClipTransform(layer.clip.transform);
-  const activeTransform = gesture?.transform ?? baseTransform;
+  const currentTransform = getClipTransformAtTime(
+    layer.clip.transform,
+    layer.clip.transformKeyframes,
+    localTimeMs,
+  );
+  const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
   const contentBoundsPercent = getContainedContentPercentageBounds(
@@ -319,6 +326,12 @@ function PreviewVisualLayer({
       // Pointer capture is not implemented in every runtime.
     }
 
+    const gestureBaseTransform = getClipTransformAtTime(
+      layer.clip.transform,
+      layer.clip.transformKeyframes,
+      localTimeMs,
+    );
+
     setGesture({
       mode,
       pointerId: event.pointerId,
@@ -326,7 +339,7 @@ function PreviewVisualLayer({
         x: event.clientX,
         y: event.clientY,
       },
-      baseTransform,
+      baseTransform: gestureBaseTransform,
       transform: baseTransform,
       manipulationBounds: mode === "move" ? {
         left: bounds.left,
