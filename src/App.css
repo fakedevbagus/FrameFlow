@@ -1038,6 +1038,61 @@ button:disabled {
   gap: 7px;
 }
 
+.inspector-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inspector-inline-button {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #343b48;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #9da6b5;
+  background: #1b2028;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.inspector-inline-button:hover {
+  border-color: #555f72;
+  color: #dce1eb;
+}
+
+.inspector-transform-readout {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 10px;
+  padding: 8px 9px;
+  border: 1px solid #2c333f;
+  border-radius: 6px;
+  background: #1a1e25;
+  color: #7f899a;
+  font-size: 10px;
+}
+
+.inspector-transform-readout strong {
+  color: #dce1eb;
+  font-variant-numeric: tabular-nums;
+}
+
+.inspector-transform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.preview-layer-error {
+  display: grid;
+  place-items: center;
+  color: #ffb0b0;
+  background: #242029;
+  font-size: 10px;
+  text-align: center;
+}
+
 .inspector-button-grid .toolbar-button,
 .split-button {
   width: 100%;
