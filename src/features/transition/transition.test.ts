@@ -82,7 +82,7 @@ describe("transition helpers", () => {
 
     expect(
       getDissolveOpacities(
-        3850,
+        3600,
         first,
         second,
         { type: "dissolve", durationMs: 300 },
