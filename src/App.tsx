@@ -15,6 +15,7 @@ import {
   removeClipFromTimeline,
   removeTrack,
   addTransformKeyframe,
+  moveTransformKeyframe,
   resetClipTransform,
   removeTransformKeyframe,
   toggleTrackMute,
@@ -646,6 +647,23 @@ function App() {
     );
   }
 
+  function handleMoveTransformKeyframe(
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        moveTransformKeyframe(
+          currentProject,
+          clipId,
+          fromTimeMs,
+          toTimeMs,
+        ),
+      "Keyframe moved.",
+    );
+  }
+
   function handleRemoveTransformKeyframe() {
     if (!selectedClipContext || !selectedKeyframe) {
       return;
@@ -916,6 +934,7 @@ function App() {
             onAddAssetToTrack={handleAddAssetToTrack}
             onAddTrack={handleAddTrack}
             onRemoveTrack={handleRemoveTrack}
+            onMoveTransformKeyframe={handleMoveTransformKeyframe}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
           />

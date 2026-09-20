@@ -77,6 +77,55 @@ describe("Timeline", () => {
     expect(onCurrentTimeChange).toHaveBeenCalledWith(7000);
   });
 
+  it("drags a transform keyframe and commits its new time", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 2000);
+    project = addTransformKeyframe(project, clipId, 7000);
+
+    const onMoveTransformKeyframe = vi.fn();
+    const onCurrentTimeChange = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={2000}
+        onCurrentTimeChange={onCurrentTimeChange}
+        onMoveTransformKeyframe={onMoveTransformKeyframe}
+      />,
+    );
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to transform keyframe for intro.mp4 at 00:02.000",
+    });
+
+    fireEvent.pointerDown(markerButton, {
+      button: 0,
+      buttons: 1,
+      clientX: 80,
+      pointerId: 7,
+    });
+    fireEvent.pointerMove(markerButton, {
+      buttons: 1,
+      clientX: 160,
+      pointerId: 7,
+    });
+    fireEvent.pointerUp(markerButton, {
+      button: 0,
+      buttons: 0,
+      clientX: 160,
+      pointerId: 7,
+    });
+
+    expect(onMoveTransformKeyframe).toHaveBeenCalledWith(
+      clipId,
+      2000,
+      4000,
+    );
+    expect(onCurrentTimeChange).toHaveBeenLastCalledWith(4000);
+  });
+
   it("moves the playhead when the ruler is clicked", () => {
     const project = createVideoProject();
     const onCurrentTimeChange = vi.fn();

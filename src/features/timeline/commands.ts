@@ -350,6 +350,79 @@ export function addTransformKeyframe(
   );
 }
 
+export function moveTransformKeyframe(
+  project: Project,
+  clipId: string,
+  fromTimeMs: number,
+  toTimeMs: number,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform keyframes are only available for visual media.");
+  }
+
+  const durationMs = getClipDurationMs(location.clip);
+
+  if (
+    !Number.isFinite(fromTimeMs) ||
+    !Number.isFinite(toTimeMs) ||
+    fromTimeMs < 0 ||
+    toTimeMs < 0 ||
+    fromTimeMs > durationMs ||
+    toTimeMs > durationMs
+  ) {
+    throw new Error("Transform keyframe time must be inside the clip.");
+  }
+
+  const keyframe = getTransformKeyframeAtTime(
+    location.clip.transformKeyframes,
+    fromTimeMs,
+  );
+
+  if (!keyframe) {
+    throw new Error("No transform keyframe exists at the source time.");
+  }
+
+  if (
+    toTimeMs !== fromTimeMs &&
+    getTransformKeyframeAtTime(location.clip.transformKeyframes, toTimeMs)
+  ) {
+    throw new Error("A transform keyframe already exists at the target time.");
+  }
+
+  const remaining = removeTransformKeyframeAtTime(
+    location.clip.transformKeyframes,
+    fromTimeMs,
+  );
+  const keyframes = upsertTransformKeyframe(
+    remaining,
+    toTimeMs,
+    keyframe.transform,
+  );
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      transformKeyframes: keyframes,
+      transform: getClipTransformAtTime(
+        location.clip.transform,
+        keyframes,
+        toTimeMs,
+      ),
+    },
+    now,
+  );
+}
+
 export function removeTransformKeyframe(
   project: Project,
   clipId: string,

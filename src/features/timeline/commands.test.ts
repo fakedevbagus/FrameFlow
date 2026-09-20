@@ -5,6 +5,7 @@ import {
   addAssetToTrack,
   addTrack,
   addTransformKeyframe,
+  moveTransformKeyframe,
   removeTrack,
   removeTransformKeyframe,
   resetClipTransform,
@@ -642,6 +643,70 @@ describe("transform keyframe commands", () => {
         },
       },
     ]);
+  });
+
+  it("moves a transform keyframe and preserves its transform", () => {
+    let project = createProject({ id: "keyframe-move-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "keyframe-move.mp4",
+          mediaType: "video",
+          sourcePath: "/keyframe-move.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 1000);
+    project = updateClipTransformAtTime(project, clipId, 1000, {
+      x: 25,
+      rotation: 15,
+    });
+
+    project = moveTransformKeyframe(project, clipId, 1000, 2500);
+
+    expect(project.tracks[0].clips[0].transformKeyframes).toEqual([
+      {
+        timeMs: 2500,
+        transform: {
+          x: 25,
+          y: 0,
+          scale: 1,
+          rotation: 15,
+          opacity: 1,
+        },
+      },
+    ]);
+  });
+
+  it("rejects moving a keyframe onto an occupied time", () => {
+    let project = createProject({ id: "keyframe-collision-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "keyframe-collision.mp4",
+          mediaType: "video",
+          sourcePath: "/keyframe-collision.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 1000);
+    project = addTransformKeyframe(project, clipId, 2000);
+
+    expect(() =>
+      moveTransformKeyframe(project, clipId, 1000, 2000),
+    ).toThrow("already exists");
   });
 
   it("removes the active keyframe and preserves the remaining animation", () => {

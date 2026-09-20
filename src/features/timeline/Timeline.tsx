@@ -38,11 +38,25 @@ interface TimelineProps {
   ) => void;
   onAddTrack?: (type: "audio" | "video") => void;
   onRemoveTrack?: (trackId: string) => void;
+  onMoveTransformKeyframe?: (
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) => void;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
 }
 
 type ClipInteractionMode = "move" | "trim-start" | "trim-end";
+
+interface KeyframeInteraction {
+  clipId: string;
+  pointerId: number;
+  keyframeTimeMs: number;
+  startClientX: number;
+  previewTimeMs: number;
+  hasMoved: boolean;
+}
 
 interface ClipInteraction {
   clipId: string;
@@ -71,10 +85,13 @@ export function Timeline({
   onAddAssetToTrack,
   onAddTrack,
   onRemoveTrack,
+  onMoveTransformKeyframe,
   zoom = DEFAULT_TIMELINE_ZOOM,
   onZoomChange,
 }: TimelineProps) {
   const [interaction, setInteraction] = useState<ClipInteraction | null>(null);
+  const [keyframeInteraction, setKeyframeInteraction] =
+    useState<KeyframeInteraction | null>(null);
   const [dragOverTrackId, setDragOverTrackId] = useState<string | null>(null);
   const timelineDurationMs = getTimelineDurationMs(project);
   const pixelsPerSecond = basePixelsPerSecond * zoom;
@@ -156,6 +173,152 @@ export function Timeline({
       sourceStartMs: interaction.previewSourceStartMs,
       sourceEndMs: interaction.previewSourceEndMs,
     };
+  }
+
+  function beginKeyframeInteraction(
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    keyframeTimeMs: number,
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.stopPropagation();
+    onSelectClip?.(clip.id);
+    onCurrentTimeChange?.(
+      Math.min(
+        Math.max(clip.timelineStartMs + keyframeTimeMs, 0),
+        timelineDurationMs,
+      ),
+    );
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    setKeyframeInteraction({
+      clipId: clip.id,
+      pointerId: event.pointerId,
+      keyframeTimeMs,
+      startClientX: event.clientX,
+      previewTimeMs: keyframeTimeMs,
+      hasMoved: false,
+    });
+  }
+
+  function updateKeyframeInteraction(event: PointerEvent<HTMLButtonElement>) {
+    if (
+      !keyframeInteraction ||
+      event.buttons !== 1 ||
+      event.pointerId !== keyframeInteraction.pointerId
+    ) {
+      return;
+    }
+
+    const clip = project.tracks
+      .flatMap((track) => track.clips)
+      .find((candidate) => candidate.id === keyframeInteraction.clipId);
+
+    if (!clip) {
+      return;
+    }
+
+    const deltaPixels = event.clientX - keyframeInteraction.startClientX;
+    if (Math.abs(deltaPixels) < 2) {
+      return;
+    }
+
+    const deltaMs = pixelsToMilliseconds(deltaPixels, pixelsPerSecond);
+    const keyframes = [...(clip.transformKeyframes ?? [])].sort(
+      (a, b) => a.timeMs - b.timeMs,
+    );
+    const index = keyframes.findIndex(
+      (keyframe) => keyframe.timeMs === keyframeInteraction.keyframeTimeMs,
+    );
+
+    if (index === -1) {
+      return;
+    }
+
+    const previousTimeMs = index > 0 ? keyframes[index - 1].timeMs : 0;
+    const nextTimeMs =
+      index < keyframes.length - 1
+        ? keyframes[index + 1].timeMs
+        : getClipDurationMs(clip);
+
+    const frameStepMs = 1000 / project.canvas.frameRate;
+    const minimumTimeMs =
+      index > 0 ? previousTimeMs + frameStepMs : 0;
+    const maximumTimeMs =
+      index < keyframes.length - 1
+        ? nextTimeMs - frameStepMs
+        : nextTimeMs;
+
+    const nextTimeMsClamped = Math.min(
+      Math.max(
+        Math.round(
+          snapTimelineTime(
+            keyframeInteraction.keyframeTimeMs + deltaMs,
+          ),
+        ),
+        minimumTimeMs,
+      ),
+      maximumTimeMs,
+    );
+
+    setKeyframeInteraction({
+      ...keyframeInteraction,
+      hasMoved: true,
+      previewTimeMs: nextTimeMsClamped,
+    });
+  }
+
+  function finishKeyframeInteraction(
+    event?: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (!keyframeInteraction) {
+      return;
+    }
+
+    if (
+      event &&
+      "hasPointerCapture" in event.currentTarget &&
+      event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (
+      !keyframeInteraction.hasMoved ||
+      keyframeInteraction.previewTimeMs === keyframeInteraction.keyframeTimeMs
+    ) {
+      setKeyframeInteraction(null);
+      return;
+    }
+
+    event?.preventDefault();
+    onMoveTransformKeyframe?.(
+      keyframeInteraction.clipId,
+      keyframeInteraction.keyframeTimeMs,
+      keyframeInteraction.previewTimeMs,
+    );
+    onCurrentTimeChange?.(
+      Math.min(
+        Math.max(
+          project.tracks
+            .flatMap((track) => track.clips)
+            .find((clip) => clip.id === keyframeInteraction.clipId)
+            ?.timelineStartMs ?? 0,
+          0,
+        ) + keyframeInteraction.previewTimeMs,
+        timelineDurationMs,
+      ),
+    );
+    setKeyframeInteraction(null);
+  }
+
+  function cancelKeyframeInteraction() {
+    setKeyframeInteraction(null);
   }
 
   function beginClipInteraction(
@@ -438,6 +601,12 @@ export function Timeline({
             onFinishClipInteraction={finishClipInteraction}
             onCancelClipInteraction={cancelClipInteraction}
             onKeyframeClick={handleKeyframeClick}
+            onMoveTransformKeyframe={onMoveTransformKeyframe}
+            keyframeInteraction={keyframeInteraction}
+            onBeginKeyframeInteraction={beginKeyframeInteraction}
+            onUpdateKeyframeInteraction={updateKeyframeInteraction}
+            onFinishKeyframeInteraction={finishKeyframeInteraction}
+            onCancelKeyframeInteraction={cancelKeyframeInteraction}
           />
         ))}
       </div>
@@ -475,6 +644,24 @@ interface TimelineTrackProps {
     clip: Clip,
     keyframeTimeMs: number,
   ) => void;
+  onMoveTransformKeyframe?: (
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) => void;
+  keyframeInteraction: KeyframeInteraction | null;
+  onBeginKeyframeInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    keyframeTimeMs: number,
+  ) => void;
+  onUpdateKeyframeInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onFinishKeyframeInteraction: (
+    event?: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onCancelKeyframeInteraction: () => void;
 }
 
 function TimelineTrack({
@@ -499,6 +686,11 @@ function TimelineTrack({
   onFinishClipInteraction,
   onCancelClipInteraction,
   onKeyframeClick,
+  keyframeInteraction,
+  onBeginKeyframeInteraction,
+  onUpdateKeyframeInteraction,
+  onFinishKeyframeInteraction,
+  onCancelKeyframeInteraction,
 }: TimelineTrackProps) {
   const pixelsPerSecond = basePixelsPerSecond * zoom;
 
@@ -638,8 +830,13 @@ function TimelineTrack({
                   }}
                 >
                   {keyframes.map((keyframe) => {
+                    const displayTimeMs =
+                      keyframeInteraction?.clipId === clip.id &&
+                      keyframeInteraction.keyframeTimeMs === keyframe.timeMs
+                        ? keyframeInteraction.previewTimeMs
+                        : keyframe.timeMs;
                     const absoluteTimeMs =
-                      clip.timelineStartMs + keyframe.timeMs;
+                      clip.timelineStartMs + displayTimeMs;
                     const isActive =
                       Math.abs(currentTimeMs - absoluteTimeMs) <=
                       500 / project.canvas.frameRate;
@@ -660,6 +857,12 @@ function TimelineTrack({
                         onClick={(event) =>
                           onKeyframeClick(event, clip, keyframe.timeMs)
                         }
+                        onPointerDown={(event) =>
+                          onBeginKeyframeInteraction(event, clip, keyframe.timeMs)
+                        }
+                        onPointerMove={onUpdateKeyframeInteraction}
+                        onPointerUp={onFinishKeyframeInteraction}
+                        onPointerCancel={onCancelKeyframeInteraction}
                         style={{
                           left:
                             durationMs > 0
