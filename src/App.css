@@ -384,6 +384,11 @@ button:focus-visible {
 }
 
 
+.preview-crop-viewport {
+  position: absolute;
+  pointer-events: none;
+}
+
 .preview-crop-controls {
   position: absolute;
   inset: 0;
