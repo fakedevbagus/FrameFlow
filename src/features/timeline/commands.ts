@@ -7,6 +7,7 @@ import type {
   Project,
   TrackType,
   TransformEasing,
+  ClipTransition,
 } from "../project/domain";
 import {
   DEFAULT_CLIP_TRANSFORM,
@@ -23,6 +24,10 @@ import {
   removeTransformKeyframe as removeTransformKeyframeAtTime,
   upsertTransformKeyframe,
 } from "../transform/transform";
+import {
+  getNextClipForTransition,
+  normalizeClipTransition,
+} from "../transition/transition";
 
 const defaultImageDurationMs = 3000;
 
@@ -461,6 +466,81 @@ export function toggleTrackMute(
   };
 
   return { ...project, tracks, updatedAt: now.toISOString() };
+}
+
+
+export function updateClipTransition(
+  project: Project,
+  clipId: string,
+  transition: ClipTransition | undefined,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transitions are only available for visual media.");
+  }
+
+  if (transition === undefined) {
+    return updateClipAtLocation(
+      project,
+      location,
+      { transitionOut: undefined },
+      now,
+    );
+  }
+
+  if (transition.type !== "dissolve") {
+    throw new Error("Unsupported transition type.");
+  }
+
+  const nextClip = getNextClipForTransition(location.track, clipId);
+
+  if (!nextClip) {
+    throw new Error("Transition requires an adjacent visual clip.");
+  }
+
+  const nextAsset = project.assets.find(
+    (candidate) => candidate.id === nextClip.assetId,
+  );
+
+  if (!nextAsset || (nextAsset.mediaType !== "video" && nextAsset.mediaType !== "image")) {
+    throw new Error("Transition requires an adjacent visual clip.");
+  }
+
+  const clipEndMs = location.clip.timelineStartMs + getClipDurationMs(location.clip);
+
+  if (clipEndMs !== nextClip.timelineStartMs) {
+    throw new Error("Transition requires two adjacent clips.");
+  }
+
+  const normalized = normalizeClipTransition(transition);
+
+  if (!normalized) {
+    throw new Error("Transition duration must be a finite number.");
+  }
+
+  const maxDurationMs = Math.min(
+    getClipDurationMs(location.clip),
+    getClipDurationMs(nextClip),
+  );
+
+  if (normalized.durationMs > maxDurationMs) {
+    throw new Error("Transition duration cannot exceed either clip duration.");
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { transitionOut: normalized },
+    now,
+  );
 }
 
 export function updateClipTransform(

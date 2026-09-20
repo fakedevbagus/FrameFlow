@@ -12,6 +12,7 @@ import type {
   CropPosition,
   TransformEasing,
   TransformAnchor,
+  ClipTransition,
 } from "./features/project/domain";
 import {
   addAssetToTimeline,
@@ -36,6 +37,7 @@ import {
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
+  updateClipTransition,
 } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
 import { Preview } from "./features/preview/Preview";
@@ -64,6 +66,12 @@ import {
 import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
+import { TransitionInspector } from "./features/transition/TransitionInspector";
+import {
+  getClipTransition,
+  getNextClipForTransition,
+  isTransitionAdjacent,
+} from "./features/transition/transition";
 import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
@@ -160,6 +168,35 @@ function App() {
       )
     : null;
   const selectedKeyframeCount = selectedClipContext?.clip.transformKeyframes?.length ?? 0;
+  const selectedTransition = selectedClipContext
+    ? getClipTransition(selectedClipContext.clip.transitionOut)
+    : undefined;
+  const selectedTransitionTarget = selectedClipContext
+    ? getNextClipForTransition(
+        selectedClipContext.track,
+        selectedClipContext.clip.id,
+      )
+    : null;
+  const selectedTransitionTargetAsset = selectedTransitionTarget
+    ? project.assets.find(
+        (asset) => asset.id === selectedTransitionTarget.assetId,
+      )
+    : null;
+  const canTransitionToNextVisual =
+    Boolean(selectedClipContext) &&
+    (selectedClipContext?.asset?.mediaType === "video" ||
+      selectedClipContext?.asset?.mediaType === "image") &&
+    Boolean(
+      selectedTransitionTarget &&
+        selectedTransitionTargetAsset &&
+        (selectedTransitionTargetAsset.mediaType === "video" ||
+          selectedTransitionTargetAsset.mediaType === "image") &&
+        selectedClipContext &&
+        isTransitionAdjacent(
+          selectedClipContext.clip,
+          selectedTransitionTarget,
+        ),
+    );
   const timelineDurationMs = getTimelineDurationMs(project);
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
@@ -469,6 +506,24 @@ function App() {
     applyProjectChange(
       (currentProject) => toggleTrackMute(currentProject, trackId),
       "Track mute updated.",
+    );
+  }
+
+  function handleUpdateSelectedTransition(
+    transition: ClipTransition | undefined,
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipTransition(
+          currentProject,
+          selectedClipContext.clip.id,
+          transition,
+        ),
+      transition ? "Transition updated." : "Transition removed.",
     );
   }
 
@@ -2039,6 +2094,15 @@ function App() {
                     </button>
                   </div>
                 </div>
+              ) : null}
+
+              {(selectedClipContext.asset?.mediaType === "video" ||
+                selectedClipContext.asset?.mediaType === "image") ? (
+                <TransitionInspector
+                  canTransition={canTransitionToNextVisual}
+                  transition={selectedTransition}
+                  onChange={handleUpdateSelectedTransition}
+                />
               ) : null}
 
               <div className="inspector-section">
