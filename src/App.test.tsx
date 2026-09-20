@@ -368,6 +368,73 @@ describe("App", () => {
     });
   });
 
+  it("applies a crop aspect preset as one history edit", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-crop-aspect-ui",
+        name: "crop-aspect-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/crop-aspect-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("crop-aspect-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add crop-aspect-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select crop-aspect-ui.mp4 clip",
+      }),
+    );
+
+    const video = screen.getByTestId("preview-video");
+    Object.defineProperty(video, "videoWidth", {
+      configurable: true,
+      value: 1920,
+    });
+    Object.defineProperty(video, "videoHeight", {
+      configurable: true,
+      value: 1080,
+    });
+    fireEvent.loadedMetadata(video);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Set crop aspect ratio 1:1" }),
+      ).not.toBeDisabled(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set crop aspect ratio 1:1" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Crop left" })).toHaveValue(22);
+      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(22);
+    });
+
+    expect(container).toHaveTextContent("Crop aspect ratio updated.");
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Crop left" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(0);
+    });
+  });
+
   it("applies visual transform controls and resets them", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
