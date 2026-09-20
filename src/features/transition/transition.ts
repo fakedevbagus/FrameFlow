@@ -1,14 +1,11 @@
-import type { Clip, Track } from "../project/domain";
+import type { Clip, ClipTransition, Track } from "../project/domain";
+
+export type { ClipTransition } from "../project/domain";
 
 export const DISSOLVE_TRANSITION_TYPE = "dissolve" as const;
 export const DEFAULT_DISSOLVE_DURATION_MS = 300;
 export const MIN_DISSOLVE_DURATION_MS = 50;
 export const MAX_DISSOLVE_DURATION_MS = 2000;
-
-export interface ClipTransition {
-  type: typeof DISSOLVE_TRANSITION_TYPE;
-  durationMs: number;
-}
 
 export function normalizeClipTransition(
   transition: ClipTransition | null | undefined,
