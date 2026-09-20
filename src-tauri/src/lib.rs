@@ -1,5 +1,6 @@
 use std::{
-  fs,
+  fs::{self, File},
+  io::{Read, Seek, SeekFrom},
   path::{Path, PathBuf},
   process::Command,
 };
@@ -130,6 +131,245 @@ fn prepare_media_preview(
   })?;
 
   Ok(output_path.to_string_lossy().into_owned())
+}
+
+fn stream_media_request(
+  request: tauri::http::Request<Vec<u8>>,
+) -> tauri::http::Response<Vec<u8>> {
+  let Some(query) = request.uri().query() else {
+    return response_with_status(
+      tauri::http::StatusCode::BAD_REQUEST,
+      "Missing media path.",
+    );
+  };
+
+  let Some(encoded_path) = query.strip_prefix("path=") else {
+    return response_with_status(
+      tauri::http::StatusCode::BAD_REQUEST,
+      "Missing media path.",
+    );
+  };
+
+  let path = match percent_decode(encoded_path) {
+    Ok(path) => PathBuf::from(path),
+    Err(message) => {
+      return response_with_status(tauri::http::StatusCode::BAD_REQUEST, &message);
+    }
+  };
+
+  if !is_allowed_media_path(&path) {
+    return response_with_status(
+      tauri::http::StatusCode::FORBIDDEN,
+      "Media path is not allowed.",
+    );
+  }
+
+  let metadata = match fs::metadata(&path) {
+    Ok(metadata) if metadata.is_file() => metadata,
+    _ => {
+      return response_with_status(
+        tauri::http::StatusCode::NOT_FOUND,
+        "Media file could not be found.",
+      )
+    }
+  };
+
+  let len = metadata.len();
+  let content_type = media_content_type(&path);
+
+  let mut response = tauri::http::Response::builder()
+    .header(tauri::http::header::CONTENT_TYPE, content_type)
+    .header(tauri::http::header::ACCEPT_RANGES, "bytes")
+    .header(tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+
+  if let Some(range_header) = request.headers().get(tauri::http::header::RANGE) {
+    let Ok(range_text) = range_header.to_str() else {
+      return response_with_status(
+        tauri::http::StatusCode::RANGE_NOT_SATISFIABLE,
+        "Invalid range header.",
+      );
+    };
+
+    let Some((start, end)) = parse_single_range(range_text, len) else {
+      return response
+        .status(tauri::http::StatusCode::RANGE_NOT_SATISFIABLE)
+        .header(
+          tauri::http::header::CONTENT_RANGE,
+          format!("bytes */{len}"),
+        )
+        .body(Vec::new())
+        .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()));
+    };
+
+    let length = end - start + 1;
+    let max_range_len = 2 * 1024 * 1024;
+    let bounded_end = start + length.min(max_range_len) - 1;
+    let bounded_length = bounded_end - start + 1;
+
+    match read_file_range(&path, start, bounded_length) {
+      Ok(data) => {
+        return response
+          .status(tauri::http::StatusCode::PARTIAL_CONTENT)
+          .header(
+            tauri::http::header::CONTENT_RANGE,
+            format!("bytes {start}-{bounded_end}/{len}"),
+          )
+          .header(tauri::http::header::CONTENT_LENGTH, bounded_length.to_string())
+          .body(data)
+          .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()));
+      }
+      Err(_) => {
+        return response_with_status(
+          tauri::http::StatusCode::INTERNAL_SERVER_ERROR,
+          "Could not read media range.",
+        )
+      }
+    }
+  }
+
+  match fs::read(&path) {
+    Ok(data) => response
+      .header(tauri::http::header::CONTENT_LENGTH, data.len().to_string())
+      .body(data)
+      .unwrap_or_else(|_| tauri::http::Response::new(Vec::new())),
+    Err(_) => response_with_status(
+      tauri::http::StatusCode::INTERNAL_SERVER_ERROR,
+      "Could not read media file.",
+    ),
+  }
+}
+
+fn read_file_range(path: &Path, start: u64, length: u64) -> Result<Vec<u8>, String> {
+  let mut file = File::open(path).map_err(|error| error.to_string())?;
+  file.seek(SeekFrom::Start(start))
+    .map_err(|error| error.to_string())?;
+
+  let mut data = Vec::with_capacity(length as usize);
+  file.take(length)
+    .read_to_end(&mut data)
+    .map_err(|error| error.to_string())?;
+
+  Ok(data)
+}
+
+fn parse_single_range(header: &str, len: u64) -> Option<(u64, u64)> {
+  if len == 0 || !header.starts_with("bytes=") {
+    return None;
+  }
+
+  let spec = header["bytes=".len()..].split(',').next()?.trim();
+
+  let (start_text, end_text) = spec.split_once('-')?;
+
+  if start_text.is_empty() {
+    let suffix = end_text.parse::<u64>().ok()?;
+    let length = suffix.min(len);
+    return Some((len - length, len - 1));
+  }
+
+  let start = start_text.parse::<u64>().ok()?;
+  if start >= len {
+    return None;
+  }
+
+  let end = if end_text.is_empty() {
+    len - 1
+  } else {
+    end_text.parse::<u64>().ok()?.min(len - 1)
+  };
+
+  (end >= start).then_some((start, end))
+}
+
+fn media_content_type(path: &Path) -> &'static str {
+  match path
+    .extension()
+    .and_then(|extension| extension.to_str())
+    .unwrap_or_default()
+    .to_ascii_lowercase()
+    .as_str()
+  {
+    "webm" => "video/webm",
+    "mp4" | "m4v" => "video/mp4",
+    "mov" => "video/quicktime",
+    "mkv" => "video/x-matroska",
+    "avi" => "video/x-msvideo",
+    "mp3" => "audio/mpeg",
+    "wav" => "audio/wav",
+    "ogg" | "opus" => "audio/ogg",
+    "m4a" => "audio/mp4",
+    _ => "application/octet-stream",
+  }
+}
+
+fn percent_decode(value: &str) -> Result<String, String> {
+  let bytes = value.as_bytes();
+  let mut output = Vec::with_capacity(bytes.len());
+  let mut index = 0;
+
+  while index < bytes.len() {
+    if bytes[index] == b'%' {
+      if index + 2 >= bytes.len() {
+        return Err("Invalid percent-encoded media path.".to_string());
+      }
+
+      let high = decode_hex(bytes[index + 1])?;
+      let low = decode_hex(bytes[index + 2])?;
+      output.push((high << 4) | low);
+      index += 3;
+    } else {
+      output.push(bytes[index]);
+      index += 1;
+    }
+  }
+
+  String::from_utf8(output)
+    .map_err(|_| "Media path is not valid UTF-8.".to_string())
+}
+
+fn decode_hex(byte: u8) -> Result<u8, String> {
+  match byte {
+    b'0'..=b'9' => Ok(byte - b'0'),
+    b'a'..=b'f' => Ok(byte - b'a' + 10),
+    b'A'..=b'F' => Ok(byte - b'A' + 10),
+    _ => Err("Invalid percent-encoded media path.".to_string()),
+  }
+}
+
+fn is_allowed_media_path(path: &Path) -> bool {
+  if path.is_relative() {
+    return false;
+  }
+
+  let Ok(canonical) = fs::canonicalize(path) else {
+    return false;
+  };
+
+  if canonical.starts_with("/media/")
+    || canonical.starts_with("/mnt/")
+    || canonical.starts_with("/run/media/")
+  {
+    return true;
+  }
+
+  if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
+    if canonical.starts_with(&home) {
+      return true;
+    }
+  }
+
+  false
+}
+
+fn response_with_status(
+  status: tauri::http::StatusCode,
+  message: &str,
+) -> tauri::http::Response<Vec<u8>> {
+  tauri::http::Response::builder()
+    .status(status)
+    .header(tauri::http::header::CONTENT_TYPE, "text/plain; charset=utf-8")
+    .body(message.as_bytes().to_vec())
+    .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()))
 }
 
 #[tauri::command]
@@ -448,6 +688,11 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_opener::init())
+    .register_asynchronous_uri_scheme_protocol("stream", |_ctx, request, responder| {
+      std::thread::spawn(move || {
+        responder.respond(stream_media_request(request));
+      });
+    })
     .invoke_handler(tauri::generate_handler![
       inspect_media,
       prepare_media_preview,
