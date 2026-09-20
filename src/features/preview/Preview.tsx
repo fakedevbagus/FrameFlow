@@ -1,6 +1,7 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState } from "react";
 import type { Project } from "../project/domain";
+import { getClipTransform } from "../transform/transform";
 import {
   getActiveAudioPreviewClips,
   getActiveVisualPreviewClips,
@@ -110,6 +111,12 @@ function PreviewVisualLayer({
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+  const transform = getClipTransform(layer.clip.transform);
+  const layerStyle = {
+    zIndex,
+    transform: `translate(${transform.x}%, ${transform.y}%) scale(${transform.scale}) rotate(${transform.rotation}deg)`,
+    opacity: transform.opacity,
+  };
 
   useEffect(() => {
     if (isPlaying) {
@@ -171,7 +178,7 @@ function PreviewVisualLayer({
         className="preview-layer preview-image-layer"
         data-preview-state="image"
         src={mediaUrl ?? ""}
-        style={{ zIndex }}
+        style={layerStyle}
       />
     );
   }
@@ -185,7 +192,7 @@ function PreviewVisualLayer({
       preload="auto"
       ref={mediaRef}
       src={mediaUrl ?? ""}
-      style={{ zIndex }}
+      style={layerStyle}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() =>
         onError(layer.asset.id, "Video could not be loaded.")
