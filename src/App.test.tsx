@@ -462,6 +462,53 @@ describe("App", () => {
     expect(container).toHaveTextContent("Keyframe easing updated.");
   });
 
+  it("deletes a focused timeline keyframe without deleting its clip", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-keyframe-delete",
+        name: "keyframe-delete.mp4",
+        mediaType: "video",
+        sourcePath: "/media/keyframe-delete.mp4",
+        durationMs: 5000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("keyframe-delete.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add keyframe-delete.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select keyframe-delete.mp4 clip",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add keyframe" }));
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to transform keyframe for keyframe-delete.mp4 at 00:00.000",
+    });
+
+    markerButton.focus();
+    fireEvent.keyDown(markerButton, { key: "Delete" });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", {
+        name: "Go to transform keyframe for keyframe-delete.mp4 at 00:00.000",
+      })).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("keyframe-delete.mp4")).toBeInTheDocument();
+    expect(container).toHaveTextContent("0 keyframes");
+  });
+
   it("animates transform values between keyframes", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
