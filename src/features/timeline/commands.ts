@@ -1,5 +1,6 @@
 import type {
   TransformAnchor,
+  ClipCrop,
   Clip,
   ClipTransform,
   Project,
@@ -8,10 +9,13 @@ import type {
 } from "../project/domain";
 import {
   DEFAULT_CLIP_TRANSFORM,
+  getClipCrop,
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
+  isValidClipCrop,
   normalizeClipTransform,
   normalizeTransformAnchor,
+  normalizeClipCrop,
   removeTransformKeyframe as removeTransformKeyframeAtTime,
   upsertTransformKeyframe,
 } from "../transform/transform";
@@ -40,6 +44,40 @@ export function updateClipTransformAnchor(
     project,
     location,
     { transformAnchor: normalizeTransformAnchor(anchor) },
+    now,
+  );
+}
+
+export function updateClipCrop(
+  project: Project,
+  clipId: string,
+  crop: ClipCrop,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Crop controls are only available for visual media.");
+  }
+
+  const normalizedCrop = normalizeClipCrop(crop);
+
+  if (!isValidClipCrop(normalizedCrop)) {
+    throw new Error("Crop cannot remove the entire visual content.");
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      crop: normalizedCrop,
+    },
     now,
   );
 }
