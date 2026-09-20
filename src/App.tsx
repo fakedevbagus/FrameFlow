@@ -122,7 +122,7 @@ function App() {
     : null;
   const selectedCropPosition = selectedClipContext
     ? getClipCropPosition(
-        selectedCrop,
+        selectedCrop ?? undefined,
         selectedClipContext.clip.cropPosition,
       )
     : null;
