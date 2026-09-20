@@ -4,6 +4,7 @@
 
 ### M3.16 — Crop foundation — in progress
 Branch: `feat/m3-16-crop-foundation`
+PR #26 — draft
 
 Implemented:
 - Added a backward-compatible per-clip crop model with zero-crop defaults.
