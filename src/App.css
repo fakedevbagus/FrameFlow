@@ -1350,6 +1350,12 @@ button:disabled {
   gap: 8px;
 }
 
+.inspector-crop-position {
+  display: grid;
+  gap: 7px;
+  padding-top: 2px;
+}
+
 .inspector-keyframe-status {
   display: flex;
   align-items: center;
