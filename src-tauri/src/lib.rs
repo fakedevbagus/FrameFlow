@@ -51,8 +51,8 @@ fn prepare_media_preview(path: String) -> Result<String, String> {
   })?;
 
   let cache_key = preview_cache_key(&source_path, metadata.len(), metadata.modified().ok());
-  let output_path = cache_root.join(format!("{cache_key}.webm"));
-  let temporary_path = cache_root.join(format!("{cache_key}.partial.webm"));
+  let output_path = cache_root.join(format!("{cache_key}.mp4"));
+  let temporary_path = cache_root.join(format!("{cache_key}.partial.mp4"));
 
   if output_path.is_file() {
     return Ok(output_path.to_string_lossy().into_owned());
@@ -70,23 +70,30 @@ fn prepare_media_preview(path: String) -> Result<String, String> {
     .args([
       "-map",
       "0:v:0",
-      "-an",
+      "-map",
+      "0:a:0?",
       "-sn",
       "-dn",
       "-vf",
       "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
       "-c:v",
-      "libvpx",
-      "-deadline",
-      "realtime",
-      "-cpu-used",
-      "8",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-profile:v",
+      "main",
+      "-pix_fmt",
+      "yuv420p",
       "-crf",
-      "34",
-      "-b:v",
-      "0",
+      "28",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-movflags",
+      "+faststart",
       "-f",
-      "webm",
+      "mp4",
     ])
     .arg(&temporary_path)
     .output()
