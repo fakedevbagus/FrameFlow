@@ -418,6 +418,30 @@ describe("App", () => {
     expect(container).toHaveTextContent("Transform updated.");
   });
 
+  it("changes keyframe interpolation from the inspector", () => {
+    const project = createKeyframeProject();
+
+    render(<App initialProject={project} />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select keyframe-ui.mp4 clip",
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add keyframe" }));
+
+    const interpolation = screen.getByRole("combobox", {
+      name: "Keyframe interpolation",
+    });
+
+    fireEvent.change(interpolation, {
+      target: { value: "ease-out" },
+    });
+
+    expect(interpolation).toHaveValue("ease-out");
+  });
+
   it("animates transform values between keyframes", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
