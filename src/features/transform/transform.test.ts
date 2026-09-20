@@ -72,6 +72,7 @@ describe("transform keyframes", () => {
         rotation: 10,
         opacity: 0.7,
       },
+      easing: "linear",
     });
   });
 
