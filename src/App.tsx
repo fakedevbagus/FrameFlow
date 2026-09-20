@@ -1378,6 +1378,9 @@ function App() {
                 selectedClipId={selectedClipId}
                 onSelectClip={handleSelectClip}
                 onTransformCommit={handleCanvasTransformCommit}
+                onTransformAnchorCommit={(_, anchor) =>
+                  handleSetSelectedTransformAnchor(anchor)
+                }
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
                 />
