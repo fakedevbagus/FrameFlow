@@ -24,6 +24,7 @@ import {
   updateClipCropPosition,
   updateClipCropWithPosition,
   updateCanvasDimensions,
+  updateClipTransition,
 } from "./commands";
 
 describe("canvas settings", () => {
@@ -1249,4 +1250,122 @@ describe("transform keyframe commands", () => {
     });
   });
 
+});
+
+
+describe("clip transitions", () => {
+  it("sets a dissolve transition only between directly adjacent visual clips", () => {
+    const project = createProject({ id: "transition-command" });
+    project.assets.push(
+      {
+        id: "transition-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 4000,
+      },
+      {
+        id: "transition-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    const populated = addAssetToTimeline(
+      addAssetToTimeline(project, "transition-a"),
+      "transition-b",
+    );
+    const firstClipId = populated.tracks[0].clips[0].id;
+
+    const updated = updateClipTransition(
+      populated,
+      firstClipId,
+      { type: "dissolve", durationMs: 450 },
+      new Date("2026-09-21T03:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].transitionOut).toEqual({
+      type: "dissolve",
+      durationMs: 450,
+    });
+    expect(updated.updatedAt).toBe("2026-09-21T03:00:00.000Z");
+  });
+
+  it("rejects transitions without an adjacent visual clip or with excessive duration", () => {
+    const project = createProject({ id: "transition-command-errors" });
+    project.assets.push({
+      id: "transition-only",
+      name: "only.mp4",
+      mediaType: "video",
+      sourcePath: "/only.mp4",
+      durationMs: 1000,
+    });
+
+    const onlyClipProject = addAssetToTimeline(project, "transition-only");
+    const onlyClipId = onlyClipProject.tracks[0].clips[0].id;
+
+    expect(() =>
+      updateClipTransition(
+        onlyClipProject,
+        onlyClipId,
+        { type: "dissolve", durationMs: 300 },
+      ),
+    ).toThrow("Transition requires an adjacent visual clip.");
+
+    project.assets.push({
+      id: "transition-second",
+      name: "second.mp4",
+      mediaType: "video",
+      sourcePath: "/second.mp4",
+      durationMs: 800,
+    });
+
+    const adjacent = addAssetToTimeline(
+      onlyClipProject,
+      "transition-second",
+    );
+
+    expect(() =>
+      updateClipTransition(
+        adjacent,
+        adjacent.tracks[0].clips[0].id,
+        { type: "dissolve", durationMs: 1100 },
+      ),
+    ).toThrow("Transition duration cannot exceed either clip duration.");
+  });
+
+  it("clears an existing transition", () => {
+    const project = createProject({ id: "transition-clear" });
+    project.assets.push(
+      {
+        id: "transition-clear-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 3000,
+      },
+      {
+        id: "transition-clear-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    let populated = addAssetToTimeline(project, "transition-clear-a");
+    populated = addAssetToTimeline(populated, "transition-clear-b");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    populated = updateClipTransition(
+      populated,
+      clipId,
+      { type: "dissolve", durationMs: 500 },
+    );
+    const cleared = updateClipTransition(populated, clipId, undefined);
+
+    expect(cleared.tracks[0].clips[0].transitionOut).toBeUndefined();
+  });
 });
