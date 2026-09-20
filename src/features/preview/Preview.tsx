@@ -8,6 +8,7 @@ import {
 import type { ClipCrop, ClipTransform, Project } from "../project/domain";
 import {
   getClipCrop,
+  getClipCropPosition,
   getClipTransformAnchor,
   getClipTransformAtTime,
   normalizeClipTransform,
@@ -205,6 +206,10 @@ function PreviewVisualLayer({
   const anchor = getClipTransformAnchor(layer.clip.transformAnchor);
   const crop = getClipCrop(layer.clip.crop);
   const activeCrop = cropGesture?.crop ?? crop;
+  const cropPosition = getClipCropPosition(
+    activeCrop,
+    layer.clip.cropPosition,
+  );
   const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
