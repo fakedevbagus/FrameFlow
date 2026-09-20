@@ -975,8 +975,14 @@ export function trimClipStart(
     },
     now,
   );
+  const tracks = [...updatedProject.tracks];
 
-  return sanitizeAllProjectTrackTransitions(updatedProject);
+  tracks[location.trackIndex] = sanitizeProjectTrackTransitions(
+    updatedProject,
+    tracks[location.trackIndex],
+  );
+
+  return { ...updatedProject, tracks };
 }
 
 export function trimClipEnd(
@@ -1020,8 +1026,14 @@ export function trimClipEnd(
     { sourceEndMs: newSourceEndMs },
     now,
   );
+  const tracks = [...updatedProject.tracks];
 
-  return sanitizeAllProjectTrackTransitions(updatedProject);
+  tracks[location.trackIndex] = sanitizeProjectTrackTransitions(
+    updatedProject,
+    tracks[location.trackIndex],
+  );
+
+  return { ...updatedProject, tracks };
 }
 
 export function splitClipAtTime(
@@ -1135,15 +1147,6 @@ function sanitizeProjectTrackTransitions(
       return asset?.mediaType === "video" || asset?.mediaType === "image";
     },
   );
-}
-
-function sanitizeAllProjectTrackTransitions(project: Project): Project {
-  return {
-    ...project,
-    tracks: project.tracks.map((track) =>
-      sanitizeProjectTrackTransitions(project, track),
-    ),
-  };
 }
 
 function hasTimelineOverlap(
