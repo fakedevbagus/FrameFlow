@@ -1,5 +1,26 @@
 ## 2026-09-21
 
+### M3.28 — Transition lifecycle integrity — in progress
+Branch: `feat/m3-28-transition-lifecycle-integrity`
+
+Implemented:
+- Added transition-pair normalization and track sanitization helpers.
+- Cleared stale transitions when move/remove/trim operations break adjacency.
+- Clamped transition duration when trimming an adjacent clip reduces available duration.
+- Kept split transitions on the second half of a split outgoing clip and cleared the first half.
+- Added regression tests for transition cleanup and split ownership.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Only dissolve transitions are supported.
+- Legacy stale metadata is repaired when the affected track is structurally edited.
+
+Next step:
+- User validates M3.28 locally before merge.
+
+
 ### M3.27 — Direct timeline transition-duration manipulation — in progress
 Branch: `feat/m3-27-direct-transition-duration`
 
