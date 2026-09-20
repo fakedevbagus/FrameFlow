@@ -54,6 +54,11 @@ export interface CropPosition {
   y: number;
 }
 
+export interface ClipTransition {
+  type: "dissolve";
+  durationMs: number;
+}
+
 export interface Clip {
   id: string;
   assetId: string;
@@ -64,6 +69,7 @@ export interface Clip {
   transformAnchor?: TransformAnchor;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
+  transitionOut?: ClipTransition;
   transformKeyframes?: TransformKeyframe[];
 }
 
