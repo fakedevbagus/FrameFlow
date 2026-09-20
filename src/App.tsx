@@ -330,6 +330,49 @@ function App() {
   }
 
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
+  const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
+  const [previewCanvasSize, setPreviewCanvasSize] = useState({
+    width: 0,
+    height: 0,
+  });
+
+  useEffect(() => {
+    const stageRegion = previewStageRegionRef.current;
+
+    if (!stageRegion) {
+      return;
+    }
+
+    const updatePreviewCanvasSize = () => {
+      const { width, height } = stageRegion.getBoundingClientRect();
+
+      if (width <= 0 || height <= 0) {
+        setPreviewCanvasSize({ width: 0, height: 0 });
+        return;
+      }
+
+      const aspectRatio = project.canvas.width / project.canvas.height;
+      const fittedWidth = Math.min(width, height * aspectRatio);
+      const fittedHeight = fittedWidth / aspectRatio;
+
+      setPreviewCanvasSize({
+        width: fittedWidth,
+        height: fittedHeight,
+      });
+    };
+
+    updatePreviewCanvasSize();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(updatePreviewCanvasSize);
+      observer.observe(stageRegion);
+
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", updatePreviewCanvasSize);
+    return () => window.removeEventListener("resize", updatePreviewCanvasSize);
+  }, [project.canvas.height, project.canvas.width]);
 
   const getPreviewMediaElements = useCallback((): HTMLMediaElement[] => {
     const container = previewCanvasRef.current;
@@ -1286,15 +1329,24 @@ function App() {
           </div>
 
           <div className="preview-region">
-            <div
-              className="preview-canvas"
-              ref={previewCanvasRef}
-              style={{
-                aspectRatio:
-                  project.canvas.width + " / " + project.canvas.height,
-              }}
-            >
-              <Preview
+            <div className="preview-stage-region" ref={previewStageRegionRef}>
+              <div
+                className="preview-canvas"
+                ref={previewCanvasRef}
+                style={{
+                  aspectRatio:
+                    project.canvas.width + " / " + project.canvas.height,
+                  width:
+                    previewCanvasSize.width > 0
+                      ? previewCanvasSize.width + "px"
+                      : undefined,
+                  height:
+                    previewCanvasSize.height > 0
+                      ? previewCanvasSize.height + "px"
+                      : undefined,
+                }}
+              >
+                <Preview
                 project={project}
                 currentTimeMs={displayedCurrentTimeMs}
                 isPlaying={isPlaying}
@@ -1303,7 +1355,8 @@ function App() {
                 onTransformCommit={handleCanvasTransformCommit}
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
-              />
+                />
+              </div>
             </div>
             <div className="transport-controls" aria-label="Playback controls">
               <button
