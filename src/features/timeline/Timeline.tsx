@@ -595,6 +595,7 @@ export function Timeline({
             onToggleTrackMute={onToggleTrackMute}
             onRemoveTrack={onRemoveTrack}
             onRemoveTransformKeyframe={onRemoveTransformKeyframe}
+            onCurrentTimeChange={onCurrentTimeChange}
             zoom={zoom}
             interaction={interaction}
             dragOverTrackId={dragOverTrackId}
@@ -634,6 +635,7 @@ interface TimelineTrackProps {
     clipId: string,
     timeMs: number,
   ) => void;
+  onCurrentTimeChange?: (timeMs: number) => void;
   zoom: number;
   dragOverTrackId: string | null;
   onDragOverTrack: (event: DragEvent<HTMLDivElement>) => void;
@@ -685,6 +687,8 @@ function TimelineTrack({
   onToggleTrackMute,
   onRemoveTrack,
   onRemoveTransformKeyframe,
+  onCurrentTimeChange,
+  onMoveTransformKeyframe,
   zoom,
   dragOverTrackId,
   onDragOverTrack,
@@ -840,7 +844,7 @@ function TimelineTrack({
                     width: width + "px",
                   }}
                 >
-                  {keyframes.map((keyframe) => {
+                  {keyframes.map((keyframe, keyframeIndex) => {
                     const displayTimeMs =
                       keyframeInteraction?.clipId === clip.id &&
                       keyframeInteraction.keyframeTimeMs === keyframe.timeMs
@@ -855,13 +859,81 @@ function TimelineTrack({
                     function handleKeyframeKeyDown(
                       event: KeyboardEvent<HTMLButtonElement>,
                     ) {
-                      if (event.key !== "Delete" && event.key !== "Backspace") {
+                      if (event.key === "Delete" || event.key === "Backspace") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onRemoveTransformKeyframe?.(clip.id, keyframe.timeMs);
+                        return;
+                      }
+
+                      if (
+                        event.key !== "ArrowLeft" &&
+                        event.key !== "ArrowRight"
+                      ) {
+                        return;
+                      }
+
+                      const stepMs = event.shiftKey
+                        ? 500
+                        : 1000 / project.canvas.frameRate;
+                      const deltaMs =
+                        event.key === "ArrowLeft" ? -stepMs : stepMs;
+                      const keyframes = [...(clip.transformKeyframes ?? [])].sort(
+                        (a, b) => a.timeMs - b.timeMs,
+                      );
+                      const keyframeIndex = keyframes.findIndex(
+                        (candidate) => candidate.timeMs === keyframe.timeMs,
+                      );
+
+                      if (keyframeIndex === -1) {
+                        return;
+                      }
+
+                      const previousTimeMs =
+                        keyframeIndex > 0
+                          ? keyframes[keyframeIndex - 1].timeMs
+                          : 0;
+                      const nextTimeMs =
+                        keyframeIndex < keyframes.length - 1
+                          ? keyframes[keyframeIndex + 1].timeMs
+                          : getClipDurationMs(clip);
+                      const frameStepMs = 1000 / project.canvas.frameRate;
+                      const minimumTimeMs =
+                        keyframeIndex > 0
+                          ? previousTimeMs + frameStepMs
+                          : 0;
+                      const maximumTimeMs =
+                        keyframeIndex < keyframes.length - 1
+                          ? nextTimeMs - frameStepMs
+                          : nextTimeMs;
+                      const targetTimeMs = Math.min(
+                        Math.max(
+                          Math.round(keyframe.timeMs + deltaMs),
+                          minimumTimeMs,
+                        ),
+                        maximumTimeMs,
+                      );
+
+                      if (targetTimeMs === keyframe.timeMs) {
                         return;
                       }
 
                       event.preventDefault();
                       event.stopPropagation();
-                      onRemoveTransformKeyframe?.(clip.id, keyframe.timeMs);
+                      onMoveTransformKeyframe?.(
+                        clip.id,
+                        keyframe.timeMs,
+                        targetTimeMs,
+                      );
+                      onCurrentTimeChange?.(
+                        Math.min(
+                          Math.max(
+                            clip.timelineStartMs + targetTimeMs,
+                            0,
+                          ),
+                          timelineDurationMs,
+                        ),
+                      );
                     }
 
                     return (
@@ -876,7 +948,7 @@ function TimelineTrack({
                           "timeline-keyframe-marker" +
                           (isActive ? " timeline-keyframe-marker-active" : "")
                         }
-                        key={keyframe.timeMs}
+                        key={clip.id + "-keyframe-" + keyframeIndex}
                         onClick={(event) =>
                           onKeyframeClick(event, clip, keyframe.timeMs)
                         }
