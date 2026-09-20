@@ -1336,6 +1336,41 @@ describe("clip transitions", () => {
     ).toThrow("Transition duration cannot exceed either clip duration.");
   });
 
+  it("clears a previous transition when trimming the incoming clip start breaks adjacency", () => {
+    const project = createProject({ id: "transition-trim-start-clear" });
+    project.assets.push(
+      {
+        id: "transition-trim-start-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 3000,
+      },
+      {
+        id: "transition-trim-start-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    let populated = addAssetToTimeline(project, "transition-trim-start-a");
+    populated = addAssetToTimeline(populated, "transition-trim-start-b");
+    const firstClipId = populated.tracks[0].clips[0].id;
+    const secondClipId = populated.tracks[0].clips[1].id;
+
+    populated = updateClipTransition(
+      populated,
+      firstClipId,
+      { type: "dissolve", durationMs: 500 },
+    );
+
+    const trimmed = trimClipStart(populated, secondClipId, 500);
+
+    expect(trimmed.tracks[0].clips[0].transitionOut).toBeUndefined();
+  });
+
   it("clears a transition when moving the outgoing or incoming clip breaks adjacency", () => {
     const project = createProject({ id: "transition-move-clear" });
     project.assets.push(
