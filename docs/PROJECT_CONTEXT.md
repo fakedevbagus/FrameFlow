@@ -541,7 +541,7 @@ Next step:
 ## M3.20 — Aspect-ratio crop presets (in progress)
 
 Branch: `feat/m3-20-crop-aspect-presets`
-PR: pending creation
+PR: #30 (draft)
 
 Scope:
 - Add common crop aspect-ratio presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
