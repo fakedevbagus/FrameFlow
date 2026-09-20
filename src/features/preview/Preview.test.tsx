@@ -54,7 +54,10 @@ describe("Preview", () => {
 
     const video = screen.getByTestId("preview-video");
 
-    expect(video).toHaveAttribute("src", "asset:///media/intro.mp4");
+    expect(video).toHaveAttribute(
+      "src",
+      "stream://localhost/?path=%2Fmedia%2Fintro.mp4",
+    );
   });
 
   it("falls back to a compatible preview when the source video cannot be decoded", async () => {
@@ -98,7 +101,7 @@ describe("Preview", () => {
       });
       expect(video).toHaveAttribute(
         "src",
-        "asset:///home/test/.cache/com.fakedevbagus.frameflow/previews-v4/video-preview.mp4",
+        "stream://localhost/?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
       );
     });
   });
