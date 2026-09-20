@@ -234,29 +234,29 @@ Known limitation:
 Next step:
 - M3.18 should address crop-position translation compensation so crop edits can preserve the visible subject position when required.
 
-### M3.18 — Crop position and translation compensation — in progress
+### M3.18 — Crop position and translation compensation — merged
 Branch: `feat/m3-18-crop-position-compensation`
-PR: pending
+PR #28 — merged
+Merge SHA: `f59553d3e7192bae2a00741acfa5177da94e94eb`
 
 Implemented:
 - Added an optional per-clip crop content-position model.
 - Added backward-compatible crop-position derivation from the crop window.
-- Replaced direct media `clip-path` rendering with a fixed crop viewport and positioned media content.
+- Replaced direct media `clip-path` rendering with a fixed crop viewport and separately positioned media content.
 - Added Inspector controls for Crop position X/Y and a Center content action.
 - Kept crop-position changes in the existing project history engine.
 - Cleared stored crop position when crop is fully reset.
-
-Automated coverage:
-- Added crop-position derivation and normalization tests.
-- Added crop-position timeline-command coverage.
-- Added Preview crop viewport and explicit position coverage.
-- Added App-level crop-position Inspector coverage.
+- Updated App and Preview regression assertions for the new crop viewport structure.
 
 Validation:
-- Local lint, test, build, Tauri dev, and manual validation are pending user verification.
+- User confirmed local lint, test, build, Tauri dev, and requested M3.18 manual checks passed on Linux.
+- Follow-up fixes for crop-position Inspector naming, optional crop typing, and stale Preview/App assertions were also confirmed passing by the user.
 
 Known limitation:
 - Direct crop-content panning and aspect-ratio crop presets remain future work.
+
+Next step:
+- M3.19 should add direct crop-content panning while preserving the existing crop viewport, transform/anchor behavior, and history model.
 
 ## Documentation rule
 
