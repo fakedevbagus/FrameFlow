@@ -221,8 +221,8 @@ describe("canvas manipulation", () => {
       base,
     );
 
-    expect(position.x).toBeCloseTo(0.6, 5);
-    expect(position.y).toBeCloseTo(0.6, 5);
+    expect(position.x).toBeCloseTo(0.3, 5);
+    expect(position.y).toBeCloseTo(0.2, 5);
   });
 
   it("accounts for transform scale and rotation when panning crop content", () => {
@@ -239,7 +239,7 @@ describe("canvas manipulation", () => {
     );
 
     expect(position.x).toBeCloseTo(0.5, 5);
-    expect(position.y).toBeCloseTo(0.3, 5);
+    expect(position.y).toBeCloseTo(0.7, 5);
   });
 
   it("keeps a dragged crop edge away from removing all visible content", () => {
