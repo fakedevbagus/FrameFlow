@@ -429,6 +429,50 @@ describe("Preview", () => {
     ).toBeInTheDocument();
   });
 
+  it("re-aligns video to the transport position when playback starts", async () => {
+    let project = createProject({ id: "replay-alignment-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-replay",
+          name: "replay.mp4",
+          mediaType: "video",
+          sourcePath: "/media/replay.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-replay");
+
+    const { rerender } = render(
+      <Preview
+        project={project}
+        currentTimeMs={0}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    const video = screen.getByTestId("preview-video") as HTMLVideoElement;
+    video.currentTime = 4.8;
+
+    rerender(
+      <Preview
+        project={project}
+        currentTimeMs={0}
+        isPlaying
+      />,
+    );
+
+    await vi.waitFor(() => {
+      expect(video.currentTime).toBe(0);
+    });
+  });
+
   it("starts media playback when transport playback is active", async () => {
     const playMock = vi
       .spyOn(HTMLMediaElement.prototype, "play")
