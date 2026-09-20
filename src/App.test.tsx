@@ -416,6 +416,63 @@ describe("App", () => {
     expect(container).toHaveTextContent("Transform updated.");
   });
 
+  it("changes the selected visual transform anchor", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-transform-anchor-ui",
+        name: "anchor-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/anchor-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("anchor-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add anchor-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select anchor-ui.mp4 clip",
+      }),
+    );
+
+    const anchorButton = screen.getByRole("button", {
+      name: "Set anchor top left",
+    });
+
+    expect(anchorButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(anchorButton);
+
+    await waitFor(() => {
+      expect(anchorButton).toHaveAttribute("aria-pressed", "true");
+      expect(container).toHaveTextContent("0%, 0%");
+      expect(screen.getByTestId("preview-video").parentElement).toHaveStyle({
+        transformOrigin: "0% 0%",
+      });
+    });
+
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Set anchor center" }),
+      ).toHaveAttribute("aria-pressed", "true");
+    });
+  });
+
   it("changes keyframe interpolation from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
