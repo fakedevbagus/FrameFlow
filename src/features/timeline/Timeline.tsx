@@ -192,7 +192,9 @@ export function Timeline({
         timelineDurationMs,
       ),
     );
-    event.currentTarget.setPointerCapture(event.pointerId);
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
 
     setKeyframeInteraction({
       clipId: clip.id,
@@ -280,6 +282,7 @@ export function Timeline({
 
     if (
       event &&
+      "hasPointerCapture" in event.currentTarget &&
       event.currentTarget.hasPointerCapture(event.pointerId)
     ) {
       event.currentTarget.releasePointerCapture(event.pointerId);
