@@ -652,7 +652,7 @@ function App() {
     fromTimeMs: number,
     toTimeMs: number,
   ) {
-    updateSelectedClip(
+    applyProjectChange(
       (currentProject) =>
         moveTransformKeyframe(
           currentProject,
