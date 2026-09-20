@@ -30,6 +30,8 @@ import {
   updateClipTransformAnchor,
   updateClipCrop,
   updateClipCropPosition,
+  updateClipCropWithPosition,
+  updateCanvasDimensions,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -39,10 +41,12 @@ import { Preview } from "./features/preview/Preview";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
+  CROP_ASPECT_RATIO_PRESETS,
   getClipCrop,
   getClipCropPosition,
   getClipTransformAnchor,
   getClipTransformAtTime,
+  getCropForAspectRatio,
   getTransformKeyframeAtTime,
   normalizeClipCrop,
   normalizeClipTransform,
@@ -85,6 +89,14 @@ const navigation: Array<{ id: WorkspaceView; label: string }> = [
   { id: "editor", label: "Editor" },
   { id: "export", label: "Export" },
 ];
+
+const canvasAspectRatioPresets = [
+  { id: "16-9", label: "16:9", width: 1920, height: 1080 },
+  { id: "9-16", label: "9:16", width: 1080, height: 1920 },
+  { id: "1-1", label: "1:1", width: 1080, height: 1080 },
+  { id: "4-5", label: "4:5", width: 1080, height: 1350 },
+  { id: "4-3", label: "4:3", width: 1440, height: 1080 },
+] as const;
 
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
@@ -145,6 +157,13 @@ function App() {
     Math.max(currentTimeMs, 0),
     timelineDurationMs,
   );
+
+  const selectedCanvasPresetId =
+    canvasAspectRatioPresets.find(
+      (preset) =>
+        preset.width === project.canvas.width &&
+        preset.height === project.canvas.height,
+    )?.id ?? "custom";
 
   useEffect(() => {
     saveWorkspaceProject(project);
@@ -217,6 +236,33 @@ function App() {
     setPlaybackTime(timeMs);
   }
 
+  function handleSetCanvasAspectRatio(presetId: string) {
+    const preset = canvasAspectRatioPresets.find(
+      (candidate) => candidate.id === presetId,
+    );
+
+    if (!preset) {
+      return;
+    }
+
+    if (
+      project.canvas.width === preset.width &&
+      project.canvas.height === preset.height
+    ) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        updateCanvasDimensions(
+          currentProject,
+          preset.width,
+          preset.height,
+        ),
+      "Canvas aspect ratio updated.",
+    );
+  }
+
   async function handleOpenProject() {
     try {
       const result = await openProjectFromDialog();
@@ -284,6 +330,49 @@ function App() {
   }
 
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
+  const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
+  const [previewCanvasSize, setPreviewCanvasSize] = useState({
+    width: 0,
+    height: 0,
+  });
+
+  useEffect(() => {
+    const stageRegion = previewStageRegionRef.current;
+
+    if (!stageRegion) {
+      return;
+    }
+
+    const updatePreviewCanvasSize = () => {
+      const { width, height } = stageRegion.getBoundingClientRect();
+
+      if (width <= 0 || height <= 0) {
+        setPreviewCanvasSize({ width: 0, height: 0 });
+        return;
+      }
+
+      const aspectRatio = project.canvas.width / project.canvas.height;
+      const fittedWidth = Math.min(width, height * aspectRatio);
+      const fittedHeight = fittedWidth / aspectRatio;
+
+      setPreviewCanvasSize({
+        width: fittedWidth,
+        height: fittedHeight,
+      });
+    };
+
+    updatePreviewCanvasSize();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(updatePreviewCanvasSize);
+      observer.observe(stageRegion);
+
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", updatePreviewCanvasSize);
+    return () => window.removeEventListener("resize", updatePreviewCanvasSize);
+  }, [project.canvas.height, project.canvas.width]);
 
   const getPreviewMediaElements = useCallback((): HTMLMediaElement[] => {
     const container = previewCanvasRef.current;
@@ -611,6 +700,100 @@ function App() {
     );
   }
 
+  function getSelectedVisualMediaDimensions(): { width: number; height: number } | null {
+    if (!selectedClipContext || !previewCanvasRef.current) {
+      return null;
+    }
+
+    const media = Array.from(
+      previewCanvasRef.current.querySelectorAll<HTMLVideoElement | HTMLImageElement>(
+        "video, img",
+      ),
+    ).find(
+      (candidate) =>
+        candidate.getAttribute("data-clip-id") === selectedClipContext.clip.id,
+    );
+
+    if (!media) {
+      return null;
+    }
+
+    if ("videoWidth" in media) {
+      return media.videoWidth > 0 && media.videoHeight > 0
+        ? { width: media.videoWidth, height: media.videoHeight }
+        : null;
+    }
+
+    if ("naturalWidth" in media) {
+      return media.naturalWidth > 0 && media.naturalHeight > 0
+        ? { width: media.naturalWidth, height: media.naturalHeight }
+        : null;
+    }
+
+    return null;
+  }
+
+  function handleSetSelectedCropAspectPreset(
+    preset: (typeof CROP_ASPECT_RATIO_PRESETS)[number],
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    if (preset.ratio === null) {
+      updateSelectedClip(
+        (currentProject) =>
+          updateClipCropWithPosition(
+            currentProject,
+            selectedClipContext.clip.id,
+            { top: 0, right: 0, bottom: 0, left: 0 },
+            undefined,
+          ),
+        "Crop aspect ratio updated.",
+      );
+      return;
+    }
+
+    const dimensions = getSelectedVisualMediaDimensions();
+
+    if (!dimensions) {
+      setProjectNotice("Media dimensions are not available yet.");
+      return;
+    }
+
+    const result = getCropForAspectRatio(
+      preset.ratio,
+      dimensions.width,
+      dimensions.height,
+      selectedCropPosition ?? undefined,
+    );
+
+    const currentCrop = selectedCrop ?? { top: 0, right: 0, bottom: 0, left: 0 };
+    const currentPosition = selectedCropPosition ?? { x: 0.5, y: 0.5 };
+
+    if (
+      result.crop.top === currentCrop.top &&
+      result.crop.right === currentCrop.right &&
+      result.crop.bottom === currentCrop.bottom &&
+      result.crop.left === currentCrop.left &&
+      result.cropPosition?.x === currentPosition.x &&
+      result.cropPosition?.y === currentPosition.y
+    ) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipCropWithPosition(
+          currentProject,
+          selectedClipContext.clip.id,
+          result.crop,
+          result.cropPosition,
+        ),
+      "Crop aspect ratio updated.",
+    );
+  }
+
   function handleSetSelectedCropPosition(position: CropPosition) {
     if (!selectedClipContext || !selectedCropPosition) {
       return;
@@ -848,6 +1031,7 @@ function App() {
       "Canvas crop updated.",
     );
   }
+
 
 
   function handleAddTransformKeyframe() {
@@ -1116,9 +1300,23 @@ function App() {
               <button className="toolbar-button" onClick={handleSaveProject} type="button">
                 Save
               </button>
-              <button className="toolbar-button" type="button">
-                9:16
-              </button>
+              <select
+                aria-label="Canvas aspect ratio"
+                className="canvas-preset-select"
+                value={selectedCanvasPresetId}
+                onChange={(event) =>
+                  handleSetCanvasAspectRatio(event.currentTarget.value)
+                }
+              >
+                {selectedCanvasPresetId === "custom" ? (
+                  <option value="custom">Custom</option>
+                ) : null}
+                {canvasAspectRatioPresets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.label}
+                  </option>
+                ))}
+              </select>
               <button className="primary-button" type="button">
                 Export
               </button>
@@ -1131,8 +1329,24 @@ function App() {
           </div>
 
           <div className="preview-region">
-            <div className="preview-canvas" ref={previewCanvasRef}>
-              <Preview
+            <div className="preview-stage-region" ref={previewStageRegionRef}>
+              <div
+                className="preview-canvas"
+                ref={previewCanvasRef}
+                style={{
+                  aspectRatio:
+                    project.canvas.width + " / " + project.canvas.height,
+                  width:
+                    previewCanvasSize.width > 0
+                      ? previewCanvasSize.width + "px"
+                      : undefined,
+                  height:
+                    previewCanvasSize.height > 0
+                      ? previewCanvasSize.height + "px"
+                      : undefined,
+                }}
+              >
+                <Preview
                 project={project}
                 currentTimeMs={displayedCurrentTimeMs}
                 isPlaying={isPlaying}
@@ -1141,7 +1355,8 @@ function App() {
                 onTransformCommit={handleCanvasTransformCommit}
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
-              />
+                />
+              </div>
             </div>
             <div className="transport-controls" aria-label="Playback controls">
               <button
@@ -1389,6 +1604,25 @@ function App() {
                     >
                       Reset crop
                     </button>
+                    <div className="inspector-crop-aspect-presets">
+                      <div className="inspector-section-header">
+                        <span className="inspector-section-title">Aspect ratio</span>
+                        <span className="inspector-keyframe-count">Crop viewport</span>
+                      </div>
+                      <div className="inspector-crop-aspect-grid">
+                        {CROP_ASPECT_RATIO_PRESETS.map((preset) => (
+                          <button
+                            aria-label={"Set crop aspect ratio " + preset.label}
+                            className="inspector-inline-button"
+                            key={preset.id}
+                            onClick={() => handleSetSelectedCropAspectPreset(preset)}
+                            type="button"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div
                       className="inspector-crop-position"
                       key={

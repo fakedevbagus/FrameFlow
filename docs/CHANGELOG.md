@@ -2,6 +2,34 @@
 
 ## 2026-09-21
 
+### M3.20 — Aspect-ratio crop presets — in progress
+Branch: `feat/m3-20-crop-aspect-presets`
+PR #30 — draft
+
+Implemented:
+- Added common crop presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
+- Added intrinsic-media-dimension crop math with source-position preservation and valid-range clamping.
+- Added an atomic timeline command for applying crop and crop position together.
+- Added Inspector crop aspect-ratio controls.
+- Added media dimension lookup support for both video and image preview elements.
+- Added regression coverage for preset math, command behavior, and App/Inspector Undo workflow.
+- Added canvas aspect-ratio presets for 16:9, 9:16, 1:1, 4:5, and 4:3, committed through project history.
+- Made the preview canvas follow project canvas dimensions instead of a hardcoded 9:16 framing.
+- Hardened the fullscreen workspace so media/Inspector panels scroll internally and the editor stays inside the viewport.
+- Added App and timeline-command regression coverage for canvas aspect changes, preview framing, and Undo.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Crop position remains per-clip and is not keyframed.
+- Custom crop ratios are deferred.
+
+Next step:
+- User validates M3.20 locally before the draft PR is marked ready and merged.
+
+## 2026-09-21
+
 ### M3.19 — Direct crop-content panning — merged
 Branch: `feat/m3-19-direct-crop-content-panning`
 PR #29 — merged

@@ -955,6 +955,7 @@ function PreviewVisualLayer({
               className="preview-layer preview-image-layer"
               data-preview-state="image"
               ref={imageRef}
+              data-clip-id={layer.clip.id}
               src={mediaUrl ?? undefined}
               onLoad={handleImageLoad}
               style={{

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  CROP_ASPECT_RATIO_PRESETS,
   DEFAULT_CLIP_TRANSFORM,
   DEFAULT_TRANSFORM_ANCHOR,
   getClipTransform,
   getClipTransformAnchor,
   getClipTransformAtTime,
+  getCropForAspectRatio,
   getTransformKeyframeAtTime,
   normalizeClipTransform,
   normalizeTransformKeyframes,
@@ -50,6 +52,59 @@ describe("clip transforms", () => {
 
   it("normalizes negative rotations without changing their direction", () => {
     expect(normalizeClipTransform({ rotation: -450 }).rotation).toBe(-90);
+  });
+
+  it("lists the supported crop aspect ratio presets", () => {
+    expect(CROP_ASPECT_RATIO_PRESETS.map((preset) => preset.label)).toEqual([
+      "Original",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:5",
+      "4:3",
+    ]);
+  });
+
+  it("derives a centered square crop from a 16:9 source", () => {
+    expect(getCropForAspectRatio(1, 1920, 1080, undefined)).toEqual({
+      crop: {
+        top: 0,
+        right: 0.21875,
+        bottom: 0,
+        left: 0.21875,
+      },
+      cropPosition: {
+        x: 0.5,
+        y: 0.5,
+      },
+    });
+  });
+
+  it("preserves crop content position while keeping the new viewport inside the source", () => {
+    expect(getCropForAspectRatio(16 / 9, 1080, 1920, { x: 0.2, y: 0.9 })).toEqual({
+      crop: {
+        top: 0.68359375,
+        right: 0,
+        bottom: 0,
+        left: 0,
+      },
+      cropPosition: {
+        x: 0.5,
+        y: 0.841796875,
+      },
+    });
+  });
+
+  it("resets crop and stored crop position for the Original preset", () => {
+    expect(getCropForAspectRatio(null, 1920, 1080, { x: 0.2, y: 0.8 })).toEqual({
+      crop: {
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+      },
+      cropPosition: undefined,
+    });
   });
 });
 

@@ -23,6 +23,34 @@ import {
 
 const defaultImageDurationMs = 3000;
 
+export function updateCanvasDimensions(
+  project: Project,
+  width: number,
+  height: number,
+  now: Date = new Date(),
+): Project {
+  if (
+    !Number.isFinite(width) ||
+    !Number.isInteger(width) ||
+    width <= 0 ||
+    !Number.isFinite(height) ||
+    !Number.isInteger(height) ||
+    height <= 0
+  ) {
+    throw new Error("Canvas dimensions must be positive integers.");
+  }
+
+  return {
+    ...project,
+    canvas: {
+      ...project.canvas,
+      width,
+      height,
+    },
+    updatedAt: now.toISOString(),
+  };
+}
+
 export function updateClipTransformAnchor(
   project: Project,
   clipId: string,
@@ -85,6 +113,50 @@ export function updateClipCrop(
         normalizedCrop.left === 0
           ? undefined
           : location.clip.cropPosition,
+    },
+    now,
+  );
+}
+
+export function updateClipCropWithPosition(
+  project: Project,
+  clipId: string,
+  crop: ClipCrop,
+  position: CropPosition | undefined,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Crop controls are only available for visual media.");
+  }
+
+  const normalizedCrop = normalizeClipCrop(crop);
+
+  if (!isValidClipCrop(normalizedCrop)) {
+    throw new Error("Crop cannot remove the entire visual content.");
+  }
+
+  const hasCrop =
+    normalizedCrop.top > 0 ||
+    normalizedCrop.right > 0 ||
+    normalizedCrop.bottom > 0 ||
+    normalizedCrop.left > 0;
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      crop: normalizedCrop,
+      cropPosition: hasCrop
+        ? normalizeClipCropPosition(normalizedCrop, position)
+        : undefined,
     },
     now,
   );

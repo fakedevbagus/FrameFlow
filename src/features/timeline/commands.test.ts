@@ -21,7 +21,41 @@ import {
   updateClipTransformAnchor,
   updateClipCrop,
   updateClipCropPosition,
+  updateClipCropWithPosition,
+  updateCanvasDimensions,
 } from "./commands";
+
+describe("canvas settings", () => {
+  it("updates canvas dimensions without changing frame rate", () => {
+    const project = createProject({ id: "canvas-dimensions" });
+
+    const updated = updateCanvasDimensions(
+      project,
+      1920,
+      1080,
+      new Date("2026-09-21T02:00:00.000Z"),
+    );
+
+    expect(updated.canvas).toEqual({
+      width: 1920,
+      height: 1080,
+      frameRate: 30,
+    });
+    expect(updated.updatedAt).toBe("2026-09-21T02:00:00.000Z");
+    expect(updated.tracks).toEqual(project.tracks);
+  });
+
+  it("rejects invalid canvas dimensions", () => {
+    const project = createProject({ id: "canvas-dimensions-invalid" });
+
+    expect(() => updateCanvasDimensions(project, 1920.5, 1080)).toThrow(
+      "Canvas dimensions must be positive integers.",
+    );
+    expect(() => updateCanvasDimensions(project, 0, 1080)).toThrow(
+      "Canvas dimensions must be positive integers.",
+    );
+  });
+});
 
 describe("track management", () => {
   it("adds a track with the next type-specific name", () => {
@@ -260,6 +294,60 @@ describe("clip transforms", () => {
       rotation: 0,
       opacity: 1,
     });
+  });
+
+  it("updates crop and content position atomically", () => {
+    let project = createProject({ id: "crop-aspect-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "aspect.mp4",
+          mediaType: "video",
+          sourcePath: "/aspect.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipCropWithPosition(
+      project,
+      clipId,
+      {
+        top: 0,
+        right: 0.2,
+        bottom: 0,
+        left: 0.2,
+      },
+      { x: 0.6, y: 0.5 },
+      new Date("2026-09-21T01:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].crop).toEqual({
+      top: 0,
+      right: 0.2,
+      bottom: 0,
+      left: 0.2,
+    });
+    expect(updated.tracks[0].clips[0].cropPosition).toEqual({
+      x: 0.6,
+      y: 0.5,
+    });
+    expect(updated.updatedAt).toBe("2026-09-21T01:00:00.000Z");
+
+    const reset = updateClipCropWithPosition(
+      updated,
+      clipId,
+      { top: 0, right: 0, bottom: 0, left: 0 },
+      { x: 0.7, y: 0.3 },
+    );
+
+    expect(reset.tracks[0].clips[0].cropPosition).toBeUndefined();
   });
 
   it("updates and clamps crop content position", () => {
