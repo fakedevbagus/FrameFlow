@@ -24,7 +24,7 @@
         "enable": true,
         "scope": [
           "$HOME/**",
-          "$CACHE/frameflow/previews-v2/**",
+          "$CACHE/frameflow/previews-v3/**/*",
           "/media/**",
           "/mnt/**",
           "/run/media/**"
