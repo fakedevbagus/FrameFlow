@@ -15,6 +15,8 @@ The project is being built incrementally. Every milestone must be small, testabl
 - M3.15 was merged as PR #25 with merge SHA `69c2b5edee8e4ea5e5d530c2402e0c9ce7281abc`.
 - M3.16 was merged as PR #26 with merge SHA `cb61fb6277d8b800f30978098ba5abfaf2acc97f`.
 - M3.17 was merged as PR #27 with merge SHA `dd4333deccc420bfe07dd68f05c2cb49ae865bdb`.
+- M3.18 was merged as PR #28 with merge SHA `f59553d3e7192bae2a00741acfa5177da94e94eb`.
+- M3.19 was merged as PR #29 with merge SHA `549b1423e365ed11116a14b1005aa5a38f7b35ad`.
 - New milestone branches must be created from the updated `main` after the preceding milestone validation.
 
 ## Development environment
@@ -492,25 +494,31 @@ Known limitation:
 - Direct crop-content panning with pointer dragging and aspect-ratio crop presets remain future work.
 
 Next step:
-- Start M3.19 from the updated `main`, focusing on direct crop-content panning while preserving crop, transform, anchor, keyframe, and history behavior.
+- Start M3.20 from the updated `main`, focusing on aspect-ratio crop presets while preserving crop, transform, anchor, keyframe, and history behavior.
 
-## M3.19 — Direct crop-content panning (in progress)
+## M3.19 — Direct crop-content panning — completed
 
 Branch: `feat/m3-19-direct-crop-content-panning`
 PR: #29
+Merge SHA: `549b1423e365ed11116a14b1005aa5a38f7b35ad`
 
-Scope:
-- Add direct pointer panning for source content inside the fixed M3.18 crop viewport.
-- Keep the crop viewport fixed while changing the source point aligned to its center.
-- Account for the active transform scale, rotation, translation, and anchor during pointer mapping.
-- Constrain crop content movement so the crop viewport remains fully covered by source content.
-- Commit one crop-position history operation per completed pan gesture.
-- Preserve existing canvas move behavior for uncropped visuals and existing crop edge/transform handles.
+Scope delivered:
+- Added direct pointer panning for source content inside the fixed M3.18 crop viewport.
+- Kept the crop viewport fixed while changing the source point aligned to its center.
+- Accounted for the active transform scale, rotation, translation, and anchor during pointer mapping.
+- Constrained crop content movement so the crop viewport remains fully covered by source content.
+- Committed one crop-position history operation per completed pan gesture.
+- Preserved existing canvas move behavior for uncropped visuals and existing crop edge/transform handles.
 
 Interaction design:
 - A selected visual with non-zero crop exposes a transparent pan surface inside the crop viewport while playback is stopped.
 - Dragging inside that surface changes `Clip.cropPosition`; crop edge handles continue to edit `Clip.crop`.
 - Uncropped visuals do not enable the pan surface, so their existing canvas move interaction is unchanged.
+
+Architecture decisions:
+- Direct crop-content panning reuses the existing transformed pointer-to-content mapping rather than introducing a parallel coordinate system.
+- The source point is clamped to the mathematically valid range for the current crop viewport, preventing uncovered gaps at the viewport edges.
+- Pan gestures update live UI state but create a single history mutation on pointer release through the existing crop-position command.
 
 Automated coverage added:
 - Crop-content pointer math and directionality.
@@ -520,14 +528,15 @@ Automated coverage added:
 - App direct pan workflow, Inspector synchronization, and Undo history.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed the M3.19 local validation passed on Linux after the final crop-pan regression fixture correction.
+- The final App-level regression fixture uses both top and right crop so horizontal crop-position movement is mathematically available; the test also verifies Undo restores the prior crop position.
 
 Known limitations:
 - Aspect-ratio crop presets remain future work.
 - Crop position remains per-clip and is not keyframed in this milestone.
 
 Next step:
-- Validate PR #29 locally before merging M3.19.
+- Start M3.20 from the updated `main`, focusing on aspect-ratio crop presets while preserving the current crop viewport, crop-position, transform/anchor, keyframe, and history architecture.
 
 ## Documentation protocol
 
