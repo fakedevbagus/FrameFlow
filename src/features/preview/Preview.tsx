@@ -225,9 +225,6 @@ function PreviewVisualLayer({
 
     let cancelled = false;
 
-    setIsPreparingPreview(true);
-    setVideoSourceUrl(null);
-
     void invoke<string>("prepare_media_preview", {
       path: layer.asset.sourcePath,
     })
@@ -717,7 +714,7 @@ function PreviewAudioLayer({
         className="preview-layer-error"
         role="status"
       >
-        Audio preview unavailable
+        Preparing audio preview…
       </div>
     );
   }
