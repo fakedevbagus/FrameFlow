@@ -5,6 +5,21 @@ import { importMediaFiles } from "./features/media/import";
 
 vi.mock("@tauri-apps/api/core", () => ({
   convertFileSrc: (path: string) => "asset://" + path,
+  invoke: vi.fn((command: string) => {
+    if (command === "prepare_media_preview") {
+      return Promise.resolve(
+        "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/default.mp4",
+      );
+    }
+
+    if (command === "get_media_http_url") {
+      return Promise.resolve(
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fdefault.mp4",
+      );
+    }
+
+    return Promise.resolve(undefined);
+  }),
 }));
 
 vi.mock("./features/media/import", () => ({
