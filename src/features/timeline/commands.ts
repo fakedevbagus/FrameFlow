@@ -566,6 +566,7 @@ export function resetClipTransform(
     location,
     {
       transform: { ...DEFAULT_CLIP_TRANSFORM },
+      transformAnchor: undefined,
       transformKeyframes: undefined,
     },
     now,
