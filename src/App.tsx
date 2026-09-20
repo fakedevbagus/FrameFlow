@@ -59,6 +59,9 @@ function App() {
   const canRedo = history.future.length > 0;
   const assets = project.assets;
   const selectedClipContext = findClipContext(project, selectedClipId);
+  const selectedTransform = selectedClipContext
+    ? getClipTransform(selectedClipContext.clip.transform)
+    : null;
   const timelineDurationMs = getTimelineDurationMs(project);
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
@@ -804,20 +807,16 @@ function App() {
                   </div>
 
                   <div className="inspector-transform-readout">
-                    {(() => {
-                      const transform = getClipTransform(
-                        selectedClipContext.clip.transform,
-                      );
-                      return (
-                        <>
-                          <span>X</span><strong>{formatSignedPercent(transform.x)}</strong>
-                          <span>Y</span><strong>{formatSignedPercent(transform.y)}</strong>
-                          <span>Scale</span><strong>{transform.scale.toFixed(2)}×</strong>
-                          <span>Rotation</span><strong>{transform.rotation}°</strong>
-                          <span>Opacity</span><strong>{Math.round(transform.opacity * 100)}%</strong>
-                        </>
-                      );
-                    })()}
+                    <span>X</span>
+                    <strong>{formatSignedPercent(selectedTransform?.x ?? 0)}</strong>
+                    <span>Y</span>
+                    <strong>{formatSignedPercent(selectedTransform?.y ?? 0)}</strong>
+                    <span>Scale</span>
+                    <strong>{(selectedTransform?.scale ?? 1).toFixed(2)}×</strong>
+                    <span>Rotation</span>
+                    <strong>{selectedTransform?.rotation ?? 0}°</strong>
+                    <span>Opacity</span>
+                    <strong>{Math.round((selectedTransform?.opacity ?? 1) * 100)}%</strong>
                   </div>
 
                   <div className="inspector-transform-grid">
