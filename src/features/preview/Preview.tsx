@@ -199,8 +199,6 @@ function PreviewVisualLayer({
   const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const [cropGesture, setCropGesture] = useState<CropGesture | null>(null);
-  const [cropPositionGesture, setCropPositionGesture] =
-    useState<CropPositionGesture | null>(null);
   const cropPositionGestureRef = useRef<CropPositionGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
@@ -592,7 +590,6 @@ function PreviewVisualLayer({
     } satisfies CropPositionGesture;
 
     cropPositionGestureRef.current = nextGesture;
-    setCropPositionGesture(nextGesture);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -625,7 +622,6 @@ function PreviewVisualLayer({
       };
 
       cropPositionGestureRef.current = nextGesture;
-      setCropPositionGesture(nextGesture);
       return;
     }
 
@@ -719,7 +715,6 @@ function PreviewVisualLayer({
       const nextPosition = activeCropPositionGesture.position;
 
       cropPositionGestureRef.current = null;
-      setCropPositionGesture(null);
 
       if (shouldCommit) {
         onCropPositionCommit?.(layer.clip.id, nextPosition);
@@ -773,7 +768,6 @@ function PreviewVisualLayer({
       activeCropPositionGesture.pointerId === event.pointerId
     ) {
       cropPositionGestureRef.current = null;
-      setCropPositionGesture(null);
 
       try {
         interactionRef.current?.releasePointerCapture(event.pointerId);
