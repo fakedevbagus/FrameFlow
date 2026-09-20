@@ -210,7 +210,7 @@ Foundation, media import, Media Bin to Timeline, selection/Inspector/delete, tim
 
 ### M3.17 — Direct crop handle manipulation — in progress
 Branch: `feat/m3-17-direct-crop-handles`
-PR: pending
+PR #27 — draft
 
 Implemented:
 - Added direct Top, Right, Bottom, and Left crop handles to selected visual preview layers.
