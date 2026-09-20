@@ -504,6 +504,7 @@ function PreviewVisualLayer({
         style={{
           ...contentLayerStyle,
           transform: layerStyle.transform,
+          opacity: layerStyle.opacity,
         }}
       >
         <video
