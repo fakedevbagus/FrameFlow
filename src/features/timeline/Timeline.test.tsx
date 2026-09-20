@@ -485,7 +485,7 @@ describe("Timeline", () => {
   });
 
   it("shows a dissolve transition indicator between adjacent visual clips", () => {
-    let project = createVideoProject();
+    const project = createVideoProject();
     project.assets.push({
       id: "outgoing-transition",
       name: "outgoing.mp4",
