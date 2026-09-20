@@ -153,6 +153,52 @@ describe("Timeline", () => {
     expect(onRemoveTransformKeyframe).toHaveBeenCalledWith(clipId, 2000);
   });
 
+  it("nudges a focused transform keyframe with Arrow keys", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 2000);
+    project = addTransformKeyframe(project, clipId, 7000);
+
+    const onMoveTransformKeyframe = vi.fn();
+    const onCurrentTimeChange = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={2000}
+        onCurrentTimeChange={onCurrentTimeChange}
+        onMoveTransformKeyframe={onMoveTransformKeyframe}
+      />,
+    );
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to transform keyframe for intro.mp4 at 00:02.000",
+    });
+
+    markerButton.focus();
+    fireEvent.keyDown(markerButton, { key: "ArrowRight" });
+
+    expect(onMoveTransformKeyframe).toHaveBeenCalledWith(
+      clipId,
+      2000,
+      2033,
+    );
+    expect(onCurrentTimeChange).toHaveBeenCalledWith(2033);
+
+    fireEvent.keyDown(markerButton, {
+      key: "ArrowLeft",
+      shiftKey: true,
+    });
+
+    expect(onMoveTransformKeyframe).toHaveBeenLastCalledWith(
+      clipId,
+      2000,
+      1500,
+    );
+    expect(onCurrentTimeChange).toHaveBeenLastCalledWith(1500);
+  });
+
   it("moves the playhead when the ruler is clicked", () => {
     const project = createVideoProject();
     const onCurrentTimeChange = vi.fn();
