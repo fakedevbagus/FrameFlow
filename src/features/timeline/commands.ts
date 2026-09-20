@@ -23,6 +23,34 @@ import {
 
 const defaultImageDurationMs = 3000;
 
+export function updateCanvasDimensions(
+  project: Project,
+  width: number,
+  height: number,
+  now: Date = new Date(),
+): Project {
+  if (
+    !Number.isFinite(width) ||
+    !Number.isInteger(width) ||
+    width <= 0 ||
+    !Number.isFinite(height) ||
+    !Number.isInteger(height) ||
+    height <= 0
+  ) {
+    throw new Error("Canvas dimensions must be positive integers.");
+  }
+
+  return {
+    ...project,
+    canvas: {
+      ...project.canvas,
+      width,
+      height,
+    },
+    updatedAt: now.toISOString(),
+  };
+}
+
 export function updateClipTransformAnchor(
   project: Project,
   clipId: string,
