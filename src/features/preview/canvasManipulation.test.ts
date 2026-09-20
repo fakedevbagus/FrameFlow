@@ -3,6 +3,7 @@ import {
   getContainedContentBounds,
   getContainedContentPercentageBounds,
   cropFromPointer,
+  cropPositionFromPointer,
   transformFromPointer,
   type CanvasPointer,
 } from "./canvasManipulation";
@@ -188,6 +189,57 @@ describe("canvas manipulation", () => {
     );
 
     expect(crop.left).toBeCloseTo(0.5, 5);
+  });
+
+  it("pans crop content in the opposite direction of the pointer movement", () => {
+    const position = cropPositionFromPointer(
+      { x: 0.5, y: 0.5 },
+      { x: 50, y: 100 },
+      { x: 90, y: 60 },
+      { top: 0.1, right: 0.1, bottom: 0.1, left: 0.1 },
+      { left: 0, top: 0, width: 200, height: 400 },
+      200,
+      400,
+      base,
+    );
+
+    expect(position).toEqual({
+      x: 0.3,
+      y: 0.6,
+    });
+  });
+
+  it("keeps crop content inside the crop window while panning", () => {
+    const position = cropPositionFromPointer(
+      { x: 0.5, y: 0.5 },
+      { x: 100, y: 100 },
+      { x: 300, y: 300 },
+      { top: 0.4, right: 0.1, bottom: 0.2, left: 0.3 },
+      { left: 0, top: 0, width: 400, height: 400 },
+      400,
+      400,
+      base,
+    );
+
+    expect(position.x).toBeCloseTo(0.6, 5);
+    expect(position.y).toBeCloseTo(0.6, 5);
+  });
+
+  it("accounts for transform scale and rotation when panning crop content", () => {
+    const position = cropPositionFromPointer(
+      { x: 0.5, y: 0.5 },
+      { x: 100, y: 100 },
+      { x: 180, y: 100 },
+      { top: 0.1, right: 0.1, bottom: 0.1, left: 0.1 },
+      { left: 50, top: 50, width: 200, height: 200 },
+      400,
+      400,
+      { ...base, scale: 2, rotation: 90, x: 0, y: 0 },
+      { x: 0, y: 0 },
+    );
+
+    expect(position.x).toBeCloseTo(0.5, 5);
+    expect(position.y).toBeCloseTo(0.3, 5);
   });
 
   it("keeps a dragged crop edge away from removing all visible content", () => {
