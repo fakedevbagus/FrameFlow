@@ -932,6 +932,49 @@ button:disabled {
   margin: 0;
 }
 
+.timeline-clip-keyframes {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.timeline-keyframe-marker {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  background: transparent;
+  transform: translate(-50%, -50%);
+}
+
+.timeline-keyframe-marker span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 3px;
+  border: 1px solid #a99cff;
+  border-radius: 2px;
+  background: #2a263c;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
+  transform: rotate(45deg);
+}
+
+.timeline-keyframe-marker:hover span {
+  background: #514b73;
+  transform: rotate(45deg) scale(1.15);
+}
+
+.timeline-keyframe-marker-active span {
+  border-color: #f2efff;
+  background: #a99cff;
+}
+
 .timeline-clip {
   position: absolute;
   top: 8px;
