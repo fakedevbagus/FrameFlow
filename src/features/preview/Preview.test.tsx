@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "../timeline/commands";
@@ -71,7 +71,7 @@ describe("Preview", () => {
 
     expect(video).toHaveAttribute(
       "src",
-      "stream://localhost/%2Fmedia%2Fintro.mp4",
+      "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fdefault.mp4",
     );
   });
 
