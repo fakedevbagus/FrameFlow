@@ -1,5 +1,23 @@
 ## 2026-09-21
 
+### M3.24 — Timeline clip interaction hardening — in progress
+Branch: `feat/m3-24-timeline-interaction-hardening`
+
+Implemented:
+- Added Escape cancellation for direct timeline clip movement.
+- Added Escape cancellation for trim-start gestures.
+- Added Escape cancellation for trim-end gestures.
+- Released active pointer capture during cancellation without committing project history.
+- Added Timeline regression coverage for all clip gesture cancellation paths.
+
+Validation:
+- Local validation is pending user verification.
+
+Next step:
+- User validates M3.24 locally before merge.
+
+
+
 ### M3.23 — Transform/crop interaction hardening — merged
 Branch: `feat/m3-23-transform-crop-interaction-hardening`
 PR #34 — merged
