@@ -1,7 +1,11 @@
 import type { Clip, ClipTransform, Project, TrackType } from "../project/domain";
 import {
   DEFAULT_CLIP_TRANSFORM,
+  getClipTransformAtTime,
+  getTransformKeyframeAtTime,
   normalizeClipTransform,
+  removeTransformKeyframe as removeTransformKeyframeAtTime,
+  upsertTransformKeyframe,
 } from "../transform/transform";
 
 const defaultImageDurationMs = 3000;
@@ -241,12 +245,178 @@ export function updateClipTransform(
   );
 }
 
+export function updateClipTransformAtTime(
+  project: Project,
+  clipId: string,
+  timeMs: number,
+  changes: Partial<ClipTransform>,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform controls are only available for visual media.");
+  }
+
+  const durationMs = getClipDurationMs(location.clip);
+
+  if (!Number.isFinite(timeMs) || timeMs < 0 || timeMs > durationMs) {
+    throw new Error("Transform keyframe time must be inside the clip.");
+  }
+
+  const currentTransform = getClipTransformAtTime(
+    location.clip.transform,
+    location.clip.transformKeyframes,
+    timeMs,
+  );
+  const nextTransform = normalizeClipTransform({
+    ...currentTransform,
+    ...changes,
+  });
+
+  if (location.clip.transformKeyframes?.length) {
+    const nextKeyframes = upsertTransformKeyframe(
+      location.clip.transformKeyframes,
+      timeMs,
+      nextTransform,
+    );
+
+    return updateClipAtLocation(
+      project,
+      location,
+      {
+        transform: nextTransform,
+        transformKeyframes: nextKeyframes,
+      },
+      now,
+    );
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { transform: nextTransform },
+    now,
+  );
+}
+
+export function addTransformKeyframe(
+  project: Project,
+  clipId: string,
+  timeMs: number,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform keyframes are only available for visual media.");
+  }
+
+  const durationMs = getClipDurationMs(location.clip);
+
+  if (!Number.isFinite(timeMs) || timeMs < 0 || timeMs > durationMs) {
+    throw new Error("Transform keyframe time must be inside the clip.");
+  }
+
+  const transform = getClipTransformAtTime(
+    location.clip.transform,
+    location.clip.transformKeyframes,
+    timeMs,
+  );
+  const keyframes = upsertTransformKeyframe(
+    location.clip.transformKeyframes,
+    timeMs,
+    transform,
+  );
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      transformKeyframes: keyframes,
+      transform: transform,
+    },
+    now,
+  );
+}
+
+export function removeTransformKeyframe(
+  project: Project,
+  clipId: string,
+  timeMs: number,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform keyframes are only available for visual media.");
+  }
+
+  const keyframe = getTransformKeyframeAtTime(
+    location.clip.transformKeyframes,
+    timeMs,
+  );
+
+  if (!keyframe) {
+    throw new Error("No transform keyframe exists at this time.");
+  }
+
+  const keyframes = removeTransformKeyframeAtTime(
+    location.clip.transformKeyframes,
+    timeMs,
+  );
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      transformKeyframes: keyframes.length ? keyframes : undefined,
+      transform: getClipTransformAtTime(
+        location.clip.transform,
+        keyframes,
+        timeMs,
+      ),
+    },
+    now,
+  );
+}
+
 export function resetClipTransform(
   project: Project,
   clipId: string,
   now: Date = new Date(),
 ): Project {
-  return updateClipTransform(project, clipId, DEFAULT_CLIP_TRANSFORM, now);
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      transform: { ...DEFAULT_CLIP_TRANSFORM },
+      transformKeyframes: undefined,
+    },
+    now,
+  );
 }
 
 export function removeClipFromTimeline(
@@ -428,15 +598,48 @@ export function splitClipAtTime(
   const sourceSplitMs =
     clip.sourceStartMs + (timelineTimeMs - clip.timelineStartMs);
 
+  const splitLocalTimeMs = timelineTimeMs - clip.timelineStartMs;
+  const hasKeyframes = Boolean(clip.transformKeyframes?.length);
+  const splitTransform = hasKeyframes
+    ? getClipTransformAtTime(
+        clip.transform,
+        clip.transformKeyframes,
+        splitLocalTimeMs,
+      )
+    : undefined;
+  const firstKeyframes = hasKeyframes
+    ? upsertTransformKeyframe(
+        (clip.transformKeyframes ?? []).filter(
+          (keyframe) => keyframe.timeMs <= splitLocalTimeMs,
+        ),
+        splitLocalTimeMs,
+        splitTransform ?? DEFAULT_CLIP_TRANSFORM,
+      )
+    : undefined;
+  const secondKeyframes = hasKeyframes
+    ? upsertTransformKeyframe(
+        (clip.transformKeyframes ?? [])
+          .filter((keyframe) => keyframe.timeMs >= splitLocalTimeMs)
+          .map((keyframe) => ({
+            ...keyframe,
+            timeMs: keyframe.timeMs - splitLocalTimeMs,
+          })),
+        0,
+        splitTransform ?? DEFAULT_CLIP_TRANSFORM,
+      )
+    : undefined;
+
   const firstClip: Clip = {
     ...clip,
     sourceEndMs: sourceSplitMs,
+    transformKeyframes: firstKeyframes,
   };
   const secondClip: Clip = {
     ...clip,
     id: crypto.randomUUID(),
     timelineStartMs: timelineTimeMs,
     sourceStartMs: sourceSplitMs,
+    transformKeyframes: secondKeyframes,
   };
 
   const clips = track.clips.flatMap((candidate) =>

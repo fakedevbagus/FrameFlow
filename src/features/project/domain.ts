@@ -25,6 +25,11 @@ export interface ClipTransform {
   opacity: number;
 }
 
+export interface TransformKeyframe {
+  timeMs: number;
+  transform: ClipTransform;
+}
+
 export interface Clip {
   id: string;
   assetId: string;
@@ -32,6 +37,7 @@ export interface Clip {
   sourceStartMs: number;
   sourceEndMs: number | null;
   transform?: ClipTransform;
+  transformKeyframes?: TransformKeyframe[];
 }
 
 export interface Track {

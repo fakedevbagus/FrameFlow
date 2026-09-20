@@ -4,10 +4,13 @@ import {
   addAssetToTimeline,
   addAssetToTrack,
   addTrack,
+  addTransformKeyframe,
   removeTrack,
+  removeTransformKeyframe,
   resetClipTransform,
   toggleTrackMute,
   updateClipTransform,
+  updateClipTransformAtTime,
   moveClipOnTimeline,
   removeClipFromTimeline,
   splitClipAtTime,
@@ -581,5 +584,129 @@ describe("splitClipAtTime", () => {
     expect(() => splitClipAtTime(populated, clipId, 10_000)).toThrow(
       "Split time must be inside the selected clip.",
     );
+  });
+});
+
+
+describe("transform keyframe commands", () => {
+  it("adds keyframes and edits the keyed transform at the current time", () => {
+    let project = createProject({ id: "keyframe-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "keyframe.mp4",
+          mediaType: "video",
+          sourcePath: "/keyframe.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(
+      project,
+      clipId,
+      0,
+      new Date("2026-09-20T02:00:00.000Z"),
+    );
+    project = updateClipTransformAtTime(
+      project,
+      clipId,
+      2000,
+      { x: 40, scale: 2, opacity: 0.5 },
+      new Date("2026-09-20T02:00:01.000Z"),
+    );
+
+    expect(project.tracks[0].clips[0].transformKeyframes).toEqual([
+      {
+        timeMs: 0,
+        transform: {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 0,
+          opacity: 1,
+        },
+      },
+      {
+        timeMs: 2000,
+        transform: {
+          x: 40,
+          y: 0,
+          scale: 2,
+          rotation: 0,
+          opacity: 0.5,
+        },
+      },
+    ]);
+  });
+
+  it("removes the active keyframe and preserves the remaining animation", () => {
+    let project = createProject({ id: "keyframe-remove-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "keyframe-remove.mp4",
+          mediaType: "video",
+          sourcePath: "/keyframe-remove.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 0);
+    project = addTransformKeyframe(project, clipId, 2000);
+    project = updateClipTransformAtTime(project, clipId, 2000, { x: 30 });
+
+    const updated = removeTransformKeyframe(project, clipId, 2000);
+
+    expect(updated.tracks[0].clips[0].transformKeyframes).toHaveLength(1);
+    expect(updated.tracks[0].clips[0].transformKeyframes?.[0].timeMs).toBe(0);
+  });
+
+  it("carries keyed animation across a split", () => {
+    let project = createProject({ id: "keyframe-split-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "keyframe-split.mp4",
+          mediaType: "video",
+          sourcePath: "/keyframe-split.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 0);
+    project = updateClipTransformAtTime(project, clipId, 3000, {
+      x: 60,
+      scale: 2,
+    });
+    project = addTransformKeyframe(project, clipId, 6000);
+
+    const split = splitClipAtTime(project, clipId, 3000);
+    const first = split.tracks[0].clips[0];
+    const second = split.tracks[0].clips[1];
+
+    expect(first.transformKeyframes?.map((keyframe) => keyframe.timeMs)).toEqual([
+      0,
+      3000,
+    ]);
+    expect(second.transformKeyframes?.map((keyframe) => keyframe.timeMs)).toEqual([
+      0,
+      3000,
+    ]);
+    expect(second.transformKeyframes?.[0].transform.x).toBe(60);
   });
 });

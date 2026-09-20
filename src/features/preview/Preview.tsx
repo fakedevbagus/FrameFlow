@@ -1,4 +1,4 @@
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import {
   useEffect,
   useRef,
@@ -6,7 +6,10 @@ import {
   type PointerEvent,
 } from "react";
 import type { ClipTransform, Project } from "../project/domain";
-import { getClipTransform, normalizeClipTransform } from "../transform/transform";
+import {
+  getClipTransformAtTime,
+  normalizeClipTransform,
+} from "../transform/transform";
 import {
   getContainedContentBounds,
   getContainedContentPercentageBounds,
@@ -158,15 +161,29 @@ function PreviewVisualLayer({
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
+  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+  const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
     height: number;
   } | null>(null);
+  const [isPreparingPreview, setIsPreparingPreview] = useState(
+    layer.asset.mediaType === "video",
+  );
+  const onErrorRef = useRef(onError);
+
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
-  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
-  const baseTransform = getClipTransform(layer.clip.transform);
-  const activeTransform = gesture?.transform ?? baseTransform;
+  const transformTimeMs = Math.min(
+    Math.max(currentTimeMs - layer.clip.timelineStartMs, 0),
+    getClipDurationMsForTransform(layer.clip),
+  );
+  const currentTransform = getClipTransformAtTime(
+    layer.clip.transform,
+    layer.clip.transformKeyframes,
+    transformTimeMs,
+  );
+  const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
   const contentBoundsPercent = getContainedContentPercentageBounds(
@@ -196,6 +213,52 @@ function PreviewVisualLayer({
     height: `${contentBoundsPercent.height}%`,
     transformOrigin: "center center",
   };
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    if (layer.asset.mediaType !== "video") {
+      return;
+    }
+
+    let cancelled = false;
+
+    void invoke<string>("prepare_media_preview", {
+      path: layer.asset.sourcePath,
+    })
+      .then((previewPath) =>
+        invoke<string>("get_media_http_url", {
+          path: previewPath,
+        }),
+      )
+      .then((url) => {
+        if (cancelled) {
+          return;
+        }
+
+        setVideoSourceUrl(url);
+        setIsPreparingPreview(false);
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+
+        setIsPreparingPreview(false);
+        onErrorRef.current(
+          layer.asset.id,
+          error instanceof Error
+            ? error.message
+            : "A compatible video preview could not be prepared.",
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [layer.asset.id, layer.asset.mediaType, layer.asset.sourcePath]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -253,6 +316,18 @@ function PreviewVisualLayer({
     } catch {
       // Metadata can still be settling in some WebView implementations.
     }
+  }
+
+  function handleVideoError() {
+    const mediaError = mediaRef.current?.error;
+    const errorCode = mediaError?.code
+      ? ` (media error code ${mediaError.code})`
+      : "";
+
+    onError(
+      layer.asset.id,
+      `Video preview could not be loaded${errorCode}. The local preview server could not deliver a playable stream.`,
+    );
   }
 
   function handleImageLoad() {
@@ -319,6 +394,12 @@ function PreviewVisualLayer({
       // Pointer capture is not implemented in every runtime.
     }
 
+    const gestureBaseTransform = getClipTransformAtTime(
+      layer.clip.transform,
+      layer.clip.transformKeyframes,
+      transformTimeMs,
+    );
+
     setGesture({
       mode,
       pointerId: event.pointerId,
@@ -326,8 +407,8 @@ function PreviewVisualLayer({
         x: event.clientX,
         y: event.clientY,
       },
-      baseTransform,
-      transform: baseTransform,
+      baseTransform: gestureBaseTransform,
+      transform: gestureBaseTransform,
       manipulationBounds: mode === "move" ? {
         left: bounds.left,
         top: bounds.top,
@@ -440,7 +521,7 @@ function PreviewVisualLayer({
     );
   }
 
-  if (!mediaUrl) {
+  if (layer.asset.mediaType === "image" && !mediaUrl) {
     return (
       <div
         className="preview-interaction-layer preview-layer-error"
@@ -477,7 +558,7 @@ function PreviewVisualLayer({
             className="preview-layer preview-image-layer"
             data-preview-state="image"
             ref={imageRef}
-            src={mediaUrl}
+            src={mediaUrl ?? undefined}
             onLoad={handleImageLoad}
             style={{ width: "100%", height: "100%", objectFit: "fill", zIndex }}
           />
@@ -514,7 +595,7 @@ function PreviewVisualLayer({
           playsInline
           preload="auto"
           ref={mediaRef}
-          src={mediaUrl}
+          src={videoSourceUrl ?? undefined}
           style={{
             width: "100%",
             height: "100%",
@@ -522,10 +603,13 @@ function PreviewVisualLayer({
             zIndex,
           }}
           onLoadedMetadata={handleLoadedMetadata}
-          onError={() =>
-            onError(layer.asset.id, "Video could not be loaded.")
-          }
+          onError={() => void handleVideoError()}
         />
+        {isPreparingPreview ? (
+          <div className="preview-transcode-status" role="status">
+            Preparing compatible preview…
+          </div>
+        ) : null}
         {renderManipulationControls()}
       </div>
     </div>
@@ -541,7 +625,39 @@ function PreviewAudioLayer({
 }: PreviewLayerProps) {
   const mediaRef = useRef<HTMLAudioElement | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
-  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void invoke<string>("get_media_http_url", {
+      path: layer.asset.sourcePath,
+    })
+      .then((url) => {
+        if (!cancelled) {
+          setMediaUrl(url);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          onErrorRef.current(
+            layer.asset.id,
+            error instanceof Error
+              ? error.message
+              : "Audio preview could not be prepared.",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [layer.asset.id, layer.asset.sourcePath]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -598,7 +714,7 @@ function PreviewAudioLayer({
         className="preview-layer-error"
         role="status"
       >
-        Audio preview unavailable
+        Preparing audio preview…
       </div>
     );
   }
@@ -619,7 +735,7 @@ function PreviewAudioLayer({
       data-testid="preview-audio"
       preload="auto"
       ref={mediaRef}
-      src={mediaUrl}
+      src={mediaUrl ?? undefined}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
     />
@@ -633,3 +749,15 @@ function tryConvertFileSrc(path: string): string | null {
     return null;
   }
 }
+
+
+function getClipDurationMsForTransform(clip: ActivePreviewClip["clip"]): number {
+  if (clip.sourceEndMs === null) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+}
+
+
+

@@ -1,19 +1,55 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "../timeline/commands";
 import { Preview } from "./Preview";
 
-vi.mock("@tauri-apps/api/core", () => ({
-  convertFileSrc: (path: string) => "asset://" + path,
+vi.mock("@tauri-apps/api/core", async () => {
+  const actual = await vi.importActual<typeof import("@tauri-apps/api/core")>(
+    "@tauri-apps/api/core",
+  );
+
+  return {
+    ...actual,
+    convertFileSrc: (path: string) => "asset://" + path,
+    invoke: vi.fn(),
+  };
+});
+
+const { invokeMock } = await import("@tauri-apps/api/core").then((module) => ({
+  invokeMock: module.invoke as ReturnType<typeof vi.fn>,
 }));
+
+async function flushPreviewEffects() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  invokeMock.mockReset();
+  invokeMock.mockImplementation((command: string) => {
+    if (command === "prepare_media_preview") {
+      return Promise.resolve(
+        "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/default.mp4",
+      );
+    }
+
+    if (command === "get_media_http_url") {
+      return Promise.resolve(
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fdefault.mp4",
+      );
+    }
+
+    return Promise.resolve(undefined);
+  });
 });
 
 describe("Preview", () => {
-  it("renders the active local video asset", () => {
+  it("renders the active local video asset", async () => {
     let project = createProject({ id: "video-preview" });
 
     project = {
@@ -39,12 +75,69 @@ describe("Preview", () => {
       />,
     );
 
+    await flushPreviewEffects();
     const video = screen.getByTestId("preview-video");
 
-    expect(video).toHaveAttribute("src", "asset:///media/intro.mp4");
+    await vi.waitFor(() =>
+      expect(video).toHaveAttribute(
+        "src",
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fdefault.mp4",
+      ),
+    );
   });
 
-  it("renders multiple active visual layers in track order", () => {
+  it("prepares a compatible preview for the video layer", async () => {
+    invokeMock
+      .mockResolvedValueOnce(
+        "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/video-preview.mp4",
+      )
+      .mockResolvedValueOnce(
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
+      );
+
+    let project = createProject({ id: "video-preview-fallback" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-fallback",
+          name: "unsupported.mp4",
+          mediaType: "video",
+          sourcePath: "/media/unsupported.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-fallback");
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+    const video = screen.getByTestId("preview-video");
+
+    await vi.waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith("prepare_media_preview", {
+        path: "/media/unsupported.mp4",
+      });
+      expect(invokeMock).toHaveBeenCalledWith("get_media_http_url", {
+        path: "/home/test/.cache/com.fakedevbagus.frameflow/previews-v4/video-preview.mp4",
+      });
+      expect(video).toHaveAttribute(
+        "src",
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fvideo-preview.mp4",
+      );
+    });
+  });
+
+  it("renders multiple active visual layers in track order", async () => {
     let project = createProject({ id: "multitrack-preview" });
 
     project = {
@@ -108,14 +201,15 @@ describe("Preview", () => {
       />,
     );
 
-    const layers = screen.getAllByTestId("preview-video");
+    await flushPreviewEffects();
+    const layers = await screen.findAllByTestId("preview-video");
 
     expect(layers).toHaveLength(2);
     expect(layers[0]).toHaveStyle({ zIndex: "1" });
     expect(layers[1]).toHaveStyle({ zIndex: "2" });
   });
 
-  it("renders an image clip as the visual preview", () => {
+  it("renders an image clip as the visual preview", async () => {
     let project = createProject({ id: "image-preview" });
 
     project = {
@@ -141,13 +235,14 @@ describe("Preview", () => {
       />,
     );
 
+    await flushPreviewEffects();
     expect(screen.getByAltText("poster.png")).toHaveAttribute(
       "src",
       "asset:///pictures/poster.png",
     );
   });
 
-  it("renders audio-only clips with native controls", () => {
+  it("renders audio-only clips with native controls", async () => {
     let project = createProject({ id: "audio-preview" });
 
     project = {
@@ -173,12 +268,13 @@ describe("Preview", () => {
       />,
     );
 
-    expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
+    await flushPreviewEffects();
+    await screen.findByTestId("preview-audio");
     expect(screen.getByLabelText("Audio preview")).toBeInTheDocument();
     expect(screen.getByText("music.mp3")).toBeInTheDocument();
   });
 
-  it("keeps active audio layers mounted while a visual preview is playing", () => {
+  it("keeps active audio layers mounted while a visual preview is playing", async () => {
     let project = createProject({ id: "mixed-preview" });
 
     project = {
@@ -212,8 +308,9 @@ describe("Preview", () => {
       />,
     );
 
-    expect(screen.getByTestId("preview-video")).toBeInTheDocument();
-    expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
+    await screen.findByTestId("preview-video");
+    await flushPreviewEffects();
+    await screen.findByTestId("preview-audio");
     expect(screen.getByTestId("preview-audio")).not.toHaveAttribute("controls");
   });
 
