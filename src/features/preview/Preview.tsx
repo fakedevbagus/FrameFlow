@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { ClipTransform, Project } from "../project/domain";
 import {
+  getClipTransformAnchor,
   getClipTransformAtTime,
   normalizeClipTransform,
 } from "../transform/transform";
@@ -183,6 +184,7 @@ function PreviewVisualLayer({
     layer.clip.transformKeyframes,
     transformTimeMs,
   );
+  const anchor = getClipTransformAnchor(layer.clip.transformAnchor);
   const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
@@ -211,7 +213,7 @@ function PreviewVisualLayer({
     top: `${contentBoundsPercent.top}%`,
     width: `${contentBoundsPercent.width}%`,
     height: `${contentBoundsPercent.height}%`,
-    transformOrigin: "center center",
+    transformOrigin: `${anchor.x * 100}% ${anchor.y * 100}%`,
   };
 
   useEffect(() => {
@@ -452,6 +454,7 @@ function PreviewVisualLayer({
           y: event.clientY,
         },
         currentGesture.manipulationBounds,
+        anchor,
       );
 
       const moved =
