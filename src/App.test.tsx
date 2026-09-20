@@ -447,7 +447,7 @@ describe("App", () => {
     );
 
     const anchorButton = screen.getByRole("button", {
-      name: "Set anchor top left",
+      name: /Set anchor top left/i,
     });
 
     expect(anchorButton).toHaveAttribute("aria-pressed", "false");
@@ -468,7 +468,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: "Set anchor center" }),
+        screen.getByRole("button", { name: /Set anchor center/i }),
       ).toHaveAttribute("aria-pressed", "true");
     });
   });
