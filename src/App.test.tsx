@@ -489,7 +489,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("1 keyframe")).toBeInTheDocument();
-      expect(screen.getByText("Static transform at 00:04.000")).toBeInTheDocument();
+      expect(screen.getByText("Animated transform at 00:04.000")).toBeInTheDocument();
     });
   });
 
