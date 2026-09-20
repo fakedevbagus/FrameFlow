@@ -11,6 +11,7 @@ import {
   getClipCropPosition,
   getClipTransformAnchor,
   getClipTransformAtTime,
+  compensateTransformForAnchorChange,
   normalizeClipTransform,
   normalizeClipCrop,
 } from "../transform/transform";
@@ -20,6 +21,7 @@ import {
   transformFromPointer,
   cropFromPointer,
   cropPositionFromPointer,
+  transformAnchorFromPointer,
   type CanvasManipulationMode,
   type ContentBounds,
   type CropEdge,
@@ -38,6 +40,7 @@ interface PreviewProps {
   selectedClipId?: string | null;
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
+  onTransformAnchorCommit?: (clipId: string, anchor: TransformAnchor) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
 }
@@ -54,6 +57,7 @@ export function Preview({
   selectedClipId = null,
   onSelectClip,
   onTransformCommit,
+  onTransformAnchorCommit,
   onCropCommit,
   onCropPositionCommit,
 }: PreviewProps) {
@@ -94,6 +98,7 @@ export function Preview({
           isSelected={selectedClipId === layer.clip.id}
           onSelectClip={onSelectClip}
           onTransformCommit={onTransformCommit}
+          onTransformAnchorCommit={onTransformAnchorCommit}
           onCropCommit={onCropCommit}
           onCropPositionCommit={onCropPositionCommit}
           onError={handleMediaError}
@@ -178,6 +183,16 @@ interface CropGesture {
   hasMoved: boolean;
 }
 
+interface AnchorGesture {
+  pointerId: number;
+  startAnchor: TransformAnchor;
+  anchor: TransformAnchor;
+  manipulationBounds: ContentBounds;
+  baseTransform: ClipTransform;
+  transform: ClipTransform;
+  hasMoved: boolean;
+}
+
 function PreviewVisualLayer({
   layer,
   currentTimeMs,
@@ -188,6 +203,7 @@ function PreviewVisualLayer({
   isSelected,
   onSelectClip,
   onTransformCommit,
+  onTransformAnchorCommit,
   onCropCommit,
   onCropPositionCommit,
   onError,
@@ -201,6 +217,8 @@ function PreviewVisualLayer({
   const [cropGesture, setCropGesture] = useState<CropGesture | null>(null);
   const [cropPositionGesture, setCropPositionGesture] =
     useState<CropPositionGesture | null>(null);
+  const [anchorGesture, setAnchorGesture] =
+    useState<AnchorGesture | null>(null);
   const cropPositionGestureRef = useRef<CropPositionGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
@@ -232,7 +250,9 @@ function PreviewVisualLayer({
     activeCrop.right > 0.0001 ||
     activeCrop.bottom > 0.0001 ||
     activeCrop.left > 0.0001;
-  const activeTransform = gesture?.transform ?? currentTransform;
+  const activeAnchor = anchorGesture?.anchor ?? anchor;
+  const activeTransform =
+    anchorGesture?.transform ?? gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
   const contentBoundsPercent = getContainedContentPercentageBounds(
@@ -260,7 +280,7 @@ function PreviewVisualLayer({
     top: `${contentBoundsPercent.top}%`,
     width: `${contentBoundsPercent.width}%`,
     height: `${contentBoundsPercent.height}%`,
-    transformOrigin: `${anchor.x * 100}% ${anchor.y * 100}%`,
+    transformOrigin: `${activeAnchor.x * 100}% ${activeAnchor.y * 100}%`,
   };
   const visibleWidth = Math.max(
     0.001,
@@ -506,6 +526,46 @@ function PreviewVisualLayer({
     });
   }
 
+  function beginAnchorGesture(
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    onSelectClip?.(layer.clip.id);
+
+    if (isPlaying || !interactionRef.current) {
+      return;
+    }
+
+    const bounds = interactionRef.current.getBoundingClientRect();
+    const contentBounds = getInteractionContentBounds(bounds);
+
+    if (contentBounds.width <= 0 || contentBounds.height <= 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+      interactionRef.current.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is not implemented in every runtime.
+    }
+
+    setAnchorGesture({
+      pointerId: event.pointerId,
+      startAnchor: anchor,
+      anchor,
+      manipulationBounds: contentBounds,
+      baseTransform: currentTransform,
+      transform: currentTransform,
+      hasMoved: false,
+    });
+  }
+
   function beginCropGesture(
     edge: CropEdge,
     event: PointerEvent<HTMLButtonElement>,
@@ -597,6 +657,69 @@ function PreviewVisualLayer({
   function handlePointerMove(
     event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
   ) {
+    if (anchorGesture && anchorGesture.pointerId === event.pointerId) {
+      const nextAnchor = transformAnchorFromPointer(
+        {
+          x: event.clientX,
+          y: event.clientY,
+        },
+        anchorGesture.manipulationBounds,
+        canvasWidth,
+        canvasHeight,
+        anchorGesture.baseTransform,
+        anchorGesture.startAnchor,
+      );
+      const nextTransform = compensateTransformForAnchorChange(
+        anchorGesture.baseTransform,
+        anchorGesture.startAnchor,
+        nextAnchor,
+        {
+          widthPercent: contentBoundsPercent.width,
+          heightPercent: contentBoundsPercent.height,
+        },
+      );
+
+      setAnchorGesture({
+        ...anchorGesture,
+        anchor: nextAnchor,
+        transform: nextTransform,
+        hasMoved:
+          anchorGesture.hasMoved ||
+          Math.abs(nextAnchor.x - anchorGesture.startAnchor.x) > 0.0001 ||
+          Math.abs(nextAnchor.y - anchorGesture.startAnchor.y) > 0.0001,
+      });
+      return;
+    }
+
+    if (anchorGesture && anchorGesture.pointerId === event.pointerId) {
+      try {
+        interactionRef.current?.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may be unavailable in tests.
+      }
+
+      const shouldCommit = anchorGesture.hasMoved;
+      const nextAnchor = anchorGesture.anchor;
+
+      setAnchorGesture(null);
+
+      if (shouldCommit) {
+        onTransformAnchorCommit?.(layer.clip.id, nextAnchor);
+      }
+      return;
+    }
+
+    if (anchorGesture && anchorGesture.pointerId === event.pointerId) {
+      setAnchorGesture(null);
+
+      try {
+        interactionRef.current?.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may be unavailable in tests.
+      }
+      return;
+    }
+
     const activeCropPositionGesture = cropPositionGestureRef.current;
 
     if (
@@ -881,6 +1004,19 @@ function PreviewVisualLayer({
       >
         <div className="preview-transform-bounds" />
         {renderCropControls()}
+        <button
+          aria-label="Move transform anchor"
+          className="preview-transform-anchor-handle"
+          data-testid="preview-transform-anchor-handle"
+          onPointerDown={beginAnchorGesture}
+          style={{
+            left: activeAnchor.x * 100 + "%",
+            top: activeAnchor.y * 100 + "%",
+          }}
+          type="button"
+        >
+          +
+        </button>
         <button
           aria-label="Rotate selected visual"
           className="preview-transform-handle preview-transform-rotate-handle"
