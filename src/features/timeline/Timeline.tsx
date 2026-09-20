@@ -3,6 +3,7 @@ import {
   useState,
   type DragEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent,
 } from "react";
 import type { Clip, Project, Track } from "../project/domain";
@@ -330,7 +331,7 @@ export function Timeline({
     setInteraction(null);
   }
 
-  function handleKeyframeClick(event: PointerEvent<HTMLButtonElement>, clip: Clip, keyframeTimeMs: number) {
+  function handleKeyframeClick(event: MouseEvent<HTMLButtonElement>, clip: Clip, keyframeTimeMs: number) {
     event.stopPropagation();
 
     if (!onCurrentTimeChange) {
@@ -469,7 +470,7 @@ interface TimelineTrackProps {
   onFinishClipInteraction: (event?: PointerEvent<HTMLElement>) => void;
   onCancelClipInteraction: () => void;
   onKeyframeClick: (
-    event: PointerEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>,
     clip: Clip,
     keyframeTimeMs: number,
   ) => void;
