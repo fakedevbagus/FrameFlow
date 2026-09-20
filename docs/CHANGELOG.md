@@ -12,14 +12,14 @@ Implemented:
 - Added Timeline regression coverage for drag, cancellation, and keyboard editing.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local Linux validation passed, including lint, tests, build, Tauri dev, and the requested duration-drag, Escape, keyboard, and Undo/Redo checks.
 
 Known limitations:
 - Only dissolve transitions are supported.
 - The Inspector remains the primary precision-editing surface.
 
 Next step:
-- User validates M3.27 locally before merge.
+- Start M3.28 from the updated `main`, focusing on transition lifecycle integrity after timeline structure edits.
 
 
 ### M3.26 — Timeline transition indicator — in progress
