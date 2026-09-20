@@ -2,9 +2,10 @@
 
 ## 2026-09-20
 
-### M3.16 — Crop foundation — in progress
+### M3.16 — Crop foundation — merged
 Branch: `feat/m3-16-crop-foundation`
-PR #26 — draft
+PR #26 — merged
+Merge SHA: `cb61fb6277d8b800f30978098ba5abfaf2acc97f`
 
 Implemented:
 - Added a backward-compatible per-clip crop model with zero-crop defaults.
@@ -14,10 +15,11 @@ Implemented:
 - Added regression coverage for crop normalization, command validation/preservation, preview clipping, and App workflow.
 
 Validation:
-- Local lint, test, build, Tauri dev, and manual validation are pending user verification.
+- User confirmed lint, test, build, Tauri dev, and the requested manual crop checks passed locally on Linux.
+- The automated suite reported 17 test files and 136 tests passing before the final lint/build correction.
 
 Known limitation:
-- Direct crop-handle manipulation, aspect-ratio presets, and crop-position translation compensation are not part of this milestone.
+- Direct crop-handle manipulation, aspect-ratio presets, and crop-position translation compensation remain future work.
 
 ### M3.15 — Transform anchor foundation — merged
 Branch: `feat/m3-15-transform-anchor-foundation`
