@@ -9,7 +9,6 @@ import type {
 } from "../project/domain";
 import {
   DEFAULT_CLIP_TRANSFORM,
-  getClipCrop,
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
   isValidClipCrop,
