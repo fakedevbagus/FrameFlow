@@ -1413,3 +1413,20 @@ function formatDuration(durationMs: number | null): string {
 }
 
 export default App;
+
+
+function formatKeyframeTime(timeMs: number): string {
+  const safeMs = Math.max(0, Math.round(timeMs));
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const milliseconds = safeMs % 1000;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return (
+    minutes.toString().padStart(2, "0") +
+    ":" +
+    seconds.toString().padStart(2, "0") +
+    "." +
+    milliseconds.toString().padStart(3, "0")
+  );
+}
