@@ -47,6 +47,10 @@ interface PreviewProps {
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
   onTransformAnchorCommit?: (clipId: string, anchor: TransformAnchor) => void;
+  onVisualMediaDimensionsChange?: (
+    clipId: string,
+    dimensions: { width: number; height: number },
+  ) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
 }
@@ -64,6 +68,7 @@ export function Preview({
   onSelectClip,
   onTransformCommit,
   onTransformAnchorCommit,
+  onVisualMediaDimensionsChange,
   onCropCommit,
   onCropPositionCommit,
 }: PreviewProps) {
@@ -105,6 +110,7 @@ export function Preview({
           onSelectClip={onSelectClip}
           onTransformCommit={onTransformCommit}
           onTransformAnchorCommit={onTransformAnchorCommit}
+          onVisualMediaDimensionsChange={onVisualMediaDimensionsChange}
           onCropCommit={onCropCommit}
           onCropPositionCommit={onCropPositionCommit}
           onError={handleMediaError}
@@ -211,6 +217,7 @@ function PreviewVisualLayer({
   onSelectClip,
   onTransformCommit,
   onTransformAnchorCommit,
+  onVisualMediaDimensionsChange,
   onCropCommit,
   onCropPositionCommit,
   onError,
@@ -420,10 +427,16 @@ function PreviewVisualLayer({
       return;
     }
 
-    setMediaSize({
+    const dimensions = {
       width: media.videoWidth,
       height: media.videoHeight,
-    });
+    };
+
+    setMediaSize(dimensions);
+
+    if (dimensions.width > 0 && dimensions.height > 0) {
+      onVisualMediaDimensionsChange?.(layer.clip.id, dimensions);
+    }
 
     try {
       media.currentTime = Math.max(0, localTimeMs / 1000);
@@ -451,10 +464,16 @@ function PreviewVisualLayer({
       return;
     }
 
-    setMediaSize({
+    const dimensions = {
       width: image.naturalWidth,
       height: image.naturalHeight,
-    });
+    };
+
+    setMediaSize(dimensions);
+
+    if (dimensions.width > 0 && dimensions.height > 0) {
+      onVisualMediaDimensionsChange?.(layer.clip.id, dimensions);
+    }
   }
 
   function getInteractionContentBounds(
