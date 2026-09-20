@@ -350,11 +350,16 @@ Scope:
 - Add focused regression coverage for these interactions.
 
 Validation status:
-- Implementation is in progress.
-- Local validation has not yet been reported for M3.14.
+- Initial local validation found one Preview ref lint error and one Timeline Escape regression defect.
+- Both issues have been corrected on this branch.
+- Local validation must be rerun before M3.14 can be considered complete.
+
+M3.14 validation correction:
+- Updated the preview time ref inside a React effect to satisfy the React refs lint rule without reintroducing per-tick media seeking.
+- Corrected Escape handling to call the Timeline-owned cancellation callback instead of an undefined child-scope function.
 
 Next step:
-- Run lint, tests, build, then manual keyframe interaction checks before preparing the PR for merge.
+- Rerun lint, tests, build, then manual keyframe interaction checks before preparing the PR for merge.
 
 ## Documentation protocol
 
