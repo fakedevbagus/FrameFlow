@@ -1,4 +1,8 @@
-import type { Clip, Project, TrackType } from "../project/domain";
+import type { Clip, ClipTransform, Project, TrackType } from "../project/domain";
+import {
+  DEFAULT_CLIP_TRANSFORM,
+  normalizeClipTransform,
+} from "../transform/transform";
 
 const defaultImageDurationMs = 3000;
 
@@ -93,6 +97,7 @@ export function addAssetToTrack(
     timelineStartMs: requestedStartMs,
     sourceStartMs: 0,
     sourceEndMs: durationMs,
+    transform: { ...DEFAULT_CLIP_TRANSFORM },
   };
 
   const tracks = project.tracks.map((candidate, index) =>
@@ -193,6 +198,44 @@ export function toggleTrackMute(
   };
 
   return { ...project, tracks, updatedAt: now.toISOString() };
+}
+
+export function updateClipTransform(
+  project: Project,
+  clipId: string,
+  changes: Partial<ClipTransform>,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform controls are only available for visual media.");
+  }
+
+  const nextTransform = normalizeClipTransform({
+    ...location.clip.transform,
+    ...changes,
+  });
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { transform: nextTransform },
+    now,
+  );
+}
+
+export function resetClipTransform(
+  project: Project,
+  clipId: string,
+  now: Date = new Date(),
+): Project {
+  return updateClipTransform(project, clipId, DEFAULT_CLIP_TRANSFORM, now);
 }
 
 export function removeClipFromTimeline(
