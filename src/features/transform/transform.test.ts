@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_CLIP_TRANSFORM,
+  DEFAULT_TRANSFORM_ANCHOR,
   getClipTransform,
+  getClipTransformAnchor,
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
   normalizeClipTransform,
@@ -35,6 +37,14 @@ describe("clip transforms", () => {
       scale: 0.05,
       rotation: 180,
       opacity: 1,
+    });
+  });
+
+  it("normalizes legacy and out-of-range transform anchors", () => {
+    expect(getClipTransformAnchor(undefined)).toEqual(DEFAULT_TRANSFORM_ANCHOR);
+    expect(getClipTransformAnchor({ x: 2, y: -1 })).toEqual({
+      x: 1,
+      y: 0,
     });
   });
 

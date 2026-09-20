@@ -37,6 +37,11 @@ export interface TransformKeyframe {
   easing?: TransformEasing;
 }
 
+export interface TransformAnchor {
+  x: number;
+  y: number;
+}
+
 export interface Clip {
   id: string;
   assetId: string;
@@ -44,6 +49,7 @@ export interface Clip {
   sourceStartMs: number;
   sourceEndMs: number | null;
   transform?: ClipTransform;
+  transformAnchor?: TransformAnchor;
   transformKeyframes?: TransformKeyframe[];
 }
 

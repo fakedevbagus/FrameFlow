@@ -1,4 +1,5 @@
 import type {
+  TransformAnchor,
   Clip,
   ClipTransform,
   Project,
@@ -10,11 +11,38 @@ import {
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
   normalizeClipTransform,
+  normalizeTransformAnchor,
   removeTransformKeyframe as removeTransformKeyframeAtTime,
   upsertTransformKeyframe,
 } from "../transform/transform";
 
 const defaultImageDurationMs = 3000;
+
+export function updateClipTransformAnchor(
+  project: Project,
+  clipId: string,
+  anchor: TransformAnchor,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform anchors are only available for visual media.");
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { transformAnchor: normalizeTransformAnchor(anchor) },
+    now,
+  );
+}
 
 export function addAssetToTimeline(
   project: Project,
@@ -537,6 +565,7 @@ export function resetClipTransform(
     location,
     {
       transform: { ...DEFAULT_CLIP_TRANSFORM },
+      transformAnchor: undefined,
       transformKeyframes: undefined,
     },
     now,

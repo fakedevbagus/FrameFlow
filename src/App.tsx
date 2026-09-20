@@ -9,6 +9,7 @@ import { MediaBin } from "./features/media/MediaBin";
 import type {
   ClipTransform,
   TransformEasing,
+  TransformAnchor,
 } from "./features/project/domain";
 import {
   addAssetToTimeline,
@@ -24,6 +25,7 @@ import {
   removeTransformKeyframe,
   toggleTrackMute,
   updateClipTransformAtTime,
+  updateClipTransformAnchor,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -33,6 +35,7 @@ import { Preview } from "./features/preview/Preview";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
+  getClipTransformAnchor,
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
   normalizeClipTransform,
@@ -52,6 +55,22 @@ import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
 type TransformField = "x" | "y" | "scale" | "rotation" | "opacity";
+
+const transformAnchorPresets: Array<{
+  id: string;
+  label: string;
+  anchor: TransformAnchor;
+}> = [
+  { id: "top-left", label: "Top left", anchor: { x: 0, y: 0 } },
+  { id: "top-center", label: "Top center", anchor: { x: 0.5, y: 0 } },
+  { id: "top-right", label: "Top right", anchor: { x: 1, y: 0 } },
+  { id: "middle-left", label: "Middle left", anchor: { x: 0, y: 0.5 } },
+  { id: "center", label: "Center", anchor: { x: 0.5, y: 0.5 } },
+  { id: "middle-right", label: "Middle right", anchor: { x: 1, y: 0.5 } },
+  { id: "bottom-left", label: "Bottom left", anchor: { x: 0, y: 1 } },
+  { id: "bottom-center", label: "Bottom center", anchor: { x: 0.5, y: 1 } },
+  { id: "bottom-right", label: "Bottom right", anchor: { x: 1, y: 1 } },
+];
 
 const navigation: Array<{ id: WorkspaceView; label: string }> = [
   { id: "media", label: "Media" },
@@ -87,6 +106,9 @@ function App() {
         getClipDurationMs(selectedClipContext.clip),
       )
     : 0;
+  const selectedAnchor = selectedClipContext
+    ? getClipTransformAnchor(selectedClipContext.clip.transformAnchor)
+    : null;
   const selectedTransform = selectedClipContext
     ? getClipTransformAtTime(
         selectedClipContext.clip.transform,
@@ -529,6 +551,30 @@ function App() {
           currentTimeMs,
         ),
       "Clip split.",
+    );
+  }
+
+  function handleSetSelectedTransformAnchor(anchor: TransformAnchor) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    const currentAnchor = getClipTransformAnchor(
+      selectedClipContext.clip.transformAnchor,
+    );
+
+    if (currentAnchor.x === anchor.x && currentAnchor.y === anchor.y) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipTransformAnchor(
+          currentProject,
+          selectedClipContext.clip.id,
+          anchor,
+        ),
+      "Transform anchor updated.",
     );
   }
 
@@ -1097,6 +1143,47 @@ function App() {
                       </select>
                     </label>
                   ) : null}
+
+                  <div className="inspector-anchor-section">
+                    <div className="inspector-anchor-header">
+                      <span>Anchor point</span>
+                      <small>
+                        {selectedAnchor
+                          ? Math.round(selectedAnchor.x * 100) + "%, " +
+                            Math.round(selectedAnchor.y * 100) + "%"
+                          : "50%, 50%"}
+                      </small>
+                    </div>
+                    <div
+                      aria-label="Transform anchor point"
+                      className="inspector-anchor-grid"
+                    >
+                      {transformAnchorPresets.map((preset) => {
+                        const isActive =
+                          selectedAnchor?.x === preset.anchor.x &&
+                          selectedAnchor?.y === preset.anchor.y;
+
+                        return (
+                          <button
+                            aria-label={"Set anchor " + preset.label}
+                            aria-pressed={isActive}
+                            className={
+                              "inspector-anchor-button" +
+                              (isActive ? " inspector-anchor-button-active" : "")
+                            }
+                            key={preset.id}
+                            onClick={() =>
+                              handleSetSelectedTransformAnchor(preset.anchor)
+                            }
+                            title={preset.label}
+                            type="button"
+                          >
+                            <span aria-hidden="true">•</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <div className="inspector-keyframe-status">
                     <span>

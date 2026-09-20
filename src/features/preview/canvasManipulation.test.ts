@@ -72,6 +72,30 @@ describe("canvas manipulation", () => {
     });
   });
 
+  it("uses the transform anchor as the scale and rotation pivot", () => {
+    expect(
+      transformFromPointer(
+        "scale",
+        base,
+        { x: 100, y: 0 },
+        { x: 150, y: 0 },
+        { left: 0, top: 0, width: 200, height: 200 },
+        { x: 0, y: 0 },
+      ).scale,
+    ).toBe(1.5);
+
+    expect(
+      transformFromPointer(
+        "rotate",
+        base,
+        { x: 300, y: 0 },
+        { x: 200, y: 100 },
+        { left: 0, top: 0, width: 200, height: 200 },
+        { x: 1, y: 0 },
+      ).rotation,
+    ).toBe(90);
+  });
+
   it("uses the content center for scale manipulation", () => {
     expect(
       transformFromPointer(

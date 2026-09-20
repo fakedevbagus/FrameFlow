@@ -1,3 +1,4 @@
+import type { TransformAnchor } from "../project/domain";
 import type { ClipTransform } from "../transform/transform";
 import { normalizeClipTransform } from "../transform/transform";
 
@@ -117,6 +118,7 @@ export function transformFromPointer(
   startPointer: CanvasPointer,
   currentPointer: CanvasPointer,
   rect: CanvasRect,
+  anchor: TransformAnchor = { x: 0.5, y: 0.5 },
 ): ClipTransform {
   if (rect.width <= 0 || rect.height <= 0) {
     return baseTransform;
@@ -130,14 +132,14 @@ export function transformFromPointer(
     });
   }
 
-  const center = {
-    x: (rect.left ?? 0) + rect.width / 2,
-    y: (rect.top ?? 0) + rect.height / 2,
+  const pivot = {
+    x: (rect.left ?? 0) + rect.width * Math.min(1, Math.max(0, anchor.x)),
+    y: (rect.top ?? 0) + rect.height * Math.min(1, Math.max(0, anchor.y)),
   };
 
   if (mode === "scale") {
-    const startDistance = distance(startPointer, center);
-    const currentDistance = distance(currentPointer, center);
+    const startDistance = distance(startPointer, pivot);
+    const currentDistance = distance(currentPointer, pivot);
 
     if (startDistance <= 0) {
       return baseTransform;
@@ -149,8 +151,8 @@ export function transformFromPointer(
     });
   }
 
-  const startAngle = angleFromCenter(startPointer, center);
-  const currentAngle = angleFromCenter(currentPointer, center);
+  const startAngle = angleFromCenter(startPointer, pivot);
+  const currentAngle = angleFromCenter(currentPointer, pivot);
   const rotationDelta = ((currentAngle - startAngle) * 180) / Math.PI;
 
   return normalizeClipTransform({
