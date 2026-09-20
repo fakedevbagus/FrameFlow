@@ -1,5 +1,28 @@
 ## 2026-09-21
 
+### M3.25 — Dissolve transition foundation — in progress
+Branch: `feat/m3-25-dissolve-transition-foundation`
+
+Implemented:
+- Added optional outgoing `dissolve` transition metadata to clips.
+- Added transition helpers for adjacency, duration normalization, and dissolve opacity.
+- Added a command for adding/updating/removing a dissolve transition between adjacent visual clips.
+- Added preview support for complementary outgoing/incoming dissolve layers.
+- Added Inspector controls for transition type and duration.
+- Added regression coverage for transition helpers, commands, preview behavior, and Inspector history.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Only the `dissolve` transition type is included.
+- No audio transitions or visual transition browser are included.
+- Transition metadata is not automatically cleared when later edits break adjacency.
+
+Next step:
+- User validates M3.25 locally before merge.
+
+
 ### M3.24 — Timeline clip interaction hardening — merged
 Branch: `feat/m3-24-timeline-interaction-hardening`
 PR #35 — merged
