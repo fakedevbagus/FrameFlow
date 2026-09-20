@@ -55,6 +55,7 @@ export function Preview({
   onSelectClip,
   onTransformCommit,
   onCropCommit,
+  onCropPositionCommit,
 }: PreviewProps) {
   const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
   const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
@@ -94,6 +95,7 @@ export function Preview({
           onSelectClip={onSelectClip}
           onTransformCommit={onTransformCommit}
           onCropCommit={onCropCommit}
+          onCropPositionCommit={onCropPositionCommit}
           onError={handleMediaError}
         />
       ))}
