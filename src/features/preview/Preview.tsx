@@ -167,11 +167,15 @@ function PreviewVisualLayer({
     height: number;
   } | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
+  const transformTimeMs = Math.min(
+    Math.max(currentTimeMs - layer.clip.timelineStartMs, 0),
+    getClipDurationMsForTransform(layer.clip),
+  );
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const currentTransform = getClipTransformAtTime(
     layer.clip.transform,
     layer.clip.transformKeyframes,
-    localTimeMs,
+    transformTimeMs,
   );
   const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
@@ -329,7 +333,7 @@ function PreviewVisualLayer({
     const gestureBaseTransform = getClipTransformAtTime(
       layer.clip.transform,
       layer.clip.transformKeyframes,
-      localTimeMs,
+      transformTimeMs,
     );
 
     setGesture({
@@ -645,4 +649,13 @@ function tryConvertFileSrc(path: string): string | null {
   } catch {
     return null;
   }
+}
+
+
+function getClipDurationMsForTransform(clip: ActivePreviewClip["clip"]): number {
+  if (clip.sourceEndMs === null) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
 }
