@@ -1,7 +1,9 @@
 import {
+  Fragment,
   useState,
   type DragEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent,
 } from "react";
 import type { Clip, Project, Track } from "../project/domain";
@@ -329,6 +331,21 @@ export function Timeline({
     setInteraction(null);
   }
 
+  function handleKeyframeClick(event: MouseEvent<HTMLButtonElement>, clip: Clip, keyframeTimeMs: number) {
+    event.stopPropagation();
+
+    if (!onCurrentTimeChange) {
+      return;
+    }
+
+    onCurrentTimeChange(
+      Math.min(
+        Math.max(clip.timelineStartMs + keyframeTimeMs, 0),
+        timelineDurationMs,
+      ),
+    );
+  }
+
   return (
     <section className="timeline-region" aria-label="Timeline">
       <div className="timeline-toolbar">
@@ -420,6 +437,7 @@ export function Timeline({
             onUpdateClipInteraction={updateClipInteraction}
             onFinishClipInteraction={finishClipInteraction}
             onCancelClipInteraction={cancelClipInteraction}
+            onKeyframeClick={handleKeyframeClick}
           />
         ))}
       </div>
@@ -452,6 +470,11 @@ interface TimelineTrackProps {
   onUpdateClipInteraction: (event: PointerEvent<HTMLElement>) => void;
   onFinishClipInteraction: (event?: PointerEvent<HTMLElement>) => void;
   onCancelClipInteraction: () => void;
+  onKeyframeClick: (
+    event: MouseEvent<HTMLButtonElement>,
+    clip: Clip,
+    keyframeTimeMs: number,
+  ) => void;
 }
 
 function TimelineTrack({
@@ -475,6 +498,7 @@ function TimelineTrack({
   onUpdateClipInteraction,
   onFinishClipInteraction,
   onCancelClipInteraction,
+  onKeyframeClick,
 }: TimelineTrackProps) {
   const pixelsPerSecond = basePixelsPerSecond * zoom;
 
@@ -542,50 +566,116 @@ function TimelineTrack({
             }
           }
 
+          const keyframes = clip.transformKeyframes ?? [];
+          const assetSupportsTransformKeyframes =
+            asset?.mediaType === "video" || asset?.mediaType === "image";
+
           return (
-            <div
-              aria-label={"Select " + (asset?.name ?? "Missing media") + " clip"}
-              aria-pressed={isSelected}
-              className={
-                "timeline-clip timeline-clip-" +
-                track.type +
-                (isSelected ? " timeline-clip-selected" : "") +
-                (isInteracting ? " timeline-clip-interacting" : "")
-              }
-              key={clip.id}
-              style={{
-                left: clip.timelineStartMs / 1000 * pixelsPerSecond + "px",
-                width: width + "px",
-              }}
-              onClick={() => onSelectClip?.(clip.id)}
-              onKeyDown={handleClipKeyDown}
-              onPointerDown={(event) => onBeginClipInteraction(event, sourceClip, "move")}
-              onPointerMove={onUpdateClipInteraction}
-              onPointerUp={onFinishClipInteraction}
-              onPointerCancel={onCancelClipInteraction}
-              role="button"
-              tabIndex={0}
-              title={asset ? asset.name + " · " + formatTimecode(durationMs) : "Missing media"}
-            >
-              <span
-                aria-label="Trim clip start"
-                className="timeline-trim-handle timeline-trim-handle-start"
-                onPointerDown={(event) =>
-                  onBeginClipInteraction(event, sourceClip, "trim-start")
+            <Fragment key={clip.id}>
+              <div
+                aria-label={"Select " + (asset?.name ?? "Missing media") + " clip"}
+                aria-pressed={isSelected}
+                className={
+                  "timeline-clip timeline-clip-" +
+                  track.type +
+                  (isSelected ? " timeline-clip-selected" : "") +
+                  (isInteracting ? " timeline-clip-interacting" : "")
                 }
-                role="presentation"
-              />
-              <span className="timeline-clip-name">{asset?.name ?? "Missing media"}</span>
-              <small>{formatTimecode(durationMs)}</small>
-              <span
-                aria-label="Trim clip end"
-                className="timeline-trim-handle timeline-trim-handle-end"
+                style={{
+                  left: clip.timelineStartMs / 1000 * pixelsPerSecond + "px",
+                  width: width + "px",
+                }}
+                onClick={() => onSelectClip?.(clip.id)}
+                onKeyDown={handleClipKeyDown}
                 onPointerDown={(event) =>
-                  onBeginClipInteraction(event, sourceClip, "trim-end")
+                  onBeginClipInteraction(event, sourceClip, "move")
                 }
-                role="presentation"
-              />
-            </div>
+                onPointerMove={onUpdateClipInteraction}
+                onPointerUp={onFinishClipInteraction}
+                onPointerCancel={onCancelClipInteraction}
+                role="button"
+                tabIndex={0}
+                title={
+                  asset
+                    ? asset.name + " · " + formatTimecode(durationMs)
+                    : "Missing media"
+                }
+              >
+                <span
+                  aria-label="Trim clip start"
+                  className="timeline-trim-handle timeline-trim-handle-start"
+                  onPointerDown={(event) =>
+                    onBeginClipInteraction(event, sourceClip, "trim-start")
+                  }
+                  role="presentation"
+                />
+                <span className="timeline-clip-name">
+                  {asset?.name ?? "Missing media"}
+                </span>
+                <small>{formatTimecode(durationMs)}</small>
+                <span
+                  aria-label="Trim clip end"
+                  className="timeline-trim-handle timeline-trim-handle-end"
+                  onPointerDown={(event) =>
+                    onBeginClipInteraction(event, sourceClip, "trim-end")
+                  }
+                  role="presentation"
+                />
+              </div>
+
+              {assetSupportsTransformKeyframes ? (
+                <div
+                  aria-label={
+                    "Transform keyframes for " +
+                    (asset?.name ?? "Missing media")
+                  }
+                  className="timeline-clip-keyframes"
+                  style={{
+                    left:
+                      clip.timelineStartMs / 1000 * pixelsPerSecond +
+                      "px",
+                    width: width + "px",
+                  }}
+                >
+                  {keyframes.map((keyframe) => {
+                    const absoluteTimeMs =
+                      clip.timelineStartMs + keyframe.timeMs;
+                    const isActive =
+                      Math.abs(currentTimeMs - absoluteTimeMs) <=
+                      500 / project.canvas.frameRate;
+
+                    return (
+                      <button
+                        aria-label={
+                          "Go to transform keyframe for " +
+                          (asset?.name ?? "Missing media") +
+                          " at " +
+                          formatKeyframeTime(keyframe.timeMs)
+                        }
+                        className={
+                          "timeline-keyframe-marker" +
+                          (isActive ? " timeline-keyframe-marker-active" : "")
+                        }
+                        key={keyframe.timeMs}
+                        onClick={(event) =>
+                          onKeyframeClick(event, clip, keyframe.timeMs)
+                        }
+                        style={{
+                          left:
+                            durationMs > 0
+                              ? keyframe.timeMs / durationMs * 100 + "%"
+                              : "0%",
+                        }}
+                        title={formatKeyframeTime(keyframe.timeMs)}
+                        type="button"
+                      >
+                        <span aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </Fragment>
           );
         })}
 
@@ -729,3 +819,20 @@ function formatTimecode(durationMs: number): string {
 
   return minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0");
 }
+
+function formatKeyframeTime(timeMs: number): string {
+  const safeMs = Math.max(0, Math.round(timeMs));
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const milliseconds = safeMs % 1000;
+
+  return (
+    minutes.toString().padStart(2, "0") +
+    ":" +
+    seconds.toString().padStart(2, "0") +
+    "." +
+    milliseconds.toString().padStart(3, "0")
+  );
+}
+
