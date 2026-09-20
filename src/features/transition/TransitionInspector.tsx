@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { ClipTransition } from "./transition";
 import { DEFAULT_DISSOLVE_DURATION_MS } from "./transition";
 
@@ -13,7 +14,31 @@ export function TransitionInspector({
   onChange,
 }: TransitionInspectorProps) {
   const isDissolve = transition?.type === "dissolve";
-  const durationMs = transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS;
+  const [durationMs, setDurationMs] = useState(
+    transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS,
+  );
+
+  useEffect(() => {
+    setDurationMs(
+      transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS,
+    );
+  }, [transition?.durationMs]);
+
+  function commitDuration() {
+    const value = Number(durationMs);
+
+    if (!Number.isFinite(value)) {
+      setDurationMs(
+        transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS,
+      );
+      return;
+    }
+
+    onChange({
+      type: "dissolve",
+      durationMs: value,
+    });
+  }
 
   return (
     <div className="inspector-section">
@@ -65,17 +90,13 @@ export function TransitionInspector({
               type="number"
               value={durationMs}
               onChange={(event) => {
-                const value = Number(event.currentTarget.value);
-
-                if (!Number.isFinite(value)) {
-                  return;
-                }
-
-                onChange({
-                  type: "dissolve",
-                  durationMs: value,
-                });
+                setDurationMs(
+                  Number.isFinite(Number(event.currentTarget.value))
+                    ? Number(event.currentTarget.value)
+                    : DEFAULT_DISSOLVE_DURATION_MS,
+                );
               }}
+              onBlur={commitDuration}
             />
             <span>ms</span>
           </div>
