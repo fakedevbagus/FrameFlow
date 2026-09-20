@@ -90,6 +90,50 @@ export function updateClipCrop(
   );
 }
 
+export function updateClipCropWithPosition(
+  project: Project,
+  clipId: string,
+  crop: ClipCrop,
+  position: CropPosition | undefined,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Crop controls are only available for visual media.");
+  }
+
+  const normalizedCrop = normalizeClipCrop(crop);
+
+  if (!isValidClipCrop(normalizedCrop)) {
+    throw new Error("Crop cannot remove the entire visual content.");
+  }
+
+  const hasCrop =
+    normalizedCrop.top > 0 ||
+    normalizedCrop.right > 0 ||
+    normalizedCrop.bottom > 0 ||
+    normalizedCrop.left > 0;
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      crop: normalizedCrop,
+      cropPosition: hasCrop
+        ? normalizeClipCropPosition(normalizedCrop, position)
+        : undefined,
+    },
+    now,
+  );
+}
+
 export function updateClipCropPosition(
   project: Project,
   clipId: string,
