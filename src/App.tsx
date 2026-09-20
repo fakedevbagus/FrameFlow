@@ -819,6 +819,21 @@ function App() {
     );
   }
 
+  function handleCanvasCropPositionCommit(
+    clipId: string,
+    position: CropPosition,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        updateClipCropPosition(
+          currentProject,
+          clipId,
+          position,
+        ),
+      "Crop content position updated.",
+    );
+  }
+
   function handleCanvasCropCommit(
     clipId: string,
     crop: ClipCrop,
@@ -1125,6 +1140,7 @@ function App() {
                 onSelectClip={handleSelectClip}
                 onTransformCommit={handleCanvasTransformCommit}
                 onCropCommit={handleCanvasCropCommit}
+                onCropPositionCommit={handleCanvasCropPositionCommit}
               />
             </div>
             <div className="transport-controls" aria-label="Playback controls">

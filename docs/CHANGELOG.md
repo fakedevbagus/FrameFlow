@@ -258,6 +258,28 @@ Known limitation:
 Next step:
 - M3.19 should add direct crop-content panning while preserving the existing crop viewport, transform/anchor behavior, and history model.
 
+### M3.19 — Direct crop-content panning — in progress
+Branch: `feat/m3-19-direct-crop-content-panning`
+PR: #29
+
+Implemented:
+- Added direct crop-content panning inside the fixed M3.18 crop viewport.
+- Added transform-aware crop-position pointer math for scale, rotation, translation, and anchor.
+- Constrained the source content position so the crop viewport stays covered by the source media.
+- Kept completed pan gestures as one history mutation through the existing crop-position command.
+- Preserved the existing canvas move gesture for uncropped visuals and kept crop edge handles separate.
+- Added Preview and App regression coverage for direct pan interaction and Undo behavior.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Aspect-ratio crop presets remain future work.
+- Crop position remains per-clip and is not keyframed in this milestone.
+
+Next step:
+- Run local validation on PR #29 before merging M3.19.
+
 ## Documentation rule
 
 Every future milestone or meaningful bug fix must add a dated entry here and update `docs/PROJECT_CONTEXT.md`. Record factual validation only after the user reports it.

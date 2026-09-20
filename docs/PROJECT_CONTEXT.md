@@ -111,6 +111,7 @@ Visual clips may contain:
 - transform keyframe easing metadata
 - optional transform anchor point
 - optional per-edge crop insets
+- optional crop content-position source point
 
 Current transform fields:
 
@@ -492,6 +493,41 @@ Known limitation:
 
 Next step:
 - Start M3.19 from the updated `main`, focusing on direct crop-content panning while preserving crop, transform, anchor, keyframe, and history behavior.
+
+## M3.19 — Direct crop-content panning (in progress)
+
+Branch: `feat/m3-19-direct-crop-content-panning`
+PR: #29
+
+Scope:
+- Add direct pointer panning for source content inside the fixed M3.18 crop viewport.
+- Keep the crop viewport fixed while changing the source point aligned to its center.
+- Account for the active transform scale, rotation, translation, and anchor during pointer mapping.
+- Constrain crop content movement so the crop viewport remains fully covered by source content.
+- Commit one crop-position history operation per completed pan gesture.
+- Preserve existing canvas move behavior for uncropped visuals and existing crop edge/transform handles.
+
+Interaction design:
+- A selected visual with non-zero crop exposes a transparent pan surface inside the crop viewport while playback is stopped.
+- Dragging inside that surface changes `Clip.cropPosition`; crop edge handles continue to edit `Clip.crop`.
+- Uncropped visuals do not enable the pan surface, so their existing canvas move interaction is unchanged.
+
+Automated coverage added:
+- Crop-content pointer math and directionality.
+- Crop-position bounds while panning.
+- Transform-aware pan mapping.
+- Preview direct pan gesture.
+- App direct pan workflow, Inspector synchronization, and Undo history.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Aspect-ratio crop presets remain future work.
+- Crop position remains per-clip and is not keyframed in this milestone.
+
+Next step:
+- Validate PR #29 locally before merging M3.19.
 
 ## Documentation protocol
 

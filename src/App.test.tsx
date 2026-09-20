@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { importMediaFiles } from "./features/media/import";
@@ -616,18 +616,18 @@ describe("App", () => {
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
 
     fireEvent.change(screen.getByRole("spinbutton", { name: "Crop right" }), {
-      target: { value: "20" },
+      target: { value: "10" },
     });
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop right" }));
 
     await waitFor(() => {
       expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(10);
-      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(20);
+      expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(10);
       const viewport = screen.getByTestId(/preview-crop-viewport-/);
       expect(viewport).toHaveStyle({
         left: "0%",
         top: "10%",
-        width: "80%",
+        width: "90%",
       });
       expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(90, 10);
     });
@@ -718,6 +718,126 @@ describe("App", () => {
     });
 
     expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+  });
+
+  it("pans crop content directly on the canvas and records history", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-crop-pan-ui",
+        name: "crop-pan-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/crop-pan-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Import media" })[1],
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("crop-pan-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add crop-pan-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select crop-pan-ui.mp4 clip",
+      }),
+    );
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Crop top" }), {
+      target: { value: "10" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Crop right" }), {
+      target: { value: "20" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop right" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(40);
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position Y" }),
+      ).toHaveValue(55);
+    });
+
+    const hitArea = screen.getByTestId(/preview-hit-area-/);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const surface = await screen.findByRole("button", {
+      name: "Pan crop content",
+    });
+
+    await act(async () => {
+      fireEvent.pointerDown(surface, {
+        button: 0,
+        pointerId: 13,
+        clientX: 100,
+        clientY: 200,
+      });
+    });
+    await act(async () => {
+      fireEvent.pointerMove(surface, {
+        buttons: 1,
+        pointerId: 13,
+        clientX: 80,
+        clientY: 200,
+      });
+    });
+    await act(async () => {
+      fireEvent.pointerUp(surface, {
+        button: 0,
+        pointerId: 13,
+        clientX: 80,
+        clientY: 200,
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(50);
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position Y" }),
+      ).toHaveValue(55);
+    });
+
+    expect(screen.getByText("Crop content position updated.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(40);
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position Y" }),
+      ).toHaveValue(55);
+    });
   });
 
   it("changes keyframe interpolation from the inspector", async () => {

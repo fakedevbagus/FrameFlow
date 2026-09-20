@@ -683,6 +683,107 @@ describe("Preview", () => {
     });
   });
 
+  it("commits direct crop content panning", async () => {
+    let project = createProject({ id: "crop-content-pan-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-crop-pan",
+          name: "crop-pan.mp4",
+          mediaType: "video",
+          sourcePath: "/media/crop-pan.mp4",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-crop-pan");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) => ({
+        ...track,
+        clips: track.clips.map((clip) =>
+          clip.id === clipId
+            ? {
+                ...clip,
+                crop: {
+                  top: 0.1,
+                  right: 0.1,
+                  bottom: 0.1,
+                  left: 0.1,
+                },
+              }
+            : clip,
+        ),
+      })),
+    };
+
+    const onCropPositionCommit = vi.fn();
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+        selectedClipId={clipId}
+        onCropPositionCommit={onCropPositionCommit}
+      />,
+    );
+
+    const hitArea = screen.getByTestId(`preview-hit-area-${clipId}`);
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const surface = screen.getByTestId(
+      `preview-crop-pan-surface-${clipId}`,
+    );
+
+    fireEvent.pointerDown(surface, {
+      button: 0,
+      pointerId: 12,
+      clientX: 100,
+      clientY: 200,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 12,
+      clientX: 140,
+      clientY: 160,
+    });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 12,
+      clientX: 140,
+      clientY: 160,
+    });
+
+    await vi.waitFor(() => {
+      expect(onCropPositionCommit).toHaveBeenCalledWith(
+        clipId,
+        expect.objectContaining({
+          x: 0.4,
+          y: 0.6,
+        }),
+      );
+    });
+  });
+
   it("re-aligns video to the transport position when playback starts", async () => {
     let project = createProject({ id: "replay-alignment-preview" });
 
