@@ -282,6 +282,9 @@ function PreviewVisualLayer({
     localTimeMs,
   ]);
 
+  const localTimeMsRef = useRef(localTimeMs);
+  localTimeMsRef.current = localTimeMs;
+
   useEffect(() => {
     const media = mediaRef.current;
 
@@ -297,14 +300,15 @@ function PreviewVisualLayer({
     }
 
     try {
-      // Re-align the media element whenever transport playback starts.
-      media.currentTime = Math.max(0, localTimeMs / 1000);
+      // Re-align only when playback starts or when the active clip changes.
+      // Do not seek on every transport tick because that interrupts media playback.
+      media.currentTime = Math.max(0, localTimeMsRef.current / 1000);
     } catch {
       // Some WebView/media implementations reject seeking before metadata is ready.
     }
 
     void Promise.resolve(media.play()).catch(() => undefined);
-  }, [isPlaying, layer.asset.id, layer.clip.id, localTimeMs]);
+  }, [isPlaying, layer.asset.id, layer.clip.id]);
 
   function handleLoadedMetadata() {
     const media = mediaRef.current;
