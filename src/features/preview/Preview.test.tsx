@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 
 describe("Preview", () => {
-  it("renders the active local video asset", () => {
+  it("renders the active local video asset", async () => {
     let project = createProject({ id: "video-preview" });
 
     project = {
@@ -69,9 +69,11 @@ describe("Preview", () => {
 
     const video = screen.getByTestId("preview-video");
 
-    expect(video).toHaveAttribute(
-      "src",
-      "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fdefault.mp4",
+    await vi.waitFor(() =>
+      expect(video).toHaveAttribute(
+        "src",
+        "http://127.0.0.1:43123/media?path=%2Fhome%2Ftest%2F.cache%2Fcom.fakedevbagus.frameflow%2Fpreviews-v4%2Fdefault.mp4",
+      ),
     );
   });
 
@@ -125,7 +127,7 @@ describe("Preview", () => {
     });
   });
 
-  it("renders multiple active visual layers in track order", () => {
+  it("renders multiple active visual layers in track order", async () => {
     let project = createProject({ id: "multitrack-preview" });
 
     project = {
@@ -189,7 +191,7 @@ describe("Preview", () => {
       />,
     );
 
-    const layers = screen.getAllByTestId("preview-video");
+    const layers = await screen.findAllByTestId("preview-video");
 
     expect(layers).toHaveLength(2);
     expect(layers[0]).toHaveStyle({ zIndex: "1" });
@@ -228,7 +230,7 @@ describe("Preview", () => {
     );
   });
 
-  it("renders audio-only clips with native controls", () => {
+  it("renders audio-only clips with native controls", async () => {
     let project = createProject({ id: "audio-preview" });
 
     project = {
@@ -254,12 +256,12 @@ describe("Preview", () => {
       />,
     );
 
-    expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
+    await screen.findByTestId("preview-audio");
     expect(screen.getByLabelText("Audio preview")).toBeInTheDocument();
     expect(screen.getByText("music.mp3")).toBeInTheDocument();
   });
 
-  it("keeps active audio layers mounted while a visual preview is playing", () => {
+  it("keeps active audio layers mounted while a visual preview is playing", async () => {
     let project = createProject({ id: "mixed-preview" });
 
     project = {
@@ -293,8 +295,8 @@ describe("Preview", () => {
       />,
     );
 
-    expect(screen.getByTestId("preview-video")).toBeInTheDocument();
-    expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
+    await screen.findByTestId("preview-video");
+    await screen.findByTestId("preview-audio");
     expect(screen.getByTestId("preview-audio")).not.toHaveAttribute("controls");
   });
 
