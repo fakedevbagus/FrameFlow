@@ -5,7 +5,9 @@ import {
   addAssetToTrack,
   addTrack,
   removeTrack,
+  resetClipTransform,
   toggleTrackMute,
+  updateClipTransform,
   moveClipOnTimeline,
   removeClipFromTimeline,
   splitClipAtTime,
@@ -140,6 +142,79 @@ describe("track management", () => {
     expect(() =>
       addAssetToTrack(populated, "video", "video-1", 2000),
     ).toThrow("Media cannot overlap another clip on the same track.");
+  });
+});
+
+describe("clip transforms", () => {
+  it("updates and clamps visual clip transforms", () => {
+    let project = createProject({ id: "transform-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipTransform(project, clipId, {
+      x: 25,
+      y: -10,
+      scale: 1.5,
+      rotation: 45,
+      opacity: 0.7,
+    });
+
+    expect(updated.tracks[0].clips[0].transform).toEqual({
+      x: 25,
+      y: -10,
+      scale: 1.5,
+      rotation: 45,
+      opacity: 0.7,
+    });
+
+    const reset = resetClipTransform(updated, clipId);
+
+    expect(reset.tracks[0].clips[0].transform).toEqual({
+      x: 0,
+      y: 0,
+      scale: 1,
+      rotation: 0,
+      opacity: 1,
+    });
+  });
+
+  it("rejects transform updates for audio clips", () => {
+    let project = createProject({ id: "audio-transform-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "audio",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music.mp3",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "audio");
+
+    expect(() =>
+      updateClipTransform(project, project.tracks[1].clips[0].id, {
+        scale: 2,
+      }),
+    ).toThrow("Transform controls are only available for visual media.");
   });
 });
 
