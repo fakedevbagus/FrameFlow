@@ -1,5 +1,26 @@
 ## 2026-09-21
 
+### M3.22 — Direct on-canvas anchor manipulation — in progress
+Branch: `feat/m3-22-direct-anchor-manipulation`
+
+Implemented:
+- Added a visible transform-anchor handle to selected visual preview layers.
+- Added direct pointer dragging for the transform anchor.
+- Preserved live visual position during anchor drag using M3.21 compensation math.
+- Routed completed anchor drags through the existing compensated anchor history command.
+- Added regression coverage for pointer mapping, Preview interaction, App integration, and Undo.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Anchor dragging is disabled during playback.
+- When intrinsic media metadata is unavailable, the existing fallback anchor behavior is used.
+
+Next step:
+- User validates M3.22 locally before merge.
+## 2026-09-21
+
 ### M3.21 — Transform anchor compensation — merged
 Branch: `feat/m3-21-anchor-compensation`
 PR #32 — merged
