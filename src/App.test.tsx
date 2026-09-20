@@ -757,6 +757,15 @@ describe("App", () => {
     });
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
 
+    await waitFor(() => {
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(50);
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position Y" }),
+      ).toHaveValue(55);
+    });
+
     const hitArea = screen.getByTestId(/preview-hit-area-/);
     Object.defineProperty(hitArea, "getBoundingClientRect", {
       configurable: true,
