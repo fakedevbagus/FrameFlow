@@ -423,6 +423,7 @@ Next step:
 ## M3.17 — Direct crop handle manipulation (in progress)
 
 Branch: `feat/m3-17-direct-crop-handles`
+PR: #27
 
 Scope:
 - Add direct Top, Right, Bottom, and Left crop handles to the selected visual preview.
@@ -450,7 +451,7 @@ Known limitation:
 - Aspect-ratio crop presets and crop-position translation compensation remain future work.
 
 Next step:
-- Run local lint, test, build, Tauri dev, and direct crop-handle manual checks before merging PR for M3.17.
+- Run local lint, test, build, Tauri dev, and direct crop-handle manual checks before merging PR #27.
 
 ## Documentation protocol
 
