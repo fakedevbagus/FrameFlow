@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { importMediaFiles } from "./features/media/import";
 
+vi.mock("@tauri-apps/api/core", () => ({
+  convertFileSrc: (path: string) => "asset://" + path,
+}));
+
 vi.mock("./features/media/import", () => ({
   importMediaFiles: vi.fn(),
 }));
