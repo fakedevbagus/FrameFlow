@@ -1,3 +1,25 @@
+## 2026-09-21
+
+### M3.21 — Transform anchor compensation — in progress
+Branch: `feat/m3-21-anchor-compensation`
+PR #31 — draft
+
+Implemented:
+- Added transform-anchor compensation math that preserves the rendered visual position when changing the anchor.
+- Compensates X/Y using the current scale/rotation and the contained media bounds.
+- Applies the same compensation to all transform keyframes.
+- Integrated the behavior into the existing Inspector anchor workflow with a fallback when media dimensions are not available.
+- Added regression coverage for transform math, command history behavior, keyframes, and App/Inspector interaction.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitation:
+- Anchor changes made before intrinsic media metadata is available use the legacy anchor command and may not preserve the rendered position.
+
+Next step:
+- User validates M3.21 locally before the draft PR is marked ready and merged.
+
 # FrameFlow Changelog
 
 ## 2026-09-21
