@@ -142,6 +142,7 @@ interface PreviewVisualLayerProps extends PreviewLayerProps {
   isSelected: boolean;
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
+  onCropCommit?: (clipId: string, crop: ClipCrop) => void;
 }
 
 interface CanvasGesture {
@@ -172,6 +173,7 @@ function PreviewVisualLayer({
   isSelected,
   onSelectClip,
   onTransformCommit,
+  onCropCommit,
   onError,
 }: PreviewVisualLayerProps) {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
