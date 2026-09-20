@@ -720,6 +720,33 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
+## M3.26 — Timeline transition indicator (in progress)
+
+Branch: `feat/m3-26-transition-timeline-indicator`
+PR: pending
+
+Scope:
+- Show a compact transition indicator at the boundary of an active outgoing dissolve transition.
+- Make the indicator keyboard accessible and clickable.
+- Selecting the indicator selects the outgoing clip so the existing Inspector transition controls remain the single configuration surface.
+- Keep the indicator derived from existing transition metadata and adjacency helpers; no second transition state is introduced.
+
+Automated coverage:
+- Timeline renders a dissolve indicator only for a valid adjacent visual transition.
+- Indicator activation selects the outgoing clip.
+- Existing timeline interaction behavior remains covered by the existing suite.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- The indicator is not itself a draggable transition block.
+- Only dissolve transitions are represented.
+- Transition configuration remains in the Inspector.
+
+Next step:
+- User validates M3.26 locally before merge.
+
 ## M3.25 — Dissolve transition foundation — completed
 
 Branch: `feat/m3-25-dissolve-transition-foundation`
