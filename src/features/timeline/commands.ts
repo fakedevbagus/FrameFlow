@@ -11,6 +11,7 @@ import type {
 import {
   DEFAULT_CLIP_TRANSFORM,
   getClipTransformAtTime,
+  getClipTransformAnchor,
   getTransformKeyframeAtTime,
   isValidClipCrop,
   normalizeClipTransform,
