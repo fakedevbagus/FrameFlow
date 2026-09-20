@@ -114,7 +114,6 @@ describe("App", () => {
     expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
   });
 
-
   it("deletes the selected clip with the Delete key", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
@@ -149,7 +148,6 @@ describe("App", () => {
     });
     expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
   });
-
 
   it("applies move and trim controls to the selected clip", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
@@ -462,6 +460,56 @@ describe("App", () => {
     expect(container).toHaveTextContent("Keyframe easing updated.");
   });
 
+  it("deletes a focused timeline keyframe without deleting its clip", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-keyframe-delete",
+        name: "keyframe-delete.mp4",
+        mediaType: "video",
+        sourcePath: "/media/keyframe-delete.mp4",
+        durationMs: 5000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("keyframe-delete.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add keyframe-delete.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select keyframe-delete.mp4 clip",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add keyframe" }));
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to transform keyframe for keyframe-delete.mp4 at 00:00.000",
+    });
+
+    markerButton.focus();
+    fireEvent.keyDown(markerButton, { key: "Delete" });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", {
+        name: "Go to transform keyframe for keyframe-delete.mp4 at 00:00.000",
+      })).not.toBeInTheDocument();
+    });
+
+    const clipButton = screen.getByRole("button", {
+      name: "Select keyframe-delete.mp4 clip",
+    });
+    expect(clipButton).toBeInTheDocument();
+    expect(container).toHaveTextContent("Static transform at 00:00.000");
+  });
+
   it("animates transform values between keyframes", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
@@ -658,7 +706,6 @@ describe("App", () => {
     expect(screen.getAllByRole("button", { name: "Select split-ui.mp4 clip" })).toHaveLength(2);
   });
 
-
   it("starts preview media from the transport click", async () => {
     const playMock = vi
       .spyOn(HTMLMediaElement.prototype, "play")
@@ -763,5 +810,4 @@ describe("App", () => {
       ).toHaveStyle({ left: "80px" });
     });
   });
-
 });

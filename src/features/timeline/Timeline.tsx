@@ -38,6 +38,10 @@ interface TimelineProps {
   ) => void;
   onAddTrack?: (type: "audio" | "video") => void;
   onRemoveTrack?: (trackId: string) => void;
+  onRemoveTransformKeyframe?: (
+    clipId: string,
+    timeMs: number,
+  ) => void;
   onMoveTransformKeyframe?: (
     clipId: string,
     fromTimeMs: number,
@@ -85,6 +89,7 @@ export function Timeline({
   onAddAssetToTrack,
   onAddTrack,
   onRemoveTrack,
+  onRemoveTransformKeyframe,
   onMoveTransformKeyframe,
   zoom = DEFAULT_TIMELINE_ZOOM,
   onZoomChange,
@@ -589,6 +594,7 @@ export function Timeline({
             onSelectClip={onSelectClip}
             onToggleTrackMute={onToggleTrackMute}
             onRemoveTrack={onRemoveTrack}
+            onRemoveTransformKeyframe={onRemoveTransformKeyframe}
             zoom={zoom}
             interaction={interaction}
             dragOverTrackId={dragOverTrackId}
@@ -624,6 +630,10 @@ interface TimelineTrackProps {
   onSelectClip?: (clipId: string) => void;
   onToggleTrackMute?: (trackId: string) => void;
   onRemoveTrack?: (trackId: string) => void;
+  onRemoveTransformKeyframe?: (
+    clipId: string,
+    timeMs: number,
+  ) => void;
   zoom: number;
   dragOverTrackId: string | null;
   onDragOverTrack: (event: DragEvent<HTMLDivElement>) => void;
@@ -674,6 +684,7 @@ function TimelineTrack({
   onSelectClip,
   onToggleTrackMute,
   onRemoveTrack,
+  onRemoveTransformKeyframe,
   zoom,
   dragOverTrackId,
   onDragOverTrack,
@@ -841,6 +852,18 @@ function TimelineTrack({
                       Math.abs(currentTimeMs - absoluteTimeMs) <=
                       500 / project.canvas.frameRate;
 
+                    function handleKeyframeKeyDown(
+                      event: KeyboardEvent<HTMLButtonElement>,
+                    ) {
+                      if (event.key !== "Delete" && event.key !== "Backspace") {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onRemoveTransformKeyframe?.(clip.id, keyframe.timeMs);
+                    }
+
                     return (
                       <button
                         aria-label={
@@ -857,6 +880,7 @@ function TimelineTrack({
                         onClick={(event) =>
                           onKeyframeClick(event, clip, keyframe.timeMs)
                         }
+                        onKeyDown={handleKeyframeKeyDown}
                         onPointerDown={(event) =>
                           onBeginKeyframeInteraction(event, clip, keyframe.timeMs)
                         }

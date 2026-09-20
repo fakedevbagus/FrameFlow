@@ -685,6 +685,21 @@ function App() {
     );
   }
 
+  function handleRemoveTransformKeyframeAt(
+    clipId: string,
+    timeMs: number,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        removeTransformKeyframe(
+          currentProject,
+          clipId,
+          timeMs,
+        ),
+      "Keyframe removed.",
+    );
+  }
+
   function handleRemoveTransformKeyframe() {
     if (!selectedClipContext || !selectedKeyframe) {
       return;
@@ -955,6 +970,7 @@ function App() {
             onAddAssetToTrack={handleAddAssetToTrack}
             onAddTrack={handleAddTrack}
             onRemoveTrack={handleRemoveTrack}
+            onRemoveTransformKeyframe={handleRemoveTransformKeyframeAt}
             onMoveTransformKeyframe={handleMoveTransformKeyframe}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
