@@ -5,7 +5,7 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import type { ClipCrop, ClipTransform, Project } from "../project/domain";
+import type { ClipTransform, Project } from "../project/domain";
 import {
   getClipCrop,
   getClipTransformAnchor,
@@ -217,7 +217,7 @@ function PreviewVisualLayer({
     height: `${contentBoundsPercent.height}%`,
     transformOrigin: `${anchor.x * 100}% ${anchor.y * 100}%`,
   };
-  const cropLayerStyle = {
+  const cropStyle = {
     clipPath: `inset(${crop.top * 100}% ${crop.right * 100}% ${crop.bottom * 100}% ${crop.left * 100}%)`,
   };
 
@@ -575,21 +575,21 @@ function PreviewVisualLayer({
             transform: layerStyle.transform,
           }}
         >
-          <div
-            className="preview-media-crop-layer"
-            data-testid="preview-crop-layer"
-            style={cropLayerStyle}
-          >
-            <img
-              alt={layer.asset.name}
-              className="preview-layer preview-image-layer"
-              data-preview-state="image"
-              ref={imageRef}
-              src={mediaUrl ?? undefined}
-              onLoad={handleImageLoad}
-              style={{ width: "100%", height: "100%", objectFit: "fill", zIndex }}
-            />
-          </div>
+          <img
+            alt={layer.asset.name}
+            className="preview-layer preview-image-layer"
+            data-preview-state="image"
+            ref={imageRef}
+            src={mediaUrl ?? undefined}
+            onLoad={handleImageLoad}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "fill",
+              zIndex,
+              ...cropStyle,
+            }}
+          />
           {renderManipulationControls()}
         </div>
       </div>
@@ -616,30 +616,25 @@ function PreviewVisualLayer({
           opacity: layerStyle.opacity,
         }}
       >
-        <div
-          className="preview-media-crop-layer"
-          data-testid="preview-crop-layer"
-          style={cropLayerStyle}
-        >
-          <video
-            className="preview-layer preview-video-layer"
-            data-preview-state="video"
-            data-testid="preview-video"
-            playsInline
-            preload="auto"
-            ref={mediaRef}
-            data-clip-id={layer.clip.id}
-            src={videoSourceUrl ?? undefined}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "fill",
-              zIndex,
-            }}
-            onLoadedMetadata={handleLoadedMetadata}
-            onError={() => void handleVideoError()}
-          />
-        </div>
+        <video
+          className="preview-layer preview-video-layer"
+          data-preview-state="video"
+          data-testid="preview-video"
+          playsInline
+          preload="auto"
+          ref={mediaRef}
+          data-clip-id={layer.clip.id}
+          src={videoSourceUrl ?? undefined}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "fill",
+            zIndex,
+            ...cropStyle,
+          }}
+          onLoadedMetadata={handleLoadedMetadata}
+          onError={() => void handleVideoError()}
+        />
         {isPreparingPreview ? (
           <div className="preview-transcode-status" role="status">
             Preparing compatible preview…
