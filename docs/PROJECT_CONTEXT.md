@@ -594,6 +594,39 @@ Known limitations:
 Next step:
 - Continue with the next focused transform milestone from the updated `main`.
 
+## M3.21 — Transform anchor compensation (in progress)
+
+Branch: `feat/m3-21-anchor-compensation`
+PR: #31 (draft)
+
+Scope:
+- Preserve rendered visual position when changing a selected visual clip's transform anchor.
+- Compensate X/Y translation based on the anchor delta, active transform scale/rotation, and contained media bounds.
+- Apply anchor compensation to the base transform and every transform keyframe so animated clips remain spatially consistent.
+- Keep anchor changes as one history mutation.
+- Fall back to the existing anchor command when intrinsic media dimensions are not available yet.
+
+Architecture decisions:
+- Compensation math lives in `src/features/transform/transform.ts` as a pure transform-domain helper.
+- The timeline command performs the atomic anchor + transform/keyframe update and receives media-content bounds in canvas-relative percentage units from the UI layer.
+- The existing `getContainedContentPercentageBounds` helper remains the source of media fit geometry.
+- No separate preview transform system is introduced.
+
+Automated coverage added:
+- Compensation math for scale and rotation.
+- Command-level compensation and timestamp/history behavior.
+- Compensation across all transform keyframes.
+- App-level anchor-change workflow using intrinsic media dimensions and Undo.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitation:
+- When intrinsic media dimensions are unavailable, the UI falls back to the previous anchor-change command; changing the anchor before metadata is ready may cause a visible position change.
+
+Next step:
+- User validates M3.21 locally before the draft PR is marked ready and merged.
+
 ## Documentation protocol
 
 For every milestone or meaningful bug fix, update:
