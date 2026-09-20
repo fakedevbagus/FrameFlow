@@ -179,7 +179,7 @@ describe("canvas manipulation", () => {
     const crop = cropFromPointer(
       "left",
       { top: 0, right: 0, bottom: 0, left: 0.1 },
-      { x: 100, y: 200 },
+      { x: 90, y: 230 },
       { left: 50, top: 50, width: 200, height: 200 },
       400,
       400,
