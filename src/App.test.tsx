@@ -114,7 +114,6 @@ describe("App", () => {
     expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
   });
 
-
   it("deletes the selected clip with the Delete key", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
@@ -149,7 +148,6 @@ describe("App", () => {
     });
     expect(screen.getByText("Pilih sebuah clip")).toBeInTheDocument();
   });
-
 
   it("applies move and trim controls to the selected clip", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
@@ -505,7 +503,10 @@ describe("App", () => {
       })).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText("keyframe-delete.mp4")).toBeInTheDocument();
+    const clipButton = screen.getByRole("button", {
+      name: "Select keyframe-delete.mp4 clip",
+    });
+    expect(clipButton).toBeInTheDocument();
     expect(container).toHaveTextContent("Static transform at 00:00.000");
   });
 
@@ -705,7 +706,6 @@ describe("App", () => {
     expect(screen.getAllByRole("button", { name: "Select split-ui.mp4 clip" })).toHaveLength(2);
   });
 
-
   it("starts preview media from the transport click", async () => {
     const playMock = vi
       .spyOn(HTMLMediaElement.prototype, "play")
@@ -810,5 +810,4 @@ describe("App", () => {
       ).toHaveStyle({ left: "80px" });
     });
   });
-
 });
