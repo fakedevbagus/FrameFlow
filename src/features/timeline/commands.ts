@@ -27,6 +27,7 @@ import {
 import {
   getNextClipForTransition,
   normalizeClipTransition,
+  sanitizeTrackTransitions,
 } from "../transition/transition";
 
 const defaultImageDurationMs = 3000;
@@ -882,7 +883,10 @@ export function removeClipFromTimeline(
   const track = project.tracks[trackIndex];
   const clips = track.clips.filter((clip) => clip.id !== clipId);
   const tracks = [...project.tracks];
-  tracks[trackIndex] = { ...track, clips };
+  tracks[trackIndex] = sanitizeProjectTrackTransitions(
+    project,
+    { ...track, clips },
+  );
 
   return { ...project, tracks, updatedAt: now.toISOString() };
 }
@@ -910,16 +914,18 @@ export function moveClipOnTimeline(
     throw new Error("Clip cannot overlap another clip on the same track.");
   }
 
-  const tracks = project.tracks.map((track, index) =>
-    index === location.trackIndex
-      ? {
-          ...track,
-          clips: track.clips.map((clip) =>
-            clip.id === clipId ? { ...clip, timelineStartMs } : clip,
-          ),
-        }
-      : track,
-  );
+  const tracks = project.tracks.map((track, index) => {
+    if (index !== location.trackIndex) {
+      return track;
+    }
+
+    return sanitizeProjectTrackTransitions(project, {
+      ...track,
+      clips: track.clips.map((clip) =>
+        clip.id === clipId ? { ...clip, timelineStartMs } : clip,
+      ),
+    });
+  });
 
   return { ...project, tracks, updatedAt: now.toISOString() };
 }
@@ -960,7 +966,7 @@ export function trimClipStart(
     throw new Error("Clip cannot overlap another clip on the same track.");
   }
 
-  return updateClipAtLocation(
+  const updatedProject = updateClipAtLocation(
     project,
     location,
     {
@@ -969,6 +975,8 @@ export function trimClipStart(
     },
     now,
   );
+
+  return sanitizeAllProjectTrackTransitions(updatedProject);
 }
 
 export function trimClipEnd(
@@ -1006,12 +1014,14 @@ export function trimClipEnd(
     throw new Error("Clip cannot overlap another clip on the same track.");
   }
 
-  return updateClipAtLocation(
+  const updatedProject = updateClipAtLocation(
     project,
     location,
     { sourceEndMs: newSourceEndMs },
     now,
   );
+
+  return sanitizeAllProjectTrackTransitions(updatedProject);
 }
 
 export function splitClipAtTime(
@@ -1079,6 +1089,7 @@ export function splitClipAtTime(
   const firstClip: Clip = {
     ...clip,
     sourceEndMs: sourceSplitMs,
+    transitionOut: undefined,
     transformKeyframes: firstKeyframes,
   };
   const secondClip: Clip = {
@@ -1093,7 +1104,12 @@ export function splitClipAtTime(
     candidate.id === clipId ? [firstClip, secondClip] : [candidate],
   );
   const tracks = project.tracks.map((candidateTrack, index) =>
-    index === location.trackIndex ? { ...candidateTrack, clips } : candidateTrack,
+    index === location.trackIndex
+      ? sanitizeProjectTrackTransitions(project, {
+          ...candidateTrack,
+          clips,
+        })
+      : candidateTrack,
   );
 
   return { ...project, tracks, updatedAt: now.toISOString() };
@@ -1105,6 +1121,30 @@ type ClipLocation = {
   clip: Clip;
   clipIndex: number;
 };
+
+function sanitizeProjectTrackTransitions(
+  project: Project,
+  track: Project["tracks"][number],
+): Project["tracks"][number] {
+  return sanitizeTrackTransitions(
+    track,
+    (clip) => {
+      const asset = project.assets.find(
+        (candidate) => candidate.id === clip.assetId,
+      );
+      return asset?.mediaType === "video" || asset?.mediaType === "image";
+    },
+  );
+}
+
+function sanitizeAllProjectTrackTransitions(project: Project): Project {
+  return {
+    ...project,
+    tracks: project.tracks.map((track) =>
+      sanitizeProjectTrackTransitions(project, track),
+    ),
+  };
+}
 
 function hasTimelineOverlap(
   track: Project["tracks"][number],
