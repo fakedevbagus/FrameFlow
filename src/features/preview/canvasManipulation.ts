@@ -1,4 +1,4 @@
-import type { ClipCrop, TransformAnchor } from "../project/domain";
+import type { ClipCrop, CropPosition, TransformAnchor } from "../project/domain";
 import type { ClipTransform } from "../transform/transform";
 import { normalizeClipCrop, normalizeClipTransform } from "../transform/transform";
 
@@ -164,7 +164,7 @@ export function transformFromPointer(
 export type CropEdge = "top" | "right" | "bottom" | "left";
 
 export function cropPositionFromPointer(
-  basePosition: { x: number; y: number },
+  basePosition: CropPosition,
   startPointer: CanvasPointer,
   currentPointer: CanvasPointer,
   crop: ClipCrop,
@@ -173,7 +173,7 @@ export function cropPositionFromPointer(
   canvasHeight: number,
   transform: ClipTransform,
   anchor: TransformAnchor = { x: 0.5, y: 0.5 },
-): { x: number; y: number } {
+): CropPosition {
   if (
     contentBounds.width <= 0 ||
     contentBounds.height <= 0 ||
