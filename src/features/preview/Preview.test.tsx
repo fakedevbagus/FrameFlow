@@ -59,7 +59,7 @@ describe("Preview", () => {
 
   it("falls back to a compatible preview when the source video cannot be decoded", async () => {
     invokeMock.mockResolvedValueOnce(
-      "/home/test/.cache/frameflow/previews/video-preview.webm",
+      "/home/test/.cache/frameflow/previews-v3/video-preview.mp4",
     );
 
     let project = createProject({ id: "video-preview-fallback" });
@@ -96,7 +96,7 @@ describe("Preview", () => {
       });
       expect(video).toHaveAttribute(
         "src",
-        "asset:///home/test/.cache/frameflow/previews/video-preview.webm",
+        "asset:///home/test/.cache/frameflow/previews-v3/video-preview.mp4",
       );
     });
   });
