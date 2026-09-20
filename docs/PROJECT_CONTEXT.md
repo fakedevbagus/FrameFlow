@@ -594,38 +594,40 @@ Known limitations:
 Next step:
 - Continue with the next focused transform milestone from the updated `main`.
 
-## M3.21 — Transform anchor compensation (in progress)
+## M3.21 — Transform anchor compensation — completed
 
 Branch: `feat/m3-21-anchor-compensation`
-PR: #31 (draft)
+PR: #32
+Merge SHA: `0da298e3f5c047e13c7c43c7ac391ba31f33a181`
 
-Scope:
-- Preserve rendered visual position when changing a selected visual clip's transform anchor.
-- Compensate X/Y translation based on the anchor delta, active transform scale/rotation, and contained media bounds.
-- Apply anchor compensation to the base transform and every transform keyframe so animated clips remain spatially consistent.
-- Keep anchor changes as one history mutation.
-- Fall back to the existing anchor command when intrinsic media dimensions are not available yet.
+Scope delivered:
+- Preserved the rendered visual position when changing a visual clip's transform anchor.
+- Compensated X/Y translation using the anchor delta, active transform scale/rotation, and the intrinsic media bounds after fit-to-canvas.
+- Applied equivalent compensation to all transform keyframes.
+- Kept anchor changes inside the existing history engine as one mutation.
+- Fell back to the existing anchor command when intrinsic media dimensions are not available yet.
 
 Architecture decisions:
-- Compensation math lives in `src/features/transform/transform.ts` as a pure transform-domain helper.
-- The timeline command performs the atomic anchor + transform/keyframe update and receives media-content bounds in canvas-relative percentage units from the UI layer.
-- The existing `getContainedContentPercentageBounds` helper remains the source of media fit geometry.
-- No separate preview transform system is introduced.
+- Compensation math lives in `src/features/transform/transform.ts` as a pure domain helper.
+- The timeline command performs the atomic anchor + transform/keyframe update.
+- The UI derives contained media bounds with the existing `getContainedContentPercentageBounds` helper.
+- No second preview transform pipeline was introduced.
 
-Automated coverage added:
-- Compensation math for scale and rotation.
-- Command-level compensation and timestamp/history behavior.
-- Compensation across all transform keyframes.
-- App-level anchor-change workflow using intrinsic media dimensions and Undo.
+Automated coverage:
+- Anchor compensation math for scale and rotation.
+- Command-level compensation and history timestamp behavior.
+- Compensation across transform keyframes.
+- App-level anchor change workflow with intrinsic media dimensions and Undo.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed the M3.21 local validation passed on Linux.
+- The final validation cycle reported lint success, 17 test files / 161 tests passing, successful production build after the final CSS corrections, and successful Tauri dev startup.
 
 Known limitation:
-- When intrinsic media dimensions are unavailable, the UI falls back to the previous anchor-change command; changing the anchor before metadata is ready may cause a visible position change.
+- Changing anchor before intrinsic media metadata is available uses the legacy anchor command and may not preserve the rendered position.
 
 Next step:
-- User validates M3.21 locally before the draft PR is marked ready and merged.
+- Start M3.22 from the updated `main`, focusing on direct on-canvas anchor manipulation.
 
 ## Documentation protocol
 
