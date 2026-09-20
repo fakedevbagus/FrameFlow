@@ -30,6 +30,7 @@ import {
   updateClipTransformAnchor,
   updateClipCrop,
   updateClipCropPosition,
+  updateClipCropWithPosition,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -849,6 +850,23 @@ function App() {
     );
   }
 
+  function handleCanvasCropAspectPresetCommit(
+    clipId: string,
+    crop: ClipCrop,
+    position?: CropPosition,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        updateClipCropWithPosition(
+          currentProject,
+          clipId,
+          crop,
+          position,
+        ),
+      "Crop aspect ratio updated.",
+    );
+  }
+
 
   function handleAddTransformKeyframe() {
     if (!selectedClipContext || !selectedTransform) {
@@ -1141,6 +1159,7 @@ function App() {
                 onTransformCommit={handleCanvasTransformCommit}
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
+                onCropAspectPresetCommit={handleCanvasCropAspectPresetCommit}
               />
             </div>
             <div className="transport-controls" aria-label="Playback controls">
