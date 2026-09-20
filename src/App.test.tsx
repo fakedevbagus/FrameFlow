@@ -309,7 +309,10 @@ describe("App", () => {
     });
 
     const previewVideo = screen.getByTestId("preview-video");
-    expect(previewVideo).toHaveStyle({
+    const previewContentLayer = previewVideo.parentElement;
+
+    expect(previewContentLayer).not.toBeNull();
+    expect(previewContentLayer).toHaveStyle({
       transform: "translate(5%, 0%) scale(1.1) rotate(15deg)",
       opacity: "0.9",
     });
