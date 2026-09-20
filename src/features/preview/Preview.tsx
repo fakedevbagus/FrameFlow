@@ -271,6 +271,7 @@ function PreviewVisualLayer({
   const activeAnchor = anchorGesture?.anchor ?? anchor;
   const activeTransform =
     anchorGesture?.transform ?? gesture?.transform ?? currentTransform;
+  const transitionOpacity = layer.transitionOpacity ?? 1;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
   const contentBoundsPercent = getContainedContentPercentageBounds(
@@ -290,7 +291,7 @@ function PreviewVisualLayer({
   const layerStyle = {
     zIndex,
     transform: `translate(${translateXPercent}%, ${translateYPercent}%) scale(${activeTransform.scale}) rotate(${activeTransform.rotation}deg)`,
-    opacity: activeTransform.opacity,
+    opacity: activeTransform.opacity * transitionOpacity,
   };
   const contentLayerStyle = {
     position: "absolute" as const,
