@@ -31,6 +31,7 @@ import {
   updateClipCrop,
   updateClipCropPosition,
   updateClipCropWithPosition,
+  updateCanvasDimensions,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -88,6 +89,14 @@ const navigation: Array<{ id: WorkspaceView; label: string }> = [
   { id: "editor", label: "Editor" },
   { id: "export", label: "Export" },
 ];
+
+const canvasAspectRatioPresets = [
+  { id: "16-9", label: "16:9", width: 1920, height: 1080 },
+  { id: "9-16", label: "9:16", width: 1080, height: 1920 },
+  { id: "1-1", label: "1:1", width: 1080, height: 1080 },
+  { id: "4-5", label: "4:5", width: 1080, height: 1350 },
+  { id: "4-3", label: "4:3", width: 1440, height: 1080 },
+] as const;
 
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
@@ -148,6 +157,13 @@ function App() {
     Math.max(currentTimeMs, 0),
     timelineDurationMs,
   );
+
+  const selectedCanvasPresetId =
+    canvasAspectRatioPresets.find(
+      (preset) =>
+        preset.width === project.canvas.width &&
+        preset.height === project.canvas.height,
+    )?.id ?? "custom";
 
   useEffect(() => {
     saveWorkspaceProject(project);
@@ -218,6 +234,33 @@ function App() {
   function handleCurrentTimeChange(timeMs: number) {
     setIsPlaying(false);
     setPlaybackTime(timeMs);
+  }
+
+  function handleSetCanvasAspectRatio(presetId: string) {
+    const preset = canvasAspectRatioPresets.find(
+      (candidate) => candidate.id === presetId,
+    );
+
+    if (!preset) {
+      return;
+    }
+
+    if (
+      project.canvas.width === preset.width &&
+      project.canvas.height === preset.height
+    ) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        updateCanvasDimensions(
+          currentProject,
+          preset.width,
+          preset.height,
+        ),
+      "Canvas aspect ratio updated.",
+    );
   }
 
   async function handleOpenProject() {
@@ -1214,9 +1257,23 @@ function App() {
               <button className="toolbar-button" onClick={handleSaveProject} type="button">
                 Save
               </button>
-              <button className="toolbar-button" type="button">
-                9:16
-              </button>
+              <select
+                aria-label="Canvas aspect ratio"
+                className="canvas-preset-select"
+                value={selectedCanvasPresetId}
+                onChange={(event) =>
+                  handleSetCanvasAspectRatio(event.currentTarget.value)
+                }
+              >
+                {selectedCanvasPresetId === "custom" ? (
+                  <option value="custom">Custom</option>
+                ) : null}
+                {canvasAspectRatioPresets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.label}
+                  </option>
+                ))}
+              </select>
               <button className="primary-button" type="button">
                 Export
               </button>
@@ -1229,7 +1286,14 @@ function App() {
           </div>
 
           <div className="preview-region">
-            <div className="preview-canvas" ref={previewCanvasRef}>
+            <div
+              className="preview-canvas"
+              ref={previewCanvasRef}
+              style={{
+                aspectRatio:
+                  project.canvas.width + " / " + project.canvas.height,
+              }}
+            >
               <Preview
                 project={project}
                 currentTimeMs={displayedCurrentTimeMs}
