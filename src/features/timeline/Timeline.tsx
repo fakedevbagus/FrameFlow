@@ -38,6 +38,11 @@ interface TimelineProps {
   ) => void;
   onAddTrack?: (type: "audio" | "video") => void;
   onRemoveTrack?: (trackId: string) => void;
+  onMoveTransformKeyframe?: (
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) => void;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
 }
@@ -80,6 +85,7 @@ export function Timeline({
   onAddAssetToTrack,
   onAddTrack,
   onRemoveTrack,
+  onMoveTransformKeyframe,
   zoom = DEFAULT_TIMELINE_ZOOM,
   onZoomChange,
 }: TimelineProps) {
@@ -287,6 +293,7 @@ export function Timeline({
       return;
     }
 
+    event?.preventDefault();
     onMoveTransformKeyframe?.(
       keyframeInteraction.clipId,
       keyframeInteraction.keyframeTimeMs,
@@ -591,6 +598,7 @@ export function Timeline({
             onFinishClipInteraction={finishClipInteraction}
             onCancelClipInteraction={cancelClipInteraction}
             onKeyframeClick={handleKeyframeClick}
+            onMoveTransformKeyframe={onMoveTransformKeyframe}
             keyframeInteraction={keyframeInteraction}
             onBeginKeyframeInteraction={beginKeyframeInteraction}
             onUpdateKeyframeInteraction={updateKeyframeInteraction}
@@ -633,6 +641,11 @@ interface TimelineTrackProps {
     clip: Clip,
     keyframeTimeMs: number,
   ) => void;
+  onMoveTransformKeyframe?: (
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) => void;
   keyframeInteraction: KeyframeInteraction | null;
   onBeginKeyframeInteraction: (
     event: PointerEvent<HTMLButtonElement>,
@@ -670,6 +683,7 @@ function TimelineTrack({
   onFinishClipInteraction,
   onCancelClipInteraction,
   onKeyframeClick,
+  onMoveTransformKeyframe,
   keyframeInteraction,
   onBeginKeyframeInteraction,
   onUpdateKeyframeInteraction,
