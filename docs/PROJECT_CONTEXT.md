@@ -284,6 +284,8 @@ Important: these changes were implemented from current `main` after M3.12 was al
 
 The user has not yet reported validation for M3.13.
 
+Follow-up issue found during manual playback: while transport playback was active, the preview video effect depended on the changing clip-local transport time and therefore could seek the video element on every animation-frame update. The M3.13 follow-up correction removes the per-tick seek and keeps re-alignment limited to playback start or active-clip changes. Automated regression coverage was added; local validation remains pending.
+
 Run locally on the M3.13 branch:
 
 ```bash
