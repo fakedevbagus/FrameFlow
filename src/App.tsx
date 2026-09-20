@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaBin } from "./features/media/MediaBin";
+import type { ClipTransform } from "./features/project/domain";
 import {
   addAssetToTimeline,
   addAssetToTrack,
@@ -508,13 +509,7 @@ function App() {
 
   function handleCanvasTransformCommit(
     clipId: string,
-    transform: Parameters<typeof getClipTransform>[0] & {
-      x: number;
-      y: number;
-      scale: number;
-      rotation: number;
-      opacity: number;
-    },
+    transform: ClipTransform,
   ) {
     applyProjectChange(
       (currentProject) =>
