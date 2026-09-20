@@ -4,6 +4,7 @@
 
 ### M3.15 — Transform anchor foundation (in progress)
 Branch: `feat/m3-15-transform-anchor-foundation`
+PR #25 — draft
 
 Implemented:
 - Added backward-compatible per-clip transform anchor defaults.
@@ -13,8 +14,10 @@ Implemented:
 - Added regression coverage for anchor normalization, commands, preview transform origin, anchor pivot math, and App history workflow.
 
 Validation:
-- Not yet validated locally by the user.
-- Do not merge until lint, tests, build, and manual transform/anchor checks pass.
+- Initial local validation found one assertion mismatch in the App anchor test and one unused-import TypeScript error.
+- Both issues have been corrected on the branch.
+- Awaiting a clean local lint/test/build/manual validation run.
+- Do not merge until validation passes.
 
 3.14 — Keyframe UX hardening — merged
 Branch: `feat/m3-14-keyframe-ux-hardening`
