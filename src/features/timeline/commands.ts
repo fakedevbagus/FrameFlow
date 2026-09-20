@@ -135,9 +135,20 @@ export function addTrack(
     clips: [],
   } satisfies Project["tracks"][number];
 
+  const insertionIndex =
+    project.tracks.reduce(
+      (lastIndex, candidate, index) =>
+        candidate.type === type ? index + 1 : lastIndex,
+      0,
+    );
+
   return {
     ...project,
-    tracks: [...project.tracks, track],
+    tracks: [
+      ...project.tracks.slice(0, insertionIndex),
+      track,
+      ...project.tracks.slice(insertionIndex),
+    ],
     updatedAt: now.toISOString(),
   };
 }
