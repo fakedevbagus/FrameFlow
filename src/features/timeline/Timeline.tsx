@@ -437,6 +437,7 @@ export function Timeline({
             onUpdateClipInteraction={updateClipInteraction}
             onFinishClipInteraction={finishClipInteraction}
             onCancelClipInteraction={cancelClipInteraction}
+            onKeyframeClick={handleKeyframeClick}
           />
         ))}
       </div>
