@@ -1,5 +1,28 @@
 ## 2026-09-21
 
+### M3.28 — Transition lifecycle integrity — merged
+Branch: `feat/m3-28-transition-lifecycle-integrity`
+PR #39
+Merge SHA: `2e77190ef6474b3ede1ad72af0682a9c5bfb7c61`
+
+Implemented:
+- Added transition-pair normalization and edited-track sanitization helpers.
+- Cleared stale transition metadata after move, remove, and trim edits break adjacency.
+- Clamped transition duration when an adjacent clip is shortened.
+- Preserved the outgoing transition on the correct segment when splitting a clip.
+- Added regression coverage for the lifecycle cases.
+
+Validation:
+- User confirmed local Linux validation passed, including lint, tests, build, Tauri dev, and manual transition lifecycle checks.
+
+Known limitations:
+- Only dissolve transitions are supported.
+- No transition browser, drag-and-drop placement, or audio transitions yet.
+
+Next step:
+- Continue from updated `main` with the next focused editor milestone.
+
+
 ### M3.28 — Transition lifecycle integrity — in progress
 Branch: `feat/m3-28-transition-lifecycle-integrity`
 
