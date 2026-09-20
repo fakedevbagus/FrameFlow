@@ -23,6 +23,12 @@ Implementation commits:
 - `7cf18d1c4d7cb3c6a2fdb1f0901eb5aea1eedc67` — new-chat handoff prompt
 - `fc5ed54ca8bcfb91fe0df8294fd64e34852cd1a6` — context updated with PR #23
 
+Follow-up playback smoothness correction:
+- Prevent the video preview effect from seeking `currentTime` on every transport tick while playback is active.
+- Keep playback-start re-alignment for replay/start synchronization.
+- Added regression coverage for transport ticks during active playback.
+- Local validation remains pending.
+
 Validation:
 - Not yet validated locally by the user.
 - Do not merge until lint, tests, build, `tauri dev`, and manual playback checks pass.
