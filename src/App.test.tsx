@@ -234,6 +234,96 @@ describe("App", () => {
     expect(container.querySelector(".timeline-playhead")).not.toBeNull();
   });
 
+  it("configures a dissolve transition between adjacent visual clips", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-transition-a",
+        name: "transition-a.mp4",
+        mediaType: "video",
+        sourcePath: "/media/transition-a.mp4",
+        durationMs: 4000,
+      },
+      {
+        id: "asset-transition-b",
+        name: "transition-b.mp4",
+        mediaType: "video",
+        sourcePath: "/media/transition-b.mp4",
+        durationMs: 3000,
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() => {
+      expect(screen.getByText("transition-a.mp4")).toBeInTheDocument();
+      expect(screen.getByText("transition-b.mp4")).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add transition-a.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add transition-b.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select transition-a.mp4 clip",
+      }),
+    );
+
+    const typeSelect = screen.getByRole("combobox", {
+      name: "Transition type",
+    });
+
+    expect(typeSelect).not.toBeDisabled();
+    expect(typeSelect).toHaveValue("none");
+
+    fireEvent.change(typeSelect, { target: { value: "dissolve" } });
+
+    await waitFor(() => {
+      expect(typeSelect).toHaveValue("dissolve");
+      expect(
+        screen.getByRole("spinbutton", { name: "Transition duration" }),
+      ).toHaveValue(300);
+    });
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Transition duration" }),
+      { target: { value: "600" } },
+    );
+    fireEvent.blur(
+      screen.getByRole("spinbutton", { name: "Transition duration" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("spinbutton", { name: "Transition duration" }),
+      ).toHaveValue(600),
+    );
+
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(typeSelect).toHaveValue("dissolve");
+      expect(
+        screen.getByRole("spinbutton", { name: "Transition duration" }),
+      ).toHaveValue(300);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(typeSelect).toHaveValue("none");
+    });
+  });
+
   it("commits direct canvas movement into project history", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
