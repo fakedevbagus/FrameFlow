@@ -199,6 +199,8 @@ function PreviewVisualLayer({
   const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const [cropGesture, setCropGesture] = useState<CropGesture | null>(null);
+  const [cropPositionGesture, setCropPositionGesture] =
+    useState<CropPositionGesture | null>(null);
   const cropPositionGestureRef = useRef<CropPositionGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
@@ -222,10 +224,9 @@ function PreviewVisualLayer({
   const anchor = getClipTransformAnchor(layer.clip.transformAnchor);
   const crop = getClipCrop(layer.clip.crop);
   const activeCrop = cropGesture?.crop ?? crop;
-  const cropPosition = getClipCropPosition(
-    activeCrop,
-    layer.clip.cropPosition,
-  );
+  const cropPosition =
+    cropPositionGesture?.position ??
+    getClipCropPosition(activeCrop, layer.clip.cropPosition);
   const hasCrop =
     activeCrop.top > 0.0001 ||
     activeCrop.right > 0.0001 ||
@@ -590,9 +591,12 @@ function PreviewVisualLayer({
     } satisfies CropPositionGesture;
 
     cropPositionGestureRef.current = nextGesture;
+    setCropPositionGesture(nextGesture);
   }
 
-  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+  function handlePointerMove(
+    event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
+  ) {
     const activeCropPositionGesture = cropPositionGestureRef.current;
 
     if (
@@ -622,6 +626,7 @@ function PreviewVisualLayer({
       };
 
       cropPositionGestureRef.current = nextGesture;
+      setCropPositionGesture(nextGesture);
       return;
     }
 
@@ -698,7 +703,9 @@ function PreviewVisualLayer({
     });
   }
 
-  function finishGesture(event: PointerEvent<HTMLDivElement>) {
+  function finishGesture(
+    event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
+  ) {
     const activeCropPositionGesture = cropPositionGestureRef.current;
 
     if (
@@ -715,6 +722,7 @@ function PreviewVisualLayer({
       const nextPosition = activeCropPositionGesture.position;
 
       cropPositionGestureRef.current = null;
+      setCropPositionGesture(null);
 
       if (shouldCommit) {
         onCropPositionCommit?.(layer.clip.id, nextPosition);
@@ -760,7 +768,9 @@ function PreviewVisualLayer({
     }
   }
 
-  function cancelGesture(event: PointerEvent<HTMLDivElement>) {
+  function cancelGesture(
+    event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
+  ) {
     const activeCropPositionGesture = cropPositionGestureRef.current;
 
     if (
@@ -768,6 +778,7 @@ function PreviewVisualLayer({
       activeCropPositionGesture.pointerId === event.pointerId
     ) {
       cropPositionGestureRef.current = null;
+      setCropPositionGesture(null);
 
       try {
         interactionRef.current?.releasePointerCapture(event.pointerId);
@@ -933,6 +944,9 @@ function PreviewVisualLayer({
                 className="preview-crop-pan-surface"
                 data-testid={`preview-crop-pan-surface-${layer.clip.id}`}
                 onPointerDown={beginCropPositionGesture}
+                onPointerMove={handlePointerMove}
+                onPointerUp={finishGesture}
+                onPointerCancel={cancelGesture}
                 type="button"
               />
             ) : null}
