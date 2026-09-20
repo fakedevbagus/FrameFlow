@@ -632,15 +632,19 @@ function App() {
       return null;
     }
 
-    if (media.tagName === "VIDEO") {
+    if ("videoWidth" in media) {
       return media.videoWidth > 0 && media.videoHeight > 0
         ? { width: media.videoWidth, height: media.videoHeight }
         : null;
     }
 
-    return media.naturalWidth > 0 && media.naturalHeight > 0
-      ? { width: media.naturalWidth, height: media.naturalHeight }
-      : null;
+    if ("naturalWidth" in media) {
+      return media.naturalWidth > 0 && media.naturalHeight > 0
+        ? { width: media.naturalWidth, height: media.naturalHeight }
+        : null;
+    }
+
+    return null;
   }
 
   function handleSetSelectedCropAspectPreset(
@@ -675,7 +679,7 @@ function App() {
       preset.ratio,
       dimensions.width,
       dimensions.height,
-      selectedCropPosition,
+      selectedCropPosition ?? undefined,
     );
 
     const currentCrop = selectedCrop ?? { top: 0, right: 0, bottom: 0, left: 0 };
