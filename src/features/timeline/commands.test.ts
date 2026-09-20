@@ -22,7 +22,40 @@ import {
   updateClipCrop,
   updateClipCropPosition,
   updateClipCropWithPosition,
+  updateCanvasDimensions,
 } from "./commands";
+
+describe("canvas settings", () => {
+  it("updates canvas dimensions without changing frame rate", () => {
+    const project = createProject({ id: "canvas-dimensions" });
+
+    const updated = updateCanvasDimensions(
+      project,
+      1920,
+      1080,
+      new Date("2026-09-21T02:00:00.000Z"),
+    );
+
+    expect(updated.canvas).toEqual({
+      width: 1920,
+      height: 1080,
+      frameRate: 30,
+    });
+    expect(updated.updatedAt).toBe("2026-09-21T02:00:00.000Z");
+    expect(updated.tracks).toEqual(project.tracks);
+  });
+
+  it("rejects invalid canvas dimensions", () => {
+    const project = createProject({ id: "canvas-dimensions-invalid" });
+
+    expect(() => updateCanvasDimensions(project, 1920.5, 1080)).toThrow(
+      "Canvas dimensions must be positive integers.",
+    );
+    expect(() => updateCanvasDimensions(project, 0, 1080)).toThrow(
+      "Canvas dimensions must be positive integers.",
+    );
+  });
+});
 
 describe("track management", () => {
   it("adds a track with the next type-specific name", () => {
