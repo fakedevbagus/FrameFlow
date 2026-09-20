@@ -804,7 +804,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("spinbutton", { name: "Crop position X" }),
-      ).toHaveValue(50);
+      ).toHaveValue(40);
       expect(
         screen.getByRole("spinbutton", { name: "Crop position Y" }),
       ).toHaveValue(55);
@@ -818,7 +818,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("spinbutton", { name: "Crop position X" }),
-      ).toHaveValue(40);
+      ).toHaveValue(50);
       expect(
         screen.getByRole("spinbutton", { name: "Crop position Y" }),
       ).toHaveValue(55);
