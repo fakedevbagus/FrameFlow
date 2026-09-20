@@ -208,15 +208,16 @@ Merge SHA:
 ### M1–M2.5
 Foundation, media import, Media Bin to Timeline, selection/Inspector/delete, timeline interaction foundation, and core edit commands were completed before the recorded M2.6 merge point. Use repository history when exact older SHAs are needed.
 
-### M3.17 — Direct crop handle manipulation — in progress
+### M3.17 — Direct crop handle manipulation — merged
 Branch: `feat/m3-17-direct-crop-handles`
-PR #27 — draft
+PR #27 — merged
+Merge SHA: `dd4333deccc420bfe07dd68f05c2cb49ae865bdb`
 
 Implemented:
 - Added direct Top, Right, Bottom, and Left crop handles to selected visual preview layers.
-- Added transformed pointer-to-content crop math so handles remain meaningful with scale, rotation, translation, and custom transform anchors.
-- Added live crop preview during dragging.
-- Kept the completed crop interaction as one history edit on pointer release.
+- Added transformed pointer-to-content crop math for scale, rotation, translation, and custom transform anchors.
+- Added live crop feedback during dragging.
+- Committed one crop history edit on pointer release.
 - Preserved existing Inspector crop editing and transform/keyframe controls.
 
 Automated coverage:
@@ -225,10 +226,13 @@ Automated coverage:
 - Added App-level crop history/Undo coverage.
 
 Validation:
-- Local lint, test, build, Tauri dev, and manual validation are pending user verification.
+- User confirmed local lint, test, build, Tauri dev, and M3.17 manual checks passed on Linux.
 
 Known limitation:
-- Aspect-ratio crop presets and crop-position translation compensation are not part of this milestone.
+- Aspect-ratio crop presets and crop-position translation compensation remain future work.
+
+Next step:
+- M3.18 should address crop-position translation compensation so crop edits can preserve the visible subject position when required.
 
 ## Documentation rule
 
