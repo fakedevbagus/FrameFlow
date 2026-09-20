@@ -290,9 +290,11 @@ describe("App", () => {
     expect(screen.getByText("Transform")).toBeInTheDocument();
     expect(container).toHaveTextContent("X");
     expect(container).toHaveTextContent("Y");
-    expect(container).toHaveTextContent("1.00×");
-    expect(container).toHaveTextContent("0°");
-    expect(container).toHaveTextContent("100%");
+    expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(1);
+    expect(screen.getByRole("spinbutton", { name: "Rotation" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(100);
 
     fireEvent.click(screen.getByRole("button", { name: "Move visual right" }));
     fireEvent.click(screen.getByRole("button", { name: "Scale visual up" }));
@@ -300,14 +302,16 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Decrease visual opacity" }));
 
     await waitFor(() => {
-      expect(container).toHaveTextContent("+5%");
-      expect(container).toHaveTextContent("1.10×");
-      expect(container).toHaveTextContent("15°");
-      expect(container).toHaveTextContent("90%");
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(5);
+      expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(1.1);
+      expect(screen.getByRole("spinbutton", { name: "Rotation" })).toHaveValue(15);
+      expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(90);
     });
 
     const previewVideo = screen.getByTestId("preview-video");
-    expect(previewVideo).toHaveStyle({
+    const previewContentLayer = previewVideo.parentElement;
+    expect(previewContentLayer).not.toBeNull();
+    expect(previewContentLayer).toHaveStyle({
       transform: "translate(5%, 0%) scale(1.1) rotate(15deg)",
       opacity: "0.9",
     });
@@ -315,10 +319,11 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset transform" }));
 
     await waitFor(() => {
-      expect(container).toHaveTextContent("+0%");
-      expect(container).toHaveTextContent("1.00×");
-      expect(container).toHaveTextContent("0°");
-      expect(container).toHaveTextContent("100%");
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(1);
+      expect(screen.getByRole("spinbutton", { name: "Rotation" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(100);
     });
   });
 
