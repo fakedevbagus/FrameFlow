@@ -7,10 +7,12 @@ import {
 } from "react";
 import type { ClipCrop, ClipTransform, CropPosition, Project } from "../project/domain";
 import {
+  CROP_ASPECT_RATIO_PRESETS,
   getClipCrop,
   getClipCropPosition,
   getClipTransformAnchor,
   getClipTransformAtTime,
+  getCropForAspectRatio,
   normalizeClipTransform,
   normalizeClipCrop,
 } from "../transform/transform";
@@ -40,6 +42,11 @@ interface PreviewProps {
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
+  onCropAspectPresetCommit?: (
+    clipId: string,
+    crop: ClipCrop,
+    position?: CropPosition,
+  ) => void;
 }
 
 interface PreviewError {
@@ -56,6 +63,7 @@ export function Preview({
   onTransformCommit,
   onCropCommit,
   onCropPositionCommit,
+  onCropAspectPresetCommit,
 }: PreviewProps) {
   const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
   const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
@@ -96,6 +104,7 @@ export function Preview({
           onTransformCommit={onTransformCommit}
           onCropCommit={onCropCommit}
           onCropPositionCommit={onCropPositionCommit}
+          onCropAspectPresetCommit={onCropAspectPresetCommit}
           onError={handleMediaError}
         />
       ))}
@@ -149,6 +158,11 @@ interface PreviewVisualLayerProps extends PreviewLayerProps {
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
+  onCropAspectPresetCommit?: (
+    clipId: string,
+    crop: ClipCrop,
+    position?: CropPosition,
+  ) => void;
 }
 
 interface CanvasGesture {
@@ -545,6 +559,32 @@ function PreviewVisualLayer({
     });
   }
 
+  function handleCropAspectPreset(preset: (typeof CROP_ASPECT_RATIO_PRESETS)[number]) {
+    if (!onCropAspectPresetCommit) {
+      return;
+    }
+
+    if (
+      preset.ratio !== null &&
+      (mediaWidth <= 0 || mediaHeight <= 0)
+    ) {
+      return;
+    }
+
+    const result = getCropForAspectRatio(
+      preset.ratio,
+      mediaWidth,
+      mediaHeight,
+      cropPosition,
+    );
+
+    onCropAspectPresetCommit(
+      layer.clip.id,
+      result.crop,
+      result.cropPosition,
+    );
+  }
+
   function beginCropPositionGesture(
     event: PointerEvent<HTMLButtonElement>,
   ) {
@@ -832,6 +872,34 @@ function PreviewVisualLayer({
             left: activeCrop.left * 100 + "%",
           }}
         />
+        <div
+          className="preview-crop-aspect-presets"
+          aria-label="Crop aspect ratio presets"
+          role="group"
+        >
+          {CROP_ASPECT_RATIO_PRESETS.map((preset) => {
+            const isDisabled =
+              preset.ratio !== null && (mediaWidth <= 0 || mediaHeight <= 0);
+
+            return (
+              <button
+                aria-label={"Set crop aspect ratio " + preset.label}
+                className="preview-crop-aspect-button"
+                data-testid={"preview-crop-aspect-" + preset.id}
+                disabled={isDisabled}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleCropAspectPreset(preset);
+                }}
+                title={preset.label}
+                type="button"
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
         <button
           aria-label="Crop top"
           className="preview-crop-handle preview-crop-handle-top"
