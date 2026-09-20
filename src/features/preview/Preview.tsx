@@ -330,6 +330,46 @@ function PreviewVisualLayer({
   }, [onError]);
 
   useEffect(() => {
+    if (!gesture && !cropGesture && !cropPositionGesture && !anchorGesture) {
+      return;
+    }
+
+    function handleCancel(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      event.preventDefault();
+
+      for (const pointerId of [
+        gesture?.pointerId,
+        cropGesture?.pointerId,
+        cropPositionGesture?.pointerId,
+        anchorGesture?.pointerId,
+      ]) {
+        if (typeof pointerId !== "number") {
+          continue;
+        }
+
+        try {
+          interactionRef.current?.releasePointerCapture(pointerId);
+        } catch {
+          // Pointer capture may be unavailable in tests.
+        }
+      }
+
+      cropPositionGestureRef.current = null;
+      setGesture(null);
+      setCropGesture(null);
+      setCropPositionGesture(null);
+      setAnchorGesture(null);
+    }
+
+    window.addEventListener("keydown", handleCancel);
+    return () => window.removeEventListener("keydown", handleCancel);
+  }, [anchorGesture, cropGesture, cropPositionGesture, gesture]);
+
+  useEffect(() => {
     if (layer.asset.mediaType !== "video") {
       return;
     }
