@@ -534,6 +534,60 @@ button:focus-visible {
   gap: 4px;
 }
 
+.track-label-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.track-remove-button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #343b48;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #7f899a;
+  background: #1a1e25;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 18px;
+}
+
+.track-remove-button:hover:not(:disabled) {
+  border-color: #5c6577;
+  color: #dce1eb;
+}
+
+.track-remove-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.timeline-actions .track-add-button {
+  min-width: 40px;
+}
+
+.timeline-lane-drop-target {
+  outline: 1px dashed #8f83ff;
+  outline-offset: -2px;
+  background-color: rgb(94 83 150 / 8%);
+}
+
+.timeline-lane-drop-target::after {
+  position: absolute;
+  inset: 7px;
+  border: 1px dashed rgb(159 145 255 / 55%);
+  border-radius: 5px;
+  content: "Drop media here";
+  display: grid;
+  place-items: center;
+  color: #9f91ff;
+  background: rgb(25 24 36 / 35%);
+  font-size: 10px;
+  pointer-events: none;
+}
+
 .track-label strong {
   color: #d4d9e2;
   font-size: 11px;

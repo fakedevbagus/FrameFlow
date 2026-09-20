@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
-import { addAssetToTimeline } from "./commands";
+import { addAssetToTimeline, addTrack } from "./commands";
 import { Timeline } from "./Timeline";
 
 describe("Timeline", () => {
@@ -125,6 +125,115 @@ describe("Timeline", () => {
     fireEvent.click(muteButton);
 
     expect(onToggleTrackMute).toHaveBeenCalledWith("video-1");
+  });
+
+  it("adds video and audio tracks through timeline controls", () => {
+    const project = createVideoProject();
+    const onAddTrack = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onAddTrack={onAddTrack}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add video track" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add audio track" }));
+
+    expect(onAddTrack).toHaveBeenNthCalledWith(1, "video");
+    expect(onAddTrack).toHaveBeenNthCalledWith(2, "audio");
+  });
+
+  it("shows dynamic track labels and routes dropped media to the target track", () => {
+    let project = createProject({ id: "drop-project" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-overlay",
+          name: "overlay.mp4",
+          mediaType: "video",
+          sourcePath: "/media/overlay.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+    project = addTrack(project, "video");
+
+    const onAddAssetToTrack = vi.fn();
+
+    const { container } = render(
+      <Timeline
+        project={project}
+        onAddAssetToTrack={onAddAssetToTrack}
+      />,
+    );
+
+    expect(screen.getByText("V2")).toBeInTheDocument();
+
+    const lanes = container.querySelectorAll(".timeline-lane");
+    const secondLane = lanes[1];
+
+    Object.defineProperty(secondLane, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 69,
+        height: 69,
+        left: 0,
+        right: 800,
+        top: 0,
+        width: 800,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const dataTransfer = {
+      dropEffect: "none",
+      effectAllowed: "copy",
+      types: ["application/x-frameflow-asset-id"],
+      getData: vi.fn(() => "asset-overlay"),
+    };
+
+    fireEvent.drop(secondLane, {
+      dataTransfer,
+      clientX: 120,
+    });
+
+    expect(onAddAssetToTrack).toHaveBeenCalledWith(
+      "asset-overlay",
+      project.tracks[2].id,
+      3000,
+    );
+  });
+
+  it("disables removal for populated tracks and exposes removal for empty extra tracks", () => {
+    const project = createVideoProject();
+    const extraTrack = addTrack(project, "video");
+    const onRemoveTrack = vi.fn();
+
+    render(
+      <Timeline
+        project={extraTrack}
+        onRemoveTrack={onRemoveTrack}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Remove Video 2 track" }),
+    ).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Remove Video 1 track" }),
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove Video 2 track" }),
+    );
+    expect(onRemoveTrack).toHaveBeenCalledWith(
+      extraTrack.tracks[2].id,
+    );
   });
 
   it("marks the selected clip", () => {

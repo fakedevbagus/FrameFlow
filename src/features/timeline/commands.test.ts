@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { createProject } from "../project/domain";
 import {
   addAssetToTimeline,
+  addAssetToTrack,
+  addTrack,
+  removeTrack,
   toggleTrackMute,
   moveClipOnTimeline,
   removeClipFromTimeline,
@@ -9,6 +12,136 @@ import {
   trimClipEnd,
   trimClipStart,
 } from "./commands";
+
+describe("track management", () => {
+  it("adds a track with the next type-specific name", () => {
+    const project = createProject({ id: "track-add" });
+
+    const updated = addTrack(
+      addTrack(project, "video", new Date("2026-09-20T00:00:01.000Z")),
+      "video",
+      new Date("2026-09-20T00:00:02.000Z"),
+    );
+
+    expect(updated.tracks.map((track) => track.name)).toEqual([
+      "Video 1",
+      "Video 2",
+      "Audio 1",
+      "Video 3",
+    ]);
+    expect(updated.tracks[3].clips).toHaveLength(0);
+  });
+
+  it("removes only empty tracks and keeps the last track of a type", () => {
+    const project = addTrack(createProject({ id: "track-remove" }), "video");
+
+    const removableId = project.tracks[2].id;
+    const updated = removeTrack(
+      project,
+      removableId,
+      new Date("2026-09-20T00:00:03.000Z"),
+    );
+
+    expect(updated.tracks).toHaveLength(2);
+    expect(updated.tracks.map((track) => track.name)).toEqual([
+      "Video 1",
+      "Audio 1",
+    ]);
+
+    expect(() =>
+      removeTrack(
+        createProject({ id: "track-last" }),
+        "video-1",
+      ),
+    ).toThrow("The last track of this type cannot be removed.");
+  });
+
+  it("routes compatible media to a chosen track at a requested position", () => {
+    let project = createProject({ id: "track-routing" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "overlay.mp4",
+          mediaType: "video",
+          sourcePath: "/overlay.mp4",
+          durationMs: 4000,
+        },
+        {
+          id: "image",
+          name: "poster.png",
+          mediaType: "image",
+          sourcePath: "/poster.png",
+          durationMs: null,
+        },
+        {
+          id: "audio",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music.mp3",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addTrack(project, "video");
+    project = addAssetToTrack(project, "video", project.tracks[2].id, 6000);
+    project = addAssetToTrack(project, "image", project.tracks[2].id, 12000);
+    project = addAssetToTrack(project, "audio", project.tracks[1].id, 3000);
+
+    expect(project.tracks[2].clips.map((clip) => clip.timelineStartMs)).toEqual([
+      6000,
+      12000,
+    ]);
+    expect(project.tracks[1].clips[0].timelineStartMs).toBe(3000);
+  });
+
+  it("rejects incompatible media, locked tracks, and overlapping drops", () => {
+    let project = createProject({ id: "track-routing-errors" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+        {
+          id: "audio",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music.mp3",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    expect(() =>
+      addAssetToTrack(project, "audio", "video-1"),
+    ).toThrow("Cannot add audio media to a video track.");
+
+    const lockedProject = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1" ? { ...track, isLocked: true } : track,
+      ),
+    };
+
+    expect(() =>
+      addAssetToTrack(lockedProject, "video", "video-1"),
+    ).toThrow("Track is locked.");
+
+    const populated = addAssetToTrack(project, "video", "video-1", 0);
+    expect(() =>
+      addAssetToTrack(populated, "video", "video-1", 2000),
+    ).toThrow("Media cannot overlap another clip on the same track.");
+  });
+});
 
 describe("toggleTrackMute", () => {
   it("toggles a track mute state", () => {
