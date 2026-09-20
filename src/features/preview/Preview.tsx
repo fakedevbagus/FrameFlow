@@ -282,6 +282,9 @@ function PreviewVisualLayer({
     localTimeMs,
   ]);
 
+  const localTimeMsRef = useRef(localTimeMs);
+  localTimeMsRef.current = localTimeMs;
+
   useEffect(() => {
     const media = mediaRef.current;
 
@@ -294,6 +297,14 @@ function PreviewVisualLayer({
         media.pause();
       }
       return;
+    }
+
+    try {
+      // Re-align only when playback starts or when the active clip changes.
+      // Do not seek on every transport tick because that interrupts media playback.
+      media.currentTime = Math.max(0, localTimeMsRef.current / 1000);
+    } catch {
+      // Some WebView/media implementations reject seeking before metadata is ready.
     }
 
     void Promise.resolve(media.play()).catch(() => undefined);
@@ -595,6 +606,7 @@ function PreviewVisualLayer({
           playsInline
           preload="auto"
           ref={mediaRef}
+          data-clip-id={layer.clip.id}
           src={videoSourceUrl ?? undefined}
           style={{
             width: "100%",
@@ -735,6 +747,7 @@ function PreviewAudioLayer({
       data-testid="preview-audio"
       preload="auto"
       ref={mediaRef}
+      data-clip-id={layer.clip.id}
       src={mediaUrl ?? undefined}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}

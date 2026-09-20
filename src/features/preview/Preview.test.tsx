@@ -429,6 +429,115 @@ describe("Preview", () => {
     ).toBeInTheDocument();
   });
 
+  it("re-aligns video to the transport position when playback starts", async () => {
+    let project = createProject({ id: "replay-alignment-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-replay",
+          name: "replay.mp4",
+          mediaType: "video",
+          sourcePath: "/media/replay.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-replay");
+
+    const { rerender } = render(
+      <Preview
+        project={project}
+        currentTimeMs={0}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    const video = screen.getByTestId("preview-video") as HTMLVideoElement;
+    video.currentTime = 4.8;
+
+    rerender(
+      <Preview
+        project={project}
+        currentTimeMs={0}
+        isPlaying
+      />,
+    );
+
+    await vi.waitFor(() => {
+      expect(video.currentTime).toBe(0);
+    });
+  });
+
+  it("does not continuously seek video while transport ticks during playback", async () => {
+    const playMock = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockResolvedValue(undefined);
+
+    let project = createProject({ id: "playback-no-seek-per-tick" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-1",
+          name: "smooth.mp4",
+          mediaType: "video",
+          sourcePath: "/media/smooth.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-1");
+
+    const { rerender } = render(
+      <Preview
+        project={project}
+        currentTimeMs={0}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    const video = screen.getByTestId("preview-video") as HTMLVideoElement;
+
+    video.currentTime = 0.25;
+
+    rerender(
+      <Preview
+        project={project}
+        currentTimeMs={250}
+        isPlaying
+      />,
+    );
+
+    await vi.waitFor(() => {
+      expect(playMock).toHaveBeenCalledTimes(1);
+      expect(video.currentTime).toBe(0.25);
+    });
+
+    video.currentTime = 0.4;
+
+    rerender(
+      <Preview
+        project={project}
+        currentTimeMs={500}
+        isPlaying
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    expect(video.currentTime).toBe(0.4);
+    expect(playMock).toHaveBeenCalledTimes(1);
+  });
+
   it("starts media playback when transport playback is active", async () => {
     const playMock = vi
       .spyOn(HTMLMediaElement.prototype, "play")

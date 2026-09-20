@@ -258,7 +258,7 @@ function App() {
     ).filter((media) => Boolean(media.getAttribute("src"))) as HTMLMediaElement[];
   }, []);
 
-  const handleTogglePlayback = useCallback(async () => {
+  const handleTogglePlayback = useCallback(() => {
     const mediaElements = getPreviewMediaElements();
 
     if (isPlaying) {
@@ -269,8 +269,13 @@ function App() {
       return;
     }
 
-    if (playbackTimeRef.current >= timelineDurationRef.current) {
-      setPlaybackTime(0);
+    const targetTimeMs =
+      playbackTimeRef.current >= timelineDurationRef.current
+        ? 0
+        : playbackTimeRef.current;
+
+    if (targetTimeMs !== playbackTimeRef.current) {
+      setPlaybackTime(targetTimeMs);
     }
 
     if (mediaElements.length === 0) {
@@ -278,12 +283,35 @@ function App() {
       return;
     }
 
-    try {
-      // Call play() synchronously from the user-triggered handler so WebKit can
+    const playPromises = mediaElements.map((media) => {
+      const clipId = media.getAttribute("data-clip-id");
+      const clipContext = clipId ? findClipContext(project, clipId) : null;
+
+      if (clipContext) {
+        const localTimeMs =
+          Math.min(
+            Math.max(
+              targetTimeMs - clipContext.clip.timelineStartMs,
+              0,
+            ),
+            getClipDurationMs(clipContext.clip),
+          ) + clipContext.clip.sourceStartMs;
+
+        try {
+          media.currentTime = Math.max(0, localTimeMs / 1000);
+        } catch {
+          // Some WebView/media implementations reject seeking before metadata is ready.
+        }
+      }
+
+      // Call play() directly from the user-triggered handler so WebKit can
       // associate playback with the user's activation gesture.
-      await Promise.all(mediaElements.map((media) => media.play()));
-      setIsPlaying(true);
-    } catch (error) {
+      return media.play();
+    });
+
+    setIsPlaying(true);
+
+    void Promise.all(playPromises).catch((error) => {
       const name = error instanceof DOMException ? error.name : "";
       const message =
         name === "NotSupportedError"
@@ -296,8 +324,8 @@ function App() {
 
       setProjectNotice(message);
       setIsPlaying(false);
-    }
-  }, [getPreviewMediaElements, isPlaying, setPlaybackTime]);
+    });
+  }, [getPreviewMediaElements, isPlaying, project, setPlaybackTime]);
 
   function handleToggleTrackMute(trackId: string) {
     applyProjectChange(
