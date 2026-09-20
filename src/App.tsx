@@ -509,6 +509,17 @@ function App() {
     );
   }
 
+  function handleUpdateClipTransition(
+    clipId: string,
+    transition: ClipTransition | undefined,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        updateClipTransition(currentProject, clipId, transition),
+      transition ? "Transition updated." : "Transition removed.",
+    );
+  }
+
   function handleUpdateSelectedTransition(
     transition: ClipTransition | undefined,
   ) {
@@ -1552,6 +1563,7 @@ function App() {
             onRemoveTrack={handleRemoveTrack}
             onRemoveTransformKeyframe={handleRemoveTransformKeyframeAt}
             onMoveTransformKeyframe={handleMoveTransformKeyframe}
+            onUpdateClipTransition={handleUpdateClipTransition}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
           />
