@@ -322,6 +322,74 @@ describe("App", () => {
     });
   });
 
+  it("edits transform values precisely from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-precision-transform",
+        name: "precision-transform.mp4",
+        mediaType: "video",
+        sourcePath: "/media/precision-transform.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("precision-transform.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add precision-transform.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select precision-transform.mp4 clip",
+      }),
+    );
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "X position" }), {
+      target: { value: "12.5" },
+    });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Y position" }), {
+      target: { value: "-7.5" },
+    });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Scale" }), {
+      target: { value: "1.25" },
+    });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Rotation" }), {
+      target: { value: "-22" },
+    });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Opacity" }), {
+      target: { value: "73" },
+    });
+
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "X position" }));
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Y position" }));
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Scale" }));
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Rotation" }));
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Opacity" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(12.5);
+      expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(-7.5);
+      expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(1.25);
+      expect(screen.getByRole("spinbutton", { name: "Rotation" })).toHaveValue(-22);
+      expect(screen.getByRole("spinbutton", { name: "Opacity" })).toHaveValue(73);
+    });
+
+    expect(screen.getByTestId("preview-video")).toHaveStyle({
+      transform: "translate(12.5%, -7.5%) scale(1.25) rotate(-22deg)",
+      opacity: "0.73",
+    });
+
+    expect(container).toHaveTextContent("Transform updated.");
+  });
+
   it("undoes and redoes a timeline edit with keyboard shortcuts", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
