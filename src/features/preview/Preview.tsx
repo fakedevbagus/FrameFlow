@@ -8,8 +8,10 @@ import {
 import type { ClipTransform, Project } from "../project/domain";
 import { getClipTransform, normalizeClipTransform } from "../transform/transform";
 import {
+  getContainedContentBounds,
   transformFromPointer,
   type CanvasManipulationMode,
+  type ContentBounds,
 } from "./canvasManipulation";
 import {
   getActiveAudioPreviewClips,
@@ -132,6 +134,7 @@ interface CanvasGesture {
   startPointer: { x: number; y: number };
   baseTransform: ClipTransform;
   transform: ClipTransform;
+  manipulationBounds: ContentBounds;
   hasMoved: boolean;
 }
 
@@ -146,8 +149,13 @@ function PreviewVisualLayer({
   onError,
 }: PreviewVisualLayerProps) {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
+  const [mediaSize, setMediaSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const baseTransform = getClipTransform(layer.clip.transform);
@@ -204,11 +212,49 @@ function PreviewVisualLayer({
       return;
     }
 
+    setMediaSize({
+      width: media.videoWidth,
+      height: media.videoHeight,
+    });
+
     try {
       media.currentTime = Math.max(0, localTimeMs / 1000);
     } catch {
       // Metadata can still be settling in some WebView implementations.
     }
+  }
+
+  function handleImageLoad() {
+    const image = imageRef.current;
+
+    if (!image) {
+      return;
+    }
+
+    setMediaSize({
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+    });
+  }
+
+  function getInteractionContentBounds(
+    interactionBounds: DOMRect,
+  ): ContentBounds {
+    const measured = getContainedContentBounds(
+      {
+        width: interactionBounds.width,
+        height: interactionBounds.height,
+      },
+      mediaSize?.width ?? interactionBounds.width,
+      mediaSize?.height ?? interactionBounds.height,
+    );
+
+    return {
+      left: interactionBounds.left + measured.left,
+      top: interactionBounds.top + measured.top,
+      width: measured.width,
+      height: measured.height,
+    };
   }
 
   function beginGesture(
@@ -231,6 +277,8 @@ function PreviewVisualLayer({
       return;
     }
 
+    const contentBounds = getInteractionContentBounds(bounds);
+
     event.preventDefault();
     event.stopPropagation();
 
@@ -244,11 +292,17 @@ function PreviewVisualLayer({
       mode,
       pointerId: event.pointerId,
       startPointer: {
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
+        x: event.clientX,
+        y: event.clientY,
       },
       baseTransform,
       transform: baseTransform,
+      manipulationBounds: mode === "move" ? {
+        left: bounds.left,
+        top: bounds.top,
+        width: bounds.width,
+        height: bounds.height,
+      } : contentBounds,
       hasMoved: false,
     });
   }
@@ -263,19 +317,15 @@ function PreviewVisualLayer({
         return currentGesture;
       }
 
-      const bounds = interactionRef.current.getBoundingClientRect();
       const nextTransform = transformFromPointer(
         currentGesture.mode,
         currentGesture.baseTransform,
         currentGesture.startPointer,
         {
-          x: event.clientX - bounds.left,
-          y: event.clientY - bounds.top,
+          x: event.clientX,
+          y: event.clientY,
         },
-        {
-          width: bounds.width,
-          height: bounds.height,
-        },
+        currentGesture.manipulationBounds,
       );
 
       const moved =
@@ -372,6 +422,25 @@ function PreviewVisualLayer({
   }
 
   if (layer.asset.mediaType === "image") {
+    const contentBounds = interactionRef.current
+      ? getInteractionContentBounds(interactionRef.current.getBoundingClientRect())
+      : null;
+    const contentLayerStyle = contentBounds
+      ? {
+          ...layerStyle,
+          left: contentBounds.left,
+          top: contentBounds.top,
+          width: contentBounds.width,
+          height: contentBounds.height,
+        }
+      : {
+          ...layerStyle,
+          left: 0,
+          top: 0,
+          width: "100%",
+          height: "100%",
+        };
+
     return (
       <div
         className="preview-interaction-layer"
@@ -384,17 +453,39 @@ function PreviewVisualLayer({
         onPointerUp={finishGesture}
         onPointerCancel={cancelGesture}
       >
-        <img
-          alt={layer.asset.name}
-          className="preview-layer preview-image-layer"
-          data-preview-state="image"
-          src={mediaUrl}
-          style={layerStyle}
-        />
-        {renderManipulationControls()}
+        <div className="preview-content-layer" style={contentLayerStyle}>
+          <img
+            alt={layer.asset.name}
+            className="preview-layer preview-image-layer"
+            data-preview-state="image"
+            ref={imageRef}
+            src={mediaUrl}
+            onLoad={handleImageLoad}
+          />
+          {renderManipulationControls()}
+        </div>
       </div>
     );
   }
+
+  const contentBounds = interactionRef.current
+    ? getInteractionContentBounds(interactionRef.current.getBoundingClientRect())
+    : null;
+  const contentLayerStyle = contentBounds
+    ? {
+        ...layerStyle,
+        left: contentBounds.left,
+        top: contentBounds.top,
+        width: contentBounds.width,
+        height: contentBounds.height,
+      }
+    : {
+        ...layerStyle,
+        left: 0,
+        top: 0,
+        width: "100%",
+        height: "100%",
+      };
 
   return (
     <div
@@ -408,21 +499,27 @@ function PreviewVisualLayer({
       onPointerUp={finishGesture}
       onPointerCancel={cancelGesture}
     >
-      <video
-        className="preview-layer preview-video-layer"
-        data-preview-state="video"
-        data-testid="preview-video"
-        playsInline
-        preload="auto"
-        ref={mediaRef}
-        src={mediaUrl}
-        style={layerStyle}
-        onLoadedMetadata={handleLoadedMetadata}
-        onError={() =>
-          onError(layer.asset.id, "Video could not be loaded.")
-        }
-      />
-      {renderManipulationControls()}
+      <div className="preview-content-layer" style={contentLayerStyle}>
+        <video
+          className="preview-layer preview-video-layer"
+          data-preview-state="video"
+          data-testid="preview-video"
+          playsInline
+          preload="auto"
+          ref={mediaRef}
+          src={mediaUrl}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "fill",
+          }}
+          onLoadedMetadata={handleLoadedMetadata}
+          onError={() =>
+            onError(layer.asset.id, "Video could not be loaded.")
+          }
+        />
+        {renderManipulationControls()}
+      </div>
     </div>
   );
 }
