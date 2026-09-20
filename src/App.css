@@ -383,6 +383,23 @@ button:focus-visible {
   bottom: -10px;
 }
 
+.preview-transcode-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 110;
+  transform: translate(-50%, -50%);
+  padding: 7px 10px;
+  border: 1px solid #394252;
+  border-radius: 6px;
+  color: #dce1eb;
+  background: rgb(20 23 29 / 92%);
+  font-size: 10px;
+  font-weight: 650;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .preview-audio-layer {
   position: absolute;
   width: 1px;
