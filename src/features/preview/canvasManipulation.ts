@@ -163,6 +163,71 @@ export function transformFromPointer(
 
 export type CropEdge = "top" | "right" | "bottom" | "left";
 
+export function cropPositionFromPointer(
+  basePosition: { x: number; y: number },
+  startPointer: CanvasPointer,
+  currentPointer: CanvasPointer,
+  crop: ClipCrop,
+  contentBounds: ContentBounds,
+  canvasWidth: number,
+  canvasHeight: number,
+  transform: ClipTransform,
+  anchor: TransformAnchor = { x: 0.5, y: 0.5 },
+): { x: number; y: number } {
+  if (
+    contentBounds.width <= 0 ||
+    contentBounds.height <= 0 ||
+    canvasWidth <= 0 ||
+    canvasHeight <= 0
+  ) {
+    return basePosition;
+  }
+
+  const startPoint = pointerToContentPoint(
+    startPointer,
+    contentBounds,
+    canvasWidth,
+    canvasHeight,
+    transform,
+    anchor,
+  );
+  const currentPoint = pointerToContentPoint(
+    currentPointer,
+    contentBounds,
+    canvasWidth,
+    canvasHeight,
+    transform,
+    anchor,
+  );
+  const visibleWidth = Math.max(
+    0.001,
+    1 - crop.left - crop.right,
+  );
+  const visibleHeight = Math.max(
+    0.001,
+    1 - crop.top - crop.bottom,
+  );
+  const minX = visibleWidth / 2;
+  const maxX = 1 - minX;
+  const minY = visibleHeight / 2;
+  const maxY = 1 - minY;
+
+  return {
+    x: clamp(
+      basePosition.x -
+        (currentPoint.x - startPoint.x) / contentBounds.width,
+      minX,
+      maxX,
+    ),
+    y: clamp(
+      basePosition.y -
+        (currentPoint.y - startPoint.y) / contentBounds.height,
+      minY,
+      maxY,
+    ),
+  };
+}
+
 export function cropFromPointer(
   edge: CropEdge,
   baseCrop: ClipCrop,
