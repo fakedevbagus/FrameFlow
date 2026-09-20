@@ -453,25 +453,6 @@ function PreviewVisualLayer({
   }
 
   if (layer.asset.mediaType === "image") {
-    const contentBounds = interactionRef.current
-      ? getInteractionContentBounds(interactionRef.current.getBoundingClientRect())
-      : null;
-    const contentLayerStyle = contentBounds
-      ? {
-          ...layerStyle,
-          left: contentBounds.left,
-          top: contentBounds.top,
-          width: contentBounds.width,
-          height: contentBounds.height,
-        }
-      : {
-          ...layerStyle,
-          left: 0,
-          top: 0,
-          width: "100%",
-          height: "100%",
-        };
-
     return (
       <div
         className="preview-interaction-layer"
@@ -484,7 +465,13 @@ function PreviewVisualLayer({
         onPointerUp={finishGesture}
         onPointerCancel={cancelGesture}
       >
-        <div className="preview-content-layer" style={contentLayerStyle}>
+        <div
+          className="preview-content-layer"
+          style={{
+            ...contentLayerStyle,
+            transform: layerStyle.transform,
+          }}
+        >
           <img
             alt={layer.asset.name}
             className="preview-layer preview-image-layer"
@@ -492,31 +479,13 @@ function PreviewVisualLayer({
             ref={imageRef}
             src={mediaUrl}
             onLoad={handleImageLoad}
+            style={{ width: "100%", height: "100%", objectFit: "fill", zIndex }}
           />
           {renderManipulationControls()}
         </div>
       </div>
     );
   }
-
-  const contentBounds = interactionRef.current
-    ? getInteractionContentBounds(interactionRef.current.getBoundingClientRect())
-    : null;
-  const contentLayerStyle = contentBounds
-    ? {
-        ...layerStyle,
-        left: contentBounds.left,
-        top: contentBounds.top,
-        width: contentBounds.width,
-        height: contentBounds.height,
-      }
-    : {
-        ...layerStyle,
-        left: 0,
-        top: 0,
-        width: "100%",
-        height: "100%",
-      };
 
   return (
     <div
@@ -530,7 +499,13 @@ function PreviewVisualLayer({
       onPointerUp={finishGesture}
       onPointerCancel={cancelGesture}
     >
-      <div className="preview-content-layer" style={contentLayerStyle}>
+      <div
+        className="preview-content-layer"
+        style={{
+          ...contentLayerStyle,
+          transform: layerStyle.transform,
+        }}
+      >
         <video
           className="preview-layer preview-video-layer"
           data-preview-state="video"
@@ -543,6 +518,7 @@ function PreviewVisualLayer({
             width: "100%",
             height: "100%",
             objectFit: "fill",
+            zIndex,
           }}
           onLoadedMetadata={handleLoadedMetadata}
           onError={() =>
