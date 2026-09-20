@@ -777,7 +777,7 @@ describe("Preview", () => {
       expect(onCropPositionCommit).toHaveBeenCalledWith(
         clipId,
         expect.objectContaining({
-          x: 0.3,
+          x: 0.4,
           y: 0.6,
         }),
       );
