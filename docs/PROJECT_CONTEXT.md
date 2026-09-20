@@ -10,10 +10,10 @@ The project is being built incrementally. Every milestone must be small, testabl
 
 - GitHub: https://github.com/fakedevbagus/FrameFlow
 - Current default branch: `main`
-- Current main commit at the time this document was refreshed: `595f7498e503aab19052279979fb389ae8300691`
 - M3.13 was merged as PR #23 with merge SHA `595f7498e503aab19052279979fb389ae8300691`.
 - M3.14 was merged as PR #24 with merge SHA `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`.
-- Next milestone branch will be created from the updated `main` after M3.14 validation.
+- M3.15 was merged as PR #25 with merge SHA `69c2b5edee8e4ea5e5d530c2402e0c9ce7281abc`.
+- New milestone branches must be created from the updated `main` after the preceding milestone validation.
 
 ## Development environment
 
@@ -363,25 +363,28 @@ M3.14 validation correction:
 Next step:
 - Continue with the next focused transform milestone from updated `main`.
 
-## M3.15 — Transform anchor foundation (in progress)
+## M3.15 — Transform anchor foundation — completed
 
 Branch: `feat/m3-15-transform-anchor-foundation`
+PR: #25
+Merge SHA: `69c2b5edee8e4ea5e5d530c2402e0c9ce7281abc`
 
-Scope:
-- Add a per-clip transform anchor point with a backward-compatible center default.
-- Expose nine anchor presets in the Transform Inspector.
-- Apply the anchor to CSS transform origin in the preview.
-- Use the anchor as the pivot for direct scale/rotation manipulation.
-- Keep anchor edits in the existing project history engine and keep anchor changes non-keyframed for this milestone.
-- Add domain, command, preview, manipulation, and App regression coverage.
+Scope delivered:
+- Added a backward-compatible per-clip transform anchor point with a center default.
+- Added nine anchor presets in the Transform Inspector.
+- Applied anchor coordinates to the preview transform origin.
+- Updated direct canvas scale/rotation manipulation to use the selected anchor as the pivot.
+- Kept anchor edits in the existing project history engine and separate from transform keyframes for this milestone.
+- Added domain, command, preview, manipulation, and App regression coverage.
 
 Validation:
-- Initial local validation found one App assertion mismatch caused by case-sensitive accessibility-name matching and one unused import causing TypeScript failure.
-- Both issues have been corrected on the branch.
-- A clean local lint, test, build, and manual validation run is still required.
+- User confirmed local validation succeeded after correcting the App accessibility-name assertion and removing the unused TypeScript import.
+
+Known limitation:
+- This milestone establishes anchor state and pivot behavior but does not yet provide visual anchor dragging or compensating translation to keep the visible content stationary when changing the pivot.
 
 Next step:
-- Run local validation on Linux before merging.
+- Start the next focused transform milestone from updated `main`, centered on crop/transform polish.
 
 ## Documentation protocol
 
