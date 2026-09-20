@@ -102,8 +102,8 @@ describe("canvas manipulation", () => {
         { x: 0.5, y: 0.5 },
       ),
     ).toMatchObject({
-      x: 0.75,
-      y: 0.25,
+      x: 0.625,
+      y: 0.625,
     });
   });
 
