@@ -1120,7 +1120,6 @@ function TimelineTrack({
 
                 return (
                   <div
-                    aria-hidden="true"
                     className="timeline-transition-region"
                     style={{
                       left:
