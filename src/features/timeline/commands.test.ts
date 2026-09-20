@@ -21,6 +21,7 @@ import {
   updateClipTransformAnchor,
   updateClipCrop,
   updateClipCropPosition,
+  updateClipCropWithPosition,
 } from "./commands";
 
 describe("track management", () => {
@@ -260,6 +261,60 @@ describe("clip transforms", () => {
       rotation: 0,
       opacity: 1,
     });
+  });
+
+  it("updates crop and content position atomically", () => {
+    let project = createProject({ id: "crop-aspect-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "aspect.mp4",
+          mediaType: "video",
+          sourcePath: "/aspect.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipCropWithPosition(
+      project,
+      clipId,
+      {
+        top: 0,
+        right: 0.2,
+        bottom: 0,
+        left: 0.2,
+      },
+      { x: 0.6, y: 0.5 },
+      new Date("2026-09-21T01:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].crop).toEqual({
+      top: 0,
+      right: 0.2,
+      bottom: 0,
+      left: 0.2,
+    });
+    expect(updated.tracks[0].clips[0].cropPosition).toEqual({
+      x: 0.6,
+      y: 0.5,
+    });
+    expect(updated.updatedAt).toBe("2026-09-21T01:00:00.000Z");
+
+    const reset = updateClipCropWithPosition(
+      updated,
+      clipId,
+      { top: 0, right: 0, bottom: 0, left: 0 },
+      { x: 0.7, y: 0.3 },
+    );
+
+    expect(reset.tracks[0].clips[0].cropPosition).toBeUndefined();
   });
 
   it("updates and clamps crop content position", () => {
