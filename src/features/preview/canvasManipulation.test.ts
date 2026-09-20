@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getContainedContentBounds,
   transformFromPointer,
   type CanvasPointer,
 } from "./canvasManipulation";
@@ -18,6 +19,53 @@ const rect = {
 };
 
 describe("canvas manipulation", () => {
+  it("fits a landscape asset inside a portrait canvas", () => {
+    expect(
+      getContainedContentBounds(
+        { width: 200, height: 400 },
+        1920,
+        1080,
+      ),
+    ).toEqual({
+      left: 0,
+      top: 143.75,
+      width: 200,
+      height: 112.5,
+    });
+  });
+
+  it("fits a portrait asset inside a landscape canvas", () => {
+    expect(
+      getContainedContentBounds(
+        { width: 400, height: 200 },
+        1080,
+        1920,
+      ),
+    ).toEqual({
+      left: 143.75,
+      top: 0,
+      width: 112.5,
+      height: 200,
+    });
+  });
+
+  it("uses the content center for scale manipulation", () => {
+    expect(
+      transformFromPointer(
+        "scale",
+        base,
+        { x: 100, y: 100 },
+        { x: 100, y: 150 },
+        {
+          left: 25,
+          top: 100,
+          width: 150,
+          height: 200,
+        },
+      ).scale,
+    ).toBe(0.5);
+  });
+
   it("moves a clip in canvas-relative percentages", () => {
     const start: CanvasPointer = { x: 50, y: 100 };
     const current: CanvasPointer = { x: 90, y: 60 };
