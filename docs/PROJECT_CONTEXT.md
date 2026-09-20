@@ -12,7 +12,7 @@ The project is being built incrementally. Every milestone must be small, testabl
 - Current default branch: `main`
 - Current main commit at the time this document was refreshed: `9c745f798b73b34fdbf70ca04837de0eaa085036`
 - Current milestone work branch: `feat/m3-13-playback-stability`
-- Current open work: playback startup/replay synchronization fix
+- Current open work: M3.13 playback startup/replay synchronization fix (PR #23, draft)
 - M3.12 was already merged as PR #21.
 
 ## Development environment
@@ -248,10 +248,12 @@ The current investigation found a concrete race in the transport/preview interac
 3. The preview playback effect started media playback but did not explicitly re-align the media element to the current transport position when `isPlaying` changed to true.
 4. This can cause delayed transport UI startup, replay from a stale end position, or a mismatch between the timeline clock and the media element.
 
-## M3.13 — Playback stability fix (current branch)
+## M3.13 — Playback stability fix (PR #23, draft)
 
 Branch:
 `feat/m3-13-playback-stability`
+
+PR: https://github.com/fakedevbagus/FrameFlow/pull/23
 
 Current changes:
 
@@ -267,6 +269,14 @@ Current changes:
   - Add `data-clip-id` to media elements so the App transport handler can resolve the corresponding clip.
 - `src/features/preview/Preview.test.tsx`
   - Added regression coverage that forces a video to a near-end position and verifies a new playback start re-aligns it to the transport position.
+
+Branch commits:
+- `bc1f2b870d83e245cbc986b99ca76410e68e7357` — App playback startup/replay fix
+- `94a01ec0892c32a6ed980ef464fcb985815d220e` — Preview playback alignment fix
+- `030a17a8f4100537fbe72a18a27c25fb763b3a9e` — replay alignment regression test
+- `fa630787122cd4133628e6cbcf71863517fb3b5e` — project context documentation
+- `e8f4de5a546661ee6a042595574491be281a1e6f` — changelog documentation
+- `7cf18d1c4d7cb3c6a2fdb1f0901eb5aea1eedc67` — new-chat handoff prompt
 
 Important: these changes were implemented from current `main` after M3.12 was already merged. The earlier temporary branch `feat/m3-12-keyframe-keyboard-nudging` was intentionally not used for the final playback fix.
 
