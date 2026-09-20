@@ -344,7 +344,7 @@ function PreviewVisualLayer({
         y: event.clientY,
       },
       baseTransform: gestureBaseTransform,
-      transform: baseTransform,
+      transform: gestureBaseTransform,
       manipulationBounds: mode === "move" ? {
         left: bounds.left,
         top: bounds.top,
