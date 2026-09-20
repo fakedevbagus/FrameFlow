@@ -283,7 +283,10 @@ function PreviewVisualLayer({
   ]);
 
   const localTimeMsRef = useRef(localTimeMs);
-  localTimeMsRef.current = localTimeMs;
+
+  useEffect(() => {
+    localTimeMsRef.current = localTimeMs;
+  }, [localTimeMs]);
 
   useEffect(() => {
     const media = mediaRef.current;
