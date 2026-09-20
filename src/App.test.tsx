@@ -629,6 +629,77 @@ describe("App", () => {
     });
   });
 
+  it("edits crop content position from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-crop-position-ui",
+        name: "crop-position-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/crop-position-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Import media" })[1],
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("crop-position-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add crop-position-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select crop-position-ui.mp4 clip",
+      }),
+    );
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Crop top" }),
+      { target: { value: "10" } },
+    );
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
+
+    expect(screen.getByRole("spinbutton", { name: "Crop position X" })).toHaveValue(45);
+    expect(screen.getByRole("spinbutton", { name: "Crop position Y" })).toHaveValue(55);
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Crop position X" }),
+      { target: { value: "25" } },
+    );
+    fireEvent.blur(
+      screen.getByRole("spinbutton", { name: "Crop position X" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(25),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Center crop content" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(50);
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position Y" }),
+      ).toHaveValue(50);
+    });
+
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+  });
+
   it("changes keyframe interpolation from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
