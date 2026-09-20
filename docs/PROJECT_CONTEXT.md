@@ -363,6 +363,25 @@ M3.14 validation correction:
 Next step:
 - Continue with the next focused transform milestone from updated `main`.
 
+## M3.15 — Transform anchor foundation (in progress)
+
+Branch: `feat/m3-15-transform-anchor-foundation`
+
+Scope:
+- Add a per-clip transform anchor point with a backward-compatible center default.
+- Expose nine anchor presets in the Transform Inspector.
+- Apply the anchor to CSS transform origin in the preview.
+- Use the anchor as the pivot for direct scale/rotation manipulation.
+- Keep anchor edits in the existing project history engine and keep anchor changes non-keyframed for this milestone.
+- Add domain, command, preview, manipulation, and App regression coverage.
+
+Validation:
+- Implementation complete on the feature branch.
+- Local lint, tests, build, and manual validation have not yet been reported.
+
+Next step:
+- Run local validation on Linux before merging.
+
 ## Documentation protocol
 
 For every milestone or meaningful bug fix, update:
