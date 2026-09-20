@@ -698,35 +698,6 @@ function PreviewVisualLayer({
       return;
     }
 
-    if (anchorGesture && anchorGesture.pointerId === event.pointerId) {
-      try {
-        interactionRef.current?.releasePointerCapture(event.pointerId);
-      } catch {
-        // Pointer capture may be unavailable in tests.
-      }
-
-      const shouldCommit = anchorGesture.hasMoved;
-      const nextAnchor = anchorGesture.anchor;
-
-      setAnchorGesture(null);
-
-      if (shouldCommit) {
-        onTransformAnchorCommit?.(layer.clip.id, nextAnchor);
-      }
-      return;
-    }
-
-    if (anchorGesture && anchorGesture.pointerId === event.pointerId) {
-      setAnchorGesture(null);
-
-      try {
-        interactionRef.current?.releasePointerCapture(event.pointerId);
-      } catch {
-        // Pointer capture may be unavailable in tests.
-      }
-      return;
-    }
-
     const activeCropPositionGesture = cropPositionGestureRef.current;
 
     if (
@@ -836,6 +807,24 @@ function PreviewVisualLayer({
   function finishGesture(
     event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
   ) {
+    if (anchorGesture && anchorGesture.pointerId === event.pointerId) {
+      try {
+        interactionRef.current?.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may be unavailable in tests.
+      }
+
+      const shouldCommit = anchorGesture.hasMoved;
+      const nextAnchor = anchorGesture.anchor;
+
+      setAnchorGesture(null);
+
+      if (shouldCommit) {
+        onTransformAnchorCommit?.(layer.clip.id, nextAnchor);
+      }
+      return;
+    }
+
     const activeCropPositionGesture = cropPositionGestureRef.current;
 
     if (
@@ -901,6 +890,17 @@ function PreviewVisualLayer({
   function cancelGesture(
     event: PointerEvent<HTMLDivElement | HTMLButtonElement>,
   ) {
+    if (anchorGesture && anchorGesture.pointerId === event.pointerId) {
+      setAnchorGesture(null);
+
+      try {
+        interactionRef.current?.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may be unavailable in tests.
+      }
+      return;
+    }
+
     const activeCropPositionGesture = cropPositionGestureRef.current;
 
     if (
