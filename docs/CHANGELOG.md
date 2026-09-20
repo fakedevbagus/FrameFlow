@@ -1,24 +1,38 @@
 ## 2026-09-21
 
-### M3.22 — Direct on-canvas anchor manipulation — in progress
+### M3.22 — Direct on-canvas anchor manipulation — merged
 Branch: `feat/m3-22-direct-anchor-manipulation`
+PR #33 — merged
+Merge SHA: `0dcae3d91fd298b36b99393921601e34a0e217c0`
 
 Implemented:
 - Added a visible transform-anchor handle to selected visual preview layers.
 - Added direct pointer dragging for the transform anchor.
-- Preserved live visual position during anchor drag using M3.21 compensation math.
-- Routed completed anchor drags through the existing compensated anchor history command.
-- Added regression coverage for pointer mapping, Preview interaction, App integration, and Undo.
+- Resolved pointer coordinates into transformed content space.
+- Preserved live visual position during anchor movement using M3.21 compensation.
+- Routed completed anchor changes through the existing compensated anchor history command.
+- Preserved the Inspector anchor grid as the precision control.
+- Added media-dimension readiness handling so anchor compensation uses intrinsic dimensions when available.
+- Added regression coverage for pointer mapping, Preview interaction, App integration, media-dimension readiness, compensation, and Undo.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local Linux validation passed.
+- `npm run lint` passed.
+- `npm run test` passed with 17 test files / 169 tests.
+- `npm run build` passed.
+- `npm run tauri dev` started successfully.
+- User confirmed the requested manual anchor, transform, crop, keyframe, playback, and Undo/Redo checks passed.
 
 Known limitations:
-- Anchor dragging is disabled during playback.
-- When intrinsic media metadata is unavailable, the existing fallback anchor behavior is used.
+- Anchor dragging remains disabled during playback.
+- When intrinsic media dimensions are unavailable, the existing fallback anchor command is used.
+
+UI/layout direction:
+- The current workspace layout remains intentionally stable during core editing work.
+- The responsive orientation-aware workspace redesign for portrait/landscape projects is deferred to a dedicated UX/layout milestone so it does not destabilize the current editor foundation.
 
 Next step:
-- User validates M3.22 locally before merge.
+- M3.23: focused transform/crop interaction hardening.
 ## 2026-09-21
 
 ### M3.21 — Transform anchor compensation — merged
