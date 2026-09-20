@@ -720,6 +720,43 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
+## M3.25 — Dissolve transition foundation (in progress)
+
+Branch: `feat/m3-25-dissolve-transition-foundation`
+PR: pending
+
+Scope:
+- Add a clip-level outgoing transition model.
+- Support a single `dissolve` transition between directly adjacent visual clips.
+- Add transition duration controls with bounded duration normalization.
+- Render outgoing/incoming visual layers with complementary dissolve opacity in preview.
+- Expose transition configuration in the Inspector.
+- Keep transition edits in the existing project history engine.
+
+Architecture decisions:
+- Transition metadata remains optional on `Clip` so existing projects without transition data remain compatible.
+- The transition is attached to the outgoing clip and only activates when the next visual clip is directly adjacent on the same video track.
+- Preview evaluation handles the transition without allowing timeline clip overlap; normal timeline overlap constraints remain unchanged.
+- The first transition slice supports only `dissolve`; additional transition types remain future work.
+
+Automated coverage:
+- Transition normalization and adjacency helpers.
+- Dissolve opacity interpolation.
+- Transition command validation, creation, and removal.
+- Preview layer activation during the dissolve window.
+- Inspector workflow and history behavior at the App level.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- No transition browser or draggable transition blocks yet.
+- No audio transitions.
+- Transition configuration does not automatically repair itself when a clip is later moved away from adjacency.
+
+Next step:
+- User validates M3.25 locally before merge.
+
 ## M3.24 — Timeline clip interaction hardening (merged)
 
 Branch: `feat/m3-24-timeline-interaction-hardening`
