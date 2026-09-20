@@ -209,7 +209,7 @@ describe("Preview", () => {
     expect(layers[1]).toHaveStyle({ zIndex: "2" });
   });
 
-  it("renders an image clip as the visual preview", () => {
+  it("renders an image clip as the visual preview", async () => {
     let project = createProject({ id: "image-preview" });
 
     project = {
