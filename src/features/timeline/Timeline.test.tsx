@@ -126,6 +126,33 @@ describe("Timeline", () => {
     expect(onCurrentTimeChange).toHaveBeenLastCalledWith(4000);
   });
 
+  it("deletes a focused transform keyframe with Delete", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 2000);
+    project = addTransformKeyframe(project, clipId, 7000);
+
+    const onRemoveTransformKeyframe = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={2000}
+        onRemoveTransformKeyframe={onRemoveTransformKeyframe}
+      />,
+    );
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to transform keyframe for intro.mp4 at 00:02.000",
+    });
+
+    markerButton.focus();
+    fireEvent.keyDown(markerButton, { key: "Delete" });
+
+    expect(onRemoveTransformKeyframe).toHaveBeenCalledWith(clipId, 2000);
+  });
+
   it("moves the playhead when the ruler is clicked", () => {
     const project = createVideoProject();
     const onCurrentTimeChange = vi.fn();
