@@ -123,7 +123,17 @@ export function Timeline({
     }
 
     const bounds = event.currentTarget.getBoundingClientRect();
-    const x = Math.min(Math.max(event.clientX - bounds.left, 0), bounds.width);
+    const clientX = Number.isFinite(event.clientX)
+      ? event.clientX
+      : bounds.left;
+    const laneWidth =
+      Number.isFinite(bounds.width) && bounds.width > 0
+        ? bounds.width
+        : timelineWidth(timelineDurationMs, zoom);
+    const x = Math.min(
+      Math.max(clientX - bounds.left, 0),
+      laneWidth,
+    );
     const requestedTimeMs = (x / pixelsPerSecond) * 1000;
 
     onAddAssetToTrack(
