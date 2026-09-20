@@ -720,10 +720,11 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
-## M3.27 — Direct timeline transition-duration manipulation (in progress)
+## M3.27 — Direct timeline transition-duration manipulation — completed
 
 Branch: `feat/m3-27-direct-transition-duration`
-PR: pending
+PR: #38
+Merge SHA: `9eb1512e733e47ab84d37fdbddfe30e24856a2e0`
 
 Scope:
 - Expose a draggable duration handle on the existing dissolve transition indicator.
@@ -745,15 +746,15 @@ Automated coverage:
 - Keyboard nudge updates duration in 50 ms steps.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local Linux validation passed.
+- User confirmed lint, tests, build, Tauri dev, and the requested drag, Escape, keyboard, and Undo/Redo duration-editing checks passed.
 
 Known limitations:
 - Only dissolve transitions are supported.
-- The duration handle is not a draggable transition block with arbitrary transition placement.
-- Duration changes remain limited by the existing 50–2000 ms dissolve range.
+- The duration handle is not a full draggable transition block with arbitrary transition placement.
 
 Next step:
-- User validates M3.27 locally before merge.
+- Start M3.28 from the updated `main`, focusing on transition lifecycle integrity after timeline structure edits.
 
 ## M3.26 — Timeline transition indicator — completed
 
