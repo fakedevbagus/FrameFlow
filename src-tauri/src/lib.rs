@@ -5,6 +5,7 @@ use std::{
 };
 
 use serde::Serialize;
+use tauri::Manager;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,19 +30,19 @@ fn inspect_media(path: String) -> Result<MediaProbe, String> {
 }
 
 #[tauri::command]
-fn prepare_media_preview(path: String) -> Result<String, String> {
+fn prepare_media_preview(
+  app: tauri::AppHandle,
+  path: String,
+) -> Result<String, String> {
   let source_path = media_path(&path)?;
   let metadata = fs::metadata(&source_path)
     .map_err(|error| format!("Could not inspect media metadata: {error}"))?;
 
-  let home = std::env::var_os("HOME")
-    .map(PathBuf::from)
-    .ok_or_else(|| "Could not determine the home directory for preview caching.".to_string())?;
-  let cache_root = std::env::var_os("XDG_CACHE_HOME")
-    .map(PathBuf::from)
-    .unwrap_or_else(|| home.join(".cache"))
-    .join("frameflow")
-    .join("previews-v3");
+  let cache_root = app
+    .path()
+    .app_cache_dir()
+    .map_err(|error| format!("Could not resolve the FrameFlow app cache directory: {error}"))?
+    .join("previews-v4");
 
   fs::create_dir_all(&cache_root).map_err(|error| {
     format!(
