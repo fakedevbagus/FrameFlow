@@ -1,4 +1,10 @@
-import type { Clip, ClipTransform, Project, TrackType } from "../project/domain";
+import type {
+  Clip,
+  ClipTransform,
+  Project,
+  TrackType,
+  TransformEasing,
+} from "../project/domain";
 import {
   DEFAULT_CLIP_TRANSFORM,
   getClipTransformAtTime,
@@ -419,6 +425,51 @@ export function moveTransformKeyframe(
         toTimeMs,
       ),
     },
+    now,
+  );
+}
+
+export function updateTransformKeyframeEasing(
+  project: Project,
+  clipId: string,
+  timeMs: number,
+  easing: TransformEasing,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find((candidate) => candidate.id === location.clip.assetId);
+
+  if (!asset || (asset.mediaType !== "video" && asset.mediaType !== "image")) {
+    throw new Error("Transform keyframes are only available for visual media.");
+  }
+
+  const keyframe = getTransformKeyframeAtTime(
+    location.clip.transformKeyframes,
+    timeMs,
+  );
+
+  if (!keyframe) {
+    throw new Error("No transform keyframe exists at this time.");
+  }
+
+  const keyframes = (location.clip.transformKeyframes ?? []).map((candidate) =>
+    candidate.timeMs === keyframe.timeMs
+      ? {
+          ...candidate,
+          easing,
+        }
+      : candidate,
+  );
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { transformKeyframes: keyframes },
     now,
   );
 }

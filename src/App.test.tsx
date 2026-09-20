@@ -418,6 +418,50 @@ describe("App", () => {
     expect(container).toHaveTextContent("Transform updated.");
   });
 
+  it("changes keyframe interpolation from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-easing-ui",
+        name: "easing-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/easing-ui.mp4",
+        durationMs: 5000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("easing-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add easing-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select easing-ui.mp4 clip",
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add keyframe" }));
+
+    const interpolation = screen.getByRole("combobox", {
+      name: "Keyframe interpolation",
+    });
+
+    fireEvent.change(interpolation, {
+      target: { value: "ease-out" },
+    });
+
+    expect(interpolation).toHaveValue("ease-out");
+    expect(container).toHaveTextContent("Keyframe easing updated.");
+  });
+
   it("animates transform values between keyframes", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {

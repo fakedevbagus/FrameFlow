@@ -6,7 +6,10 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
-import type { ClipTransform } from "./features/project/domain";
+import type {
+  ClipTransform,
+  TransformEasing,
+} from "./features/project/domain";
 import {
   addAssetToTimeline,
   addAssetToTrack,
@@ -16,6 +19,7 @@ import {
   removeTrack,
   addTransformKeyframe,
   moveTransformKeyframe,
+  updateTransformKeyframeEasing,
   resetClipTransform,
   removeTransformKeyframe,
   toggleTrackMute,
@@ -664,6 +668,23 @@ function App() {
     );
   }
 
+  function handleUpdateTransformKeyframeEasing(
+    clipId: string,
+    timeMs: number,
+    easing: TransformEasing,
+  ) {
+    updateSelectedClip(
+      (currentProject) =>
+        updateTransformKeyframeEasing(
+          currentProject,
+          clipId,
+          timeMs,
+          easing,
+        ),
+      "Keyframe easing updated.",
+    );
+  }
+
   function handleRemoveTransformKeyframe() {
     if (!selectedClipContext || !selectedKeyframe) {
       return;
@@ -1010,6 +1031,28 @@ function App() {
                       </button>
                     </div>
                   </div>
+
+                  {selectedKeyframe ? (
+                    <label className="inspector-keyframe-easing">
+                      <span>Interpolation</span>
+                      <select
+                        aria-label="Keyframe interpolation"
+                        value={selectedKeyframe.easing ?? "linear"}
+                        onChange={(event) =>
+                          handleUpdateTransformKeyframeEasing(
+                            selectedClipContext.clip.id,
+                            selectedKeyframe.timeMs,
+                            event.currentTarget.value as TransformEasing,
+                          )
+                        }
+                      >
+                        <option value="linear">Linear</option>
+                        <option value="ease-in">Ease in</option>
+                        <option value="ease-out">Ease out</option>
+                        <option value="ease-in-out">Ease in-out</option>
+                      </select>
+                    </label>
+                  ) : null}
 
                   <div className="inspector-keyframe-status">
                     <span>

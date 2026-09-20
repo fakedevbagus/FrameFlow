@@ -1,4 +1,4 @@
-import type { TransformKeyframe } from "../project/domain";
+import type { TransformEasing, TransformKeyframe } from "../project/domain";
 
 export interface ClipTransform {
   x: number;
@@ -64,6 +64,7 @@ export function normalizeTransformKeyframes(
     .map((keyframe) => ({
       timeMs: keyframe.timeMs,
       transform: normalizeClipTransform(keyframe.transform),
+      easing: normalizeTransformEasing(keyframe.easing),
     }))
     .sort((a, b) => a.timeMs - b.timeMs);
 
@@ -138,7 +139,7 @@ export function getClipTransformAtTime(
     return interpolateClipTransform(
       previous.transform,
       next.transform,
-      progress,
+      applyTransformEasing(progress, next.easing),
     );
   }
 
@@ -149,19 +150,22 @@ export function upsertTransformKeyframe(
   keyframes: TransformKeyframe[] | undefined,
   timeMs: number,
   transform: ClipTransform,
+  easing?: TransformEasing,
 ): TransformKeyframe[] {
   if (!Number.isFinite(timeMs) || timeMs < 0) {
     throw new Error("Transform keyframe time must be zero or greater.");
   }
 
-  const next = {
-    timeMs,
-    transform: normalizeClipTransform(transform),
-  };
   const normalized = normalizeTransformKeyframes(keyframes);
   const existingIndex = normalized.findIndex(
     (keyframe) => keyframe.timeMs === timeMs,
   );
+  const existing = existingIndex === -1 ? undefined : normalized[existingIndex];
+  const next = {
+    timeMs,
+    transform: normalizeClipTransform(transform),
+    easing: normalizeTransformEasing(easing ?? existing?.easing),
+  };
 
   if (existingIndex === -1) {
     normalized.push(next);
@@ -183,6 +187,37 @@ export function removeTransformKeyframe(
   return normalizeTransformKeyframes(keyframes).filter(
     (keyframe) => keyframe.timeMs !== Math.max(0, timeMs),
   );
+}
+
+export function normalizeTransformEasing(
+  easing: TransformEasing | undefined,
+): TransformEasing {
+  return easing === "ease-in" ||
+    easing === "ease-out" ||
+    easing === "ease-in-out"
+    ? easing
+    : "linear";
+}
+
+function applyTransformEasing(
+  progress: number,
+  easing: TransformEasing | undefined,
+): number {
+  const t = clamp(progress, 0, 1);
+  const safeEasing = normalizeTransformEasing(easing);
+
+  switch (safeEasing) {
+    case "ease-in":
+      return t * t;
+    case "ease-out":
+      return 1 - (1 - t) * (1 - t);
+    case "ease-in-out":
+      return t < 0.5
+        ? 2 * t * t
+        : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    default:
+      return t;
+  }
 }
 
 function interpolateClipTransform(

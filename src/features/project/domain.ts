@@ -25,9 +25,16 @@ export interface ClipTransform {
   opacity: number;
 }
 
+export type TransformEasing =
+  | "linear"
+  | "ease-in"
+  | "ease-out"
+  | "ease-in-out";
+
 export interface TransformKeyframe {
   timeMs: number;
   transform: ClipTransform;
+  easing?: TransformEasing;
 }
 
 export interface Clip {

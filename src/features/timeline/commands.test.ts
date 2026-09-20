@@ -6,6 +6,7 @@ import {
   addTrack,
   addTransformKeyframe,
   moveTransformKeyframe,
+  updateTransformKeyframeEasing,
   removeTrack,
   removeTransformKeyframe,
   resetClipTransform,
@@ -631,6 +632,7 @@ describe("transform keyframe commands", () => {
           rotation: 0,
           opacity: 1,
         },
+        easing: "linear",
       },
       {
         timeMs: 2000,
@@ -641,6 +643,7 @@ describe("transform keyframe commands", () => {
           rotation: 0,
           opacity: 0.5,
         },
+        easing: "linear",
       },
     ]);
   });
@@ -680,6 +683,7 @@ describe("transform keyframe commands", () => {
           rotation: 15,
           opacity: 1,
         },
+        easing: "linear",
       },
     ]);
   });
@@ -707,6 +711,36 @@ describe("transform keyframe commands", () => {
     expect(() =>
       moveTransformKeyframe(project, clipId, 1000, 2000),
     ).toThrow("already exists");
+  });
+
+  it("updates the easing on an existing transform keyframe", () => {
+    let project = createProject({ id: "keyframe-easing-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "keyframe-easing.mp4",
+          mediaType: "video",
+          sourcePath: "/keyframe-easing.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 1000);
+    project = updateTransformKeyframeEasing(
+      project,
+      clipId,
+      1000,
+      "ease-in-out",
+    );
+
+    expect(project.tracks[0].clips[0].transformKeyframes?.[0].easing).toBe(
+      "ease-in-out",
+    );
   });
 
   it("removes the active keyframe and preserves the remaining animation", () => {
