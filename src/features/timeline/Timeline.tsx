@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useState,
   type DragEvent,
   type KeyboardEvent,
@@ -563,67 +564,80 @@ function TimelineTrack({
             }
           }
 
-          return (
-            <div
-              aria-label={"Select " + (asset?.name ?? "Missing media") + " clip"}
-              aria-pressed={isSelected}
-              className={
-                "timeline-clip timeline-clip-" +
-                track.type +
-                (isSelected ? " timeline-clip-selected" : "") +
-                (isInteracting ? " timeline-clip-interacting" : "")
-              }
-              key={clip.id}
-              style={{
-                left: clip.timelineStartMs / 1000 * pixelsPerSecond + "px",
-                width: width + "px",
-              }}
-              onClick={() => onSelectClip?.(clip.id)}
-              onKeyDown={handleClipKeyDown}
-              onPointerDown={(event) => onBeginClipInteraction(event, sourceClip, "move")}
-              onPointerMove={onUpdateClipInteraction}
-              onPointerUp={onFinishClipInteraction}
-              onPointerCancel={onCancelClipInteraction}
-              role="button"
-              tabIndex={0}
-              title={asset ? asset.name + " · " + formatTimecode(durationMs) : "Missing media"}
-            >
-              <span
-                aria-label="Trim clip start"
-                className="timeline-trim-handle timeline-trim-handle-start"
-                onPointerDown={(event) =>
-                  onBeginClipInteraction(event, sourceClip, "trim-start")
-                }
-                role="presentation"
-              />
-              <span className="timeline-clip-name">{asset?.name ?? "Missing media"}</span>
-              <small>{formatTimecode(durationMs)}</small>
-              <span
-                aria-label="Trim clip end"
-                className="timeline-trim-handle timeline-trim-handle-end"
-                onPointerDown={(event) =>
-                  onBeginClipInteraction(event, sourceClip, "trim-end")
-                }
-                role="presentation"
-              />
-            </div>
-          );
-
           const keyframes = clip.transformKeyframes ?? [];
           const assetSupportsTransformKeyframes =
             asset?.mediaType === "video" || asset?.mediaType === "image";
 
           return (
-            <div
-              aria-hidden="true"
-              className="timeline-clip-keyframes"
-              key={clip.id + "-keyframes"}
-            >
-              {assetSupportsTransformKeyframes
-                ? keyframes.map((keyframe) => {
-                    const keyframeOffsetPx =
-                      keyframe.timeMs / 1000 * pixelsPerSecond;
-                    const absoluteTimeMs = clip.timelineStartMs + keyframe.timeMs;
+            <Fragment key={clip.id}>
+              <div
+                aria-label={"Select " + (asset?.name ?? "Missing media") + " clip"}
+                aria-pressed={isSelected}
+                className={
+                  "timeline-clip timeline-clip-" +
+                  track.type +
+                  (isSelected ? " timeline-clip-selected" : "") +
+                  (isInteracting ? " timeline-clip-interacting" : "")
+                }
+                style={{
+                  left: clip.timelineStartMs / 1000 * pixelsPerSecond + "px",
+                  width: width + "px",
+                }}
+                onClick={() => onSelectClip?.(clip.id)}
+                onKeyDown={handleClipKeyDown}
+                onPointerDown={(event) =>
+                  onBeginClipInteraction(event, sourceClip, "move")
+                }
+                onPointerMove={onUpdateClipInteraction}
+                onPointerUp={onFinishClipInteraction}
+                onPointerCancel={onCancelClipInteraction}
+                role="button"
+                tabIndex={0}
+                title={
+                  asset
+                    ? asset.name + " · " + formatTimecode(durationMs)
+                    : "Missing media"
+                }
+              >
+                <span
+                  aria-label="Trim clip start"
+                  className="timeline-trim-handle timeline-trim-handle-start"
+                  onPointerDown={(event) =>
+                    onBeginClipInteraction(event, sourceClip, "trim-start")
+                  }
+                  role="presentation"
+                />
+                <span className="timeline-clip-name">
+                  {asset?.name ?? "Missing media"}
+                </span>
+                <small>{formatTimecode(durationMs)}</small>
+                <span
+                  aria-label="Trim clip end"
+                  className="timeline-trim-handle timeline-trim-handle-end"
+                  onPointerDown={(event) =>
+                    onBeginClipInteraction(event, sourceClip, "trim-end")
+                  }
+                  role="presentation"
+                />
+              </div>
+
+              {assetSupportsTransformKeyframes ? (
+                <div
+                  aria-label={
+                    "Transform keyframes for " +
+                    (asset?.name ?? "Missing media")
+                  }
+                  className="timeline-clip-keyframes"
+                  style={{
+                    left:
+                      clip.timelineStartMs / 1000 * pixelsPerSecond +
+                      "px",
+                    width: width + "px",
+                  }}
+                >
+                  {keyframes.map((keyframe) => {
+                    const absoluteTimeMs =
+                      clip.timelineStartMs + keyframe.timeMs;
                     const isActive =
                       Math.abs(currentTimeMs - absoluteTimeMs) <=
                       500 / project.canvas.frameRate;
@@ -646,20 +660,21 @@ function TimelineTrack({
                         }
                         style={{
                           left:
-                            clip.timelineStartMs / 1000 * pixelsPerSecond +
-                            keyframeOffsetPx +
-                            "px",
+                            durationMs > 0
+                              ? keyframe.timeMs / durationMs * 100 + "%"
+                              : "0%",
                         }}
+                        title={formatKeyframeTime(keyframe.timeMs)}
                         type="button"
                       >
                         <span aria-hidden="true" />
                       </button>
                     );
-                  })
-                : null}
-            </div>
+                  })}
+                </div>
+              ) : null}
+            </Fragment>
           );
-        })}
 
         {track.clips.length === 0 ? (
           <div className="track-empty">Klik media untuk menambahkannya</div>
