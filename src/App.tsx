@@ -14,9 +14,11 @@ import {
   moveClipOnTimeline,
   removeClipFromTimeline,
   removeTrack,
+  addTransformKeyframe,
   resetClipTransform,
+  removeTransformKeyframe,
   toggleTrackMute,
-  updateClipTransform,
+  updateClipTransformAtTime,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -25,7 +27,11 @@ import { Timeline } from "./features/timeline/Timeline";
 import { Preview } from "./features/preview/Preview";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
-import { getClipTransform, normalizeClipTransform } from "./features/transform/transform";
+import {
+  getClipTransformAtTime,
+  getTransformKeyframeAtTime,
+  normalizeClipTransform,
+} from "./features/transform/transform";
 import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
 import {
   commitHistory,
@@ -67,9 +73,29 @@ function App() {
   const canRedo = history.future.length > 0;
   const assets = project.assets;
   const selectedClipContext = findClipContext(project, selectedClipId);
+  const selectedClipLocalTimeMs = selectedClipContext
+    ? Math.min(
+        Math.max(
+          currentTimeMs - selectedClipContext.clip.timelineStartMs,
+          0,
+        ),
+        getClipDurationMs(selectedClipContext.clip),
+      )
+    : 0;
   const selectedTransform = selectedClipContext
-    ? getClipTransform(selectedClipContext.clip.transform)
+    ? getClipTransformAtTime(
+        selectedClipContext.clip.transform,
+        selectedClipContext.clip.transformKeyframes,
+        selectedClipLocalTimeMs,
+      )
     : null;
+  const selectedKeyframe = selectedClipContext
+    ? getTransformKeyframeAtTime(
+        selectedClipContext.clip.transformKeyframes,
+        selectedClipLocalTimeMs,
+      )
+    : null;
+  const selectedKeyframeCount = selectedClipContext?.clip.transformKeyframes?.length ?? 0;
   const timelineDurationMs = getTimelineDurationMs(project);
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
@@ -484,16 +510,23 @@ function App() {
       return;
     }
 
-    const currentTransform = getClipTransform(
-      selectedClipContext.clip.transform,
-    );
+    const currentTransform = selectedTransform;
+
+    if (!currentTransform) {
+      return;
+    }
 
     updateSelectedClip(
       (currentProject) =>
-        updateClipTransform(currentProject, selectedClipContext.clip.id, {
-          [field]: currentTransform[field] + delta,
-        }),
-      "Transform updated.",
+        updateClipTransformAtTime(
+          currentProject,
+          selectedClipContext.clip.id,
+          selectedClipLocalTimeMs,
+          {
+            [field]: currentTransform[field] + delta,
+          },
+        ),
+      selectedKeyframe ? "Keyframe updated." : "Transform updated.",
     );
   }
 
@@ -542,10 +575,15 @@ function App() {
 
     updateSelectedClip(
       (currentProject) =>
-        updateClipTransform(currentProject, selectedClipContext.clip.id, {
-          [field]: nextTransform[field],
-        }),
-      "Transform updated.",
+        updateClipTransformAtTime(
+          currentProject,
+          selectedClipContext.clip.id,
+          selectedClipLocalTimeMs,
+          {
+            [field]: nextTransform[field],
+          },
+        ),
+      selectedKeyframe ? "Keyframe updated." : "Transform updated.",
     );
   }
 
@@ -570,10 +608,55 @@ function App() {
     clipId: string,
     transform: ClipTransform,
   ) {
+    const clipContext = findClipContext(project, clipId);
+    const localTimeMs = clipContext
+      ? Math.min(
+          Math.max(currentTimeMs - clipContext.clip.timelineStartMs, 0),
+          getClipDurationMs(clipContext.clip),
+        )
+      : 0;
+
     applyProjectChange(
       (currentProject) =>
-        updateClipTransform(currentProject, clipId, transform),
+        updateClipTransformAtTime(
+          currentProject,
+          clipId,
+          localTimeMs,
+          transform,
+        ),
       "Canvas transform updated.",
+    );
+  }
+
+  function handleAddTransformKeyframe() {
+    if (!selectedClipContext || !selectedTransform) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        addTransformKeyframe(
+          currentProject,
+          selectedClipContext.clip.id,
+          selectedClipLocalTimeMs,
+        ),
+      selectedKeyframe ? "Keyframe updated." : "Keyframe added.",
+    );
+  }
+
+  function handleRemoveTransformKeyframe() {
+    if (!selectedClipContext || !selectedKeyframe) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        removeTransformKeyframe(
+          currentProject,
+          selectedClipContext.clip.id,
+          selectedClipLocalTimeMs,
+        ),
+      "Keyframe removed.",
     );
   }
 
@@ -869,15 +952,53 @@ function App() {
                 selectedClipContext.asset?.mediaType === "image") ? (
                 <div className="inspector-section">
                   <div className="inspector-section-header">
-                    <span className="inspector-section-title">Transform</span>
-                    <button
-                      aria-label="Reset transform"
-                      className="inspector-inline-button"
-                      onClick={handleResetSelectedTransform}
-                      type="button"
-                    >
-                      Reset
-                    </button>
+                    <div className="inspector-section-title-group">
+                      <span className="inspector-section-title">Transform</span>
+                      {selectedKeyframeCount > 0 ? (
+                        <span className="inspector-keyframe-count">
+                          {selectedKeyframeCount} keyframe{selectedKeyframeCount === 1 ? "" : "s"}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="inspector-section-actions">
+                      <button
+                        aria-label={selectedKeyframe ? "Update keyframe" : "Add keyframe"}
+                        className="inspector-inline-button"
+                        onClick={handleAddTransformKeyframe}
+                        type="button"
+                      >
+                        {selectedKeyframe ? "Update keyframe" : "Add keyframe"}
+                      </button>
+                      {selectedKeyframe ? (
+                        <button
+                          aria-label="Remove keyframe"
+                          className="inspector-inline-button"
+                          onClick={handleRemoveTransformKeyframe}
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                      <button
+                        aria-label="Reset transform"
+                        className="inspector-inline-button"
+                        onClick={handleResetSelectedTransform}
+                        type="button"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="inspector-keyframe-status">
+                    <span>
+                      {selectedKeyframe
+                        ? "Keyframe active at "
+                        : selectedKeyframeCount > 0
+                          ? "Animated transform at "
+                          : "Static transform at "}
+                      {formatKeyframeTime(selectedClipLocalTimeMs)}
+                    </span>
                   </div>
 
                   <div
