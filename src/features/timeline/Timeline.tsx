@@ -393,7 +393,6 @@ export function Timeline({
             selectedClipId={selectedClipId}
             onSelectClip={onSelectClip}
             onToggleTrackMute={onToggleTrackMute}
-            onAddAssetToTrack={onAddAssetToTrack}
             onRemoveTrack={onRemoveTrack}
             zoom={zoom}
             interaction={interaction}
@@ -422,11 +421,6 @@ interface TimelineTrackProps {
   selectedClipId: string | null;
   onSelectClip?: (clipId: string) => void;
   onToggleTrackMute?: (trackId: string) => void;
-  onAddAssetToTrack?: (
-    assetId: string,
-    trackId: string,
-    timelineStartMs: number,
-  ) => void;
   onRemoveTrack?: (trackId: string) => void;
   zoom: number;
   dragOverTrackId: string | null;
@@ -448,7 +442,6 @@ interface TimelineTrackProps {
 function TimelineTrack({
   track,
   trackLabel,
-  trackIndex,
   project,
   timelineDurationMs,
   currentTimeMs,
