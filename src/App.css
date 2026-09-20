@@ -1186,6 +1186,29 @@ button:disabled {
   font-weight: 600;
 }
 
+.inspector-keyframe-easing {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.inspector-keyframe-easing > span {
+  color: #8e97a8;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.inspector-keyframe-easing select {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid #333b49;
+  border-radius: 6px;
+  color: #e7eaf0;
+  background: #171b23;
+  font: inherit;
+}
+
 .inspector-keyframe-status {
   display: flex;
   align-items: center;
