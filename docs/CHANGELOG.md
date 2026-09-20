@@ -1,7 +1,9 @@
 ## 2026-09-21
 
-### M3.24 — Timeline clip interaction hardening — in progress
+### M3.24 — Timeline clip interaction hardening — merged
 Branch: `feat/m3-24-timeline-interaction-hardening`
+PR #35 — merged
+Merge SHA: `0c190a82a18e87bf56f2aea72a4d280265858ad5`
 
 Implemented:
 - Added Escape cancellation for direct timeline clip movement.
@@ -11,10 +13,10 @@ Implemented:
 - Added Timeline regression coverage for all clip gesture cancellation paths.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local validation passed (lint, 173 tests, build, Tauri dev, and manual interaction checks).
 
 Next step:
-- User validates M3.24 locally before merge.
+- Continue with the next focused editor milestone from updated `main`.
 
 
 
