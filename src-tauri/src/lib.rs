@@ -171,67 +171,160 @@ fn stream_media_request(
 
   let len = metadata.len();
   let content_type = media_content_type(&path);
-
   let response = tauri::http::Response::builder()
     .header(tauri::http::header::CONTENT_TYPE, content_type)
     .header(tauri::http::header::ACCEPT_RANGES, "bytes")
-    .header(tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+    .header(tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+    .header(
+      tauri::http::header::ACCESS_CONTROL_EXPOSE_HEADERS,
+      "Accept-Ranges, Content-Length, Content-Range, Content-Type",
+    );
 
-  if let Some(range_header) = request.headers().get(tauri::http::header::RANGE) {
-    let Ok(range_text) = range_header.to_str() else {
-      return response_with_status(
-        tauri::http::StatusCode::RANGE_NOT_SATISFIABLE,
-        "Invalid range header.",
-      );
+  if request.method() == tauri::http::Method::HEAD {
+    return response
+      .header(tauri::http::header::CONTENT_LENGTH, len.to_string())
+      .body(Vec::new())
+      .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()));
+  }
+
+  let Some(range_header) = request.headers().get(tauri::http::header::RANGE) else {
+    return match fs::read(&path) {
+      Ok(data) => response
+        .header(tauri::http::header::CONTENT_LENGTH, data.len().to_string())
+        .body(data)
+        .unwrap_or_else(|_| tauri::http::Response::new(Vec::new())),
+      Err(_) => response_with_status(
+        tauri::http::StatusCode::INTERNAL_SERVER_ERROR,
+        "Could not read media file.",
+      ),
     };
+  };
 
-    let Some((start, end)) = parse_single_range(range_text, len) else {
-      return response
-        .status(tauri::http::StatusCode::RANGE_NOT_SATISFIABLE)
-        .header(
-          tauri::http::header::CONTENT_RANGE,
-          format!("bytes */{len}"),
-        )
-        .body(Vec::new())
-        .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()));
-    };
+  let Ok(range_text) = range_header.to_str() else {
+    return range_not_satisfiable(len);
+  };
 
-    let length = end - start + 1;
-    let max_range_len = 2 * 1024 * 1024;
-    let bounded_end = start + length.min(max_range_len) - 1;
+  let Some(ranges) = parse_media_ranges(range_text, len) else {
+    return range_not_satisfiable(len);
+  };
+
+  const MAX_RANGE_LEN: u64 = 1024 * 1024;
+  const MAX_RANGES: usize = 8;
+
+  if ranges.len() == 1 {
+    let (start, end) = ranges[0];
+    let bounded_end = start + (end - start).min(MAX_RANGE_LEN - 1);
     let bounded_length = bounded_end - start + 1;
 
-    match read_file_range(&path, start, bounded_length) {
-      Ok(data) => {
-        return response
-          .status(tauri::http::StatusCode::PARTIAL_CONTENT)
-          .header(
-            tauri::http::header::CONTENT_RANGE,
-            format!("bytes {start}-{bounded_end}/{len}"),
-          )
-          .header(tauri::http::header::CONTENT_LENGTH, bounded_length.to_string())
-          .body(data)
-          .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()));
-      }
+    return match read_file_range(&path, start, bounded_length) {
+      Ok(data) => response
+        .status(tauri::http::StatusCode::PARTIAL_CONTENT)
+        .header(
+          tauri::http::header::CONTENT_RANGE,
+          format!("bytes {start}-{bounded_end}/{len}"),
+        )
+        .header(tauri::http::header::CONTENT_LENGTH, data.len().to_string())
+        .body(data)
+        .unwrap_or_else(|_| tauri::http::Response::new(Vec::new())),
+      Err(_) => response_with_status(
+        tauri::http::StatusCode::INTERNAL_SERVER_ERROR,
+        "Could not read media range.",
+      ),
+    };
+  }
+
+  let ranges = ranges.into_iter().take(MAX_RANGES).collect::<Vec<_>>();
+  let boundary = "frameflow-range-boundary";
+  let mut body = Vec::new();
+
+  for (start, end) in ranges {
+    let bounded_end = start + (end - start).min(MAX_RANGE_LEN - 1);
+    let length = bounded_end - start + 1;
+    let data = match read_file_range(&path, start, length) {
+      Ok(data) => data,
       Err(_) => {
         return response_with_status(
           tauri::http::StatusCode::INTERNAL_SERVER_ERROR,
           "Could not read media range.",
         )
       }
-    }
+    };
+
+    body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
+    body.extend_from_slice(format!("Content-Type: {content_type}\r\n").as_bytes());
+    body.extend_from_slice(
+      format!("Content-Range: bytes {start}-{bounded_end}/{len}\r\n\r\n").as_bytes(),
+    );
+    body.extend_from_slice(&data);
+    body.extend_from_slice(b"\r\n");
   }
 
-  match fs::read(&path) {
-    Ok(data) => response
-      .header(tauri::http::header::CONTENT_LENGTH, data.len().to_string())
-      .body(data)
-      .unwrap_or_else(|_| tauri::http::Response::new(Vec::new())),
-    Err(_) => response_with_status(
-      tauri::http::StatusCode::INTERNAL_SERVER_ERROR,
-      "Could not read media file.",
-    ),
+  body.extend_from_slice(format!("--{boundary}--\r\n").as_bytes());
+
+  response
+    .status(tauri::http::StatusCode::PARTIAL_CONTENT)
+    .header(
+      tauri::http::header::CONTENT_TYPE,
+      format!("multipart/byteranges; boundary={boundary}"),
+    )
+    .header(tauri::http::header::CONTENT_LENGTH, body.len().to_string())
+    .body(body)
+    .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()))
+}
+
+fn range_not_satisfiable(len: u64) -> tauri::http::Response<Vec<u8>> {
+  tauri::http::Response::builder()
+    .status(tauri::http::StatusCode::RANGE_NOT_SATISFIABLE)
+    .header(
+      tauri::http::header::CONTENT_RANGE,
+      format!("bytes */{len}"),
+    )
+    .header(tauri::http::header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+    .body(Vec::new())
+    .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()))
+}
+
+fn parse_media_ranges(header: &str, len: u64) -> Option<Vec<(u64, u64)>> {
+  if len == 0 || !header.starts_with("bytes=") {
+    return None;
   }
+
+  let mut ranges = Vec::new();
+
+  for spec in header["bytes=".len()..].split(',') {
+    let spec = spec.trim();
+    let (start_text, end_text) = spec.split_once('-')?;
+
+    let range = if start_text.is_empty() {
+      let suffix = end_text.parse::<u64>().ok()?;
+      if suffix == 0 {
+        continue;
+      }
+      let length = suffix.min(len);
+      (len - length, len - 1)
+    } else {
+      let start = start_text.parse::<u64>().ok()?;
+      if start >= len {
+        return None;
+      }
+
+      let end = if end_text.is_empty() {
+        len - 1
+      } else {
+        end_text.parse::<u64>().ok()?.min(len - 1)
+      };
+
+      if end < start {
+        return None;
+      }
+
+      (start, end)
+    };
+
+    ranges.push(range);
+  }
+
+  (!ranges.is_empty()).then_some(ranges)
 }
 
 fn read_file_range(path: &Path, start: u64, length: u64) -> Result<Vec<u8>, String> {
