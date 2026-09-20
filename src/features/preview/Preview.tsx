@@ -1,4 +1,4 @@
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import {
   useEffect,
   useRef,
@@ -166,12 +166,21 @@ function PreviewVisualLayer({
     width: number;
     height: number;
   } | null>(null);
+  const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
+  const [isPreparingPreview, setIsPreparingPreview] = useState(false);
+  const [previewFallbackAttempted, setPreviewFallbackAttempted] = useState(false);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const transformTimeMs = Math.min(
     Math.max(currentTimeMs - layer.clip.timelineStartMs, 0),
     getClipDurationMsForTransform(layer.clip),
   );
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
+
+  useEffect(() => {
+    setVideoSourceUrl(mediaUrl);
+    setPreviewFallbackAttempted(false);
+    setIsPreparingPreview(false);
+  }, [layer.asset.id, mediaUrl]);
   const currentTransform = getClipTransformAtTime(
     layer.clip.transform,
     layer.clip.transformKeyframes,
@@ -263,6 +272,42 @@ function PreviewVisualLayer({
       media.currentTime = Math.max(0, localTimeMs / 1000);
     } catch {
       // Metadata can still be settling in some WebView implementations.
+    }
+  }
+
+  async function handleVideoError() {
+    if (previewFallbackAttempted || isPreparingPreview) {
+      onError(
+        layer.asset.id,
+        "Video preview could not be loaded. Try converting the source to a browser-compatible format.",
+      );
+      return;
+    }
+
+    setPreviewFallbackAttempted(true);
+    setIsPreparingPreview(true);
+
+    try {
+      const previewPath = await invoke<string>("prepare_media_preview", {
+        path: layer.asset.sourcePath,
+      });
+      const previewUrl = tryConvertFileSrc(previewPath);
+
+      if (!previewUrl) {
+        throw new Error("Generated preview path could not be loaded.");
+      }
+
+      setMediaSize(null);
+      setVideoSourceUrl(previewUrl);
+    } catch (error) {
+      onError(
+        layer.asset.id,
+        error instanceof Error
+          ? error.message
+          : "A compatible video preview could not be generated.",
+      );
+    } finally {
+      setIsPreparingPreview(false);
     }
   }
 
@@ -531,7 +576,7 @@ function PreviewVisualLayer({
           playsInline
           preload="auto"
           ref={mediaRef}
-          src={mediaUrl}
+          src={videoSourceUrl ?? mediaUrl}
           style={{
             width: "100%",
             height: "100%",
@@ -539,10 +584,13 @@ function PreviewVisualLayer({
             zIndex,
           }}
           onLoadedMetadata={handleLoadedMetadata}
-          onError={() =>
-            onError(layer.asset.id, "Video could not be loaded.")
-          }
+          onError={() => void handleVideoError()}
         />
+        {isPreparingPreview ? (
+          <div className="preview-transcode-status" role="status">
+            Preparing compatible preview…
+          </div>
+        ) : null}
         {renderManipulationControls()}
       </div>
     </div>
