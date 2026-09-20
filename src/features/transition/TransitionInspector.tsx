@@ -54,14 +54,16 @@ export function TransitionInspector({
       <p className="inspector-help">
         {canTransition
           ? "Applies between this clip and the next adjacent visual clip."
-          : "Place another visual clip directly after this clip to enable a transition."}
+          : isDissolve
+            ? "This transition is currently inactive because the next visual clip is not adjacent."
+            : "Place another visual clip directly after this clip to enable a transition."}
       </p>
 
       <label className="inspector-keyframe-easing">
         <span>Type</span>
         <select
           aria-label="Transition type"
-          disabled={!canTransition}
+          disabled={!canTransition && !isDissolve}
           value={isDissolve ? "dissolve" : "none"}
           onChange={(event) => {
             onChange(
@@ -90,6 +92,7 @@ export function TransitionInspector({
               min="50"
               step="50"
               type="number"
+              disabled={!canTransition}
               value={durationMs}
               onChange={(event) => {
                 setDurationMs(
