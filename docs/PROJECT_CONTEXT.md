@@ -720,10 +720,11 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
-## M3.25 — Dissolve transition foundation (in progress)
+## M3.25 — Dissolve transition foundation — completed
 
 Branch: `feat/m3-25-dissolve-transition-foundation`
-PR: pending
+PR: #36
+Merge SHA: `01c90688fe4256278fe7dc1f94c1c94463e6eb6e`
 
 Scope:
 - Add a clip-level outgoing transition model.
@@ -747,7 +748,9 @@ Automated coverage:
 - Inspector workflow and history behavior at the App level.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local validation passed on Linux.
+- User confirmed the automated lint/test/build/Tauri validation passed.
+- User confirmed the manual dissolve, duration, history, hard-cut, adjacency, and regression checks passed.
 
 Known limitations:
 - No transition browser or draggable transition blocks yet.
@@ -755,7 +758,7 @@ Known limitations:
 - Transition configuration does not automatically repair itself when a clip is later moved away from adjacency.
 
 Next step:
-- User validates M3.25 locally before merge.
+- Start the next focused transition UX milestone from updated `main`.
 
 ## M3.24 — Timeline clip interaction hardening (merged)
 
