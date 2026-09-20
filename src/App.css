@@ -414,6 +414,51 @@ button:focus-visible {
   pointer-events: none;
 }
 
+.preview-crop-aspect-presets {
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 12px);
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid #343b48;
+  border-radius: 7px;
+  background: rgb(20 23 29 / 94%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 28%);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+.preview-crop-aspect-button {
+  min-width: 38px;
+  min-height: 25px;
+  padding: 0 7px;
+  border: 1px solid #3a4250;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #aeb7c6;
+  background: #1a1e25;
+  font-size: 9px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-crop-aspect-button:hover:not(:disabled) {
+  border-color: #665baf;
+  color: #f0edff;
+  background: #252139;
+}
+
+.preview-crop-aspect-button:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+
 .preview-crop-boundary {
   position: absolute;
   z-index: 1;
