@@ -785,17 +785,21 @@ describe("App", () => {
         clientY: 200,
       });
     });
-    fireEvent.pointerMove(hitArea, {
-      buttons: 1,
-      pointerId: 13,
-      clientX: 120,
-      clientY: 200,
+    await act(async () => {
+      fireEvent.pointerMove(hitArea, {
+        buttons: 1,
+        pointerId: 13,
+        clientX: 120,
+        clientY: 200,
+      });
     });
-    fireEvent.pointerUp(hitArea, {
-      button: 0,
-      pointerId: 13,
-      clientX: 120,
-      clientY: 200,
+    await act(async () => {
+      fireEvent.pointerUp(hitArea, {
+        button: 0,
+        pointerId: 13,
+        clientX: 120,
+        clientY: 200,
+      });
     });
 
     await waitFor(() => {
