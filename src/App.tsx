@@ -117,6 +117,9 @@ function App() {
   const [visualMediaDimensions, setVisualMediaDimensions] = useState<
     Record<string, { width: number; height: number }>
   >({});
+  const visualMediaDimensionsRef = useRef<
+    Record<string, { width: number; height: number }>
+  >({});
   const project = history.present;
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
@@ -275,6 +278,7 @@ function App() {
         setHistory(resetHistory(result.project));
         setSelectedClipId(null);
         setVisualMediaDimensions({});
+        visualMediaDimensionsRef.current = {};
         setPlaybackTime(0);
         setIsPlaying(false);
         setProjectNotice("Project opened.");
@@ -668,6 +672,11 @@ function App() {
 
   const handleVisualMediaDimensionsChange = useCallback(
     (clipId: string, dimensions: { width: number; height: number }) => {
+      visualMediaDimensionsRef.current = {
+        ...visualMediaDimensionsRef.current,
+        [clipId]: dimensions,
+      };
+
       setVisualMediaDimensions((current) => {
         const previous = current[clipId];
 
@@ -755,7 +764,9 @@ function App() {
       return null;
     }
 
-    const cached = visualMediaDimensions[selectedClipContext.clip.id];
+    const cached =
+      visualMediaDimensionsRef.current[selectedClipContext.clip.id] ??
+      visualMediaDimensions[selectedClipContext.clip.id];
 
     if (cached) {
       return cached;
