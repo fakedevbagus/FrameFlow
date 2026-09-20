@@ -720,10 +720,11 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
-## M3.24 — Timeline clip interaction hardening (in progress)
+## M3.24 — Timeline clip interaction hardening (merged)
 
 Branch: `feat/m3-24-timeline-interaction-hardening`
-PR: pending
+PR: #35 — merged
+Merge SHA: `0c190a82a18e87bf56f2aea72a4d280265858ad5`
 
 Scope:
 - Allow Escape to cancel an active timeline clip move gesture.
@@ -740,10 +741,10 @@ Automated coverage:
 - Escape cancellation for move, trim-start, and trim-end interactions.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local validation passed.
 
 Next step:
-- User validates M3.24 locally before merge.
+- Start the next focused editor feature from updated `main`.
 
 ## Documentation protocol
 
