@@ -165,6 +165,10 @@ interface PreviewVisualLayerProps extends PreviewLayerProps {
   onSelectClip?: (clipId: string) => void;
   onTransformCommit?: (clipId: string, transform: ClipTransform) => void;
   onTransformAnchorCommit?: (clipId: string, anchor: TransformAnchor) => void;
+  onVisualMediaDimensionsChange?: (
+    clipId: string,
+    dimensions: { width: number; height: number },
+  ) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
 }
