@@ -13,6 +13,7 @@ The project is being built incrementally. Every milestone must be small, testabl
 - M3.13 was merged as PR #23 with merge SHA `595f7498e503aab19052279979fb389ae8300691`.
 - M3.14 was merged as PR #24 with merge SHA `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`.
 - M3.15 was merged as PR #25 with merge SHA `69c2b5edee8e4ea5e5d530c2402e0c9ce7281abc`.
+- M3.16 was merged as PR #26 with merge SHA `cb61fb6277d8b800f30978098ba5abfaf2acc97f`.
 - New milestone branches must be created from the updated `main` after the preceding milestone validation.
 
 ## Development environment
@@ -386,18 +387,19 @@ Known limitation:
 Next step:
 - Continue M3.16 crop foundation validation before merge.
 
-## M3.16 — Crop foundation (in progress)
+## M3.16 — Crop foundation — completed
 
 Branch: `feat/m3-16-crop-foundation`
 PR: #26
+Merge SHA: `cb61fb6277d8b800f30978098ba5abfaf2acc97f`
 
-Scope:
-- Add a backward-compatible per-clip crop model with zero-crop as the default.
-- Expose Top, Right, Bottom, and Left crop controls in the Transform Inspector.
-- Apply crop in the preview using media-element clipping.
-- Keep crop edits in the existing project history engine and separate from transform keyframes for this milestone.
-- Preserve crop state across clip splitting.
-- Add transform-domain, timeline-command, preview, and App regression coverage.
+Scope delivered:
+- Added a backward-compatible per-clip crop model with zero-crop as the default.
+- Added Top, Right, Bottom, and Left crop controls to the Transform Inspector.
+- Applied crop in the preview using media-element clipping.
+- Kept crop edits inside the existing project history engine and separate from transform keyframes for this milestone.
+- Preserved crop state across clip splitting.
+- Added transform-domain, timeline-command, preview, and App regression coverage.
 
 Architecture decisions:
 - Crop is represented as normalized per-edge insets (0..1) on the clip.
@@ -406,17 +408,15 @@ Architecture decisions:
 - Legacy clips without crop data render with zero crop.
 
 Validation:
-- Initial local validation found one unused TypeScript import in `src/features/timeline/commands.ts`; the import has been removed.
-- The test suite itself passed: 17 test files, 136 tests.
-- `npm run build` failed only because of the same unused import.
-- `npm run tauri dev` launched successfully despite the prior TypeScript build failure.
-- A clean lint/build rerun and manual validation are still required.
+- User confirmed local validation succeeded after the unused `getClipCrop` import in `src/features/timeline/commands.ts` was removed.
+- User confirmed the lint, test, build, Tauri dev, and requested manual crop checks passed locally on Linux.
+- The automated test suite had already reported 17 test files and 136 tests passing before the final lint/build correction.
 
 Known limitation:
-- This milestone provides Inspector-based crop values only. Direct crop-handle manipulation, aspect-ratio presets, and crop-position translation compensation are future work.
+- Direct crop-handle manipulation, aspect-ratio presets, and crop-position translation compensation remain future work.
 
 Next step:
-- Run local lint, test, build, Tauri dev, and the requested manual crop checks on Linux before merging.
+- Start the next focused transform-interaction milestone from updated `main`, prioritizing direct crop-handle manipulation while preserving the current history and transform architecture.
 
 ## Documentation protocol
 
