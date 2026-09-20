@@ -1,7 +1,9 @@
 ## 2026-09-21
 
-### M3.25 — Dissolve transition foundation — in progress
+### M3.25 — Dissolve transition foundation — merged
 Branch: `feat/m3-25-dissolve-transition-foundation`
+PR #36
+Merge SHA: `01c90688fe4256278fe7dc1f94c1c94463e6eb6e`
 
 Implemented:
 - Added optional outgoing `dissolve` transition metadata to clips.
@@ -12,7 +14,7 @@ Implemented:
 - Added regression coverage for transition helpers, commands, preview behavior, and Inspector history.
 
 Validation:
-- Local validation is pending user verification.
+- User confirmed local Linux validation passed, including lint, tests, build, Tauri dev, and the manual transition checks.
 
 Known limitations:
 - Only the `dissolve` transition type is included.
@@ -20,7 +22,7 @@ Known limitations:
 - Transition metadata is not automatically cleared when later edits break adjacency.
 
 Next step:
-- User validates M3.25 locally before merge.
+- Continue with the next focused transition UX milestone from updated `main`.
 
 
 ### M3.24 — Timeline clip interaction hardening — merged
