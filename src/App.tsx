@@ -19,7 +19,7 @@ import { Timeline } from "./features/timeline/Timeline";
 import { Preview } from "./features/preview/Preview";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
-import { getClipTransform } from "./features/transform/transform";
+import { getClipTransform, normalizeClipTransform } from "./features/transform/transform";
 import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
 import {
   commitHistory,
@@ -34,6 +34,7 @@ import { openProjectFromDialog, saveProjectFromDialog } from "./features/project
 import "./App.css";
 
 type WorkspaceView = "media" | "editor" | "export";
+type TransformField = "x" | "y" | "scale" | "rotation" | "opacity";
 
 const navigation: Array<{ id: WorkspaceView; label: string }> = [
   { id: "media", label: "Media" },
@@ -63,6 +64,9 @@ function App() {
   const selectedTransform = selectedClipContext
     ? getClipTransform(selectedClipContext.clip.transform)
     : null;
+  const [transformDraft, setTransformDraft] = useState<Record<TransformField, string>>(
+    () => createTransformDraft(selectedTransform),
+  );
   const timelineDurationMs = getTimelineDurationMs(project);
   const displayedCurrentTimeMs = Math.min(
     Math.max(currentTimeMs, 0),
@@ -72,6 +76,21 @@ function App() {
   useEffect(() => {
     saveWorkspaceProject(project);
   }, [project]);
+
+  useEffect(() => {
+    if (!selectedTransform) {
+      return;
+    }
+
+    setTransformDraft(createTransformDraft(selectedTransform));
+  }, [
+    selectedClipId,
+    selectedTransform?.x,
+    selectedTransform?.y,
+    selectedTransform?.scale,
+    selectedTransform?.rotation,
+    selectedTransform?.opacity,
+  ]);
 
   const setPlaybackTime = useCallback((timeMs: number) => {
     const safeTimeMs = Math.min(
@@ -490,6 +509,52 @@ function App() {
     );
   }
 
+  function handleTransformInputChange(field: TransformField, value: string) {
+    setTransformDraft((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function commitTransformInput(field: TransformField) {
+    if (!selectedClipContext || !selectedTransform) {
+      return;
+    }
+
+    const rawValue = transformDraft[field].trim();
+
+    if (!rawValue) {
+      setTransformDraft(createTransformDraft(selectedTransform));
+      return;
+    }
+
+    const parsedValue = Number(rawValue);
+
+    if (!Number.isFinite(parsedValue)) {
+      setTransformDraft(createTransformDraft(selectedTransform));
+      return;
+    }
+
+    const modelValue = field === "opacity" ? parsedValue / 100 : parsedValue;
+    const nextTransform = normalizeClipTransform({
+      ...selectedTransform,
+      [field]: modelValue,
+    });
+
+    if (nextTransform[field] === selectedTransform[field]) {
+      setTransformDraft(createTransformDraft(nextTransform));
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipTransform(currentProject, selectedClipContext.clip.id, {
+          [field]: nextTransform[field],
+        }),
+      "Transform updated.",
+    );
+  }
+
   function handleResetSelectedTransform() {
     if (
       !selectedClipContext ||
@@ -821,17 +886,108 @@ function App() {
                     </button>
                   </div>
 
-                  <div className="inspector-transform-readout">
-                    <span>X</span>
-                    <strong>{formatSignedPercent(selectedTransform?.x ?? 0)}</strong>
-                    <span>Y</span>
-                    <strong>{formatSignedPercent(selectedTransform?.y ?? 0)}</strong>
-                    <span>Scale</span>
-                    <strong>{(selectedTransform?.scale ?? 1).toFixed(2)}×</strong>
-                    <span>Rotation</span>
-                    <strong>{selectedTransform?.rotation ?? 0}°</strong>
-                    <span>Opacity</span>
-                    <strong>{Math.round((selectedTransform?.opacity ?? 1) * 100)}%</strong>
+                  <div className="inspector-transform-input-grid">
+                    <label className="inspector-transform-field">
+                      <span>X</span>
+                      <div className="inspector-transform-input-wrap">
+                        <input
+                          aria-label="X position"
+                          className="inspector-transform-input"
+                          max="100"
+                          min="-100"
+                          step="0.5"
+                          type="number"
+                          value={transformDraft.x}
+                          onBlur={() => commitTransformInput("x")}
+                          onChange={(event) =>
+                            handleTransformInputChange("x", event.target.value)
+                          }
+                        />
+                        <span>%</span>
+                      </div>
+                    </label>
+                    <label className="inspector-transform-field">
+                      <span>Y</span>
+                      <div className="inspector-transform-input-wrap">
+                        <input
+                          aria-label="Y position"
+                          className="inspector-transform-input"
+                          max="100"
+                          min="-100"
+                          step="0.5"
+                          type="number"
+                          value={transformDraft.y}
+                          onBlur={() => commitTransformInput("y")}
+                          onChange={(event) =>
+                            handleTransformInputChange("y", event.target.value)
+                          }
+                        />
+                        <span>%</span>
+                      </div>
+                    </label>
+                    <label className="inspector-transform-field">
+                      <span>Scale</span>
+                      <div className="inspector-transform-input-wrap">
+                        <input
+                          aria-label="Scale"
+                          className="inspector-transform-input"
+                          max="10"
+                          min="0.05"
+                          step="0.05"
+                          type="number"
+                          value={transformDraft.scale}
+                          onBlur={() => commitTransformInput("scale")}
+                          onChange={(event) =>
+                            handleTransformInputChange("scale", event.target.value)
+                          }
+                        />
+                        <span>×</span>
+                      </div>
+                    </label>
+                    <label className="inspector-transform-field">
+                      <span>Rotation</span>
+                      <div className="inspector-transform-input-wrap">
+                        <input
+                          aria-label="Rotation"
+                          className="inspector-transform-input"
+                          max="180"
+                          min="-180"
+                          step="1"
+                          type="number"
+                          value={transformDraft.rotation}
+                          onBlur={() => commitTransformInput("rotation")}
+                          onChange={(event) =>
+                            handleTransformInputChange(
+                              "rotation",
+                              event.target.value,
+                            )
+                          }
+                        />
+                        <span>°</span>
+                      </div>
+                    </label>
+                    <label className="inspector-transform-field">
+                      <span>Opacity</span>
+                      <div className="inspector-transform-input-wrap">
+                        <input
+                          aria-label="Opacity"
+                          className="inspector-transform-input"
+                          max="100"
+                          min="0"
+                          step="1"
+                          type="number"
+                          value={transformDraft.opacity}
+                          onBlur={() => commitTransformInput("opacity")}
+                          onChange={(event) =>
+                            handleTransformInputChange(
+                              "opacity",
+                              event.target.value,
+                            )
+                          }
+                        />
+                        <span>%</span>
+                      </div>
+                    </label>
                   </div>
 
                   <div className="inspector-transform-grid">
@@ -1091,6 +1247,28 @@ function formatTimecode(durationMs: number, frameRate: number): string {
 
 function formatSignedPercent(value: number): string {
   return (value >= 0 ? "+" : "") + value.toFixed(0) + "%";
+}
+
+function createTransformDraft(
+  transform: ClipTransform | null,
+): Record<TransformField, string> {
+  if (!transform) {
+    return {
+      x: "0",
+      y: "0",
+      scale: "1",
+      rotation: "0",
+      opacity: "100",
+    };
+  }
+
+  return {
+    x: String(transform.x),
+    y: String(transform.y),
+    scale: String(transform.scale),
+    rotation: String(transform.rotation),
+    opacity: String(Math.round(transform.opacity * 100)),
+  };
 }
 
 function formatDuration(durationMs: number | null): string {
