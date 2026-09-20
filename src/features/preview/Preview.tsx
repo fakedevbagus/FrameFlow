@@ -1099,6 +1099,8 @@ function PreviewVisualLayer({
               data-preview-state="image"
               ref={imageRef}
               data-clip-id={layer.clip.id}
+              data-media-width={mediaSize?.width || undefined}
+              data-media-height={mediaSize?.height || undefined}
               src={mediaUrl ?? undefined}
               onLoad={handleImageLoad}
               style={{
@@ -1151,6 +1153,8 @@ function PreviewVisualLayer({
             className="preview-layer preview-video-layer"
             data-preview-state="video"
             data-testid="preview-video"
+            data-media-width={mediaSize?.width || undefined}
+            data-media-height={mediaSize?.height || undefined}
             playsInline
             preload="auto"
             ref={mediaRef}
