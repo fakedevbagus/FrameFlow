@@ -213,17 +213,21 @@ export function cropPositionFromPointer(
   const maxY = 1 - minY;
 
   return {
-    x: clamp(
-      basePosition.x -
-        (currentPoint.x - startPoint.x) / contentBounds.width,
-      minX,
+    x: Math.min(
       maxX,
+      Math.max(
+        minX,
+        basePosition.x -
+          (currentPoint.x - startPoint.x) / contentBounds.width,
+      ),
     ),
-    y: clamp(
-      basePosition.y -
-        (currentPoint.y - startPoint.y) / contentBounds.height,
-      minY,
+    y: Math.min(
       maxY,
+      Math.max(
+        minY,
+        basePosition.y -
+          (currentPoint.y - startPoint.y) / contentBounds.height,
+      ),
     ),
   };
 }
