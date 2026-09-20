@@ -757,6 +757,11 @@ describe("App", () => {
     });
     fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
 
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Crop right" }), {
+      target: { value: "20" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop right" }));
+
     const hitArea = screen.getByTestId(/preview-hit-area-/);
     Object.defineProperty(hitArea, "getBoundingClientRect", {
       configurable: true,
@@ -799,7 +804,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("spinbutton", { name: "Crop position X" }),
-      ).toHaveValue(40);
+      ).toHaveValue(30);
       expect(
         screen.getByRole("spinbutton", { name: "Crop position Y" }),
       ).toHaveValue(55);
@@ -813,7 +818,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByRole("spinbutton", { name: "Crop position X" }),
-      ).toHaveValue(50);
+      ).toHaveValue(40);
       expect(
         screen.getByRole("spinbutton", { name: "Crop position Y" }),
       ).toHaveValue(55);
