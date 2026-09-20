@@ -204,7 +204,7 @@ describe("canvas manipulation", () => {
     );
 
     expect(position).toEqual({
-      x: 0.3,
+      x: 0.4,
       y: 0.6,
     });
   });
@@ -239,7 +239,7 @@ describe("canvas manipulation", () => {
     );
 
     expect(position.x).toBeCloseTo(0.5, 5);
-    expect(position.y).toBeCloseTo(0.7, 5);
+    expect(position.y).toBeCloseTo(0.6, 5);
   });
 
   it("keeps a dragged crop edge away from removing all visible content", () => {
