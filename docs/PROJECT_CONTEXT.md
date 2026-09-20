@@ -106,6 +106,14 @@ This pipeline is intentionally separate from the eventual full FFmpeg export/ren
 
 ## Current project model
 
+Canvas behavior:
+
+- The project canvas supports selectable aspect-ratio presets in the editor toolbar: 16:9, 9:16, 1:1, 4:5, and 4:3.
+- Canvas preset changes are committed through the existing history engine and preserve frame rate, tracks, clips, and normalized transform/crop state.
+- The preview viewport derives its displayed aspect ratio from project.canvas, so landscape/square/portrait projects render with matching framing instead of a hardcoded 9:16 canvas.
+- Custom canvas dimensions loaded from a project remain displayable and are shown as Custom in the preset selector.
+
+
 Visual clips may contain:
 
 - static transform
