@@ -1,5 +1,7 @@
 import {
   Fragment,
+  useEffect,
+  useRef,
   useState,
   type DragEvent,
   type KeyboardEvent,
@@ -95,6 +97,7 @@ export function Timeline({
   onZoomChange,
 }: TimelineProps) {
   const [interaction, setInteraction] = useState<ClipInteraction | null>(null);
+  const clipInteractionTargetRef = useRef<HTMLElement | null>(null);
   const [keyframeInteraction, setKeyframeInteraction] =
     useState<KeyframeInteraction | null>(null);
   const [dragOverTrackId, setDragOverTrackId] = useState<string | null>(null);
@@ -354,6 +357,7 @@ export function Timeline({
     if ("setPointerCapture" in event.currentTarget) {
       event.currentTarget.setPointerCapture(event.pointerId);
     }
+    clipInteractionTargetRef.current = event.currentTarget;
 
     setInteraction({
       clipId: clip.id,
@@ -482,15 +486,18 @@ export function Timeline({
       return;
     }
 
+    const target = event?.currentTarget ?? clipInteractionTargetRef.current;
+
     if (
-      event &&
-      "hasPointerCapture" in event.currentTarget &&
-      event.currentTarget.hasPointerCapture(event.pointerId)
+      target &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(interaction.pointerId)
     ) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+      target.releasePointerCapture(interaction.pointerId);
     }
 
     if (!interaction.hasMoved) {
+      clipInteractionTargetRef.current = null;
       setInteraction(null);
       return;
     }
@@ -505,12 +512,43 @@ export function Timeline({
       }
     }
 
+    clipInteractionTargetRef.current = null;
     setInteraction(null);
   }
 
   function cancelClipInteraction() {
+    const target = clipInteractionTargetRef.current;
+
+    if (
+      target &&
+      interaction &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(interaction.pointerId)
+    ) {
+      target.releasePointerCapture(interaction.pointerId);
+    }
+
+    clipInteractionTargetRef.current = null;
     setInteraction(null);
   }
+
+  useEffect(() => {
+    if (!interaction) {
+      return;
+    }
+
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      event.preventDefault();
+      cancelClipInteraction();
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [interaction]);
 
   function handleKeyframeClick(event: MouseEvent<HTMLButtonElement>, clip: Clip, keyframeTimeMs: number) {
     event.stopPropagation();
