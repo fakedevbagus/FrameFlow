@@ -720,6 +720,31 @@ UI/layout direction:
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
 
+## M3.24 — Timeline clip interaction hardening (in progress)
+
+Branch: `feat/m3-24-timeline-interaction-hardening`
+PR: pending
+
+Scope:
+- Allow Escape to cancel an active timeline clip move gesture.
+- Allow Escape to cancel timeline trim-start and trim-end gestures.
+- Release the active clip pointer capture when cancellation occurs.
+- Keep cancellation out of project history.
+
+Architecture decisions:
+- Cancellation is owned by `Timeline`, where clip interaction state already lives.
+- The timeline stores the current clip interaction target only for pointer-capture cleanup.
+- Completed move/trim history callbacks remain unchanged.
+
+Automated coverage:
+- Escape cancellation for move, trim-start, and trim-end interactions.
+
+Validation:
+- Local validation is pending user verification.
+
+Next step:
+- User validates M3.24 locally before merge.
+
 ## Documentation protocol
 
 For every milestone or meaningful bug fix, update:

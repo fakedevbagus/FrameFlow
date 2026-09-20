@@ -529,6 +529,94 @@ describe("Timeline", () => {
     );
   });
 
+  it("cancels clip movement and trimming with Escape", () => {
+    const project = createVideoProject();
+    const onMoveClip = vi.fn();
+    const onTrimClipStart = vi.fn();
+    const onTrimClipEnd = vi.fn();
+
+    const { container } = render(
+      <Timeline
+        project={project}
+        onMoveClip={onMoveClip}
+        onTrimClipStart={onTrimClipStart}
+        onTrimClipEnd={onTrimClipEnd}
+      />,
+    );
+
+    const clip = screen.getByRole("button", {
+      name: "Select intro.mp4 clip",
+    });
+    const startHandle = container.querySelector(
+      ".timeline-trim-handle-start",
+    );
+    const endHandle = container.querySelector(".timeline-trim-handle-end");
+
+    expect(startHandle).not.toBeNull();
+    expect(endHandle).not.toBeNull();
+
+    fireEvent.pointerDown(clip, {
+      button: 0,
+      buttons: 1,
+      clientX: 0,
+      pointerId: 31,
+    });
+    fireEvent.pointerMove(clip, {
+      buttons: 1,
+      clientX: 96,
+      pointerId: 31,
+    });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(clip, {
+      button: 0,
+      buttons: 0,
+      clientX: 96,
+      pointerId: 31,
+    });
+
+    fireEvent.pointerDown(startHandle as HTMLSpanElement, {
+      button: 0,
+      buttons: 1,
+      clientX: 0,
+      pointerId: 32,
+    });
+    fireEvent.pointerMove(clip, {
+      buttons: 1,
+      clientX: 80,
+      pointerId: 32,
+    });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(clip, {
+      button: 0,
+      buttons: 0,
+      clientX: 80,
+      pointerId: 32,
+    });
+
+    fireEvent.pointerDown(endHandle as HTMLSpanElement, {
+      button: 0,
+      buttons: 1,
+      clientX: 480,
+      pointerId: 33,
+    });
+    fireEvent.pointerMove(clip, {
+      buttons: 1,
+      clientX: 400,
+      pointerId: 33,
+    });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(clip, {
+      button: 0,
+      buttons: 0,
+      clientX: 400,
+      pointerId: 33,
+    });
+
+    expect(onMoveClip).not.toHaveBeenCalled();
+    expect(onTrimClipStart).not.toHaveBeenCalled();
+    expect(onTrimClipEnd).not.toHaveBeenCalled();
+  });
+
   it("trims the start handle and commits the snapped source start", () => {
     const project = createVideoProject();
     const onTrimClipStart = vi.fn();
