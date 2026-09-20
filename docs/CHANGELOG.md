@@ -2,6 +2,20 @@
 
 ## 2026-09-20
 
+### M3.14 — Keyframe UX hardening (in progress)
+Branch: `feat/m3-14-keyframe-ux-hardening`
+
+Implemented:
+- Focusing a timeline keyframe marker selects its owning clip.
+- Active keyframe markers expose `aria-current="time"` for assistive technology.
+- Escape cancels an active keyframe drag and avoids committing an unintended keyframe move.
+- Added Timeline regression coverage for focus/selection and Escape cancellation.
+
+Validation:
+- Initial validation reported one lint error and one test failure; both were traced to implementation defects and corrected on the branch.
+- Awaiting a clean local lint/test/build/manual validation run.
+- Do not merge until the rerun passes.
+
 ### M3.13 — Playback stability — merged
 Branch: `feat/m3-13-playback-stability`
 PR #23 — merged

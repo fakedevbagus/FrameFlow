@@ -77,6 +77,74 @@ describe("Timeline", () => {
     expect(onCurrentTimeChange).toHaveBeenCalledWith(7000);
   });
 
+  it("selects the clip when a keyframe marker receives keyboard focus", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 2000);
+
+    const onSelectClip = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={2000}
+        onSelectClip={onSelectClip}
+      />,
+    );
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to transform keyframe for intro.mp4 at 00:02.000",
+    });
+
+    fireEvent.focus(markerButton);
+
+    expect(onSelectClip).toHaveBeenCalledWith(clipId);
+    expect(markerButton).toHaveAttribute("aria-current", "time");
+  });
+
+  it("cancels an active keyframe drag with Escape", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 2000);
+    project = addTransformKeyframe(project, clipId, 7000);
+
+    const onMoveTransformKeyframe = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onMoveTransformKeyframe={onMoveTransformKeyframe}
+      />,
+    );
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to transform keyframe for intro.mp4 at 00:02.000",
+    });
+
+    fireEvent.pointerDown(markerButton, {
+      button: 0,
+      buttons: 1,
+      clientX: 80,
+      pointerId: 7,
+    });
+    fireEvent.pointerMove(markerButton, {
+      buttons: 1,
+      clientX: 160,
+      pointerId: 7,
+    });
+    fireEvent.keyDown(markerButton, { key: "Escape" });
+    fireEvent.pointerUp(markerButton, {
+      button: 0,
+      buttons: 0,
+      clientX: 160,
+      pointerId: 7,
+    });
+
+    expect(onMoveTransformKeyframe).not.toHaveBeenCalled();
+  });
+
   it("drags a transform keyframe and commits its new time", () => {
     let project = createVideoProject();
     const clipId = project.tracks[0].clips[0].id;

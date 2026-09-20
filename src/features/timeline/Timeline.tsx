@@ -322,7 +322,20 @@ export function Timeline({
     setKeyframeInteraction(null);
   }
 
-  function cancelKeyframeInteraction() {
+  function cancelKeyframeInteraction(
+    event?: KeyboardEvent<HTMLButtonElement>,
+  ) {
+    if (event && keyframeInteraction) {
+      const target = event.currentTarget;
+
+      if (
+        "hasPointerCapture" in target &&
+        target.hasPointerCapture(keyframeInteraction.pointerId)
+      ) {
+        target.releasePointerCapture(keyframeInteraction.pointerId);
+      }
+    }
+
     setKeyframeInteraction(null);
   }
 
@@ -866,6 +879,13 @@ function TimelineTrack({
                         return;
                       }
 
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onCancelKeyframeInteraction();
+                        return;
+                      }
+
                       if (
                         event.key !== "ArrowLeft" &&
                         event.key !== "ArrowRight"
@@ -949,6 +969,8 @@ function TimelineTrack({
                           (isActive ? " timeline-keyframe-marker-active" : "")
                         }
                         key={clip.id + "-keyframe-" + keyframeIndex}
+                        aria-current={isActive ? "time" : undefined}
+                        onFocus={() => onSelectClip?.(clip.id)}
                         onClick={(event) =>
                           onKeyframeClick(event, clip, keyframe.timeMs)
                         }
