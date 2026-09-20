@@ -277,6 +277,76 @@ describe("App", () => {
   });
 
 
+  it("starts preview media from the transport click", async () => {
+    const playMock = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockResolvedValue(undefined);
+
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-preview-play",
+        name: "preview-play.mp4",
+        mediaType: "video",
+        sourcePath: "/media/preview-play.mp4",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("preview-play.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add preview-play.mp4 to timeline" }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+    await waitFor(() => {
+      expect(playMock).toHaveBeenCalled();
+    });
+  });
+
+  it("toggles track mute state from the timeline", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-mute-ui",
+        name: "mute-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/mute-ui.mp4",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("mute-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add mute-ui.mp4 to timeline" }),
+    );
+
+    const muteButton = screen.getByRole("button", { name: "Mute Video 1" });
+
+    expect(muteButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(muteButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Unmute Video 1" }),
+      ).toHaveAttribute("aria-pressed", "true");
+    });
+  });
+
   it("moves a timeline clip through direct mouse drag", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {

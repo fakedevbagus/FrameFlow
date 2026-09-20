@@ -4,29 +4,46 @@ export interface ActivePreviewClip {
   asset: MediaAsset;
   clip: Clip;
   track: Track;
+  trackIndex: number;
+}
+
+export function getActiveVisualPreviewClips(
+  project: Project,
+  timelineTimeMs: number,
+): ActivePreviewClip[] {
+  return getActivePreviewClips(
+    project,
+    timelineTimeMs,
+    (track, asset) =>
+      track.type === "video" &&
+      (asset.mediaType === "video" || asset.mediaType === "image"),
+  );
+}
+
+export function getActiveAudioPreviewClips(
+  project: Project,
+  timelineTimeMs: number,
+): ActivePreviewClip[] {
+  return getActivePreviewClips(
+    project,
+    timelineTimeMs,
+    (track, asset) => track.type === "audio" && asset.mediaType === "audio",
+  );
 }
 
 export function findActivePreviewClip(
   project: Project,
   timelineTimeMs: number,
 ): ActivePreviewClip | null {
-  const safeTimeMs = Math.max(0, timelineTimeMs);
+  const visualClips = getActiveVisualPreviewClips(project, timelineTimeMs);
 
-  const visualClip = findActiveClip(
-    project,
-    safeTimeMs,
-    (track) => track.type === "video",
-  );
-
-  if (visualClip) {
-    return visualClip;
+  if (visualClips.length > 0) {
+    return visualClips[visualClips.length - 1];
   }
 
-  return findActiveClip(
-    project,
-    safeTimeMs,
-    (track) => track.type === "audio",
-  );
+  const audioClips = getActiveAudioPreviewClips(project, timelineTimeMs);
+
+  return audioClips.length > 0 ? audioClips[audioClips.length - 1] : null;
 }
 
 export function getClipLocalTimeMs(clip: Clip, timelineTimeMs: number): number {
@@ -40,37 +57,39 @@ export function getClipLocalTimeMs(clip: Clip, timelineTimeMs: number): number {
   return Math.min(durationMs, clip.sourceStartMs + offsetMs);
 }
 
-function findActiveClip(
+function getActivePreviewClips(
   project: Project,
   timelineTimeMs: number,
-  trackPredicate: (track: Track) => boolean,
-): ActivePreviewClip | null {
-  for (const track of project.tracks) {
-    if (!trackPredicate(track) || track.isMuted) {
-      continue;
+  predicate: (track: Track, asset: MediaAsset) => boolean,
+): ActivePreviewClip[] {
+  const safeTimeMs = Math.max(0, timelineTimeMs);
+  const activeClips: ActivePreviewClip[] = [];
+
+  project.tracks.forEach((track, trackIndex) => {
+    if (track.isMuted) {
+      return;
     }
 
-    for (const clip of track.clips) {
-      const clipEndMs =
+    track.clips.forEach((clip) => {
+      const asset = project.assets.find(
+        (candidate) => candidate.id === clip.assetId,
+      );
+
+      if (!asset || !predicate(track, asset)) {
+        return;
+      }
+
+      const clipDurationMs =
         clip.sourceEndMs === null
           ? Number.POSITIVE_INFINITY
-          : clip.timelineStartMs +
-            Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+          : Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+      const clipEndMs = clip.timelineStartMs + clipDurationMs;
 
-      if (
-        timelineTimeMs >= clip.timelineStartMs &&
-        timelineTimeMs < clipEndMs
-      ) {
-        const asset = project.assets.find(
-          (candidate) => candidate.id === clip.assetId,
-        );
-
-        if (asset) {
-          return { asset, clip, track };
-        }
+      if (safeTimeMs >= clip.timelineStartMs && safeTimeMs < clipEndMs) {
+        activeClips.push({ asset, clip, track, trackIndex });
       }
-    }
-  }
+    });
+  });
 
-  return null;
+  return activeClips;
 }

@@ -3,11 +3,13 @@ import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "../timeline/commands";
 import {
   findActivePreviewClip,
+  getActiveAudioPreviewClips,
+  getActiveVisualPreviewClips,
   getClipLocalTimeMs,
 } from "./preview";
 
 describe("preview helpers", () => {
-  it("finds the active visual clip at the playhead", () => {
+  it("finds the topmost active visual clip at the playhead", () => {
     let project = createProject({ id: "preview-project" });
 
     project = {
@@ -20,15 +22,56 @@ describe("preview helpers", () => {
           sourcePath: "/media/intro.mp4",
           durationMs: 12000,
         },
+        {
+          id: "video-2",
+          name: "overlay.mp4",
+          mediaType: "video",
+          sourcePath: "/media/overlay.mp4",
+          durationMs: 8000,
+        },
+      ],
+      tracks: [
+        project.tracks[0],
+        {
+          id: "video-2-track",
+          name: "Video 2",
+          type: "video",
+          isLocked: false,
+          isMuted: false,
+          clips: [],
+        },
+        project.tracks[1],
       ],
     };
 
     project = addAssetToTimeline(project, "video-1");
+    const baseClip = project.tracks[0].clips[0];
 
-    const active = findActivePreviewClip(project, 2500);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-2-track"
+          ? {
+              ...track,
+              clips: [
+                {
+                  ...baseClip,
+                  id: "clip-video-2",
+                  assetId: "video-2",
+                },
+              ],
+            }
+          : track,
+      ),
+    };
 
-    expect(active?.asset.name).toBe("intro.mp4");
-    expect(active?.track.type).toBe("video");
+    const activeLayers = getActiveVisualPreviewClips(project, 2500);
+    const topmost = findActivePreviewClip(project, 2500);
+
+    expect(activeLayers).toHaveLength(2);
+    expect(activeLayers[0].asset.name).toBe("intro.mp4");
+    expect(activeLayers[1].asset.name).toBe("overlay.mp4");
+    expect(topmost?.asset.name).toBe("overlay.mp4");
   });
 
   it("falls back to an active audio clip when there is no visual clip", () => {
@@ -50,9 +93,11 @@ describe("preview helpers", () => {
     project = addAssetToTimeline(project, "audio-1");
 
     const active = findActivePreviewClip(project, 1000);
+    const audioLayers = getActiveAudioPreviewClips(project, 1000);
 
     expect(active?.asset.name).toBe("music.mp3");
-    expect(active?.track.type).toBe("audio");
+    expect(audioLayers).toHaveLength(1);
+    expect(audioLayers[0].track.type).toBe("audio");
   });
 
   it("converts timeline time into source-local time", () => {

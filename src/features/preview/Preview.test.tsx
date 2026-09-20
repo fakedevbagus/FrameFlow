@@ -44,6 +44,77 @@ describe("Preview", () => {
     expect(video).toHaveAttribute("src", "asset:///media/intro.mp4");
   });
 
+  it("renders multiple active visual layers in track order", () => {
+    let project = createProject({ id: "multitrack-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-1",
+          name: "base.mp4",
+          mediaType: "video",
+          sourcePath: "/media/base.mp4",
+          durationMs: 10000,
+        },
+        {
+          id: "video-2",
+          name: "overlay.mp4",
+          mediaType: "video",
+          sourcePath: "/media/overlay.mp4",
+          durationMs: 10000,
+        },
+      ],
+      tracks: [
+        project.tracks[0],
+        {
+          id: "video-2-track",
+          name: "Video 2",
+          type: "video",
+          isLocked: false,
+          isMuted: false,
+          clips: [],
+        },
+        project.tracks[1],
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-1");
+    const baseClip = project.tracks[0].clips[0];
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-2-track"
+          ? {
+              ...track,
+              clips: [
+                {
+                  ...baseClip,
+                  id: "clip-video-2",
+                  assetId: "video-2",
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    const layers = screen.getAllByTestId("preview-video");
+
+    expect(layers).toHaveLength(2);
+    expect(layers[0]).toHaveStyle({ zIndex: "1" });
+    expect(layers[1]).toHaveStyle({ zIndex: "2" });
+  });
+
   it("renders an image clip as the visual preview", () => {
     let project = createProject({ id: "image-preview" });
 
@@ -105,6 +176,45 @@ describe("Preview", () => {
     expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
     expect(screen.getByLabelText("Audio preview")).toBeInTheDocument();
     expect(screen.getByText("music.mp3")).toBeInTheDocument();
+  });
+
+  it("keeps active audio layers mounted while a visual preview is playing", () => {
+    let project = createProject({ id: "mixed-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-1",
+          name: "intro.mp4",
+          mediaType: "video",
+          sourcePath: "/media/intro.mp4",
+          durationMs: 6000,
+        },
+        {
+          id: "audio-1",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music/music.mp3",
+          durationMs: 6000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-1");
+    project = addAssetToTimeline(project, "audio-1");
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={true}
+      />,
+    );
+
+    expect(screen.getByTestId("preview-video")).toBeInTheDocument();
+    expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
+    expect(screen.getByTestId("preview-audio")).not.toHaveAttribute("controls");
   });
 
   it("starts media playback when transport playback is active", async () => {

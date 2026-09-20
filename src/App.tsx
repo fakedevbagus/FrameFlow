@@ -4,6 +4,7 @@ import {
   addAssetToTimeline,
   moveClipOnTimeline,
   removeClipFromTimeline,
+  toggleTrackMute,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -74,19 +75,6 @@ function App() {
   useEffect(() => {
     timelineDurationRef.current = timelineDurationMs;
   }, [timelineDurationMs]);
-
-  const handleTogglePlayback = useCallback(() => {
-    if (isPlaying) {
-      setIsPlaying(false);
-      return;
-    }
-
-    if (playbackTimeRef.current >= timelineDurationRef.current) {
-      setPlaybackTime(0);
-    }
-
-    setIsPlaying(true);
-  }, [isPlaying, setPlaybackTime]);
 
   const handleStepFrame = useCallback((direction: -1 | 1) => {
     setIsPlaying(false);
@@ -180,6 +168,66 @@ function App() {
   function handleSelectClip(clipId: string) {
     setSelectedClipId(clipId);
     setProjectNotice(null);
+  }
+
+  const previewCanvasRef = useRef<HTMLDivElement | null>(null);
+
+  const getPreviewMediaElements = useCallback((): HTMLMediaElement[] => {
+    const container = previewCanvasRef.current;
+
+    if (!container) {
+      return [];
+    }
+
+    return Array.from(container.querySelectorAll("video, audio"));
+  }, []);
+
+  const handleTogglePlayback = useCallback(async () => {
+    const mediaElements = getPreviewMediaElements();
+
+    if (isPlaying) {
+      for (const media of mediaElements) {
+        media.pause();
+      }
+      setIsPlaying(false);
+      return;
+    }
+
+    if (playbackTimeRef.current >= timelineDurationRef.current) {
+      setPlaybackTime(0);
+    }
+
+    if (mediaElements.length === 0) {
+      setIsPlaying(true);
+      return;
+    }
+
+    try {
+      // Call play() synchronously from the user-triggered handler so WebKit can
+      // associate playback with the user's activation gesture.
+      await Promise.all(mediaElements.map((media) => media.play()));
+      setIsPlaying(true);
+    } catch (error) {
+      const name = error instanceof DOMException ? error.name : "";
+      const message =
+        name === "NotSupportedError"
+          ? "Preview media format is not supported by the Linux WebView."
+          : name === "NotAllowedError"
+            ? "Preview playback was blocked by the WebView."
+            : error instanceof Error && error.message
+              ? error.message
+              : "Preview playback could not start.";
+
+      setProjectNotice(message);
+      setIsPlaying(false);
+    }
+  }, [getPreviewMediaElements, isPlaying, setPlaybackTime]);
+
+  function handleToggleTrackMute(trackId: string) {
+    applyProjectChange(
+      (currentProject) => toggleTrackMute(currentProject, trackId),
+      "Track mute updated.",
+    );
   }
 
   const handleDeleteSelectedClip = useCallback(() => {
@@ -580,7 +628,7 @@ function App() {
           </div>
 
           <div className="preview-region">
-            <div className="preview-canvas">
+            <div className="preview-canvas" ref={previewCanvasRef}>
               <Preview
                 project={project}
                 currentTimeMs={displayedCurrentTimeMs}
@@ -627,6 +675,7 @@ function App() {
             onMoveClip={handleDirectMoveClip}
             onTrimClipStart={handleDirectTrimClipStart}
             onTrimClipEnd={handleDirectTrimClipEnd}
+            onToggleTrackMute={handleToggleTrackMute}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
           />
