@@ -28,6 +28,7 @@ import {
   toggleTrackMute,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
+  updateClipTransformAnchorWithCompensation,
   updateClipCrop,
   updateClipCropPosition,
   updateClipCropWithPosition,
@@ -38,6 +39,7 @@ import {
 } from "./features/timeline/commands";
 import { Timeline } from "./features/timeline/Timeline";
 import { Preview } from "./features/preview/Preview";
+import { getContainedContentPercentageBounds } from "./features/preview/canvasManipulation";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
@@ -673,13 +675,36 @@ function App() {
       return;
     }
 
+    const dimensions = getSelectedVisualMediaDimensions();
+    const contentBounds = dimensions
+      ? getContainedContentPercentageBounds(
+          project.canvas.width,
+          project.canvas.height,
+          dimensions.width,
+          dimensions.height,
+        )
+      : {
+          width: 100,
+          height: 100,
+        };
+
     updateSelectedClip(
       (currentProject) =>
-        updateClipTransformAnchor(
-          currentProject,
-          selectedClipContext.clip.id,
-          anchor,
-        ),
+        dimensions
+          ? updateClipTransformAnchorWithCompensation(
+              currentProject,
+              selectedClipContext.clip.id,
+              anchor,
+              {
+                widthPercent: contentBounds.width,
+                heightPercent: contentBounds.height,
+              },
+            )
+          : updateClipTransformAnchor(
+              currentProject,
+              selectedClipContext.clip.id,
+              anchor,
+            ),
       "Transform anchor updated.",
     );
   }
