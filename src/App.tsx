@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import type { ClipTransform } from "./features/project/domain";
 import {
@@ -511,7 +517,7 @@ function App() {
 
   function handleTransformInputKeyDown(
     field: TransformField,
-    event: React.KeyboardEvent<HTMLInputElement>,
+    event: KeyboardEvent<HTMLInputElement>,
   ) {
     if (event.key === "Enter") {
       event.currentTarget.blur();
