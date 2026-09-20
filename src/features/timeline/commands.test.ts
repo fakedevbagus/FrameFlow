@@ -28,8 +28,8 @@ describe("track management", () => {
     expect(updated.tracks.map((track) => track.name)).toEqual([
       "Video 1",
       "Video 2",
-      "Audio 1",
       "Video 3",
+      "Audio 1",
     ]);
     expect(updated.tracks[3].clips).toHaveLength(0);
   });
