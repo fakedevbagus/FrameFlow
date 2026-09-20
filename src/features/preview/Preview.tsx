@@ -161,12 +161,13 @@ function PreviewVisualLayer({
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
+  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
   const [mediaSize, setMediaSize] = useState<{
     width: number;
     height: number;
   } | null>(null);
-  const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
+  const [videoSourceUrl, setVideoSourceUrl] = useState(mediaUrl);
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
   const [previewFallbackAttempted, setPreviewFallbackAttempted] = useState(false);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
@@ -174,13 +175,6 @@ function PreviewVisualLayer({
     Math.max(currentTimeMs - layer.clip.timelineStartMs, 0),
     getClipDurationMsForTransform(layer.clip),
   );
-  const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
-
-  useEffect(() => {
-    setVideoSourceUrl(mediaUrl);
-    setPreviewFallbackAttempted(false);
-    setIsPreparingPreview(false);
-  }, [layer.asset.id, mediaUrl]);
   const currentTransform = getClipTransformAtTime(
     layer.clip.transform,
     layer.clip.transformKeyframes,
@@ -267,6 +261,7 @@ function PreviewVisualLayer({
       width: media.videoWidth,
       height: media.videoHeight,
     });
+    setIsPreparingPreview(false);
 
     try {
       media.currentTime = Math.max(0, localTimeMs / 1000);
@@ -306,8 +301,6 @@ function PreviewVisualLayer({
           ? error.message
           : "A compatible video preview could not be generated.",
       );
-    } finally {
-      setIsPreparingPreview(false);
     }
   }
 
