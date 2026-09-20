@@ -384,6 +384,11 @@ button:focus-visible {
 }
 
 
+.preview-crop-viewport {
+  position: absolute;
+  pointer-events: none;
+}
+
 .preview-crop-controls {
   position: absolute;
   inset: 0;
@@ -1343,6 +1348,12 @@ button:disabled {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.inspector-crop-position {
+  display: grid;
+  gap: 7px;
+  padding-top: 2px;
 }
 
 .inspector-keyframe-status {

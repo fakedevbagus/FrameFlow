@@ -8,6 +8,7 @@ import {
 import type { ClipCrop, ClipTransform, Project } from "../project/domain";
 import {
   getClipCrop,
+  getClipCropPosition,
   getClipTransformAnchor,
   getClipTransformAtTime,
   normalizeClipTransform,
@@ -205,6 +206,10 @@ function PreviewVisualLayer({
   const anchor = getClipTransformAnchor(layer.clip.transformAnchor);
   const crop = getClipCrop(layer.clip.crop);
   const activeCrop = cropGesture?.crop ?? crop;
+  const cropPosition = getClipCropPosition(
+    activeCrop,
+    layer.clip.cropPosition,
+  );
   const activeTransform = gesture?.transform ?? currentTransform;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
@@ -235,8 +240,29 @@ function PreviewVisualLayer({
     height: `${contentBoundsPercent.height}%`,
     transformOrigin: `${anchor.x * 100}% ${anchor.y * 100}%`,
   };
-  const cropStyle = {
-    clipPath: `inset(${activeCrop.top * 100}% ${activeCrop.right * 100}% ${activeCrop.bottom * 100}% ${activeCrop.left * 100}%)`,
+  const visibleWidth = Math.max(
+    0.001,
+    1 - activeCrop.left - activeCrop.right,
+  );
+  const visibleHeight = Math.max(
+    0.001,
+    1 - activeCrop.top - activeCrop.bottom,
+  );
+  const cropViewportStyle = {
+    position: "absolute" as const,
+    left: `${activeCrop.left * 100}%`,
+    top: `${activeCrop.top * 100}%`,
+    width: `${visibleWidth * 100}%`,
+    height: `${visibleHeight * 100}%`,
+    overflow: "hidden" as const,
+  };
+  const cropMediaStyle = {
+    position: "absolute" as const,
+    left: `${50 - (cropPosition.x / visibleWidth) * 100}%`,
+    top: `${50 - (cropPosition.y / visibleHeight) * 100}%`,
+    width: `${(1 / visibleWidth) * 100}%`,
+    height: `${(1 / visibleHeight) * 100}%`,
+    objectFit: "fill" as const,
   };
 
   useEffect(() => {
@@ -756,21 +782,24 @@ function PreviewVisualLayer({
             transform: layerStyle.transform,
           }}
         >
-          <img
-            alt={layer.asset.name}
-            className="preview-layer preview-image-layer"
-            data-preview-state="image"
-            ref={imageRef}
-            src={mediaUrl ?? undefined}
-            onLoad={handleImageLoad}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "fill",
-              zIndex,
-              ...cropStyle,
-            }}
-          />
+          <div
+            className="preview-crop-viewport"
+            data-testid={`preview-crop-viewport-${layer.clip.id}`}
+            style={cropViewportStyle}
+          >
+            <img
+              alt={layer.asset.name}
+              className="preview-layer preview-image-layer"
+              data-preview-state="image"
+              ref={imageRef}
+              src={mediaUrl ?? undefined}
+              onLoad={handleImageLoad}
+              style={{
+                ...cropMediaStyle,
+                zIndex,
+              }}
+            />
+          </div>
           {renderManipulationControls()}
         </div>
       </div>
@@ -797,25 +826,28 @@ function PreviewVisualLayer({
           opacity: layerStyle.opacity,
         }}
       >
-        <video
-          className="preview-layer preview-video-layer"
-          data-preview-state="video"
-          data-testid="preview-video"
-          playsInline
-          preload="auto"
-          ref={mediaRef}
-          data-clip-id={layer.clip.id}
-          src={videoSourceUrl ?? undefined}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "fill",
-            zIndex,
-            ...cropStyle,
-          }}
-          onLoadedMetadata={handleLoadedMetadata}
-          onError={() => void handleVideoError()}
-        />
+        <div
+          className="preview-crop-viewport"
+          data-testid={`preview-crop-viewport-${layer.clip.id}`}
+          style={cropViewportStyle}
+        >
+          <video
+            className="preview-layer preview-video-layer"
+            data-preview-state="video"
+            data-testid="preview-video"
+            playsInline
+            preload="auto"
+            ref={mediaRef}
+            data-clip-id={layer.clip.id}
+            src={videoSourceUrl ?? undefined}
+            style={{
+              ...cropMediaStyle,
+              zIndex,
+            }}
+            onLoadedMetadata={handleLoadedMetadata}
+            onError={() => void handleVideoError()}
+          />
+        </div>
         {isPreparingPreview ? (
           <div className="preview-transcode-status" role="status">
             Preparing compatible preview…

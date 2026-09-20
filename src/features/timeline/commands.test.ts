@@ -20,6 +20,7 @@ import {
   trimClipStart,
   updateClipTransformAnchor,
   updateClipCrop,
+  updateClipCropPosition,
 } from "./commands";
 
 describe("track management", () => {
@@ -259,6 +260,82 @@ describe("clip transforms", () => {
       rotation: 0,
       opacity: 1,
     });
+  });
+
+  it("updates and clamps crop content position", () => {
+    let project = createProject({ id: "crop-position-command" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = updateClipCrop(
+      project,
+      clipId,
+      { top: 0.1, right: 0.1, bottom: 0.1, left: 0.1 },
+    );
+
+    const updated = updateClipCropPosition(
+      project,
+      clipId,
+      { x: 2, y: -1 },
+      new Date("2026-09-20T02:30:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].cropPosition).toEqual({
+      x: 1,
+      y: 0,
+    });
+    expect(updated.updatedAt).toBe("2026-09-20T02:30:00.000Z");
+  });
+
+  it("clears crop position when crop is fully reset", () => {
+    let project = createProject({ id: "crop-position-reset" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = updateClipCrop(project, clipId, {
+      top: 0.1,
+      right: 0.1,
+      bottom: 0.1,
+      left: 0.1,
+    });
+    project = updateClipCropPosition(project, clipId, { x: 0.2, y: 0.8 });
+
+    const reset = updateClipCrop(project, clipId, {
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
+
+    expect(reset.tracks[0].clips[0].cropPosition).toBeUndefined();
   });
 
   it("rejects transform updates for audio clips", () => {

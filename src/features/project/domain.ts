@@ -49,6 +49,11 @@ export interface ClipCrop {
   left: number;
 }
 
+export interface CropPosition {
+  x: number;
+  y: number;
+}
+
 export interface Clip {
   id: string;
   assetId: string;
@@ -58,6 +63,7 @@ export interface Clip {
   transform?: ClipTransform;
   transformAnchor?: TransformAnchor;
   crop?: ClipCrop;
+  cropPosition?: CropPosition;
   transformKeyframes?: TransformKeyframe[];
 }
 

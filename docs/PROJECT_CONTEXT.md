@@ -456,6 +456,41 @@ Known limitation:
 Next step:
 - Start M3.18 with crop-position translation compensation so changing the crop can optionally preserve the visible content position.
 
+## M3.18 — Crop position and translation compensation (in progress)
+
+Branch: `feat/m3-18-crop-position-compensation`
+
+Scope:
+- Add a backward-compatible per-clip crop content-position model.
+- Keep legacy clips without `cropPosition` visually aligned to the existing crop window instead of shifting their source content.
+- Add crop position X/Y controls to the Inspector.
+- Render a fixed crop viewport with the media content positioned inside it.
+- Reset crop position to a centered content point through the Inspector.
+- Keep crop position edits inside the existing history engine.
+
+Architecture decisions:
+- `Clip.cropPosition` stores the normalized source point (0..1) that should align with the center of the crop viewport.
+- When `cropPosition` is absent, the preview derives the crop-window center from the existing edge insets. This preserves the established M3.16/M3.17 crop behavior for legacy clips.
+- Crop clipping is now represented by a fixed viewport wrapper; the media element is positioned inside that viewport rather than using `clip-path` directly on the media.
+- Existing transform/keyframe math continues to operate on the outer content layer.
+
+Automated coverage added:
+- Crop-position default derivation from crop insets.
+- Crop-position normalization and command behavior.
+- Clearing stored crop position when crop is fully reset.
+- Preview rendering for backward-compatible crop alignment.
+- Preview rendering with explicit crop position.
+- App-level Inspector crop-position workflow.
+
+Validation:
+- Local lint, test, build, Tauri dev, and manual validation are pending user verification.
+
+Known limitation:
+- Direct crop-content panning with pointer dragging and aspect-ratio crop presets remain future work.
+
+Next step:
+- Run local validation on PR #28 before merging M3.18.
+
 ## Documentation protocol
 
 For every milestone or meaningful bug fix, update:

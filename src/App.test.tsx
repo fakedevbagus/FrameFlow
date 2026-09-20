@@ -342,9 +342,13 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(10);
-      expect(screen.getByTestId("preview-video")).toHaveStyle({
-        clipPath: "inset(10% 0% 0% 0%)",
+      const viewport = screen.getByTestId(/preview-crop-viewport-/);
+      expect(viewport).toHaveStyle({
+        left: "0%",
+        top: "10%",
+        width: "100%",
       });
+      expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(90, 10);
     });
 
     expect(container).toHaveTextContent("Canvas crop updated.");
@@ -354,9 +358,13 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(0);
-      expect(screen.getByTestId("preview-video")).toHaveStyle({
-        clipPath: "inset(0% 0% 0% 0%)",
+      const viewport = screen.getByTestId(/preview-crop-viewport-/);
+      expect(viewport).toHaveStyle({
+        left: "0%",
+        top: "0%",
+        width: "100%",
       });
+      expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(100, 10);
     });
   });
 
@@ -412,7 +420,7 @@ describe("App", () => {
     });
 
     const previewVideo = screen.getByTestId("preview-video");
-    const previewContentLayer = previewVideo.parentElement;
+    const previewContentLayer = previewVideo.closest(".preview-content-layer");
 
     expect(previewContentLayer).not.toBeNull();
     expect(previewContentLayer).toHaveStyle({
@@ -495,7 +503,7 @@ describe("App", () => {
     });
 
     const previewVideo = screen.getByTestId("preview-video");
-    const previewContentLayer = previewVideo.parentElement;
+    const previewContentLayer = previewVideo.closest(".preview-content-layer");
 
     expect(previewContentLayer).not.toBeNull();
     expect(previewContentLayer).toHaveStyle({
@@ -547,7 +555,11 @@ describe("App", () => {
     await waitFor(() => {
       expect(anchorButton).toHaveAttribute("aria-pressed", "true");
       expect(container).toHaveTextContent("0%, 0%");
-      expect(screen.getByTestId("preview-video").parentElement).toHaveStyle({
+      const previewContentLayer = screen.getByTestId("preview-video").closest(
+        ".preview-content-layer",
+      );
+      expect(previewContentLayer).not.toBeNull();
+      expect(previewContentLayer).toHaveStyle({
         transformOrigin: "0% 0%",
       });
     });
@@ -611,9 +623,13 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(10);
       expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(20);
-      expect(screen.getByTestId("preview-video")).toHaveStyle({
-        clipPath: "inset(10% 20% 0% 0%)",
+      const viewport = screen.getByTestId(/preview-crop-viewport-/);
+      expect(viewport).toHaveStyle({
+        left: "0%",
+        top: "10%",
+        width: "80%",
       });
+      expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(90, 10);
     });
 
     expect(container).toHaveTextContent("Crop updated.");
@@ -623,10 +639,85 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("spinbutton", { name: "Crop top" })).toHaveValue(0);
       expect(screen.getByRole("spinbutton", { name: "Crop right" })).toHaveValue(0);
-      expect(screen.getByTestId("preview-video")).toHaveStyle({
-        clipPath: "inset(0% 0% 0% 0%)",
+      const viewport = screen.getByTestId(/preview-crop-viewport-/);
+      expect(viewport).toHaveStyle({
+        left: "0%",
+        top: "0%",
+        width: "100%",
       });
+      expect(Number.parseFloat(viewport.style.height)).toBeCloseTo(100, 10);
     });
+  });
+
+  it("edits crop content position from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-crop-position-ui",
+        name: "crop-position-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/crop-position-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Import media" })[1],
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("crop-position-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add crop-position-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select crop-position-ui.mp4 clip",
+      }),
+    );
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Crop top" }),
+      { target: { value: "10" } },
+    );
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Crop top" }));
+
+    expect(screen.getByRole("spinbutton", { name: "Crop position X" })).toHaveValue(50);
+    expect(screen.getByRole("spinbutton", { name: "Crop position Y" })).toHaveValue(55);
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Crop position X" }),
+      { target: { value: "25" } },
+    );
+    fireEvent.blur(
+      screen.getByRole("spinbutton", { name: "Crop position X" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(25),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Center crop content" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position X" }),
+      ).toHaveValue(50);
+      expect(
+        screen.getByRole("spinbutton", { name: "Crop position Y" }),
+      ).toHaveValue(50);
+    });
+
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
   });
 
   it("changes keyframe interpolation from the inspector", async () => {

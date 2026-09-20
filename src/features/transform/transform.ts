@@ -1,4 +1,4 @@
-import type { TransformAnchor, TransformEasing, TransformKeyframe, ClipCrop } from "../project/domain";
+import type { CropPosition, TransformAnchor, TransformEasing, TransformKeyframe, ClipCrop } from "../project/domain";
 
 export interface ClipTransform {
   x: number;
@@ -18,6 +18,11 @@ export const DEFAULT_CLIP_CROP: ClipCrop = {
   right: 0,
   bottom: 0,
   left: 0,
+};
+
+export const DEFAULT_CROP_POSITION: CropPosition = {
+  x: 0.5,
+  y: 0.5,
 };
 
 export const DEFAULT_CLIP_TRANSFORM: ClipTransform = {
@@ -58,13 +63,55 @@ export function getClipCrop(
   };
 }
 
-export function normalizeClipCrop(crop: Partial<ClipCrop>): ClipCrop {
+export function normalizeClipCrop(crop: Partial<ClipCrop> | undefined): ClipCrop {
   return getClipCrop(crop);
 }
 
 export function isValidClipCrop(crop: ClipCrop): boolean {
   return crop.left + crop.right < 1 && crop.top + crop.bottom < 1;
 }
+
+export function getClipCropPosition(
+  crop: Partial<ClipCrop> | undefined,
+  position: Partial<CropPosition> | undefined,
+): CropPosition {
+  const normalizedCrop = getClipCrop(crop);
+  const visibleWidth = Math.max(
+    0.001,
+    1 - normalizedCrop.left - normalizedCrop.right,
+  );
+  const visibleHeight = Math.max(
+    0.001,
+    1 - normalizedCrop.top - normalizedCrop.bottom,
+  );
+
+  return {
+    x: clamp(
+      finiteOrDefault(
+        position?.x,
+        normalizedCrop.left + visibleWidth / 2,
+      ),
+      0,
+      1,
+    ),
+    y: clamp(
+      finiteOrDefault(
+        position?.y,
+        normalizedCrop.top + visibleHeight / 2,
+      ),
+      0,
+      1,
+    ),
+  };
+}
+
+export function normalizeClipCropPosition(
+  crop: Partial<ClipCrop> | undefined,
+  position: Partial<CropPosition> | undefined,
+): CropPosition {
+  return getClipCropPosition(crop, position);
+}
+
 
 export function getClipTransform(
   transform: Partial<ClipTransform> | undefined,

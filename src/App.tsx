@@ -9,6 +9,7 @@ import { MediaBin } from "./features/media/MediaBin";
 import type {
   ClipCrop,
   ClipTransform,
+  CropPosition,
   TransformEasing,
   TransformAnchor,
 } from "./features/project/domain";
@@ -28,6 +29,7 @@ import {
   updateClipTransformAtTime,
   updateClipTransformAnchor,
   updateClipCrop,
+  updateClipCropPosition,
   splitClipAtTime,
   trimClipEnd,
   trimClipStart,
@@ -38,6 +40,7 @@ import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
   getClipCrop,
+  getClipCropPosition,
   getClipTransformAnchor,
   getClipTransformAtTime,
   getTransformKeyframeAtTime,
@@ -116,6 +119,12 @@ function App() {
     : null;
   const selectedCrop = selectedClipContext
     ? getClipCrop(selectedClipContext.clip.crop)
+    : null;
+  const selectedCropPosition = selectedClipContext
+    ? getClipCropPosition(
+        selectedCrop ?? undefined,
+        selectedClipContext.clip.cropPosition,
+      )
     : null;
   const selectedTransform = selectedClipContext
     ? getClipTransformAtTime(
@@ -600,6 +609,33 @@ function App() {
         ),
       "Crop reset.",
     );
+  }
+
+  function handleSetSelectedCropPosition(position: CropPosition) {
+    if (!selectedClipContext || !selectedCropPosition) {
+      return;
+    }
+
+    if (
+      position.x === selectedCropPosition.x &&
+      position.y === selectedCropPosition.y
+    ) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateClipCropPosition(
+          currentProject,
+          selectedClipContext.clip.id,
+          position,
+        ),
+      "Crop position updated.",
+    );
+  }
+
+  function handleCenterSelectedCropContent() {
+    handleSetSelectedCropPosition({ x: 0.5, y: 0.5 });
   }
 
   function commitCropInput(
@@ -1337,6 +1373,100 @@ function App() {
                     >
                       Reset crop
                     </button>
+                    <div
+                      className="inspector-crop-position"
+                      key={
+                        selectedCropPosition
+                          ? [
+                              selectedCropPosition.x,
+                              selectedCropPosition.y,
+                            ].join("|")
+                          : "none"
+                      }
+                    >
+                      <div className="inspector-section-header">
+                        <span className="inspector-section-title">Crop position</span>
+                        <span className="inspector-keyframe-count">Content anchor</span>
+                      </div>
+                      <div className="inspector-crop-grid">
+                        {([
+                          ["x", "X"],
+                          ["y", "Y"],
+                        ] as Array<[keyof CropPosition, string]>).map(
+                          ([field, label]) => (
+                            <label className="inspector-transform-field" key={field}>
+                              <span>{label}</span>
+                              <div className="inspector-transform-input-wrap">
+                                <input
+                                  aria-label={"Crop position " + label}
+                                  className="inspector-transform-input"
+                                  max="100"
+                                  min="0"
+                                  step="1"
+                                  type="number"
+                                  defaultValue={
+                                    selectedCropPosition
+                                      ? Math.round(
+                                          selectedCropPosition[field] * 100,
+                                        )
+                                      : 50
+                                  }
+                                  onBlur={(event) => {
+                                    const rawValue = event.currentTarget.value.trim();
+                                    const fallback =
+                                      selectedCropPosition?.[field] ?? 0.5;
+
+                                    if (!rawValue) {
+                                      event.currentTarget.value = String(
+                                        Math.round(fallback * 100),
+                                      );
+                                      return;
+                                    }
+
+                                    const parsedValue = Number(rawValue);
+
+                                    if (
+                                      !Number.isFinite(parsedValue) ||
+                                      parsedValue < 0 ||
+                                      parsedValue > 100
+                                    ) {
+                                      event.currentTarget.value = String(
+                                        Math.round(fallback * 100),
+                                      );
+                                      setProjectNotice(
+                                        "Crop position must be between 0% and 100%.",
+                                      );
+                                      return;
+                                    }
+
+                                    const position =
+                                      selectedCropPosition ?? {
+                                        x: 0.5,
+                                        y: 0.5,
+                                      };
+
+                                    handleSetSelectedCropPosition({
+                                      ...position,
+                                      [field]: parsedValue / 100,
+                                    });
+                                  }}
+                                  onKeyDown={handleTransformInputKeyDown}
+                                />
+                                <span>%</span>
+                              </div>
+                            </label>
+                          ),
+                        )}
+                      </div>
+                      <button
+                        aria-label="Center crop content"
+                        className="inspector-inline-button"
+                        onClick={handleCenterSelectedCropContent}
+                        type="button"
+                      >
+                        Center content
+                      </button>
+                    </div>
                   </div>
 
                   <div className="inspector-keyframe-status">
