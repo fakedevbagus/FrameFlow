@@ -721,6 +721,124 @@ describe("App", () => {
     });
   });
 
+  it("moves the transform anchor directly on the canvas", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-direct-anchor-ui",
+        name: "direct-anchor-ui.mp4",
+        mediaType: "video",
+        sourcePath: "/media/direct-anchor-ui.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("direct-anchor-ui.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add direct-anchor-ui.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select direct-anchor-ui.mp4 clip",
+      }),
+    );
+
+    const video = screen.getByTestId("preview-video");
+    Object.defineProperty(video, "videoWidth", {
+      configurable: true,
+      value: 1920,
+    });
+    Object.defineProperty(video, "videoHeight", {
+      configurable: true,
+      value: 1080,
+    });
+    fireEvent.loadedMetadata(video);
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Scale" }), {
+      target: { value: "2" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Scale" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("spinbutton", { name: "Scale" })).toHaveValue(2),
+    );
+
+    const hitArea = container.querySelector(
+      '[data-testid^="preview-hit-area-"]',
+    );
+    expect(hitArea).not.toBeNull();
+
+    Object.defineProperty(hitArea, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 400,
+        height: 400,
+        left: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    const anchorHandle = screen.getByTestId("preview-transform-anchor-handle");
+
+    fireEvent.pointerDown(anchorHandle, {
+      button: 0,
+      pointerId: 21,
+      clientX: 100,
+      clientY: 200,
+    });
+    fireEvent.pointerMove(hitArea, {
+      buttons: 1,
+      pointerId: 21,
+      clientX: 50,
+      clientY: 100,
+    });
+    fireEvent.pointerUp(hitArea, {
+      button: 0,
+      pointerId: 21,
+      clientX: 50,
+      clientY: 100,
+    });
+
+    await waitFor(() => {
+      expect(anchorHandle).toHaveStyle({
+        left: "25%",
+        top: "25%",
+      });
+      expect(screen.getByText("25%, 25%")).toBeInTheDocument();
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(
+        -25,
+      );
+      expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(
+        -7.91015625,
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Set anchor center/i }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("spinbutton", { name: "X position" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Y position" })).toHaveValue(0);
+    });
+  });
+
   it("edits and resets the selected visual crop", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
