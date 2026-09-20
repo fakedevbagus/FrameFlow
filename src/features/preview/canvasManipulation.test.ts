@@ -25,9 +25,9 @@ describe("canvas manipulation", () => {
       getContainedContentPercentageBounds(1080, 1920, 1920, 1080),
     ).toEqual({
       left: 0,
-      top: 34.375,
+      top: 34.1796875,
       width: 100,
-      height: 31.25,
+      height: 31.640625,
     });
   });
 
