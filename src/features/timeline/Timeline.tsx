@@ -676,6 +676,7 @@ function TimelineTrack({
               ) : null}
             </Fragment>
           );
+        })}
 
         {track.clips.length === 0 ? (
           <div className="track-empty">Klik media untuk menambahkannya</div>
