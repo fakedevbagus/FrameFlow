@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
 import { addAssetToTimeline } from "../timeline/commands";
@@ -19,6 +20,13 @@ vi.mock("@tauri-apps/api/core", async () => {
 const { invokeMock } = await import("@tauri-apps/api/core").then((module) => ({
   invokeMock: module.invoke as ReturnType<typeof vi.fn>,
 }));
+
+async function flushPreviewEffects() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -67,6 +75,7 @@ describe("Preview", () => {
       />,
     );
 
+    await flushPreviewEffects();
     const video = screen.getByTestId("preview-video");
 
     await vi.waitFor(() =>
@@ -111,6 +120,7 @@ describe("Preview", () => {
       />,
     );
 
+    await flushPreviewEffects();
     const video = screen.getByTestId("preview-video");
 
     await vi.waitFor(() => {
@@ -191,6 +201,7 @@ describe("Preview", () => {
       />,
     );
 
+    await flushPreviewEffects();
     const layers = await screen.findAllByTestId("preview-video");
 
     expect(layers).toHaveLength(2);
@@ -224,6 +235,7 @@ describe("Preview", () => {
       />,
     );
 
+    await flushPreviewEffects();
     expect(screen.getByAltText("poster.png")).toHaveAttribute(
       "src",
       "asset:///pictures/poster.png",
@@ -256,6 +268,7 @@ describe("Preview", () => {
       />,
     );
 
+    await flushPreviewEffects();
     await screen.findByTestId("preview-audio");
     expect(screen.getByLabelText("Audio preview")).toBeInTheDocument();
     expect(screen.getByText("music.mp3")).toBeInTheDocument();
@@ -296,6 +309,7 @@ describe("Preview", () => {
     );
 
     await screen.findByTestId("preview-video");
+    await flushPreviewEffects();
     await screen.findByTestId("preview-audio");
     expect(screen.getByTestId("preview-audio")).not.toHaveAttribute("controls");
   });
