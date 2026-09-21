@@ -1,3 +1,20 @@
+## 2026-09-21 — M3.46 Audio Clip Fades — merged
+
+PR #59 — squash-merged
+Merge SHA: 76d0a1cadd9ae7ab31d471f46c4d6cb9ddba0b40
+
+Implemented:
+- Backward-compatible per-audio-clip fade-in/fade-out state.
+- Validated fade update command with overlap and duration checks.
+- Preview and FFmpeg fade behavior.
+- Trim/split fade preservation.
+- Inspector fade controls with controlled draft-state correction.
+- Regression coverage across domain, commands, Preview, RenderPlan, audio graph, and App.
+
+User approved continuation with pass.
+
+Next:
+- M3.47 — Timeline Audio Fade Handles.
 ## 2026-09-21 — M3.46 Inspector fade draft-state correction — validation required
 
 - The user's fresh validation after the prior key-based fix still reported 268/269 tests, with only the Fade out Inspector test failing.

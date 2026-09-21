@@ -1,3 +1,14 @@
+## M3.46 merge reconciliation — 2026-09-21
+
+- M3.46 Audio Clip Fades is complete and PR #59 was squash-merged.
+- Merge SHA: 76d0a1cadd9ae7ab31d471f46c4d6cb9ddba0b40.
+- The milestone adds backward-compatible audio fade-in/fade-out clip state, command validation, trim/split preservation, Inspector editing, preview gain envelopes, RenderPlan propagation, and FFmpeg afade stages.
+- The final Inspector correction uses controlled transient draft values so adjacent fade edits remain stable during React rerenders; persisted values still flow exclusively through project history and updateAudioClipFades().
+- User approved M3.46 with pass after receiving the branch patch.
+- The latest reported validation before approval had lint/build/Rust/Tauri successful; the deterministic App fade test was corrected afterward and the user approved continuation.
+- Known non-blocking test-environment warnings remain around HTMLMediaElement.play() and React act() handling.
+- Deferred: audio effects, multiple independent Audio tracks, keyframed audio automation, render progress, and cancellation.
+- Next milestone: M3.47 — Timeline Audio Fade Handles.
 ## M3.46 Inspector fade draft-state correction — 2026-09-21
 
 - The previous per-input React-key fix did not pass the user's fresh validation run: the suite remained at 268/269 with the same Fade out Inspector failure.

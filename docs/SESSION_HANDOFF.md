@@ -1,3 +1,15 @@
+## M3.47 kickoff — 2026-09-21
+
+- M3.46 PR #59 was squash-merged at 76d0a1cadd9ae7ab31d471f46c4d6cb9ddba0b40.
+- Current main base for M3.47 is the merge above.
+- M3.47 scope: add direct Timeline drag handles for audio clip fade-in and fade-out durations.
+- Handle interaction is transient until pointer release; completed changes commit exactly once through the existing App callback -> updateAudioClipFades() -> history path.
+- Escape cancels an active fade-handle drag without changing project history.
+- Keyboard interaction will support predictable 100 ms duration nudging.
+- Fade handles must clamp to clip duration and preserve the existing non-overlap rule.
+- Deferred: waveform rendering/editor, audio effects, multiple independent Audio tracks, automation, render progress, and cancellation.
+- Required validation after implementation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+- Pull patch must be provided with the milestone handoff.
 ## M3.46 Inspector fade draft-state correction — 2026-09-21
 
 - Latest user validation after commit 10c75b5 still showed 268/269 tests.
