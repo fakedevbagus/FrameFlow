@@ -1,3 +1,12 @@
+## M3.33 — Export destination and render-job boundary — 2026-09-21
+
+- Branch: `feat/m3-33-export-destination-job-boundary`.
+- Added `src/features/export/export-dialog.ts` using the existing Tauri dialog plugin to choose a real MP4 output file.
+- Added `src/features/export/export-job.ts` with a small renderer-agnostic job request/state contract for queued, running, completed, failed, and cancelled states.
+- Export Settings now exposes output destination selection without coupling it to project history.
+- Actual FFmpeg render invocation, timeline compositing, audio/video muxing, progress streaming, and cancellation wiring remain deferred.
+- Local validation is pending user verification.
+
 ## Current live reconciliation — M3.33 — 2026-09-21
 
 - Current `main` tip: `c81df8e7b0901a54c08b19dba2f5df3ee6a63adf`.
