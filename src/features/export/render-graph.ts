@@ -86,21 +86,18 @@ export function compileSingleVideoTrackGraph(
       gapIndex += 1;
     }
 
-    const canRenderDirectlyToOutput =
-      ordered.length === 1 && segment.timelineStartMs === 0;
-    const videoLabel =
-      canRenderDirectlyToOutput && index === 0 ? "vout" : "clip" + index;
+    const videoLabel = "clip" + index;
 
     graphParts.push(buildSegmentFilter(segment, plan, videoLabel));
-
-    if (videoLabel !== "vout") {
-      concatInputs.push("[" + videoLabel + "]");
-    }
+    concatInputs.push("[" + videoLabel + "]");
     previousEndMs = segment.timelineEndMs;
   }
 
-  if (concatInputs.length === 0) {
-    graphParts.push("[vout]format=yuv420p[vout]");
+  const canRenderDirectlyToOutput =
+    ordered.length === 1 && ordered[0].timelineStartMs === 0;
+
+  if (canRenderDirectlyToOutput) {
+    graphParts.push("[clip0]format=yuv420p[vout]");
   } else {
     const concatCount = concatInputs.length;
     graphParts.push(
