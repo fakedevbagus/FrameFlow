@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.38 export error diagnostics
+
+- ExportPanel now exposes the full native renderer error instead of truncating it in the status summary.
+- Added regression coverage for complete renderer-error visibility.
+- The underlying FFmpeg graph command shape was separately validated with an equivalent synthetic input.
+- M3.38 local media export validation remains pending.
+
 ## 2026-09-21 — M3.38 export render-job activation — in progress
 
 Branch: `feat/m3-38-export-render-job`
