@@ -26,6 +26,18 @@ struct NativeExportRenderRequest {
   frame_rate: f64,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeVideoGraphRenderRequest {
+  inputs: Vec<String>,
+  output_path: String,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  filter_complex: String,
+  video_map: String,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct NativeExportRenderResult {
@@ -210,6 +222,87 @@ fn render_single_source_to_mp4(
 }
 
 #[tauri::command]
+fn render_video_graph_to_mp4(
+  request: NativeVideoGraphRenderRequest,
+) -> Result<NativeExportRenderResult, String> {
+  validate_native_export_settings(request.width, request.height, request.frame_rate)?;
+
+  if request.inputs.is_empty() {
+    return Err("Native video graph render requires at least one input.".to_string());
+  }
+
+  if request.filter_complex.trim().is_empty() {
+    return Err("Native video graph render requires a filter graph.".to_string());
+  }
+
+  if request.video_map != "[vout]" {
+    return Err("Native video graph render requires the [vout] output map.".to_string());
+  }
+
+  let output_path = PathBuf::from(&request.output_path);
+  validate_export_output_path(&output_path)?;
+
+  let input_paths = request
+    .inputs
+    .iter()
+    .map(|value| {
+      let path = media_path(value)?;
+
+      if !path.is_absolute() {
+        return Err("Native video graph inputs must use absolute paths.".to_string());
+      }
+
+      if media_type(&path)? != "video" {
+        return Err("Native video graph render currently supports video inputs only.".to_string());
+      }
+
+      if same_path(&path, &output_path) {
+        return Err("Export output must differ from every graph input.".to_string());
+      }
+
+      Ok(path)
+    })
+    .collect::<Result<Vec<_>, String>>()?;
+
+  let args = build_ffmpeg_video_graph_args(
+    &input_paths,
+    &request.filter_complex,
+    &request.video_map,
+    &output_path,
+  );
+
+  let output = Command::new("ffmpeg")
+    .args(&args)
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg for native video graph export: {error}"))?;
+
+  if !output.status.success() {
+    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+
+    return Err(if detail.is_empty() {
+      "FFmpeg could not render the requested video graph.".to_string()
+    } else {
+      format!("FFmpeg could not render the requested video graph: {detail}")
+    });
+  }
+
+  let metadata = fs::metadata(&output_path).map_err(|error| {
+    format!(
+      "FFmpeg completed but the video graph export file could not be inspected: {error}"
+    )
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&output_path);
+    return Err("FFmpeg completed but produced an empty video graph export.".to_string());
+  }
+
+  Ok(NativeExportRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+#[tauri::command]
 fn get_media_http_url(
   state: tauri::State<'_, media_server::MediaServerState>,
   path: String,
@@ -306,6 +399,48 @@ fn same_path(first: &Path, second: &Path) -> bool {
     });
 
   first_canonical.is_some() && first_canonical == second_canonical
+}
+
+fn build_ffmpeg_video_graph_args(
+  input_paths: &[PathBuf],
+  filter_complex: &str,
+  video_map: &str,
+  output_path: &Path,
+) -> Vec<std::ffi::OsString> {
+  let mut args = vec![
+    " -hide_banner".trim().into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+  ];
+
+  for input_path in input_paths {
+    args.push("-i".into());
+    args.push(input_path.as_os_str().to_os_string());
+  }
+
+  args.extend([
+    "-filter_complex".into(),
+    filter_complex.into(),
+    "-map".into(),
+    video_map.into(),
+    "-an".into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
 }
 
 fn build_ffmpeg_export_args(
@@ -640,6 +775,7 @@ pub fn run() {
       inspect_media,
       prepare_media_preview,
       render_single_source_to_mp4,
+      render_video_graph_to_mp4,
       get_media_http_url,
       open_project,
       save_project
@@ -711,6 +847,59 @@ mod tests {
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "/tmp/My Export.mp4"));
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=w=1280:h=720:x=(ow-iw)/2:y=(oh-ih)/2"));
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "29.97"));
+  }
+
+  #[test]
+  fn validates_native_video_graph_request_metadata() {
+    assert!(super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/media/a.mp4".to_string()],
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "[0:v:0]trim=start=0:end=1[v0]".to_string(),
+      video_map: "[vout]".to_string(),
+    }
+    .video_map == "[vout]");
+
+    assert_ne!(
+      super::NativeVideoGraphRenderRequest {
+        inputs: vec![],
+        output_path: "/tmp/output.mp4".to_string(),
+        width: 1280,
+        height: 720,
+        frame_rate: 30.0,
+        filter_complex: String::new(),
+        video_map: "[vout]".to_string(),
+      }
+      .video_map,
+      ""
+    );
+  }
+
+  #[test]
+  fn builds_ffmpeg_video_graph_arguments_with_structured_inputs() {
+    let args = super::build_ffmpeg_video_graph_args(
+      &[
+        Path::new("/media/First Video.mp4").to_path_buf(),
+        Path::new("/media/Second; Video.mp4").to_path_buf(),
+      ],
+      "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
+      "[vout]",
+      Path::new("/tmp/FrameFlow Export.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert_eq!(values[values.iter().position(|value| value == "-i").unwrap() + 1], "/media/First Video.mp4");
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/Second; Video.mp4".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-filter_complex".to_string(), "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "[vout]".to_string()]));
+    assert!(values.iter().any(|value| value == "-an"));
+    assert!(values.iter().any(|value| value == "/tmp/FrameFlow Export.mp4"));
   }
 
   #[test]
