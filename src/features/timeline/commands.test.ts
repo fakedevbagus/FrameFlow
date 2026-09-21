@@ -18,6 +18,7 @@ import {
   updateAudioClipCompressor,
   updateAudioClipVolumeAtTime,
   removeAudioClipVolumeKeyframe,
+  moveAudioClipVolumeKeyframe,
   updateClipTransform,
   updateClipTransformAtTime,
   moveClipOnTimeline,
@@ -1069,6 +1070,78 @@ describe("updateAudioClipEq", () => {
         highGainDb: 0,
       }),
     ).toThrow("Track is locked.");
+  });
+});
+
+describe("moveAudioClipVolumeKeyframe", () => {
+  function createAudioProject() {
+    const project = createProject({
+      id: "audio-volume-move-command",
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+    project.assets.push({
+      id: "audio",
+      name: "music.mp3",
+      mediaType: "audio",
+      sourcePath: "/music.mp3",
+      durationMs: 5000,
+    });
+    return addAssetToTimeline(project, "audio");
+  }
+
+  it("moves a keyframe without changing its volume", () => {
+    const project = createAudioProject();
+    const clipId = project.tracks[1].clips[0].id;
+    let withKeyframe = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.35);
+    withKeyframe = updateAudioClipVolumeAtTime(
+      withKeyframe,
+      clipId,
+      3000,
+      0.8,
+    );
+
+    const updated = moveAudioClipVolumeKeyframe(
+      withKeyframe,
+      clipId,
+      1000,
+      2000,
+      new Date("2026-09-20T00:00:01.000Z"),
+    );
+
+    expect(updated.tracks[1].clips[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 2000, volume: 0.35 },
+      { timeMs: 3000, volume: 0.8 },
+    ]);
+    expect(updated.updatedAt).toBe("2026-09-20T00:00:01.000Z");
+  });
+
+  it("rejects moving onto an occupied keyframe time", () => {
+    const project = createAudioProject();
+    const clipId = project.tracks[1].clips[0].id;
+    let withKeyframe = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.35);
+    withKeyframe = updateAudioClipVolumeAtTime(
+      withKeyframe,
+      clipId,
+      3000,
+      0.8,
+    );
+
+    expect(() =>
+      moveAudioClipVolumeKeyframe(withKeyframe, clipId, 1000, 3000),
+    ).toThrow("already occupied");
+  });
+
+  it("rejects moves outside the clip and ignores missing source keyframes", () => {
+    const project = createAudioProject();
+    const clipId = project.tracks[1].clips[0].id;
+
+    expect(() =>
+      moveAudioClipVolumeKeyframe(project, clipId, 0, 6000),
+    ).toThrow("inside the clip.");
+
+    expect(
+      moveAudioClipVolumeKeyframe(project, clipId, 1000, 2000),
+    ).toEqual(project);
   });
 });
 

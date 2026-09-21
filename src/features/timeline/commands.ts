@@ -32,6 +32,7 @@ import {
 import {
   getAudioVolumeAtTime,
   getAudioVolumeKeyframeAtTime,
+  normalizeAudioVolumeKeyframes,
   removeAudioVolumeKeyframe,
   upsertAudioVolumeKeyframe,
 } from "../audio/automation";
@@ -797,6 +798,72 @@ export function updateAudioClipVolumeAtTime(
     project,
     location,
     { audioVolumeKeyframes: keyframes },
+    now,
+  );
+}
+
+export function moveAudioClipVolumeKeyframe(
+  project: Project,
+  clipId: string,
+  fromTimeMs: number,
+  toTimeMs: number,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
+    throw new Error("Audio automation is only available for audio clips.");
+  }
+
+  const durationMs = getClipDurationMs(location.clip);
+  if (
+    !Number.isFinite(fromTimeMs) ||
+    !Number.isFinite(toTimeMs) ||
+    fromTimeMs < 0 ||
+    fromTimeMs > durationMs ||
+    toTimeMs < 0 ||
+    toTimeMs > durationMs
+  ) {
+    throw new Error("Audio volume keyframe time must be inside the clip.");
+  }
+
+  const normalizedKeyframes = normalizeAudioVolumeKeyframes(
+    location.clip.audioVolumeKeyframes,
+  );
+  const from = Math.round(fromTimeMs);
+  const to = Math.round(toTimeMs);
+  const index = normalizedKeyframes.findIndex(
+    (keyframe) => keyframe.timeMs === from,
+  );
+
+  if (index === -1 || to === from) {
+    return project;
+  }
+
+  if (normalizedKeyframes.some((keyframe) => keyframe.timeMs === to)) {
+    throw new Error("Audio volume keyframe time is already occupied.");
+  }
+
+  const moved = normalizedKeyframes.map((keyframe, keyframeIndex) =>
+    keyframeIndex === index
+      ? { ...keyframe, timeMs: to }
+      : keyframe,
+  );
+
+  moved.sort((a, b) => a.timeMs - b.timeMs);
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { audioVolumeKeyframes: moved },
     now,
   );
 }

@@ -1,3 +1,15 @@
+## M3.54 — Audio Volume Automation Timeline UX — in progress — 2026-09-21
+
+- M3.53 Audio Clip Volume Automation is complete and PR #67 was squash-merged at `fafe6e183ba4eb350db0f1b9873861d9c5543689`.
+- M3.54 adds Timeline UX for persisted audio volume automation keyframes.
+- Audio clips expose volume automation markers with accessible timestamp/percentage labels.
+- Markers select the owning clip, seek the playhead, support direct drag with existing timeline snapping, constrain movement between neighboring keyframes, and commit once on release.
+- Focused audio volume keyframes support Delete/Backspace removal, Arrow nudging by one frame, Shift+Arrow nudging by 500 ms, and Escape cancellation of active drags.
+- Keyframe movement persists through the existing project/history path and preserves each keyframe's volume value.
+- Existing audio track volume, pan, mute, clip fades, EQ, compressor, preview, RenderPlan, FFmpeg automation, and transform keyframe UX remain unchanged.
+- Required validation after implementation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR draft until the full local validation suite and focused Timeline automation checks are reported clean.
+
 ## M3.53 — Audio Clip Volume Automation — in progress — 2026-09-21
 
 - M3.52 Audio Clip Dynamics Compressor is complete and PR #66 was squash-merged at `da0b5dc957be094738ac4e657007523f8684fdd8`.

@@ -42,6 +42,7 @@ import {
   updateAudioClipCompressor,
   updateAudioClipVolumeAtTime,
   removeAudioClipVolumeKeyframe,
+  moveAudioClipVolumeKeyframe,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
   updateClipTransformAnchorWithCompensation,
@@ -718,19 +719,46 @@ function App() {
     );
   }
 
+  function handleMoveAudioClipVolumeKeyframe(
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        moveAudioClipVolumeKeyframe(
+          currentProject,
+          clipId,
+          fromTimeMs,
+          toTimeMs,
+        ),
+      "Audio volume keyframe moved.",
+    );
+  }
+
+  function handleRemoveAudioVolumeKeyframe(
+    clipId: string,
+    timeMs: number,
+  ) {
+    applyProjectChange(
+      (currentProject) =>
+        removeAudioClipVolumeKeyframe(
+          currentProject,
+          clipId,
+          timeMs,
+        ),
+      "Audio volume keyframe removed.",
+    );
+  }
+
   function handleRemoveSelectedAudioVolumeKeyframe() {
     if (!selectedClipContext || !selectedAudioVolumeKeyframe) {
       return;
     }
 
-    applyProjectChange(
-      (currentProject) =>
-        removeAudioClipVolumeKeyframe(
-          currentProject,
-          selectedClipContext.clip.id,
-          selectedAudioVolumeKeyframe.timeMs,
-        ),
-      "Audio volume keyframe removed.",
+    handleRemoveAudioVolumeKeyframe(
+      selectedClipContext.clip.id,
+      selectedAudioVolumeKeyframe.timeMs,
     );
   }
 
@@ -1823,6 +1851,8 @@ function App() {
             onRemoveTrack={handleRemoveTrack}
             onRemoveTransformKeyframe={handleRemoveTransformKeyframeAt}
             onMoveTransformKeyframe={handleMoveTransformKeyframe}
+            onRemoveAudioVolumeKeyframe={handleRemoveAudioVolumeKeyframe}
+            onMoveAudioVolumeKeyframe={handleMoveAudioClipVolumeKeyframe}
             onUpdateClipTransition={handleUpdateClipTransition}
             zoom={timelineZoom}
             onZoomChange={setTimelineZoom}
