@@ -1716,6 +1716,41 @@ describe("App", () => {
     });
   });
 
+  it("updates the audio track volume from the timeline", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-audio-volume-ui",
+        name: "music.mp3",
+        mediaType: "audio",
+        sourcePath: "/media/music.mp3",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("music.mp3")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add music.mp3 to timeline" }),
+    );
+
+    const volume = screen.getByRole("slider", { name: "Volume Audio 1" });
+
+    expect(volume).toHaveValue("1");
+
+    fireEvent.change(volume, { target: { value: "0.35" } });
+
+    await waitFor(() => {
+      expect(volume).toHaveValue("0.35");
+      expect(volume).toHaveAttribute("aria-valuetext", "35%");
+    });
+  });
+
   it("moves a timeline clip through direct mouse drag", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
