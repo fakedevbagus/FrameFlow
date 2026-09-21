@@ -54,7 +54,7 @@ describe("render video pipeline", () => {
     );
   });
 
-  it("does not call the native renderer when graph compilation rejects unsupported state", async () => {
+  it("does not call the native renderer when graph compilation rejects unsupported state", () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -80,9 +80,9 @@ describe("render video pipeline", () => {
       ],
     };
 
-    await expect(renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4")).rejects.toThrow(
-      "visual transforms",
-    );
+    expect(() =>
+      renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4"),
+    ).toThrow("visual transforms");
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });
 
