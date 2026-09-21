@@ -1,3 +1,10 @@
+## M3.50 validation correction — native cancellation state — 2026-09-21
+
+- User validation passed lint, 285/285 frontend tests, and the production build.
+- Rust/Tauri then exposed a compile error from using `HashSet::take()` in `ExportProcessState::finish()`.
+- Fixed the cancellation-marker cleanup to use `HashSet::remove()`.
+- Re-run the complete M3.50 validation before merging PR #64.
+
 ## M3.50 Export Progress and Cancellation — 2026-09-21
 
 - Started from M3.49 merge SHA 7fbb75a222bcccfc92cb2ee211e1df0db9748233.
