@@ -1,13 +1,13 @@
-## M3.43 implementation checkpoint — 2026-09-21
+## M3.44 implementation checkpoint — 2026-09-21
 
-- Branch: `feat/m3-43-native-audio-render`.
-- M3.42 is complete at merge SHA `5c338d0462206d88e6e258b8e433afe2ce897c43`.
-- M3.43 adds a dedicated native Tauri audio-graph render command.
-- The command validates absolute audio inputs, MP4 output, non-empty filter graph, and the fixed `[aout]` map.
-- FFmpeg execution uses structured process arguments rather than shell interpolation.
-- Output is encoded as AAC stereo 48 kHz in an MP4 container.
-- The compiler/native bridge use dense local audio input indices so filter references match the native input list.
-- Full project A/V audio composition is intentionally deferred to the next slice.
+- Branch: `feat/m3-44-project-audio-mix`.
+- M3.43 is complete and provides a dedicated native audio-graph boundary.
+- M3.44 connects an explicit Audio track to complete project export.
+- The existing video renderer remains responsible for the base video and embedded video-clip audio.
+- The compiled Audio track is mixed into that base audio in a final native FFmpeg pass.
+- When the base video has no audio, native mixing supplies project-duration stereo silence before mixing.
+- Single-source and sequential multi-segment video rendering paths remain unchanged.
+- Audio effects, multiple Audio tracks, and progress/cancellation remain deferred.
 
 ## M3.42 implementation checkpoint — 2026-09-21
 
