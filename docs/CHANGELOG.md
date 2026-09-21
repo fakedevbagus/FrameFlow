@@ -1,3 +1,37 @@
+# FrameFlow Changelog
+
+## 2026-09-21
+
+### M3.29 — Fade through black transition — in progress
+Branch: feat/m3-29-fade-through-black-transition
+PR: pending draft creation
+Merge SHA: not applicable yet
+
+Implemented:
+- Extended ClipTransition with a backward-compatible fade-through-black type.
+- Preserved transition type through normalization and lifecycle sanitization.
+- Added shared transition visual-state math for dissolve and fade-through-black.
+- Added a preview black overlay that reaches full opacity at the transition midpoint.
+- Generalized transition Inspector and Timeline duration controls to preserve the active transition type.
+- Added regression tests covering command creation, normalization, preview compositor behavior, overlay rendering, Timeline controls, and App Inspector selection.
+
+Architecture:
+- Reused the existing history-backed updateClipTransition mutation path.
+- Kept transient pointer interaction state separate from project history.
+- Kept the new overlay inside the existing Preview layer stacking model; no parallel rendering/state architecture was introduced.
+
+Validation:
+- M3.28 baseline: user reports latest local validation completed without errors; exact command output is not recorded in this branch.
+- M3.29: not yet locally validated by the user.
+
+Known limitations:
+- Only Dissolve and Fade through black are available.
+- Transitions require directly adjacent visual clips.
+- Transition browser, richer placement UX, audio transitions, and custom profiles are deferred.
+
+Next step:
+- Open the branch as a draft PR and have the user run the full local validation and manual transition checks.
+
 ## 2026-09-21
 
 ### Continuity checkpoint — chat handoff
