@@ -1,3 +1,14 @@
+## M3.55 — Audio Waveform Foundation — in progress — 2026-09-21
+
+- M3.54 Audio Volume Automation Timeline UX is complete and PR #68 was squash-merged at `21a1d601bed8215ea52c6ec4eb8ddcb2c4e769d2`.
+- M3.55 adds a read-only audio waveform foundation for Audio timeline clips.
+- Native Tauri/FFmpeg waveform analysis validates local audio sources, downsamples the first audio stream to mono, reduces it into normalized peak buckets, and returns compact waveform data without adding project schema state.
+- The frontend caches waveform requests by source path and requested peak count and renders the waveform as an SVG path inside Audio timeline clips.
+- Existing audio automation markers, fades, track volume/pan, EQ, compressor, mute, multi-track mixing, RenderPlan, export, and history semantics remain unchanged.
+- Waveform data is display-only in this slice; waveform selection, editing, region manipulation, and persistent peak caching remain deferred.
+- Required validation after implementation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR draft until the full local validation suite and focused waveform checks are reported clean.
+
 ## M3.54 — Audio Volume Automation Timeline UX — in progress — 2026-09-21
 
 - M3.53 Audio Clip Volume Automation is complete and PR #67 was squash-merged at `fafe6e183ba4eb350db0f1b9873861d9c5543689`.

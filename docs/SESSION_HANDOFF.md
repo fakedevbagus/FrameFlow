@@ -1,3 +1,13 @@
+## M3.55 kickoff — Audio Waveform Foundation — 2026-09-21
+
+- M3.54 Audio Volume Automation Timeline UX was squash-merged as PR #68 at `21a1d601bed8215ea52c6ec4eb8ddcb2c4e769d2`.
+- M3.55 scope: add a native waveform-analysis command and display the result inside Audio timeline clips.
+- Native analysis uses FFmpeg to decode the first audio stream to mono floating-point PCM at a bounded sample rate, then reduces the stream into a compact normalized peak array.
+- Frontend waveform requests are cached in memory and rejected requests are evicted so later retries are possible.
+- Audio waveforms are read-only; automation markers and existing Inspector volume editing remain separate controls.
+- Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR draft until the full local validation suite and focused waveform checks are clean.
+
 ## M3.54 kickoff — Audio Volume Automation Timeline UX — 2026-09-21
 
 - M3.53 Audio Clip Volume Automation was squash-merged as PR #67 at `fafe6e183ba4eb350db0f1b9873861d9c5543689`.

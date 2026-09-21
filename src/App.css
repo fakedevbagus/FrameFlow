@@ -1328,6 +1328,40 @@ button:disabled {
   background: #2d554b;
 }
 
+.timeline-audio-waveform,
+.timeline-audio-waveform-placeholder {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 7px;
+  width: calc(100% - 18px);
+  height: 24px;
+  pointer-events: none;
+}
+
+.timeline-audio-waveform {
+  display: block;
+  overflow: visible;
+  color: #8ea9ff;
+  opacity: 0.72;
+}
+
+.timeline-audio-waveform path {
+  fill: currentColor;
+}
+
+.timeline-audio-waveform-placeholder {
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    to right,
+    #334056 0,
+    #334056 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  opacity: 0.32;
+}
+
 .timeline-audio-fade-region {
   position: absolute;
   top: 0;
