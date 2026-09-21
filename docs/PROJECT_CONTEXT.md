@@ -1,3 +1,7 @@
+## M3.32 validation correction — 2026-09-21
+
+The first M3.32 local validation run showed the export implementation building and launching successfully. Test failures were limited to two assertions: the default 1080×1920 project correctly produces an even 406×720 720p target, and the filename is an input value. The tests were corrected without changing export behavior. Fresh local validation is still required.
+
 ## Live state reconciliation — M3.32 — 2026-09-21
 
 - Current `main`: `3a2a77aca9b30779870e16863fe709661cd02f3e`.
