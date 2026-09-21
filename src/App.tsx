@@ -17,6 +17,7 @@ import type {
   ClipTransition,
 } from "./features/project/domain";
 import {
+  getAudioEq,
   addAssetToTimeline,
   addAssetToTrack,
   addTrack,
@@ -57,7 +58,6 @@ import {
   getClipTransformAnchor,
   getClipTransformAtTime,
   getCropForAspectRatio,
-  getAudioEq,
   getTransformKeyframeAtTime,
   normalizeClipCrop,
   normalizeClipTransform,
