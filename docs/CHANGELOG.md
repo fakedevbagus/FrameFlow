@@ -1,5 +1,11 @@
 ## 2026-09-21
 
+### M3.31 validation correction
+
+First local validation: lint passed; 206/207 tests passed across 19 files, with the only failure caused by a missing `addAssetToTimeline` import in the new App playback-throttle regression. Build reported the same TypeScript error; Tauri dev launched successfully. Corrected in commit `a9e1b5111a1338fd758186969114eee2ab624612`. PR #42 remains draft pending one clean rerun.
+
+## 2026-09-21
+
 ### M3.31 — Playback smoothness / render-throttle — in progress
 
 Branch: `feat/m3-31-playback-smoothness`
