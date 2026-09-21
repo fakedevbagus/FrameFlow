@@ -51,26 +51,6 @@ Deferred:
 - Audio automation.
 - Waveform editing.
 
-## 2026-09-21 — M3.50 Export Progress and Cancellation — merged
-
-PR #64 — squash-merged
-Merge SHA: e239c4b355d64c62a090067ad1aaaa80cefe9f55
-
-Branch: feat/m3-50-export-progress-cancellation
-
-Implemented:
-- Added a native FFmpeg process manager keyed by export job ID.
-- Streamed FFmpeg progress through a Tauri export-progress event.
-- Added native cancellation that terminates the active FFmpeg child.
-- Cancellation also survives the boundary between the video-render and audio-mix stages.
-- Added overall progress aggregation for two-stage video-plus-audio exports.
-- Added ExportPanel progress display and Cancel export action.
-- Preserved existing export output validation and rendering paths.
-- Added regression coverage for progress event filtering, monotonic job progress, native request metadata, runner aggregation, and cancellation UI.
-
-Validation:
-- User reported the corrected full local npm/Cargo/Tauri validation as passing.
-
 ## 2026-09-21 — M3.49 test declaration restoration
 
 - Restored three accidentally removed test declarations that caused parser errors.
