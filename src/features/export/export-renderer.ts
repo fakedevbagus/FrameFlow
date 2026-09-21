@@ -39,6 +39,15 @@ export interface NativeAudioGraphRenderRequest {
   audioMap: string;
 }
 
+export interface NativeVideoWithAudioGraphRenderRequest {
+  videoSourcePath: string;
+  audioInputs: string[];
+  audioFilterComplex: string;
+  audioMap: string;
+  durationMs: number;
+  outputPath: string;
+}
+
 export interface NativeVideoGraphRenderRequest {
   inputs: string[];
   outputPath: string;
@@ -63,6 +72,15 @@ export function renderAudioGraphToMp4(
   return invoke<NativeExportRenderResult>("render_audio_graph_to_mp4", {
     request,
   });
+}
+
+export function renderVideoWithAudioGraphToMp4(
+  request: NativeVideoWithAudioGraphRenderRequest,
+): Promise<NativeExportRenderResult> {
+  return invoke<NativeExportRenderResult>(
+    "render_video_with_audio_graph_to_mp4",
+    { request },
+  );
 }
 
 export function renderVideoGraphToMp4(
