@@ -1,9 +1,29 @@
-## 2026-09-21 — M3.50 native cancellation compile correction
+## 2026-09-21 — M3.51 Audio Clip 3-Band EQ — implementation
 
-- Local validation reported 285/285 frontend tests and a successful production build.
-- Rust compilation failed because `ExportProcessState::finish()` used `HashSet::take()`; the cancellation collection is a `HashSet`, so cleanup must use `remove()`.
-- Corrected the implementation and kept the boolean return contract unchanged.
-- Fresh Rust/Tauri validation is required before merge.
+Branch: feat/m3-51-audio-clip-eq
+
+Implemented:
+- Backward-compatible optional per-audio-clip EQ state with enabled flag and Low/Mid/High gains from -12 dB to +12 dB.
+- Selected audio Inspector controls for Enable EQ and three gain values.
+- Web Audio preview processing with low-shelf, peaking, and high-shelf filters.
+- RenderPlan EQ propagation and FFmpeg three-band equalizer filters.
+- Regression coverage across domain, commands, RenderPlan, audio graph, and App.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required after pulling the branch.
+
+## 2026-09-21 — M3.50 Export Progress and Cancellation — merged
+
+PR #64 — squash-merged
+Merge SHA: e239c4b355d64c62a090067ad1aaaa80cefe9f55
+
+Implemented:
+- Native FFmpeg progress streaming keyed by export job ID.
+- Safe cancellation for active exports and the boundary between sequential video/audio stages.
+- Monotonic two-stage progress aggregation and ExportPanel cancellation UI.
+
+Validation:
+- User reported the corrected full local validation as passing.
 
 ## 2026-09-21 — M3.49 Audio Track Pan Control — merged
 
@@ -31,7 +51,10 @@ Deferred:
 - Audio automation.
 - Waveform editing.
 
-## 2026-09-21 — M3.50 Export Progress and Cancellation — in progress
+## 2026-09-21 — M3.50 Export Progress and Cancellation — merged
+
+PR #64 — squash-merged
+Merge SHA: e239c4b355d64c62a090067ad1aaaa80cefe9f55
 
 Branch: feat/m3-50-export-progress-cancellation
 
@@ -46,7 +69,7 @@ Implemented:
 - Added regression coverage for progress event filtering, monotonic job progress, native request metadata, runner aggregation, and cancellation UI.
 
 Validation:
-- Local npm/Cargo/Tauri validation is required after pulling this branch.
+- User reported the corrected full local npm/Cargo/Tauri validation as passing.
 
 ## 2026-09-21 — M3.49 test declaration restoration
 
