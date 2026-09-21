@@ -73,7 +73,7 @@ describe("render plan", () => {
     };
 
     const plan = createRenderPlan(projectWithMedia, {
-      format: "mp4",
+      ...createDefaultExportSettings(projectWithMedia),
       quality: "source",
     });
 
