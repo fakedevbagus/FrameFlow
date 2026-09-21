@@ -688,7 +688,12 @@ describe("Timeline", () => {
     const waveform = await screen.findByTestId("timeline-audio-waveform");
 
     expect(waveform).toBeInTheDocument();
+    expect(waveform).toHaveAttribute("viewBox", "0 0 512 20");
     expect(waveform.querySelector("path")).toHaveAttribute("d");
+    expect(waveform.querySelector("path")).toHaveAttribute(
+      "d",
+      expect.stringContaining("M 0.000"),
+    );
   });
 
   it("seeks the playhead from the audio waveform", async () => {
