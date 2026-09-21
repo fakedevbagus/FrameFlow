@@ -1751,6 +1751,40 @@ describe("App", () => {
     });
   });
 
+  it("updates the audio track pan from the timeline", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-audio-pan-ui",
+        name: "pan.mp3",
+        mediaType: "audio",
+        sourcePath: "/media/pan.mp3",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("pan.mp3")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add pan.mp3 to timeline" }),
+    );
+
+    const pan = screen.getByRole("slider", { name: "Pan Audio 1" });
+
+    expect(pan).toHaveValue("0");
+
+    fireEvent.change(pan, { target: { value: "-0.65" } });
+
+    await waitFor(() => {
+      expect(pan).toHaveValue("-0.65");
+    });
+  });
+
   it("updates audio clip fade controls from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
