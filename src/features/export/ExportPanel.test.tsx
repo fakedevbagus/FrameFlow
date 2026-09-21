@@ -27,7 +27,7 @@ describe("ExportPanel", () => {
     });
 
     expect(screen.getByText("1280 × 720")).toBeInTheDocument();
-    expect(screen.getByText("FrameFlow-export.mp4")).toBeInTheDocument();
+    expect(screen.getByText("Untitled project.mp4")).toBeInTheDocument();
   });
 
   it("closes through the provided callback", () => {
