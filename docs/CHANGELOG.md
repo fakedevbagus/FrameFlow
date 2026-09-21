@@ -279,7 +279,8 @@ Branch: `feat/m3-25-dissolve-transition-foundation`
 PR #36
 Merge SHA: `01c90688fe4256278fe7dc1f94c1c94463e6eb6e`
 
-Implemented:- Added optional outgoing `dissolve` transition metadata to clips.
+Implemented:
+- Added optional outgoing `dissolve` transition metadata to clips.
 - Added transition helpers for adjacency, duration normalization, and dissolve opacity.
 - Added a command for adding/updating/removing a dissolve transition between adjacent visual clips.
 - Added preview support for complementary outgoing/incoming dissolve layers.
@@ -528,7 +529,8 @@ Branch: `feat/m3-14-keyframe-ux-hardening`
 Implemented:
 - Focusing a timeline keyframe marker selects its owning clip.
 - Active keyframe markers expose `aria-current="time"` for assistive technology.
-- Escape cancels an active keyframe drag and avoids committing an unintended keyframe move.- Added Timeline regression coverage for focus/selection and Escape cancellation.
+- Escape cancels an active keyframe drag and avoids committing an unintended keyframe move.
+- Added Timeline regression coverage for focus/selection and Escape cancellation.
 
 Merge SHA: `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`
 
@@ -828,3 +830,110 @@ Implemented:
 
 ### M3.11 — Keyframe selection controls
 PR #20 — merged.
+
+Merge SHA:
+`6470a740818b9f3988d19f66f79fc39387981934`
+
+Implemented:
+- Keyframe markers receive keyboard focus.
+- Delete/Backspace removes the focused keyframe without deleting the clip.
+- Existing marker click and drag behavior preserved.
+- Timeline and App integration coverage added.
+
+### M3.10 — Transform keyframe easing
+PR #19 — merged.
+
+Merge SHA:
+`c4eef9e65bac87c7b3f31e3623ccf85caf714596`
+
+Implemented:
+- Linear, Ease in, Ease out, Ease in-out.
+- Easing metadata is backward compatible with legacy keyframes.
+- Inspector easing control and history command.
+- Transform/command/App regression coverage.
+
+### M3.9 — Keyframe editing
+PR #18 — merged.
+
+Merge SHA:
+`fb9f6fe5fc2186df9351d2abee1246d67b9ef661`
+
+Implemented:
+- Draggable transform keyframe markers.
+- 500 ms snapping.
+- Neighbor collision and clip-bound constraints.
+- One history operation per completed drag.
+
+### M3.8 — Keyframe Timeline UI
+PR #17 — merged.
+
+Merge SHA:
+`031033c1a6036d55a6c22ecc3ad184b376b76175`
+
+Implemented:
+- Timeline diamond markers.
+- Active marker state.
+- Marker click-to-seek.
+
+### M3.7 — Transform keyframe foundation
+PR #16 — merged.
+
+Merge SHA:
+`6bb225f35638f37d89a1031aae7371b5c95c01d6`
+
+Implemented:
+- Transform keyframe model and interpolation.
+- Keyframe CRUD commands.
+- Inspector controls.
+- Preview keyframe evaluation.
+- Split preservation.
+- Linux local preview pipeline work culminating in localhost HTTP media serving.
+
+### M3.6 — Content-aware transform bounds
+PR #15 — merged.
+
+Merge SHA:
+`8641304dfe108017f57264d6f902dda274c7888f`
+
+### M3.5 — Precision transform Inspector
+Merge SHA:
+`110a19d9d0fe1258acecf912ddb85dd2e5d69408`
+
+### M3.4 — Direct canvas manipulation
+Merge SHA:
+`84bec251aae2c90e00ceb473227a6cf7b01c7281`
+
+### M3.3 — Transform and layer controls
+Merge SHA:
+`898efee71605a9aa2cd08691ef098708653e2fd2`
+
+### M3.2 — Track management and media routing
+Merge SHA:
+`d7453426b256e5804c279b6cf72cc8ae379cf1b6`
+
+### M3.1 — Multi-track preview compositor
+Merge SHA:
+`6a423ca4d73457901d9506026ca7b2ee72ac8605`
+
+### M2.9 — Local media preview foundation
+Merge SHA:
+`74043de39126ddc3840711e36cc088cf03078cb5`
+
+### M2.8 — Playback and transport foundation
+Merge SHA:
+`32f56ffc1f41ac61d35c1f5a802a380d30ef2731`
+
+### M2.7 — Undo/Redo engine
+Merge SHA:
+`388206b60f29363abc7047af49be5f5af6a5ef60`
+
+### M2.6 — Direct mouse timeline editing
+Merge SHA:
+`7c21c206`
+
+### M1–M2.5
+Foundation, media import, Media Bin to Timeline, selection/Inspector/delete, timeline interaction foundation, and core edit commands were completed before the recorded M2.6 merge point. Use repository history when exact older SHAs are needed.
+
+## Documentation rule
+
+Every future milestone or meaningful bug fix must add a dated entry here and update `docs/PROJECT_CONTEXT.md`. Record factual validation only after the user reports it.
