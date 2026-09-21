@@ -1,3 +1,9 @@
+## M3.47 final interaction primitive correction — 2026-09-21
+
+- The Linux WebView visual defect persisted after button and pseudo-element CSS normalization.
+- Replaced both fade handle buttons with accessible div role="button" elements and isolated the visible handle as a border.
+- This is presentation/interaction-target hardening only; fade persistence, history, preview, and export behavior are unchanged.
+
 ## M3.47 final WebView handle rendering correction — 2026-09-21
 
 - User confirmed the application had no functional errors, but the Timeline Audio clip still displayed two long horizontal white bars instead of compact fade handles.
