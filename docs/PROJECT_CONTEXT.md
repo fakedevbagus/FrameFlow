@@ -1,11 +1,11 @@
-## M3.39 implementation checkpoint — 2026-09-21
+## M3.40 implementation checkpoint — 2026-09-21
 
-- Branch: `feat/m3-39-single-source-audio`.
-- M3.38 established a working single-clip video export path.
-- M3.39 extends only that direct path to mux the first audio stream from the source when available.
-- Native FFmpeg argument construction explicitly maps optional source audio to AAC; when audio is disabled, `-an` prevents accidental audio output.
-- Source timing remains constrained by the direct native `-ss/-t` segment options.
-- This slice does not interpret or mix an independent Audio Track from the project timeline.
+- Branch: `feat/m3-40-multi-segment-video`.
+- M3.39 is complete at merge SHA `2808ba584932967f7dccf2b273faf79e61e27a9d`.
+- M3.40 adds a native multi-segment renderer for sequential clips on one video track.
+- The renderer normalizes each source segment to the requested canvas/frame-rate/pixel format, generates black segments for timeline gaps, and concatenates the normalized files with the concat demuxer.
+- The existing filter_complex renderer remains available for later graph-driven composition but is no longer required for the simplest multi-clip sequential path.
+- No independent timeline audio mixing is included in this slice.
 - Local validation is pending.
 ## M3.37 implementation checkpoint — 2026-09-21
 
