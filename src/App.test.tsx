@@ -1837,6 +1837,71 @@ describe("App", () => {
     });
   });
 
+  it("updates audio clip compressor controls from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-audio-compressor-ui",
+        name: "compressor.mp3",
+        mediaType: "audio",
+        sourcePath: "/media/compressor.mp3",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+    await waitFor(() =>
+      expect(screen.getByText("compressor.mp3")).toBeInTheDocument(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add compressor.mp3 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select compressor.mp3 clip" }),
+    );
+
+    const enable = screen.getByRole("checkbox", {
+      name: "Enable audio compressor",
+    });
+    const threshold = screen.getByRole("spinbutton", {
+      name: "Audio compressor threshold",
+    });
+    const ratio = screen.getByRole("spinbutton", {
+      name: "Audio compressor ratio",
+    });
+    const attack = screen.getByRole("spinbutton", {
+      name: "Audio compressor attack",
+    });
+    const release = screen.getByRole("spinbutton", {
+      name: "Audio compressor release",
+    });
+
+    expect(enable).not.toBeChecked();
+    expect(threshold).toHaveValue(-24);
+    expect(ratio).toHaveValue(4);
+    expect(attack).toHaveValue(20);
+    expect(release).toHaveValue(250);
+
+    fireEvent.click(enable);
+    fireEvent.change(threshold, { target: { value: "-18" } });
+    fireEvent.blur(threshold);
+    fireEvent.change(ratio, { target: { value: "6" } });
+    fireEvent.blur(ratio);
+    fireEvent.change(attack, { target: { value: "10" } });
+    fireEvent.blur(attack);
+    fireEvent.change(release, { target: { value: "300" } });
+    fireEvent.blur(release);
+
+    await waitFor(() => {
+      expect(screen.getByRole("checkbox", { name: "Enable audio compressor" })).toBeChecked();
+      expect(screen.getByRole("spinbutton", { name: "Audio compressor threshold" })).toHaveValue(-18);
+      expect(screen.getByRole("spinbutton", { name: "Audio compressor ratio" })).toHaveValue(6);
+      expect(screen.getByRole("spinbutton", { name: "Audio compressor attack" })).toHaveValue(10);
+      expect(screen.getByRole("spinbutton", { name: "Audio compressor release" })).toHaveValue(300);
+    });
+  });
+
   it("updates audio clip fade controls from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
