@@ -25,7 +25,7 @@ export function normalizeClipTransition(
   }
 
   return {
-    type: DISSOLVE_TRANSITION_TYPE,
+    type: transition.type,
     durationMs: Math.min(
       MAX_DISSOLVE_DURATION_MS,
       Math.max(
@@ -81,7 +81,7 @@ export function normalizeTransitionForAdjacentClips(
   }
 
   return {
-    type: DISSOLVE_TRANSITION_TYPE,
+    type: normalized.type,
     durationMs: Math.min(normalized.durationMs, maxDurationMs),
   };
 }
