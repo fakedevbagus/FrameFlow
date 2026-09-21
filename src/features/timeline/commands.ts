@@ -1,5 +1,7 @@
 import {
+  getAudioEq,
   getAudioFadeDurations,
+  type AudioEq,
   type TransformAnchor,
   type ClipCrop,
   type CropPosition,
@@ -584,6 +586,74 @@ export function updateAudioClipFades(
     {
       audioFadeInMs: fadeInMs || undefined,
       audioFadeOutMs: fadeOutMs || undefined,
+    },
+    now,
+  );
+}
+
+export function updateAudioClipEq(
+  project: Project,
+  clipId: string,
+  eq: AudioEq,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
+    throw new Error("Audio EQ is only available for audio clips.");
+  }
+
+  if (
+    typeof eq.enabled !== "boolean" ||
+    !Number.isFinite(eq.lowGainDb) ||
+    eq.lowGainDb < -12 ||
+    eq.lowGainDb > 12 ||
+    !Number.isFinite(eq.midGainDb) ||
+    eq.midGainDb < -12 ||
+    eq.midGainDb > 12 ||
+    !Number.isFinite(eq.highGainDb) ||
+    eq.highGainDb < -12 ||
+    eq.highGainDb > 12
+  ) {
+    throw new Error("Audio EQ gains must be between -12 and 12 dB.");
+  }
+
+  const normalized: AudioEq = {
+    enabled: eq.enabled,
+    lowGainDb: Math.round(eq.lowGainDb * 10) / 10,
+    midGainDb: Math.round(eq.midGainDb * 10) / 10,
+    highGainDb: Math.round(eq.highGainDb * 10) / 10,
+  };
+  const current = getAudioEq(location.clip);
+
+  if (
+    current.enabled === normalized.enabled &&
+    current.lowGainDb === normalized.lowGainDb &&
+    current.midGainDb === normalized.midGainDb &&
+    current.highGainDb === normalized.highGainDb
+  ) {
+    return project;
+  }
+
+  const isDefault =
+    !normalized.enabled &&
+    normalized.lowGainDb === 0 &&
+    normalized.midGainDb === 0 &&
+    normalized.highGainDb === 0;
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      audioEq: isDefault ? undefined : normalized,
     },
     now,
   );
