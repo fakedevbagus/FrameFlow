@@ -6,6 +6,7 @@ import type { RenderPlan } from "./render-plan";
 
 vi.mock("./export-renderer", () => ({
   renderVideoGraphToMp4: vi.fn(),
+  renderSingleSourceToMp4: vi.fn(),
 }));
 
 describe("render video pipeline", () => {
@@ -56,6 +57,52 @@ describe("render video pipeline", () => {
         videoMap: "[vout]",
       }),
     );
+  });
+
+  it("routes a single clip at timeline zero through the native single-source renderer", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 5038,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 5038,
+          sourceStartMs: 0,
+          sourceEndMs: 5038,
+          durationMs: 5038,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderSingleSourceToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/timeline-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4"),
+    ).resolves.toEqual({ outputPath: "/tmp/timeline-export.mp4" });
+
+    expect(renderSingleSourceToMp4).toHaveBeenCalledWith({
+      sourcePath: "/media/a.mp4",
+      outputPath: "/tmp/timeline-export.mp4",
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      sourceStartMs: 0,
+      sourceDurationMs: 5038,
+      includeAudio: false,
+    });
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });
 
   it("does not call the native renderer when graph compilation rejects unsupported state", () => {
