@@ -19,7 +19,7 @@ describe("render video pipeline", () => {
     vi.clearAllMocks();
   });
 
-  it("connects a multi-clip render graph to the native renderer contract", async () => {
+  it("routes sequential multi-clip video through the native segment renderer", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -59,7 +59,7 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+    vi.mocked(renderVideoSegmentsToMp4).mockResolvedValueOnce({
       outputPath: "/tmp/timeline-export.mp4",
     });
 
@@ -67,16 +67,24 @@ describe("render video pipeline", () => {
       outputPath: "/tmp/timeline-export.mp4",
     });
 
-    expect(renderVideoGraphToMp4).toHaveBeenCalledWith(
-      expect.objectContaining({
-        inputs: ["/media/a.mp4", "/media/b.mp4"],
-        outputPath: "/tmp/timeline-export.mp4",
-        width: 1080,
-        height: 1920,
-        frameRate: 30,
-        videoMap: "[vout]",
-      }),
-    );
+    expect(renderVideoSegmentsToMp4).toHaveBeenCalledWith({
+      segments: [
+        {
+          sourcePath: "/media/a.mp4",
+          sourceStartMs: 0,
+          durationMs: 2000,
+        },
+        {
+          sourcePath: "/media/b.mp4",
+          sourceStartMs: 0,
+          durationMs: 2000,
+        },
+      ],
+      outputPath: "/tmp/timeline-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+    });
   });
 
   it("routes sequential clips on one video track through the native segment renderer", async () => {
@@ -226,7 +234,9 @@ describe("render video pipeline", () => {
     expect(() =>
       renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4"),
     ).toThrow("visual transforms");
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
   it("compiles the graph before invoking native rendering", () => {
