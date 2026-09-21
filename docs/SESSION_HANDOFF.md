@@ -1,3 +1,14 @@
+## M3.54 kickoff — Audio Volume Automation Timeline UX — 2026-09-21
+
+- M3.53 Audio Clip Volume Automation was squash-merged as PR #67 at `fafe6e183ba4eb350db0f1b9873861d9c5543689`.
+- M3.54 surfaces persisted audio volume keyframes directly on Audio clips in the Timeline.
+- Each marker supports keyboard focus, playhead seeking, Delete/Backspace removal, one-frame Arrow nudging, Shift+Arrow 500 ms nudging, and Escape cancellation for active dragging.
+- Pointer dragging uses the existing timeline snap grid and prevents collisions by constraining movement between neighboring keyframes.
+- A completed drag commits through App -> moveAudioClipVolumeKeyframe() exactly once.
+- Marker movement is independent from selected-audio Inspector volume editing.
+- Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR draft until the full validation suite and focused Timeline automation checks are clean.
+
 ## M3.53 kickoff — Audio Clip Volume Automation — 2026-09-21
 
 - M3.52 Audio Clip Dynamics Compressor was squash-merged as PR #66 at `da0b5dc957be094738ac4e657007523f8684fdd8`.
