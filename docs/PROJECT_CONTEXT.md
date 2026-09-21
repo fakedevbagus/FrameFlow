@@ -1,9 +1,4 @@
-## M3.37 validation correction — 2026-09-21
-
-- Latest local validation passed lint, 26/26 test files with 234/234 TypeScript tests, production build, and Tauri dev startup.
-- Native Rust tests failed to compile because the `tests` module referenced `media_type` without importing it.
-- Corrected the `src-tauri/src/lib.rs` test import so `media_type` is available in the test scope.
-- A fresh local validation run is required before PR #48 is marked ready.
+## M3.38 implementation checkpoint — 2026-09-21\n\n- Branch: `feat/m3-38-export-render-job`.\n- M3.37 native render graph wiring is complete at merge SHA `90d2489246c80c139dcda02bbb52cf041e738075`.\n- The next vertical slice activates the existing ExportPanel through a dedicated export-job runner rather than embedding renderer orchestration directly into the component.\n- `runExportJob()` creates and starts the existing renderer-agnostic job state, builds the current RenderPlan, invokes the native video graph renderer, and records completed or failed state.\n- ExportPanel now requires a selected output file, disables destination controls while rendering, and exposes explicit rendering/completed/error feedback.\n- The renderer remains intentionally limited to the M3.36/M3.37 supported subset; unsupported timeline state is surfaced as a controlled failed export.\n- Deferred: progress streaming, cancellation, audio graph/muxing, multi-track compositing, images, transforms, crops, keyframes, transitions, and broader export orchestration.\n- Local validation is pending M3.38.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
