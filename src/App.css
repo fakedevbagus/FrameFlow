@@ -1190,6 +1190,27 @@ button:disabled {
   background: #a99cff;
 }
 
+.timeline-audio-volume-keyframe-marker {
+  top: 68%;
+}
+
+.timeline-audio-volume-keyframe-marker span {
+  border-color: #83c7ff;
+  border-radius: 50%;
+  background: #1f3243;
+  transform: none;
+}
+
+.timeline-audio-volume-keyframe-marker:hover span {
+  background: #31506a;
+  transform: scale(1.15);
+}
+
+.timeline-audio-volume-keyframe-marker.timeline-keyframe-marker-active span {
+  border-color: #e7f5ff;
+  background: #83c7ff;
+}
+
 .timeline-transition-region {
   position: absolute;
   top: 8px;
