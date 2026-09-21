@@ -2,9 +2,10 @@
 
 - User local validation passed lint, build, and Tauri startup.
 - Test suite result: 25/26 test files and 233/234 tests passed.
-- The only failure was an assertion-shape issue in the new render-pipeline regression: graph compilation throws synchronously, so the test must use `.toThrow()` rather than `.rejects`.
-- Corrected the test; fresh local validation is pending.
-
+- The only failure was the new render-pipeline regression's renderer call-count assertion: the synchronous .toThrow() check passed, but the mock still contained a call from the preceding test.
+- The regression suite now clears the native renderer mock before each case.
+- Reconciled the TypeScript/Tauri graph-render contract so native inputs are an ordered string[] of source paths, matching Rust Vec<String>.
+- Fresh local validation is pending.
 ## 2026-09-21 — M3.37 native render graph wiring — in progress
 
 Branch: `feat/m3-37-native-render-graph-wiring`
