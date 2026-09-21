@@ -1,3 +1,11 @@
+## M3.48 Multiple Audio Track Mix — 2026-09-21
+
+- Started the next audio milestone from the verified M3.46 main line while M3.47 UI correction remains under validation.
+- Scope: allow more than one independent Audio track to participate in the existing project audio mix graph.
+- Track order is deterministic; clips retain their existing trim, fade, track volume, mute, and timeline-delay behavior.
+- No new native FFmpeg command is required because the existing video/audio mix boundary already accepts a list of audio input paths.
+- Required validation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+
 ## M3.47 kickoff — 2026-09-21
 
 - M3.46 PR #59 was squash-merged at 76d0a1cadd9ae7ab31d471f46c4d6cb9ddba0b40.
