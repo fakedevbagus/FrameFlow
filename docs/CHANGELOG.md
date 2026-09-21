@@ -1,26 +1,33 @@
-## 2026-09-21 — M3.42 audio-track graph compiler — in progress
+## 2026-09-21 — M3.43 native audio render boundary — in progress
 
-Branch: `feat/m3-42-audio-track-graph`
+Branch: `feat/m3-43-native-audio-render`
 
 Implemented:
-- Added a pure audio filter-graph compiler for the existing RenderPlan boundary.
-- Supports one explicit Audio track with audio assets.
-- Preserves source trimming and timeline placement through `atrim` + `adelay`.
-- Normalizes mixed audio inputs to stereo 48 kHz.
-- Adds a full-project stereo silence source so the graph retains timeline duration and explicit gaps remain silent.
-- Honors the audio track mute state by omitting muted clips from the mix.
-- Added regression coverage for trimming, ordering, timeline delay, mute handling, silence fallback, and deferred multiple-audio-track/non-audio routing.
+- Added a dedicated native Tauri audio-graph render command.
+- Validate absolute audio inputs, MP4 output paths, non-empty filter graphs, and fixed `[aout]` output mapping.
+- Execute FFmpeg through structured `Command` arguments without shell interpolation.
+- Normalize native audio output to AAC stereo 48 kHz.
+- Expose the native audio graph invoke bridge and regression coverage.
+- Keep the existing video rendering paths unchanged.
+
+Important contract correction:
+- Audio graph input indices are local/dense indices rather than project-global indices, so the compiled `[0:a:0]...` references match the native audio input list exactly.
 
 Deferred:
-- Native FFmpeg audio graph execution.
-- Mixing embedded video-clip audio with independent Audio track clips.
-- Audio volume/gain, fades, transitions, and effects.
+- Connect the audio graph to full project export.
+- Mix embedded video-clip audio with the independent Audio track.
+- Audio gain/volume, fades, transitions, and effects.
 - Multiple independent audio tracks.
 - Progress streaming and cancellation.
 
 Validation:
-- TypeScript/unit validation is pending for M3.42.
-- Native render wiring is intentionally a later slice.
+- Local M3.43 validation is pending.
+
+## 2026-09-21 — M3.42 audio-track graph compiler — merged
+
+- PR #53 `feat: add audio track render graph compiler` was squash-merged.
+- Merge SHA: `5c338d0462206d88e6e258b8e433afe2ce897c43`.
+- M3.42 established pure audio graph compilation above the RenderPlan boundary.
 
 ## 2026-09-21 — M3.41 multi-segment audio — merged
 
