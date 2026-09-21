@@ -65,7 +65,7 @@ describe("export settings", () => {
 
   it("sanitizes export file names", () => {
     expect(sanitizeExportFileName("My / Final:Edit")).toBe(
-      "my - final-edit.mp4",
+      "My - Final-Edit.mp4",
     );
     expect(sanitizeExportFileName("clip.mp4")).toBe("clip.mp4");
   });
