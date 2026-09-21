@@ -140,6 +140,7 @@ export function Timeline({
   onTrimClipEnd,
   onToggleTrackMute,
   onUpdateTrackVolume,
+  onUpdateAudioClipFades,
   onAddAssetToTrack,
   onAddTrack,
   onRemoveTrack,
@@ -1049,6 +1050,7 @@ export function Timeline({
             onSelectClip={onSelectClip}
             onToggleTrackMute={onToggleTrackMute}
             onUpdateTrackVolume={onUpdateTrackVolume}
+            onUpdateAudioClipFades={onUpdateAudioClipFades}
             onRemoveTrack={onRemoveTrack}
             onRemoveTransformKeyframe={onRemoveTransformKeyframe}
             onCurrentTimeChange={onCurrentTimeChange}
