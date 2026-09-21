@@ -1,17 +1,26 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ExportPanel } from "./ExportPanel";
 import { createProject } from "../project/domain";
 
-const { chooseExportOutputPath } = vi.hoisted(() => ({
+const { chooseExportOutputPath, runExportJob } = vi.hoisted(() => ({
   chooseExportOutputPath: vi.fn(),
+  runExportJob: vi.fn(),
 }));
 
 vi.mock("./export-dialog", () => ({
   chooseExportOutputPath,
 }));
 
+vi.mock("./export-runner", () => ({
+  runExportJob,
+}));
+
 describe("ExportPanel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("shows source settings by default", () => {
     render(<ExportPanel project={createProject()} onClose={vi.fn()} />);
 
@@ -46,6 +55,52 @@ describe("ExportPanel", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+
+  it("exports to the selected destination and shows completion", async () => {
+    chooseExportOutputPath.mockResolvedValueOnce("/home/user/Exports/demo.mp4");
+    runExportJob.mockImplementationOnce(
+      async (_project, _request, onUpdate) => {
+        const running = {
+          id: "export-test",
+          phase: "running",
+          progress: 0,
+          request: _request,
+          errorMessage: null,
+          outputPath: null,
+        };
+        onUpdate?.(running);
+
+        const completed = {
+          ...running,
+          phase: "completed",
+          progress: 1,
+          outputPath: "/home/user/Exports/demo.mp4",
+        };
+        onUpdate?.(completed);
+        return completed;
+      },
+    );
+
+    render(<ExportPanel project={createProject()} onClose={vi.fn()} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Choose export destination" }),
+    );
+    await screen.findByText("/home/user/Exports/demo.mp4");
+
+    fireEvent.click(screen.getByRole("button", { name: "Export video" }));
+
+    expect(await screen.findByText("Export completed")).toBeInTheDocument();
+    expect(runExportJob).toHaveBeenCalledTimes(1);
+    expect(runExportJob).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        outputPath: "/home/user/Exports/demo.mp4",
+      }),
+      expect.any(Function),
+    );
+  });
+
   it("lets the user choose and displays an output destination", async () => {
     chooseExportOutputPath.mockResolvedValueOnce("/home/user/Exports/demo.mp4");
 
@@ -59,3 +114,4 @@ describe("ExportPanel", () => {
     expect(chooseExportOutputPath).toHaveBeenCalledWith("Untitled project.mp4");
   });
 });
+
