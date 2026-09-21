@@ -1,3 +1,13 @@
+## M3.35 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-35-render-plan`.
+- Added `src/features/export/render-plan.ts` to compile the project timeline into an ordered, renderer-agnostic set of render segments.
+- Each segment preserves source path, source timing, timeline timing, track identity/type, mute state, transform/crop/keyframe metadata, and transition metadata for later graph compilation.
+- The plan resolves export quality dimensions from the existing export settings model and calculates the actual project timeline duration represented by the segments.
+- The planner rejects missing assets, empty source paths, non-positive clip durations, invalid timeline starts, and overlapping clips on the same track.
+- Added regression coverage for timing, quality sizing, invalid references, overlap detection, and preservation of render metadata.
+- M3.35 local validation is pending user verification.
+
 ## M3.34 implementation checkpoint — 2026-09-21
 
 - Added `render_single_source_to_mp4` as a narrowly scoped native Tauri command.

@@ -1,0 +1,213 @@
+import { describe, expect, it } from "vitest";
+import { createProject } from "../project/domain";
+import { addAssetToTimeline, addAssetToTrack } from "../timeline/commands";
+import { createDefaultExportSettings } from "./export";
+import { createRenderPlan } from "./render-plan";
+
+function projectWithAssets() {
+  const project = createProject({ id: "render-plan" });
+
+  project.assets = [
+    {
+      id: "video-a",
+      name: "a.mp4",
+      mediaType: "video",
+      sourcePath: "/media/a.mp4",
+      durationMs: 5000,
+    },
+    {
+      id: "video-b",
+      name: "b.mp4",
+      mediaType: "video",
+      sourcePath: "/media/b.mp4",
+      durationMs: 4000,
+    },
+    {
+      id: "audio-a",
+      name: "a.wav",
+      mediaType: "audio",
+      sourcePath: "/media/a.wav",
+      durationMs: 3000,
+    },
+  ];
+
+  return project;
+}
+
+describe("render plan", () => {
+  it("compiles timeline clips with source and timeline timing", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = addAssetToTrack(project, "video-b", "video-1", 7000);
+    project = addAssetToTrack(project, "audio-a", "audio-1", 2000);
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(plan.width).toBe(1080);
+    expect(plan.height).toBe(1920);
+    expect(plan.frameRate).toBe(30);
+    expect(plan.durationMs).toBe(11000);
+    expect(plan.segments).toHaveLength(3);
+
+    expect(plan.segments).toEqual([
+      expect.objectContaining({
+        inputIndex: 0,
+        assetId: "video-a",
+        trackType: "video",
+        timelineStartMs: 0,
+        timelineEndMs: 5000,
+        sourceStartMs: 0,
+        sourceEndMs: 5000,
+      }),
+      expect.objectContaining({
+        inputIndex: 1,
+        assetId: "video-b",
+        trackType: "video",
+        timelineStartMs: 7000,
+        timelineEndMs: 11000,
+      }),
+      expect.objectContaining({
+        inputIndex: 2,
+        assetId: "audio-a",
+        trackType: "audio",
+        timelineStartMs: 2000,
+        timelineEndMs: 5000,
+        isMuted: false,
+      }),
+    ]);
+  });
+
+  it("resolves quality dimensions from the project aspect ratio", () => {
+    const project = projectWithAssets();
+    const settings = {
+      ...createDefaultExportSettings(project),
+      quality: "720p" as const,
+    };
+
+    const plan = createRenderPlan(project, settings);
+
+    expect(plan.width).toBe(406);
+    expect(plan.height).toBe(720);
+  });
+
+  it("rejects missing and empty media references", () => {
+    const project = projectWithAssets();
+
+    const missingAssetProject = {
+      ...project,
+      tracks: [
+        {
+          ...project.tracks[0],
+          clips: [
+            {
+              id: "missing-clip",
+              assetId: "does-not-exist",
+              timelineStartMs: 0,
+              sourceStartMs: 0,
+              sourceEndMs: 1000,
+              transform: undefined,
+            },
+          ],
+        },
+        ...project.tracks.slice(1),
+      ],
+    };
+
+    expect(() =>
+      createRenderPlan(
+        missingAssetProject,
+        createDefaultExportSettings(missingAssetProject),
+      ),
+    ).toThrow("references a missing asset");
+
+    const emptySourceProject = {
+      ...project,
+      assets: project.assets.map((asset) =>
+        asset.id === "video-a" ? { ...asset, sourcePath: "   " } : asset,
+      ),
+    };
+
+    const invalidClipProject = addAssetToTimeline(emptySourceProject, "video-a");
+
+    expect(() =>
+      createRenderPlan(
+        invalidClipProject,
+        createDefaultExportSettings(invalidClipProject),
+      ),
+    ).toThrow("has no source path");
+  });
+
+  it("rejects overlapping clips on the same track", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+
+    const overlappingClip = {
+      ...project.tracks[0].clips[0],
+      id: "video-overlap",
+      timelineStartMs: 1000,
+    };
+
+    const invalidProject = {
+      ...project,
+      tracks: [
+        {
+          ...project.tracks[0],
+          clips: [...project.tracks[0].clips, overlappingClip],
+        },
+        ...project.tracks.slice(1),
+      ],
+    };
+
+    expect(() =>
+      createRenderPlan(
+        invalidProject,
+        createDefaultExportSettings(invalidProject),
+      ),
+    ).toThrow("contains overlapping clips");
+  });
+
+  it("preserves transition and mute metadata for later graph compilation", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = addAssetToTrack(project, "video-b", "video-1", 5000);
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              isMuted: true,
+              clips: track.clips.map((clip, index) =>
+                index === 0
+                  ? {
+                      ...clip,
+                      transitionOut: {
+                        type: "dissolve" as const,
+                        durationMs: 300,
+                      },
+                    }
+                  : clip,
+              ),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(plan.segments[0]).toMatchObject({
+      isMuted: true,
+      transitionOut: {
+        type: "dissolve",
+        durationMs: 300,
+      },
+    });
+  });
+});
