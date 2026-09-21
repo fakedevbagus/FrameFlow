@@ -602,7 +602,7 @@ describe("updateTrackPan", () => {
 
 });
 
-
+describe("updateTrackVolume", () => {
   it("updates the track volume and project timestamp", () => {
     const project = createProject({
       id: "volume-command",
