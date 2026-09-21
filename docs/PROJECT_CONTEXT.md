@@ -1,39 +1,27 @@
-## M3.47 Timeline Audio Fade Handles — final interaction primitive correction — 2026-09-21
+## M3.48 test assertion correction — 2026-09-21
 
-- Replaced the fade handle native button with an accessible div role="button" interaction target.
-- The visual handle is now a simple CSS border on the interaction element itself.
-- This removes all native button rendering and nested visual-child behavior from the Linux WebView path.
-- Persisted fade behavior and project/history contracts remain unchanged.
+- The multi-track regression fixture now gives Track 0 a 0–2 second source range and Track 1 a 1–3 second source range.
+- Assertions now match the deterministic compiler ordering: trackIndex 0 -> input 0, trackIndex 1 -> input 1.
+- The test also verifies source-path order and per-track timeline delay to guard against accidental input reordering.
+- No production audio graph behavior changed in this correction.
 
-## M3.47 Timeline Audio Fade Handles — final WebView handle rendering correction — 2026-09-21
+## M3.48 validation correction — 2026-09-21
 
-- The first Linux WebView CSS normalization did not resolve the user's screenshot-level visual defect.
-- Replaced the nested handle <span> visual element with a CSS ::after pseudo-element on the handle button itself.
-- The handle button remains the interaction target; only its visual primitive changed.
-- This avoids child flex/layout/UA styling interactions inside .timeline-clip.
-- No persisted fade state, project command, history, Preview, RenderPlan, or FFmpeg behavior changed.
+- User validation reached 268/269 tests with build and Rust green.
+- The lint failure came from the inherited M3.46 AudioFadeInspector setState-in-effect pattern on the M3.48 baseline.
+- Reused the stable ref-based Inspector draft synchronization already established for M3.47, preserving transient edit state without synchronous setState calls in an effect.
+- The sole M3.48 audio graph test failure was a fixture assertion mismatch: the second track still inherited a 1000–3000 ms source range while the test expected 0–2000 ms. The fixture now explicitly uses sourceStartMs=0 and sourceEndMs=2000.
 
-## M3.47 Timeline Audio Fade Handles — Linux WebView visual correction — 2026-09-21
+## M3.48 Multiple Audio Track Mix — implementation checkpoint — 2026-09-21
 
-- Normalized the Timeline audio fade handle button appearance for Linux WebView rendering.
-- Disabled native button appearance and explicitly constrained handle geometry so fade controls cannot expand into the Audio clip's flex layout.
-- Added explicit left/right anchoring for fade-in/fade-out handles.
-- No persisted audio fade, command, history, Preview, or FFmpeg behavior changed.
+- M3.48 extends the deterministic audio RenderPlan compiler to accept multiple independent Audio tracks.
+- Audio clips from separate Audio tracks are normalized, trimmed, volume-scaled, fade-processed, timeline-delayed, and mixed into the same [aout] project bus.
+- Audio track ordering is deterministic by RenderPlan track index and then clip timeline position.
+- Existing mute, track volume, clip fades, trim, and timeline placement semantics remain unchanged.
+- The native Tauri audio/video mix boundary already accepts multiple audio input paths, so no new native command contract is introduced.
+- A backward-compatible compileSingleAudioTrackGraph alias remains available while export switches to compileAudioTracksGraph.
+- Deferred: audio effects/EQ/compression, keyframed automation, render progress/cancellation, waveform editing.
 
-## M3.47 Timeline Audio Fade Handles — edge-case correction — 2026-09-21
-
-- Reviewed the direct-handle rendering at the clip boundaries and adjusted handle positioning so zero-duration and full-duration fade states keep the visible handle inside the clipped Timeline clip.
-- No project/history behavior changed; this is presentation-only hardening for the new interaction.
-## M3.47 Timeline Audio Fade Handles — implementation checkpoint — 2026-09-21
-
-- Added direct Timeline fade-in/fade-out handles for explicit Audio clips.
-- Drag interaction is transient and commits exactly once on pointer release through the existing App -> updateAudioClipFades() -> history path.
-- Escape cancels an active fade-handle interaction without creating history.
-- Keyboard ArrowLeft/ArrowRight adjusts the focused fade handle in 100 ms increments.
-- Fade durations are snapped to 100 ms and clamped so fade-in + fade-out never exceeds clip duration.
-- Timeline renders lightweight fade regions so current fade extents are visible on Audio clips.
-- Added Timeline regression coverage for drag commit, Escape cancellation, and keyboard nudging, plus App-level coverage for persistence into the Inspector.
-- Waveform rendering/editor, advanced audio effects, multiple independent Audio tracks, automation, progress, and cancellation remain deferred.
 ## M3.46 merge reconciliation — 2026-09-21
 
 - M3.46 Audio Clip Fades is complete and PR #59 was squash-merged.
