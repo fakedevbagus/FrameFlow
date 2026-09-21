@@ -1,10 +1,8 @@
 ## 2026-09-21 — M3.37 validation correction
 
-- User local validation passed lint, build, and Tauri startup.
-- Test suite result: 25/26 test files and 233/234 tests passed.
-- The only failure was the new render-pipeline regression's renderer call-count assertion: the synchronous .toThrow() check passed, but the mock still contained a call from the preceding test.
-- The regression suite now clears the native renderer mock before each case.
-- Reconciled the TypeScript/Tauri graph-render contract so native inputs are an ordered string[] of source paths, matching Rust Vec<String>.
+- Latest user validation: lint passed; 26/26 test files and 234/234 TypeScript tests passed; production build passed; Tauri dev started successfully.
+- Native Rust test compilation failed because `media_type` was not imported into the test module.
+- Corrected the test import in `src-tauri/src/lib.rs`.
 - Fresh local validation is pending.
 ## 2026-09-21 — M3.37 native render graph wiring — in progress
 
