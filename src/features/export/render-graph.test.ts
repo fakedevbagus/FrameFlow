@@ -55,8 +55,10 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain(
       "scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
     );
-    expect(graph.filterComplex).toContain("fps=fps=30:round=near");
+    expect(graph.filterComplex).not.toContain("fps=");
     expect(graph.filterComplex).not.toContain("concat=");
+    expect(graph.filterComplex).not.toContain("setsar=");
+    expect(graph.filterComplex).not.toContain("format=yuv420p");
     expect(graph.filterComplex).toContain("[vout]");
     expect(graph.videoMap).toBe("[vout]");
   });
