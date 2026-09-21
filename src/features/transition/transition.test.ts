@@ -147,15 +147,15 @@ describe("transition helpers", () => {
     };
 
     expect(
-      getFadeThroughBlackOpacity(3500, first, second, transition),
+      getFadeThroughBlackOpacity(3000, first, second, transition),
     ).toBe(0);
 
     expect(
-      getFadeThroughBlackOpacity(3750, first, second, transition),
+      getFadeThroughBlackOpacity(3250, first, second, transition),
     ).toBeCloseTo(0.5, 8);
 
     expect(
-      getFadeThroughBlackOpacity(4000 - 500, first, second, transition),
+      getFadeThroughBlackOpacity(3500, first, second, transition),
     ).toBeCloseTo(1, 8);
 
     expect(
