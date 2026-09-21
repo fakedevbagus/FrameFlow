@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
@@ -8,6 +8,11 @@ import { buildWaveformPath, clearAudioWaveformCache, getAudioWaveform } from "./
 import { invoke } from "@tauri-apps/api/core";
 
 describe("audio waveform", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAudioWaveformCache();
+  });
+
   it("builds a closed SVG waveform path", () => {
     const path = buildWaveformPath([0, 0.5, 1], 100, 20);
 
