@@ -1344,6 +1344,8 @@ button:disabled {
   overflow: visible;
   color: #8ea9ff;
   opacity: 0.72;
+  cursor: crosshair;
+  pointer-events: auto;
 }
 
 .timeline-audio-waveform path {
