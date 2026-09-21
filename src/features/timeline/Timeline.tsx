@@ -1407,9 +1407,7 @@ function TimelineTrack({
                       style={{ left: Math.max(0, fadeInWidthPx - 6) + "px" }}
                       title="Drag to change audio fade in"
                       type="button"
-                    >
-                      <span aria-hidden="true" />
-                    </button>
+                    />
                     <button
                       aria-label={
                         "Adjust audio fade out for " +
