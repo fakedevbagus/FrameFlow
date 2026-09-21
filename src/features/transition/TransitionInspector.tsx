@@ -56,7 +56,7 @@ export function TransitionInspector({
         <span>Type</span>
         <select
           aria-label="Transition type"
-          disabled={!canTransition && !isDissolve}
+          disabled={!canTransition && transitionType === "none"}
           value={transitionType}
           onChange={(event) => {
             switch (event.currentTarget.value) {
