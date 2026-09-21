@@ -1,3 +1,9 @@
+## M3.32 validation correction — 2026-09-21
+
+- First M3.32 local run: lint passed; 19/21 test files passed with 213/215 tests passing. The two failures were test assertions only: the default project canvas is portrait (1080×1920), so 720p output is normalized to an even 406×720 width; and the filename is rendered in an input value rather than a text node. Build and Tauri dev both succeeded.
+- Follow-up test-only corrections use dialog text content for the computed resolution and `getByRole("textbox")` for the filename value.
+- PR #43 remains draft and requires a fresh local rerun.
+
 ## Current live reconciliation — M3.32 — 2026-09-21
 
 - Current `main` tip: `3a2a77aca9b30779870e16863fe709661cd02f3e`.
