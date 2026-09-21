@@ -825,6 +825,7 @@ export function Timeline({
             selectedClipId={selectedClipId}
             onSelectClip={onSelectClip}
             onToggleTrackMute={onToggleTrackMute}
+            onUpdateTrackVolume={onUpdateTrackVolume}
             onRemoveTrack={onRemoveTrack}
             onRemoveTransformKeyframe={onRemoveTransformKeyframe}
             onCurrentTimeChange={onCurrentTimeChange}
@@ -868,6 +869,7 @@ interface TimelineTrackProps {
   selectedClipId: string | null;
   onSelectClip?: (clipId: string) => void;
   onToggleTrackMute?: (trackId: string) => void;
+  onUpdateTrackVolume?: (trackId: string, volume: number) => void;
   onRemoveTrack?: (trackId: string) => void;
   onRemoveTransformKeyframe?: (
     clipId: string,
@@ -941,6 +943,7 @@ function TimelineTrack({
   selectedClipId,
   onSelectClip,
   onToggleTrackMute,
+  onUpdateTrackVolume,
   onRemoveTrack,
   onRemoveTransformKeyframe,
   onCurrentTimeChange,
