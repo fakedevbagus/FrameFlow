@@ -30,6 +30,12 @@ import {
   upsertTransformKeyframe,
 } from "../transform/transform";
 import {
+  getAudioVolumeAtTime,
+  getAudioVolumeKeyframeAtTime,
+  removeAudioVolumeKeyframe,
+  upsertAudioVolumeKeyframe,
+} from "../audio/automation";
+import {
   getNextClipForTransition,
   normalizeClipTransition,
   sanitizeTrackTransitions,
@@ -736,6 +742,111 @@ export function updateAudioClipCompressor(
   );
 }
 
+export function updateAudioClipVolumeAtTime(
+  project: Project,
+  clipId: string,
+  timeMs: number,
+  volume: number,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
+    throw new Error("Audio automation is only available for audio clips.");
+  }
+
+  const durationMs = getClipDurationMs(location.clip);
+  if (
+    !Number.isFinite(timeMs) ||
+    timeMs < 0 ||
+    timeMs > durationMs
+  ) {
+    throw new Error("Audio volume keyframe time must be inside the clip.");
+  }
+
+  if (!Number.isFinite(volume) || volume < 0 || volume > 1) {
+    throw new Error("Audio volume must be between 0 and 1.");
+  }
+
+  const roundedTimeMs = Math.round(timeMs);
+  const normalizedVolume = Math.round(volume * 1000) / 1000;
+  const current = getAudioVolumeKeyframeAtTime(
+    location.clip.audioVolumeKeyframes,
+    roundedTimeMs,
+  );
+
+  if (current && current.volume === normalizedVolume) {
+    return project;
+  }
+
+  const keyframes = upsertAudioVolumeKeyframe(
+    location.clip.audioVolumeKeyframes,
+    roundedTimeMs,
+    normalizedVolume,
+  );
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { audioVolumeKeyframes: keyframes },
+    now,
+  );
+}
+
+export function removeAudioClipVolumeKeyframe(
+  project: Project,
+  clipId: string,
+  timeMs: number,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
+    throw new Error("Audio automation is only available for audio clips.");
+  }
+
+  if (!Number.isFinite(timeMs) || timeMs < 0) {
+    throw new Error("Audio volume keyframe time must be zero or greater.");
+  }
+
+  const current = getAudioVolumeKeyframeAtTime(
+    location.clip.audioVolumeKeyframes,
+    timeMs,
+  );
+
+  if (!current) {
+    return project;
+  }
+
+  const keyframes = removeAudioVolumeKeyframe(
+    location.clip.audioVolumeKeyframes,
+    timeMs,
+  );
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { audioVolumeKeyframes: keyframes.length ? keyframes : undefined },
+    now,
+  );
+}
+
 export function updateClipTransition(
   project: Project,
   clipId: string,
@@ -1375,12 +1486,40 @@ export function splitClipAtTime(
       )
     : undefined;
 
+  const audioVolumeKeyframes = clip.audioVolumeKeyframes ?? [];
+  const hasAudioVolumeKeyframes = audioVolumeKeyframes.length > 0;
+  const splitAudioVolume = hasAudioVolumeKeyframes
+    ? getAudioVolumeAtTime(clip, splitLocalTimeMs)
+    : undefined;
+  const firstAudioVolumeKeyframes = hasAudioVolumeKeyframes
+    ? upsertAudioVolumeKeyframe(
+        audioVolumeKeyframes.filter(
+          (keyframe) => keyframe.timeMs <= splitLocalTimeMs,
+        ),
+        splitLocalTimeMs,
+        splitAudioVolume ?? 1,
+      )
+    : undefined;
+  const secondAudioVolumeKeyframes = hasAudioVolumeKeyframes
+    ? upsertAudioVolumeKeyframe(
+        audioVolumeKeyframes
+          .filter((keyframe) => keyframe.timeMs >= splitLocalTimeMs)
+          .map((keyframe) => ({
+            ...keyframe,
+            timeMs: keyframe.timeMs - splitLocalTimeMs,
+          })),
+        0,
+        splitAudioVolume ?? 1,
+      )
+    : undefined;
+
   const firstClip: Clip = {
     ...clip,
     sourceEndMs: sourceSplitMs,
     transitionOut: undefined,
     audioFadeOutMs: undefined,
     transformKeyframes: firstKeyframes,
+    audioVolumeKeyframes: firstAudioVolumeKeyframes,
   };
   const secondClip: Clip = {
     ...clip,
@@ -1389,6 +1528,7 @@ export function splitClipAtTime(
     sourceStartMs: sourceSplitMs,
     audioFadeInMs: undefined,
     transformKeyframes: secondKeyframes,
+    audioVolumeKeyframes: secondAudioVolumeKeyframes,
   };
 
   const clips = track.clips.flatMap((candidate) =>
