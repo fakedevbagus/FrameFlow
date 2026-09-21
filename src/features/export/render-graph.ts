@@ -1,3 +1,5 @@
+export const M3_38_DIRECT_GRAPH_MARKER = "m3.38-direct-graph-v2";
+
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
