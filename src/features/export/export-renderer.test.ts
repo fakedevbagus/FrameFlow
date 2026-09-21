@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import {
   renderSingleSourceToMp4,
   renderVideoGraphToMp4,
+  renderVideoSegmentsToMp4,
 } from "./export-renderer";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -10,6 +11,43 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 describe("export renderer", () => {
+  it("invokes the native multi-segment renderer with ordered segments", async () => {
+    vi.mocked(invoke).mockResolvedValueOnce({
+      outputPath: "/tmp/multi-export.mp4",
+    });
+
+    const request = {
+      segments: [
+        {
+          sourcePath: "/media/a.mp4",
+          sourceStartMs: 500,
+          durationMs: 2000,
+        },
+        {
+          durationMs: 2000,
+        },
+        {
+          sourcePath: "/media/b.mp4",
+          sourceStartMs: 0,
+          durationMs: 4000,
+        },
+      ],
+      outputPath: "/tmp/multi-export.mp4",
+      width: 406,
+      height: 720,
+      frameRate: 30,
+    };
+
+    await expect(renderVideoSegmentsToMp4(request)).resolves.toEqual({
+      outputPath: "/tmp/multi-export.mp4",
+    });
+
+    expect(invoke).toHaveBeenCalledWith("render_video_segments_to_mp4", {
+      request,
+    });
+  });
+
+
   it("invokes the native single-source renderer with the export request", async () => {
     vi.mocked(invoke).mockResolvedValueOnce({
       outputPath: "/tmp/export.mp4",
