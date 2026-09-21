@@ -1,3 +1,12 @@
+## Current live reconciliation — M3.33 — 2026-09-21
+
+- Current `main` tip: `c81df8e7b0901a54c08b19dba2f5df3ee6a63adf`.
+- Completed milestone: M3.32 — Export settings foundation, PR #43, squash merge SHA `c81df8e7b0901a54c08b19dba2f5df3ee6a63adf`.
+- User approved M3.32 with `pass`; PR #43 was marked ready and squash-merged.
+- M3.32 delivered the export settings model/UI and regression coverage. Actual output-path selection and FFmpeg rendering remain deferred.
+- Historical PR #22 remains open and is not active project work.
+- Immediate next slice: M3.33 — Export destination and render-job boundary, focused on selecting an output file and establishing a testable native render-job contract without yet expanding into a full render graph.
+
 ## M3.32 validation correction — 2026-09-21
 
 - First M3.32 local run: lint passed; 19/21 test files passed with 213/215 tests passing. The two failures were test assertions only: the default project canvas is portrait (1080×1920), so 720p output is normalized to an even 406×720 width; and the filename is rendered in an input value rather than a text node. Build and Tauri dev both succeeded.
