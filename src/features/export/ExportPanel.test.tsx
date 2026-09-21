@@ -101,6 +101,39 @@ describe("ExportPanel", () => {
     );
   });
 
+  it("shows the full renderer error when export fails", async () => {
+    chooseExportOutputPath.mockResolvedValueOnce("/home/user/Exports/demo.mp4");
+    runExportJob.mockImplementationOnce(
+      async (_project, _request, onUpdate) => {
+        const failed = {
+          id: "export-failed",
+          phase: "failed",
+          progress: 0,
+          request: _request,
+          errorMessage: "FFmpeg could not render the requested video graph: detailed stderr",
+          outputPath: null,
+        };
+        onUpdate?.(failed);
+        return failed;
+      },
+    );
+
+    render(<ExportPanel project={createProject()} onClose={vi.fn()} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Choose export destination" }),
+    );
+    await screen.findByText("/home/user/Exports/demo.mp4");
+
+    fireEvent.click(screen.getByRole("button", { name: "Export video" }));
+
+    expect(
+      await screen.findByText(
+        "FFmpeg could not render the requested video graph: detailed stderr",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("lets the user choose and displays an output destination", async () => {
     chooseExportOutputPath.mockResolvedValueOnce("/home/user/Exports/demo.mp4");
 
