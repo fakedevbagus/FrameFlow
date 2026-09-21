@@ -48,7 +48,7 @@ export function renderVideoPlanToMp4(
       audioMap: audioGraph.audioMap,
       durationMs: plan.durationMs,
       outputPath,
-    }, jobId),
+    }, ...(jobId ? [jobId] : [])),
   );
 }
 
@@ -77,7 +77,7 @@ function renderVideoOnlyPlanToMp4(
       sourceStartMs: segment.sourceStartMs,
       sourceDurationMs: segment.durationMs,
       includeAudio: true,
-    }, jobId);
+    }, ...(jobId ? [jobId] : []));
   }
 
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
@@ -115,7 +115,7 @@ function renderVideoOnlyPlanToMp4(
       height: plan.height,
       frameRate: plan.frameRate,
       includeAudio: true,
-    }, jobId);
+    }, ...(jobId ? [jobId] : []));
   }
 
   return renderVideoGraphToMp4({
@@ -126,5 +126,5 @@ function renderVideoOnlyPlanToMp4(
     frameRate: plan.frameRate,
     filterComplex: graph.filterComplex,
     videoMap: graph.videoMap,
-  }, jobId, plan.durationMs);
+  }, ...(jobId ? [jobId, plan.durationMs] : []));
 }
