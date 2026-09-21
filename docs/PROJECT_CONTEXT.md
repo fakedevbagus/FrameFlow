@@ -1,3 +1,10 @@
+## M3.48 validation correction — 2026-09-21
+
+- User validation reached 268/269 tests with build and Rust green.
+- The lint failure came from the inherited M3.46 AudioFadeInspector setState-in-effect pattern on the M3.48 baseline.
+- Reused the stable ref-based Inspector draft synchronization already established for M3.47, preserving transient edit state without synchronous setState calls in an effect.
+- The sole M3.48 audio graph test failure was a fixture assertion mismatch: the second track still inherited a 1000–3000 ms source range while the test expected 0–2000 ms. The fixture now explicitly uses sourceStartMs=0 and sourceEndMs=2000.
+
 ## M3.48 Multiple Audio Track Mix — implementation checkpoint — 2026-09-21
 
 - M3.48 extends the deterministic audio RenderPlan compiler to accept multiple independent Audio tracks.
