@@ -691,6 +691,54 @@ describe("Timeline", () => {
     expect(waveform.querySelector("path")).toHaveAttribute("d");
   });
 
+  it("seeks the playhead from the audio waveform", async () => {
+    const project = createVideoProject();
+    project.assets.push({
+      id: "audio-waveform-seek",
+      name: "waveform-seek.mp3",
+      mediaType: "audio",
+      sourcePath: "/waveform-seek.mp3",
+      durationMs: 5000,
+    });
+
+    const populated = addAssetToTimeline(project, "audio-waveform-seek");
+    const onCurrentTimeChange = vi.fn();
+    const onSelectClip = vi.fn();
+
+    render(
+      <Timeline
+        project={populated}
+        onCurrentTimeChange={onCurrentTimeChange}
+        onSelectClip={onSelectClip}
+      />,
+    );
+
+    const waveform = await screen.findByTestId("timeline-audio-waveform");
+
+    vi.spyOn(waveform, "getBoundingClientRect").mockReturnValue({
+      left: 10,
+      top: 0,
+      right: 210,
+      bottom: 20,
+      width: 200,
+      height: 20,
+      x: 10,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 110,
+      pointerId: 71,
+    });
+
+    expect(onSelectClip).toHaveBeenCalledWith(
+      populated.tracks[1].clips[0].id,
+    );
+    expect(onCurrentTimeChange).toHaveBeenCalledWith(2500);
+  });
+
   it("shows an audio track volume slider and reports changes", () => {
     const project = createVideoProject();
     const onUpdateTrackVolume = vi.fn();
