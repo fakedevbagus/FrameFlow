@@ -26,8 +26,12 @@ describe("ExportPanel", () => {
       target: { value: "720p" },
     });
 
-    expect(screen.getByText("1280 × 720")).toBeInTheDocument();
-    expect(screen.getByText("Untitled project.mp4")).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Export settings" }),
+    ).toHaveTextContent("1280 × 720");
+    expect(
+      screen.getByRole("textbox", { name: "Export file name" }),
+    ).toHaveValue("Untitled project.mp4");
   });
 
   it("closes through the provided callback", () => {
