@@ -12,6 +12,7 @@ import {
   resetClipTransform,
   toggleTrackMute,
   updateTrackVolume,
+  updateAudioClipFades,
   updateClipTransform,
   updateClipTransformAtTime,
   moveClipOnTimeline,
