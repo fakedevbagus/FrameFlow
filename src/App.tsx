@@ -6,8 +6,9 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
-import { getAudioEq } from "./features/project/domain";
+import { getAudioCompressor, getAudioEq } from "./features/project/domain";
 import type {
+  AudioCompressor,
   AudioEq,
   Clip,
   ClipCrop,
@@ -34,6 +35,7 @@ import {
   updateTrackPan,
   updateAudioClipFades,
   updateAudioClipEq,
+  updateAudioClipCompressor,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
   updateClipTransformAnchorWithCompensation,
@@ -609,6 +611,45 @@ function App() {
     };
 
     handleUpdateAudioClipEq(selectedClipContext.clip.id, nextEq);
+  }
+
+  function handleUpdateAudioClipCompressor(
+    clipId: string,
+    compressor: AudioCompressor,
+  ) {
+    const clipContext = findClipContext(project, clipId);
+
+    if (
+      !clipContext ||
+      clipContext.track.type !== "audio" ||
+      clipContext.asset?.mediaType !== "audio"
+    ) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        updateAudioClipCompressor(currentProject, clipId, compressor),
+      "Audio compressor updated.",
+    );
+  }
+
+  function handleUpdateSelectedAudioCompressor(
+    changes: Partial<AudioCompressor>,
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    const nextCompressor = {
+      ...getAudioCompressor(selectedClipContext.clip),
+      ...changes,
+    };
+
+    handleUpdateAudioClipCompressor(
+      selectedClipContext.clip.id,
+      nextCompressor,
+    );
   }
 
   function handleToggleTrackMute(trackId: string) {
@@ -2259,6 +2300,11 @@ function App() {
                     onCommit={handleUpdateSelectedAudioEq}
                     onKeyDown={handleTransformInputKeyDown}
                   />
+                  <AudioCompressorInspector
+                    clip={selectedClipContext.clip}
+                    onCommit={handleUpdateSelectedAudioCompressor}
+                    onKeyDown={handleTransformInputKeyDown}
+                  />
                 </>
               ) : null}
               {(selectedClipContext.asset?.mediaType === "video" ||
@@ -2566,13 +2612,7 @@ function AudioEqInspector({
     if (highRef.current) {
       highRef.current.value = String(eq.highGainDb);
     }
-  }, [
-    clip.id,
-    clip.audioEq?.enabled,
-    clip.audioEq?.lowGainDb,
-    clip.audioEq?.midGainDb,
-    clip.audioEq?.highGainDb,
-  ]);
+  }, [clip]);
 
   function commit(which: "low" | "mid" | "high") {
     const current = getAudioEq(clip);
@@ -2708,6 +2748,222 @@ function AudioEqInspector({
               onKeyDown={onKeyDown}
             />
             <span>dB</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function AudioCompressorInspector({
+  clip,
+  onCommit,
+  onKeyDown,
+}: {
+  clip: Clip;
+  onCommit: (changes: Partial<AudioCompressor>) => void;
+  onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
+}) {
+  const enabledRef = useRef<HTMLInputElement>(null);
+  const thresholdRef = useRef<HTMLInputElement>(null);
+  const ratioRef = useRef<HTMLInputElement>(null);
+  const attackRef = useRef<HTMLInputElement>(null);
+  const releaseRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const compressor = getAudioCompressor(clip);
+
+    if (enabledRef.current) {
+      enabledRef.current.checked = compressor.enabled;
+    }
+    if (thresholdRef.current) {
+      thresholdRef.current.value = String(compressor.thresholdDb);
+    }
+    if (ratioRef.current) {
+      ratioRef.current.value = String(compressor.ratio);
+    }
+    if (attackRef.current) {
+      attackRef.current.value = String(compressor.attackMs);
+    }
+    if (releaseRef.current) {
+      releaseRef.current.value = String(compressor.releaseMs);
+    }
+  }, [clip]);
+
+  function commit(which: "threshold" | "ratio" | "attack" | "release") {
+    const current = getAudioCompressor(clip);
+    const rawValues = {
+      threshold: thresholdRef.current?.value.trim() ?? "",
+      ratio: ratioRef.current?.value.trim() ?? "",
+      attack: attackRef.current?.value.trim() ?? "",
+      release: releaseRef.current?.value.trim() ?? "",
+    };
+
+    if (
+      !rawValues.threshold ||
+      !rawValues.ratio ||
+      !rawValues.attack ||
+      !rawValues.release
+    ) {
+      if (which === "threshold" && thresholdRef.current) {
+        thresholdRef.current.value = String(current.thresholdDb);
+      }
+      if (which === "ratio" && ratioRef.current) {
+        ratioRef.current.value = String(current.ratio);
+      }
+      if (which === "attack" && attackRef.current) {
+        attackRef.current.value = String(current.attackMs);
+      }
+      if (which === "release" && releaseRef.current) {
+        releaseRef.current.value = String(current.releaseMs);
+      }
+      return;
+    }
+
+    const values = {
+      threshold: Number(rawValues.threshold),
+      ratio: Number(rawValues.ratio),
+      attack: Number(rawValues.attack),
+      release: Number(rawValues.release),
+    };
+
+    if (
+      !Number.isFinite(values.threshold) ||
+      values.threshold < -60 ||
+      values.threshold > 0 ||
+      !Number.isFinite(values.ratio) ||
+      values.ratio < 1 ||
+      values.ratio > 20 ||
+      !Number.isFinite(values.attack) ||
+      values.attack < 0.01 ||
+      values.attack > 2000 ||
+      !Number.isFinite(values.release) ||
+      values.release < 0.01 ||
+      values.release > 9000
+    ) {
+      const refs = {
+        threshold: thresholdRef,
+        ratio: ratioRef,
+        attack: attackRef,
+        release: releaseRef,
+      };
+      refs[which].current?.focus();
+      if (which === "threshold" && thresholdRef.current) {
+        thresholdRef.current.value = String(current.thresholdDb);
+      }
+      if (which === "ratio" && ratioRef.current) {
+        ratioRef.current.value = String(current.ratio);
+      }
+      if (which === "attack" && attackRef.current) {
+        attackRef.current.value = String(current.attackMs);
+      }
+      if (which === "release" && releaseRef.current) {
+        releaseRef.current.value = String(current.releaseMs);
+      }
+      return;
+    }
+
+    onCommit({
+      thresholdDb: Math.round(values.threshold * 10) / 10,
+      ratio: Math.round(values.ratio * 10) / 10,
+      attackMs: Math.round(values.attack * 100) / 100,
+      releaseMs: Math.round(values.release * 100) / 100,
+    });
+  }
+
+  function toggleEnabled() {
+    onCommit({
+      enabled: enabledRef.current?.checked ?? false,
+    });
+  }
+
+  return (
+    <div className="inspector-section">
+      <div className="inspector-section-header">
+        <span className="inspector-section-title">Audio Compressor</span>
+        <span className="inspector-keyframe-count">Dynamics</span>
+      </div>
+      <label className="inspector-toggle-field">
+        <input
+          ref={enabledRef}
+          aria-label="Enable audio compressor"
+          defaultChecked={getAudioCompressor(clip).enabled}
+          type="checkbox"
+          onChange={toggleEnabled}
+        />
+        <span>Enable compressor</span>
+      </label>
+      <div className="inspector-transform-input-grid">
+        <label className="inspector-transform-field">
+          <span>Threshold</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              ref={thresholdRef}
+              aria-label="Audio compressor threshold"
+              className="inspector-transform-input"
+              defaultValue={getAudioCompressor(clip).thresholdDb}
+              max="0"
+              min="-60"
+              step="0.5"
+              type="number"
+              onBlur={() => commit("threshold")}
+              onKeyDown={onKeyDown}
+            />
+            <span>dB</span>
+          </div>
+        </label>
+        <label className="inspector-transform-field">
+          <span>Ratio</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              ref={ratioRef}
+              aria-label="Audio compressor ratio"
+              className="inspector-transform-input"
+              defaultValue={getAudioCompressor(clip).ratio}
+              max="20"
+              min="1"
+              step="0.5"
+              type="number"
+              onBlur={() => commit("ratio")}
+              onKeyDown={onKeyDown}
+            />
+            <span>:1</span>
+          </div>
+        </label>
+        <label className="inspector-transform-field">
+          <span>Attack</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              ref={attackRef}
+              aria-label="Audio compressor attack"
+              className="inspector-transform-input"
+              defaultValue={getAudioCompressor(clip).attackMs}
+              max="2000"
+              min="0.01"
+              step="1"
+              type="number"
+              onBlur={() => commit("attack")}
+              onKeyDown={onKeyDown}
+            />
+            <span>ms</span>
+          </div>
+        </label>
+        <label className="inspector-transform-field">
+          <span>Release</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              ref={releaseRef}
+              aria-label="Audio compressor release"
+              className="inspector-transform-input"
+              defaultValue={getAudioCompressor(clip).releaseMs}
+              max="9000"
+              min="0.01"
+              step="1"
+              type="number"
+              onBlur={() => commit("release")}
+              onKeyDown={onKeyDown}
+            />
+            <span>ms</span>
           </div>
         </label>
       </div>
