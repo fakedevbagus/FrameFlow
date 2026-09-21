@@ -1,14 +1,14 @@
-## M3.45 implementation checkpoint — 2026-09-21
+## M3.45 merge reconciliation — 2026-09-21
 
-- Branch: `feat/m3-45-audio-track-volume`.
-- M3.44 is complete and squash-merged at `33c36f19735df4967b149e1c16d60e88f1ccf4a4`.
-- M3.45 adds a backward-compatible per-track volume value with a default of 1.0 (100%).
-- Audio track volume is exposed as a compact Timeline slider and applied to audio preview playback.
-- The volume value is carried into RenderPlan and applied in the explicit Audio-track FFmpeg graph before timeline placement/mixing.
-- Existing mute behavior remains separate from volume; volume 0 preserves an unmuted track state while producing silence.
-- Legacy project files without a stored track volume continue to behave as full volume through the normalization helper.
+- Current milestone: M3.45 — Audio Track Volume Control.
+- PR #57 (feat/m3-45-audio-track-volume) was marked ready after user local validation and squash-merged.
+- M3.45 merge SHA: 9ce1bcf1c7a8729f62c65121274029d960eccddb.
+- User local validation report: npm run lint passed; Vitest passed with 253/253 tests across 28 test files; npm run build completed successfully; Rust tests passed 28/28; npm run tauri dev launched successfully.
+- The initial git pull --ff-only origin feat/m3-45-audio-track-volume step did not fast-forward because the local branch had diverged. This was a repository synchronization issue only; the subsequent validation suite completed successfully.
+- M3.45 adds backward-compatible per-track volume state with a 1.0 default, a validated update command, an Audio-track Timeline slider, preview volume application, RenderPlan propagation, and FFmpeg graph volume application.
+- Existing mute behavior remains separate from continuous volume.
 - Audio fades/effects, multiple independent Audio tracks, and render progress/cancellation remain deferred.
-- Local validation is pending user verification.
+- M3.46 must be based on the verified post-M3.45 main state rather than stale local branch history.
 
 ## M3.44 implementation checkpoint — 2026-09-21
 
