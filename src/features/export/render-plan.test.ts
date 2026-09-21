@@ -74,7 +74,7 @@ describe("render plan", () => {
 
     const plan = createRenderPlan(projectWithMedia, {
       format: "mp4",
-      quality: "draft",
+      quality: "source",
     });
 
     expect(plan.segments).toContainEqual(expect.objectContaining({
