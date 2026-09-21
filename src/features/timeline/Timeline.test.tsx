@@ -1,6 +1,18 @@
 import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn((command: string) =>
+    command === "generate_audio_waveform"
+      ? Promise.resolve({
+          durationMs: 5000,
+          sampleRate: 1024,
+          peaks: [0.2, 0.5, 0.8, 0.35],
+        })
+      : Promise.resolve(undefined),
+  ),
+}));
 import { createProject } from "../project/domain";
 import {
   addAssetToTimeline,
@@ -659,6 +671,26 @@ describe("Timeline", () => {
       0,
     );
   });
+  it("renders a native audio waveform for an audio clip", async () => {
+    const project = createVideoProject();
+    project.assets.push({
+      id: "audio-waveform",
+      name: "waveform.mp3",
+      mediaType: "audio",
+      sourcePath: "/waveform.mp3",
+      durationMs: 5000,
+    });
+
+    const populated = addAssetToTimeline(project, "audio-waveform");
+
+    render(<Timeline project={populated} />);
+
+    const waveform = await screen.findByTestId("timeline-audio-waveform");
+
+    expect(waveform).toBeInTheDocument();
+    expect(waveform.querySelector("path")).toHaveAttribute("d");
+  });
+
   it("shows an audio track volume slider and reports changes", () => {
     const project = createVideoProject();
     const onUpdateTrackVolume = vi.fn();
