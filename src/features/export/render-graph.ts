@@ -151,8 +151,7 @@ function buildSegmentFilter(
           "setsar=1",
         ]
       : []),
-    "[" + label + "]",
-  ].join(",");
+  ].join(",") + "[" + label + "]";
 }
 
 function assertSupportedVisualMetadata(segment: RenderSegment): void {
