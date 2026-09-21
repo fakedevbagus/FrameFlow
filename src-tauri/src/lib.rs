@@ -692,7 +692,7 @@ mod tests {
 
   #[test]
   fn validates_native_mp4_output_paths() {
-    assert!(super::validate_export_output_path(Path::new("/tmp/output.mp4")).is_err() || true);
+    assert!(super::validate_export_output_path(Path::new("/tmp/output.mp4")).is_ok());
     assert!(super::validate_export_output_path(Path::new("relative/output.mp4")).is_err());
     assert!(super::validate_export_output_path(Path::new("/tmp/output.mov")).is_err());
   }
@@ -707,10 +707,10 @@ mod tests {
       29.97,
     );
 
-    assert!(args.iter().any(|arg| arg == "/media/My Video; clip.mp4"));
-    assert!(args.iter().any(|arg| arg == "/tmp/My Export.mp4"));
-    assert!(args.iter().any(|arg| arg == "scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=w=1280:h=720:x=(ow-iw)/2:y=(oh-ih)/2"));
-    assert!(args.iter().any(|arg| arg == "29.97"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "/media/My Video; clip.mp4"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "/tmp/My Export.mp4"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=w=1280:h=720:x=(ow-iw)/2:y=(oh-ih)/2"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "29.97"));
   }
 
   #[test]
