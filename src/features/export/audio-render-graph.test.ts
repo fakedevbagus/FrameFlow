@@ -202,6 +202,8 @@ describe("audio render graph", () => {
           trackIndex: 0,
           timelineStartMs: 1000,
           timelineEndMs: 3000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
         }),
       ]),
     );
