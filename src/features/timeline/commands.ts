@@ -6,7 +6,6 @@ import type {
   ClipTransform,
   Project,
   TrackType,
-  DEFAULT_TRACK_VOLUME,
   TransformEasing,
   ClipTransition,
 } from "../project/domain";
