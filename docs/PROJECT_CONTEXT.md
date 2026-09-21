@@ -1,3 +1,11 @@
+## M3.38 single-clip compatibility path — 2026-09-21
+
+- The user's environment reports Filter not found when executing the filter_complex path, including the minimal single-clip graph.
+- To isolate this environment-specific filter_complex issue, the simplest export case now uses the existing native single-source renderer.
+- Segment timing is passed as native input options (-ss/-t), while scale/pad, frame rate, and pixel format remain native output options.
+- Audio is explicitly disabled for this direct path to preserve M3.37's video-only render policy.
+- Multi-clip/gap timelines still use the graph renderer.
+- Local validation of the compatibility path is pending.
 - The direct single-clip graph now avoids fps, setsar, format, and concat filters; native output options apply the requested frame rate and yuv420p pixel format.\n- This is intended to reduce filter dependency surface for the simplest real export path while retaining the existing multi-clip concat path.
 ## M3.38 native render debug checkpoint — 2026-09-21
 
