@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.37 validation correction
+
+- User local validation passed lint, build, and Tauri startup.
+- Test suite result: 25/26 test files and 233/234 tests passed.
+- The only failure was an assertion-shape issue in the new render-pipeline regression: graph compilation throws synchronously, so the test must use `.toThrow()` rather than `.rejects`.
+- Corrected the test; fresh local validation is pending.
+
 ## 2026-09-21 — M3.37 native render graph wiring — in progress
 
 Branch: `feat/m3-37-native-render-graph-wiring`
