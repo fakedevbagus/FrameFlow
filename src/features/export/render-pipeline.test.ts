@@ -17,7 +17,7 @@ describe("render video pipeline", () => {
     vi.clearAllMocks();
   });
 
-  it("connects the deterministic render graph to the native renderer contract", async () => {
+  it("connects a multi-clip render graph to the native renderer contract", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -67,7 +67,7 @@ describe("render video pipeline", () => {
 
     expect(renderVideoGraphToMp4).toHaveBeenCalledWith(
       expect.objectContaining({
-        inputs: ["/media/a.mp4"],
+        inputs: ["/media/a.mp4", "/media/b.mp4"],
         outputPath: "/tmp/timeline-export.mp4",
         width: 1080,
         height: 1920,
