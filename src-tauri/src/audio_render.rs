@@ -6,6 +6,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::probe_has_audio;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeAudioGraphRenderRequest {
@@ -19,6 +21,260 @@ pub struct NativeAudioGraphRenderRequest {
 #[serde(rename_all = "camelCase")]
 pub struct NativeAudioRenderResult {
   output_path: String,
+}
+
+
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeVideoWithAudioGraphRenderRequest {
+  pub video_source_path: String,
+  pub audio_inputs: Vec<String>,
+  pub audio_filter_complex: String,
+  pub audio_map: String,
+  pub duration_ms: u64,
+  pub output_path: String,
+}
+
+#[tauri::command]
+pub fn render_video_with_audio_graph_to_mp4(
+  request: NativeVideoWithAudioGraphRenderRequest,
+) -> Result<NativeAudioRenderResult, String> {
+  validate_video_audio_mix_request(&request)?;
+
+  let video_path = PathBuf::from(&request.video_source_path);
+  let output_path = PathBuf::from(&request.output_path);
+
+  if !video_path.is_file() {
+    return Err(format!(
+      "Native video/audio mix video input does not exist: {}",
+      video_path.display()
+    ));
+  }
+
+  let audio_paths = request
+    .audio_inputs
+    .iter()
+    .map(|value| {
+      let path = PathBuf::from(value);
+
+      if !path.is_absolute() {
+        return Err("Native video/audio mix inputs must use absolute paths.".to_string());
+      }
+
+      if !path.is_file() {
+        return Err(format!(
+          "Native video/audio mix audio input does not exist: {}",
+          path.display()
+        ));
+      }
+
+      if media_type(&path)? != "audio" {
+        return Err("Native video/audio mix inputs must be audio sources only.".to_string());
+      }
+
+      if same_path(&path, &output_path) {
+        return Err(
+          "Export output must differ from every independent audio mix input.".to_string()
+        );
+      }
+
+      Ok(path)
+    })
+    .collect::<Result<Vec<_>, String>>()?;
+
+  let has_video_audio = probe_has_audio(&video_path)?;
+  let temporary_path = temporary_audio_mix_path(&output_path);
+  let args = build_ffmpeg_video_with_audio_graph_args(
+    &video_path,
+    &audio_paths,
+    &request.audio_filter_complex,
+    &request.audio_map,
+    request.duration_ms,
+    has_video_audio,
+    &temporary_path,
+  );
+
+  let output = Command::new("ffmpeg")
+    .args(&args)
+    .output()
+    .map_err(|error| {
+      let _ = fs::remove_file(&temporary_path);
+      format!("Could not run ffmpeg for native video/audio mix: {error}")
+    })?;
+
+  if !output.status.success() {
+    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let _ = fs::remove_file(&temporary_path);
+
+    return Err(if detail.is_empty() {
+      "FFmpeg could not mix the project video and audio graph.".to_string()
+    } else {
+      format!("FFmpeg could not mix the project video and audio graph: {detail}")
+    });
+  }
+
+  let metadata = fs::metadata(&temporary_path).map_err(|error| {
+    let _ = fs::remove_file(&temporary_path);
+    format!(
+      "FFmpeg completed but the mixed export file could not be inspected: {error}"
+    )
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&temporary_path);
+    return Err("FFmpeg completed but produced an empty mixed export.".to_string());
+  }
+
+  fs::rename(&temporary_path, &output_path).map_err(|error| {
+    let _ = fs::remove_file(&temporary_path);
+    format!(
+      "Could not finalize the mixed export '{}': {error}",
+      output_path.display()
+    )
+  })?;
+
+  Ok(NativeAudioRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+fn validate_video_audio_mix_request(
+  request: &NativeVideoWithAudioGraphRenderRequest,
+) -> Result<(), String> {
+  if request.audio_inputs.is_empty() {
+    return Err("Native video/audio mix requires at least one audio input.".to_string());
+  }
+
+  if request.duration_ms == 0 {
+    return Err("Native video/audio mix requires a positive duration.".to_string());
+  }
+
+  if request.audio_filter_complex.trim().is_empty() {
+    return Err("Native video/audio mix requires an audio filter graph.".to_string());
+  }
+
+  if request.audio_map != "[aout]" {
+    return Err("Native video/audio mix requires the [aout] audio map.".to_string());
+  }
+
+  let video_path = Path::new(&request.video_source_path);
+  if !video_path.is_absolute() {
+    return Err("Native video/audio mix video input must use an absolute path.".to_string());
+  }
+
+  if media_type(video_path)? != "video" {
+    return Err("Native video/audio mix video input must be a video source.".to_string());
+  }
+
+  let output_path = Path::new(&request.output_path);
+  validate_mp4_output_path(output_path)
+}
+
+fn validate_mp4_output_path(output_path: &Path) -> Result<(), String> {
+  if !output_path.is_absolute() {
+    return Err("Export output path must be absolute.".to_string());
+  }
+
+  if output_path
+    .extension()
+    .and_then(|value| value.to_str())
+    .map(str::to_ascii_lowercase)
+    .as_deref()
+    != Some("mp4")
+  {
+    return Err("Export output path must use the .mp4 extension.".to_string());
+  }
+
+  let parent = output_path
+    .parent()
+    .filter(|parent| !parent.as_os_str().is_empty())
+    .ok_or_else(|| "Export output path must have a parent directory.".to_string())?;
+
+  if !parent.is_dir() {
+    return Err("Export output directory does not exist.".to_string());
+  }
+
+  Ok(())
+}
+
+fn temporary_audio_mix_path(output_path: &Path) -> PathBuf {
+  let stamp = std::time::SystemTime::now()
+    .duration_since(std::time::UNIX_EPOCH)
+    .map(|value| value.as_nanos())
+    .unwrap_or_default();
+
+  output_path
+    .parent()
+    .unwrap_or_else(|| Path::new("."))
+    .join(format!(".frameflow-audio-mix-{stamp}.tmp.mp4"))
+}
+
+fn build_ffmpeg_video_with_audio_graph_args(
+  video_path: &Path,
+  audio_paths: &[PathBuf],
+  audio_filter_complex: &str,
+  audio_map: &str,
+  duration_ms: u64,
+  has_video_audio: bool,
+  output_path: &Path,
+) -> Vec<std::ffi::OsString> {
+  let duration_seconds = duration_ms as f64 / 1000.0;
+
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-i".into(),
+    video_path.as_os_str().to_os_string(),
+  ];
+
+  for audio_path in audio_paths {
+    args.push("-i".into());
+    args.push(audio_path.as_os_str().to_os_string());
+  }
+
+  let base_audio = if has_video_audio {
+    format!(
+      "[0:a:0]aformat=sample_rates=48000:channel_layouts=stereo,apad,atrim=duration={duration_seconds},asetpts=PTS-STARTPTS[baseaudio]"
+    )
+  } else {
+    format!(
+      "anullsrc=r=48000:cl=stereo,atrim=duration={duration_seconds},asetpts=PTS-STARTPTS[baseaudio]"
+    )
+  };
+
+  let mixed_graph = format!(
+    "{audio_filter_complex};{base_audio};[baseaudio]{audio_map}amix=inputs=2:duration=longest:dropout_transition=0:normalize=1[amixed]"
+  );
+
+  args.extend([
+    "-filter_complex".into(),
+    mixed_graph.into(),
+    "-map".into(),
+    "0:v:0".into(),
+    "-map".into(),
+    "[amixed]".into(),
+    "-c:v".into(),
+    "copy".into(),
+    "-c:a".into(),
+    "aac".into(),
+    "-b:a".into(),
+    "192k".into(),
+    "-ar".into(),
+    "48000".into(),
+    "-ac".into(),
+    "2".into(),
+    "-shortest".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
 }
 
 #[tauri::command]
@@ -209,7 +465,9 @@ fn same_path(first: &Path, second: &Path) -> bool {
 #[cfg(test)]
 mod tests {
   use super::{
-    build_ffmpeg_audio_graph_args, media_type, validate_request, NativeAudioGraphRenderRequest,
+    build_ffmpeg_audio_graph_args, build_ffmpeg_video_with_audio_graph_args, media_type,
+    validate_request, validate_video_audio_mix_request, NativeAudioGraphRenderRequest,
+    NativeVideoWithAudioGraphRenderRequest,
   };
   use std::path::{Path, PathBuf};
 
@@ -308,4 +566,124 @@ mod tests {
     ]));
     assert!(values.iter().any(|value| value == "/tmp/FrameFlow Audio.mp4"));
   }
+  #[test]
+  fn validates_video_audio_mix_request_metadata() {
+    let valid = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      audio_filter_complex: "anullsrc=r=48000:cl=stereo[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    assert!(validate_video_audio_mix_request(&valid).is_ok());
+
+    let mut missing_audio = valid;
+    missing_audio.audio_inputs.clear();
+    assert!(validate_video_audio_mix_request(&missing_audio).is_err());
+
+    let mut missing_graph = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      audio_filter_complex: String::new(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_mix_request(&missing_graph).is_err());
+
+    missing_graph.audio_filter_complex = "anullsrc[aout]".to_string();
+    missing_graph.audio_map = "[other]".to_string();
+    assert!(validate_video_audio_mix_request(&missing_graph).is_err());
+
+    let mut invalid_duration = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      audio_filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_mix_request(&invalid_duration).is_err());
+
+    invalid_duration.duration_ms = 5_000;
+    invalid_duration.output_path = "/tmp/final.mov".to_string();
+    assert!(validate_video_audio_mix_request(&invalid_duration).is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_video_with_audio_graph_arguments() {
+    let args = build_ffmpeg_video_with_audio_graph_args(
+      Path::new("/media/base video.mp4"),
+      &[
+        PathBuf::from("/media/Music Track.mp3"),
+        PathBuf::from("/media/Voice.wav"),
+      ],
+      "[1:a:0]atrim=start=0:end=2[audio0];[2:a:0]adelay=1500:all=1[audio1];[audio0][audio1]amix=inputs=2[aout]",
+      "[aout]",
+      5_000,
+      true,
+      Path::new("/tmp/final.mix.tmp.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/base video.mp4".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Music Track.mp3".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Voice.wav".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "0:v:0".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[amixed]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:v".to_string(),
+      "copy".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:a".to_string(),
+      "aac".to_string()
+    ]));
+    assert!(values.iter().any(|value| value.contains("[baseaudio]")));
+    assert!(values.iter().any(|value| value.contains("[aout]amix=inputs=2")));
+    assert!(values.iter().any(|value| value == "-shortest"));
+  }
+
+  #[test]
+  fn builds_silence_when_base_video_has_no_audio() {
+    let args = build_ffmpeg_video_with_audio_graph_args(
+      Path::new("/media/base.mp4"),
+      &[PathBuf::from("/media/music.mp3")],
+      "[1:a:0]anull[aout]",
+      "[aout]",
+      4_000,
+      false,
+      Path::new("/tmp/final.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.iter().any(|value| value.contains("anullsrc=r=48000:cl=stereo")));
+    assert!(values.iter().any(|value| value.contains("atrim=duration=4")));
+  }
+
 }
