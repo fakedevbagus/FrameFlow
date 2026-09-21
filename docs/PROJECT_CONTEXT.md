@@ -1,3 +1,11 @@
+## M3.38 native render debug checkpoint — 2026-09-21
+
+- Real ExportPanel execution reaches FFmpeg, but the user's environment reported Filter not found while parsing the video filter graph.
+- The exact graph shape succeeds in an independent FFmpeg 7.1.5 test, so the graph failure is not reproduced in the development environment.
+- M3.38 now optimizes the simplest export case: one video clip starting at 0 ms bypasses concat and emits clip0 through format=yuv420p to vout.
+- Multi-clip and gap timelines retain concat.
+- This removes one unnecessary filter dependency from the most basic export path while preserving the existing render semantics.
+- Local validation of this change is pending.
 ## M3.38 validation/debug correction — 2026-09-21
 
 - The export action is now reaching the native renderer, but a real media export returned an FFmpeg failure.
