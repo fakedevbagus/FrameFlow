@@ -1,3 +1,13 @@
+## M3.56 kickoff — Audio Waveform Scrubbing — 2026-09-22
+
+- M3.55 Audio Waveform Foundation was squash-merged as PR #69 at `8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`.
+- M3.56 scope: make the existing Audio timeline waveform directly scrub the owning clip's playhead position.
+- The waveform maps pointer X to local clip time with clamping and integer-millisecond normalization.
+- Scrubbing selects the owning audio clip and uses the existing Timeline current-time callback; waveform pointer events are isolated from clip dragging.
+- No project schema changes are introduced, and waveform generation remains read-only.
+- Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR draft until the full validation suite and focused waveform scrubbing checks are clean.
+
 ## M3.55 kickoff — Audio Waveform Foundation — 2026-09-21
 
 - M3.54 Audio Volume Automation Timeline UX was squash-merged as PR #68 at `21a1d601bed8215ea52c6ec4eb8ddcb2c4e769d2`.
