@@ -1,5 +1,13 @@
 ## 2026-09-21
 
+### M3.32 validation correction
+
+- First local run: lint passed, 213/215 tests passed, build passed, and Tauri dev launched.
+- Two test assertions were corrected: portrait 720p dimensions are 406×720 because the export helper enforces even width, and filename verification now checks the input value.
+- PR #43 remains draft pending a fresh clean rerun.
+
+## 2026-09-21
+
 ### M3.32 — Export settings foundation — in progress
 
 Branch: `feat/m3-32-export-settings`
