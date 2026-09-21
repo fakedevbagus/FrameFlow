@@ -1328,7 +1328,7 @@ function getAudioPreviewRouting(
 function applyAudioPreviewProcessing(
   routing: AudioPreviewRouting,
   track: Project["tracks"][number],
-  clip: Clip,
+  clip: ActivePreviewClip["clip"],
 ) {
   const eq = getAudioEq(clip);
 
@@ -1538,6 +1538,5 @@ function getClipDurationMsForTransform(clip: ActivePreviewClip["clip"]): number 
 
   return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
 }
-
 
 
