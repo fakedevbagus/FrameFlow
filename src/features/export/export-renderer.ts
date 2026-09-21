@@ -60,41 +60,63 @@ export interface NativeVideoGraphRenderRequest {
 
 export function renderSingleSourceToMp4(
   request: NativeExportRenderRequest,
+  jobId?: string,
 ): Promise<NativeExportRenderResult> {
   return invoke<NativeExportRenderResult>("render_single_source_to_mp4", {
     request,
+    ...(jobId ? { jobId } : {}),
   });
 }
 
 export function renderAudioGraphToMp4(
   request: NativeAudioGraphRenderRequest,
+  jobId?: string,
+  durationMs?: number,
 ): Promise<NativeExportRenderResult> {
   return invoke<NativeExportRenderResult>("render_audio_graph_to_mp4", {
     request,
+    ...(jobId ? { jobId } : {}),
+    ...(durationMs !== undefined ? { durationMs } : {}),
   });
 }
 
 export function renderVideoWithAudioGraphToMp4(
   request: NativeVideoWithAudioGraphRenderRequest,
+  jobId?: string,
 ): Promise<NativeExportRenderResult> {
   return invoke<NativeExportRenderResult>(
     "render_video_with_audio_graph_to_mp4",
-    { request },
+    {
+      request,
+      ...(jobId ? { jobId } : {}),
+    },
   );
 }
 
 export function renderVideoGraphToMp4(
   request: NativeVideoGraphRenderRequest,
+  jobId?: string,
+  durationMs?: number,
 ): Promise<NativeExportRenderResult> {
   return invoke<NativeExportRenderResult>("render_video_graph_to_mp4", {
     request,
+    ...(jobId ? { jobId } : {}),
+    ...(durationMs !== undefined ? { durationMs } : {}),
   });
 }
 export function renderVideoSegmentsToMp4(
   request: NativeVideoSegmentsRenderRequest,
+  jobId?: string,
 ): Promise<NativeExportRenderResult> {
   return invoke<NativeExportRenderResult>("render_video_segments_to_mp4", {
     request,
+    ...(jobId ? { jobId } : {}),
+  });
+}
+
+export function requestExportCancellation(jobId: string): Promise<void> {
+  return invoke<void>("cancel_export_job", {
+    request: { jobId },
   });
 }
 
