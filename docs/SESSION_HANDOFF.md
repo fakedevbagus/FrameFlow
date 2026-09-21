@@ -1,20 +1,13 @@
-## M3.40 validation correction — 2026-09-21
+## M3.41 implementation checkpoint — 2026-09-21
 
-- User validation reached build success, Tauri startup success, and Rust test execution; the Rust suite had 18 passing tests and one failing metadata-validation test.
-- TypeScript validation had 239 passing tests and two failures in `render-pipeline.test.ts`.
-- The failures were caused by tests still expecting the old filter-graph routing after M3.40 introduced the native segment renderer, plus the unsupported-state test bypassing graph validation for the direct single-source path.
-- Corrected the pipeline to compile/validate the supported render plan before renderer selection; sequential video-only plans now use the segment renderer, while the single clip at timeline zero retains the audio-capable single-source renderer.
-- Corrected the Rust metadata test to use a synthetic gap segment (`sourcePath: None`) for a filesystem-independent valid case.
-- Added an edge-case regression so a single clip offset from timeline zero uses a black gap segment rather than falling back to filter_complex.
-- M3.40 remains pending a fresh full local validation run.
-## M3.40 implementation checkpoint — 2026-09-21
-
-- Branch: `feat/m3-40-multi-segment-video`.
-- M3.39 is completed and squash-merged as PR #50 at `2808ba584932967f7dccf2b273faf79e61e27a9d`.
-- M3.40 extends the proven native single-source path to multiple sequential video segments on one video track.
-- Each clip is rendered to a normalized temporary MP4 using the existing native scale/pad/video encoder path; timeline gaps are generated as black normalized segments; the normalized segments are concatenated with FFmpeg's concat demuxer.
-- This slice intentionally avoids `filter_complex` for multi-clip timeline assembly and remains video-only; independent audio-track mixing remains deferred.
-- Local validation is pending.
+- Branch: `feat/m3-41-multisegment-audio`.
+- M3.40 is completed and squash-merged as PR #51 at `4d9e15a27dda3c5d5d42f18c2161a9a3d6a6b415`.
+- M3.41 extends the native multi-segment renderer so sequential source clips and timeline gaps can be assembled as synchronized A/V segments.
+- Every normalized segment will contain exactly one video stream and one stereo AAC audio stream; source clips use their first audio stream when available and otherwise receive generated silence.
+- Timeline gaps receive black video plus generated silent audio.
+- The final assembly continues to use the concat demuxer with no filter_complex timeline assembly.
+- Independent audio-track editing/mixing, transitions/effects, and multi-track compositing remain deferred.
+- Local validation for M3.41 is pending.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
