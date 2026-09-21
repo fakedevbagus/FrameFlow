@@ -46,6 +46,11 @@ describe("render plan", () => {
         track.id === "audio-1" ? { ...track, volume: 0.35 } : track,
       ),
     };
+    project.tracks[1].clips[0] = {
+      ...project.tracks[1].clips[0],
+      audioFadeInMs: 500,
+      audioFadeOutMs: 750,
+    };
 
     const plan = createRenderPlan(
       project,
@@ -59,6 +64,12 @@ describe("render plan", () => {
     expect(plan.segments).toHaveLength(3);
 
     expect(plan.segments.find((segment) => segment.trackType === "audio")?.trackVolume).toBe(0.35);
+    expect(
+      plan.segments.find((segment) => segment.assetId === "audio-a"),
+    ).toMatchObject({
+      audioFadeInMs: 500,
+      audioFadeOutMs: 750,
+    });
 
     expect(plan.segments).toEqual([
       expect.objectContaining({
