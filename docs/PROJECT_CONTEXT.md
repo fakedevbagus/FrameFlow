@@ -1,3 +1,13 @@
+## M3.48 Multiple Audio Track Mix — implementation checkpoint — 2026-09-21
+
+- M3.48 extends the deterministic audio RenderPlan compiler to accept multiple independent Audio tracks.
+- Audio clips from separate Audio tracks are normalized, trimmed, volume-scaled, fade-processed, timeline-delayed, and mixed into the same [aout] project bus.
+- Audio track ordering is deterministic by RenderPlan track index and then clip timeline position.
+- Existing mute, track volume, clip fades, trim, and timeline placement semantics remain unchanged.
+- The native Tauri audio/video mix boundary already accepts multiple audio input paths, so no new native command contract is introduced.
+- A backward-compatible compileSingleAudioTrackGraph alias remains available while export switches to compileAudioTracksGraph.
+- Deferred: audio effects/EQ/compression, keyframed automation, render progress/cancellation, waveform editing.
+
 ## M3.47 Timeline Audio Fade Handles — Linux WebView visual correction — 2026-09-21
 
 - Normalized the Timeline audio fade handle button appearance for Linux WebView rendering.
