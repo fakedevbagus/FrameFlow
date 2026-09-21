@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { compileSingleVideoTrackGraph } from "./render-graph";
 import { renderVideoPlanToMp4 } from "./render-pipeline";
 import { renderVideoGraphToMp4 } from "./export-renderer";
@@ -9,6 +9,10 @@ vi.mock("./export-renderer", () => ({
 }));
 
 describe("render video pipeline", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("connects the deterministic render graph to the native renderer contract", async () => {
     const plan: RenderPlan = {
       width: 1080,
@@ -44,7 +48,7 @@ describe("render video pipeline", () => {
 
     expect(renderVideoGraphToMp4).toHaveBeenCalledWith(
       expect.objectContaining({
-        inputs: [{ inputIndex: 0, sourcePath: "/media/a.mp4" }],
+        inputs: ["/media/a.mp4"],
         outputPath: "/tmp/timeline-export.mp4",
         width: 1080,
         height: 1920,
