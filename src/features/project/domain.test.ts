@@ -8,6 +8,7 @@ import {
   getTrackVolume,
   getTrackPan,
   getAudioEq,
+  getAudioCompressor,
   getAudioFadeDurations,
 } from "./domain";
 
@@ -108,6 +109,43 @@ describe("project domain", () => {
     });
 
     expect(project.tracks.find((track) => track.type === "audio")?.pan).toBe(0);
+  });
+
+  it("defaults the audio compressor and clamps stored settings", () => {
+    const clip = {
+      id: "compressor-clip",
+      assetId: "audio",
+      timelineStartMs: 0,
+      sourceStartMs: 0,
+      sourceEndMs: 5000,
+    };
+
+    expect(getAudioCompressor(clip)).toEqual({
+      enabled: false,
+      thresholdDb: -24,
+      ratio: 4,
+      attackMs: 20,
+      releaseMs: 250,
+    });
+
+    expect(
+      getAudioCompressor({
+        ...clip,
+        audioCompressor: {
+          enabled: true,
+          thresholdDb: -80,
+          ratio: 25,
+          attackMs: 0,
+          releaseMs: 10000,
+        },
+      }),
+    ).toEqual({
+      enabled: true,
+      thresholdDb: -60,
+      ratio: 20,
+      attackMs: 0.01,
+      releaseMs: 9000,
+    });
   });
 
   it("normalizes audio fade durations against the clip duration", () => {
