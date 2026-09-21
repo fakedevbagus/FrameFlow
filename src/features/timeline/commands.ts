@@ -701,7 +701,10 @@ export function updateAudioClipCompressor(
 
   const normalized: AudioCompressor = {
     enabled: compressor.enabled,
-    thresholdDb: Math.round(compressor.thresholdDb * 10) / 10,
+    thresholdDb:
+      compressor.thresholdDb < 0
+        ? -Math.round(Math.abs(compressor.thresholdDb) * 10) / 10
+        : Math.round(compressor.thresholdDb * 10) / 10,
     ratio: Math.round(compressor.ratio * 10) / 10,
     attackMs: Math.round(compressor.attackMs * 100) / 100,
     releaseMs: Math.round(compressor.releaseMs * 100) / 100,
