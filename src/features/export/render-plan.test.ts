@@ -99,7 +99,27 @@ describe("render plan", () => {
     ]);
   });
 
-  it("resolves quality dimensions from the project aspect ratio", () => {
+  it("carries audio track pan into audio render segments", () => {
+    let project = projectWithAssets();
+    project = addAssetToTrack(project, "audio-a", "audio-1", 0);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "audio-1" ? { ...track, pan: -0.55 } : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(
+      plan.segments.find((segment) => segment.assetId === "audio-a")?.trackPan,
+    ).toBe(-0.55);
+  });
+
+
     const project = projectWithAssets();
     const settings = {
       ...createDefaultExportSettings(project),
