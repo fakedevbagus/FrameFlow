@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import {
   renderSingleSourceToMp4,
   renderAudioGraphToMp4,
+  renderVideoWithAudioGraphToMp4,
   renderVideoGraphToMp4,
   renderVideoSegmentsToMp4,
 } from "./export-renderer";
