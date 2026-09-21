@@ -890,6 +890,9 @@ mod tests {
       1280,
       720,
       29.97,
+      Some(1_250),
+      Some(4_500),
+      false,
     );
 
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "/media/My Video; clip.mp4"));
