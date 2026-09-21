@@ -91,37 +91,29 @@ export function TransitionInspector({
 
       <div
         aria-label="Transition browser"
-        className="inspector-button-grid"
+        className="inspector-transition-picker"
         role="group"
       >
         {transitionOptions.map((option) => {
           const isSelected = transitionType === option.value;
           const isTransitionOption = option.value !== "none";
-          const disabled =
-            isTransitionOption && !canTransition;
+          const disabled = isTransitionOption && !canTransition;
+          const descriptionId = "transition-option-description-" + option.value;
 
           return (
             <button
+              aria-describedby={descriptionId}
+              aria-label={option.label}
               aria-pressed={isSelected}
-              className="toolbar-button"
+              className="inspector-transition-picker-button"
               disabled={disabled}
               key={option.value}
               onClick={() => handleTransitionTypeChange(option.value)}
-              style={{
-                display: "grid",
-                gap: "3px",
-                minHeight: "58px",
-                justifyItems: "start",
-                padding: "8px 9px",
-                textAlign: "left",
-              }}
               title={option.description}
               type="button"
             >
               <strong>{option.label}</strong>
-              <span style={{ color: "inherit", fontSize: "9px", fontWeight: 400 }}>
-                {option.description}
-              </span>
+              <span id={descriptionId}>{option.description}</span>
             </button>
           );
         })}
