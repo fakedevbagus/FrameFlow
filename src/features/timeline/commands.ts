@@ -1,6 +1,8 @@
 import {
   getAudioEq,
   getAudioFadeDurations,
+  getAudioCompressor,
+  type AudioCompressor,
   type AudioEq,
   type TransformAnchor,
   type ClipCrop,
@@ -655,6 +657,78 @@ export function updateAudioClipEq(
     {
       audioEq: isDefault ? undefined : normalized,
     },
+    now,
+  );
+}
+
+export function updateAudioClipCompressor(
+  project: Project,
+  clipId: string,
+  compressor: AudioCompressor,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
+    throw new Error("Audio compression is only available for audio clips.");
+  }
+
+  if (
+    typeof compressor.enabled !== "boolean" ||
+    !Number.isFinite(compressor.thresholdDb) ||
+    compressor.thresholdDb < -60 ||
+    compressor.thresholdDb > 0 ||
+    !Number.isFinite(compressor.ratio) ||
+    compressor.ratio < 1 ||
+    compressor.ratio > 20 ||
+    !Number.isFinite(compressor.attackMs) ||
+    compressor.attackMs < 0.01 ||
+    compressor.attackMs > 2000 ||
+    !Number.isFinite(compressor.releaseMs) ||
+    compressor.releaseMs < 0.01 ||
+    compressor.releaseMs > 9000
+  ) {
+    throw new Error("Audio compressor settings are outside the supported range.");
+  }
+
+  const normalized: AudioCompressor = {
+    enabled: compressor.enabled,
+    thresholdDb: Math.round(compressor.thresholdDb * 10) / 10,
+    ratio: Math.round(compressor.ratio * 10) / 10,
+    attackMs: Math.round(compressor.attackMs * 100) / 100,
+    releaseMs: Math.round(compressor.releaseMs * 100) / 100,
+  };
+  const current = getAudioCompressor(location.clip);
+
+  if (
+    current.enabled === normalized.enabled &&
+    current.thresholdDb === normalized.thresholdDb &&
+    current.ratio === normalized.ratio &&
+    current.attackMs === normalized.attackMs &&
+    current.releaseMs === normalized.releaseMs
+  ) {
+    return project;
+  }
+
+  const isDefault =
+    !normalized.enabled &&
+    normalized.thresholdDb === -24 &&
+    normalized.ratio === 4 &&
+    normalized.attackMs === 20 &&
+    normalized.releaseMs === 250;
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { audioCompressor: isDefault ? undefined : normalized },
     now,
   );
 }
