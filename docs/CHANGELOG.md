@@ -1,3 +1,17 @@
+## 2026-09-22 — M3.56 Audio Waveform Scrubbing — in progress
+
+Branch: `feat/m3-56-audio-waveform-scrubbing`
+
+Scope:
+- Map pointer position on an Audio waveform to local clip time.
+- Select the owning clip and seek the timeline playhead on waveform interaction.
+- Prevent waveform seeking from starting the parent clip move gesture.
+- Preserve existing waveform generation, caching, audio automation, fades, mixer, and export behavior.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required before merge.
+- Waveform editing and region selection remain deferred.
+
 ## 2026-09-21 — M3.55 Audio Waveform Foundation — in progress
 
 Branch: `feat/m3-55-audio-waveform-foundation`
