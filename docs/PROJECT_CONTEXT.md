@@ -1,3 +1,12 @@
+## M3.36 implementation checkpoint — 2026-09-21
+
+- `compileSingleVideoTrackGraph()` is the first filter-graph compiler layered on top of `RenderPlan`.
+- Each video segment becomes a trim/setpts/scale/pad/fps/setsar chain.
+- Timeline gaps are represented with generated black color sources and joined through FFmpeg concat.
+- The compiler deliberately handles only one video track with video assets and no audio/mutable/transform/transition semantics yet.
+- This keeps the graph deterministic and testable before wiring it into the native render command.
+- Next graph layer: connect the compiled filter graph to the native renderer and then add audio/video composition as separate focused slices.
+
 ## M3.35 implementation checkpoint — 2026-09-21
 
 - `src/features/export/render-plan.ts` is the first project-to-render compilation boundary.
