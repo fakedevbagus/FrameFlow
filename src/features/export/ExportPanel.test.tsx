@@ -178,9 +178,10 @@ describe("ExportPanel", () => {
     await screen.findByText("/home/user/Exports/demo.mp4");
     fireEvent.click(screen.getByRole("button", { name: "Export video" }));
 
-    expect(await screen.findByRole("progressbar", { name: "Export progress" })).toHaveValue(
-      0.42,
-    );
+    const progress = await screen.findByRole("progressbar", {
+      name: "Export progress",
+    });
+    expect((progress as HTMLProgressElement).value).toBe(0.42);
     expect(screen.getByText("42%")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel export" }));
