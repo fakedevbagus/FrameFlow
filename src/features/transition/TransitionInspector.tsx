@@ -10,6 +10,24 @@ interface TransitionInspectorProps {
   onChange: (transition: ClipTransition | undefined) => void;
 }
 
+const transitionOptions = [
+  {
+    value: "none",
+    label: "None",
+    description: "No visual transition.",
+  },
+  {
+    value: "dissolve",
+    label: "Dissolve",
+    description: "Blend the outgoing and incoming visuals.",
+  },
+  {
+    value: "fade-through-black",
+    label: "Fade through black",
+    description: "Fade to black before revealing the next clip.",
+  },
+] as const;
+
 export function TransitionInspector({
   canTransition,
   transition,
@@ -35,6 +53,25 @@ export function TransitionInspector({
     });
   }
 
+  function handleTransitionTypeChange(value: string) {
+    switch (value) {
+      case "dissolve":
+        onChange({
+          type: "dissolve",
+          durationMs,
+        });
+        break;
+      case "fade-through-black":
+        onChange({
+          type: "fade-through-black",
+          durationMs,
+        });
+        break;
+      default:
+        onChange(undefined);
+    }
+  }
+
   return (
     <div className="inspector-section">
       <div className="inspector-section-header">
@@ -52,34 +89,59 @@ export function TransitionInspector({
             : "Place another visual clip directly after this clip to enable a transition."}
       </p>
 
+      <div
+        aria-label="Transition browser"
+        className="inspector-button-grid"
+        role="group"
+      >
+        {transitionOptions.map((option) => {
+          const isSelected = transitionType === option.value;
+          const isTransitionOption = option.value !== "none";
+          const disabled =
+            isTransitionOption && !canTransition;
+
+          return (
+            <button
+              aria-pressed={isSelected}
+              className="toolbar-button"
+              disabled={disabled}
+              key={option.value}
+              onClick={() => handleTransitionTypeChange(option.value)}
+              style={{
+                display: "grid",
+                gap: "3px",
+                minHeight: "58px",
+                justifyItems: "start",
+                padding: "8px 9px",
+                textAlign: "left",
+              }}
+              title={option.description}
+              type="button"
+            >
+              <strong>{option.label}</strong>
+              <span style={{ color: "inherit", fontSize: "9px", fontWeight: 400 }}>
+                {option.description}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <label className="inspector-keyframe-easing">
         <span>Type</span>
         <select
           aria-label="Transition type"
           disabled={!canTransition && transitionType === "none"}
           value={transitionType}
-          onChange={(event) => {
-            switch (event.currentTarget.value) {
-              case "dissolve":
-                onChange({
-                  type: "dissolve",
-                  durationMs,
-                });
-                break;
-              case "fade-through-black":
-                onChange({
-                  type: "fade-through-black",
-                  durationMs,
-                });
-                break;
-              default:
-                onChange(undefined);
-            }
-          }}
+          onChange={(event) =>
+            handleTransitionTypeChange(event.currentTarget.value)
+          }
         >
-          <option value="none">None</option>
-          <option value="dissolve">Dissolve</option>
-          <option value="fade-through-black">Fade through black</option>
+          {transitionOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       </label>
 
