@@ -615,6 +615,7 @@ export function Timeline({
       clipId: clip.id,
       pointerId: event.pointerId,
       startClientX: event.clientX,
+      transitionType: transition.type,
       originalDurationMs: durationMs,
       previewDurationMs: durationMs,
       maxDurationMs,
