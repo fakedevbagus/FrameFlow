@@ -7,6 +7,7 @@ import {
   serializeProject,
   getTrackVolume,
   getTrackPan,
+  getAudioEq,
   getAudioFadeDurations,
 } from "./domain";
 
@@ -71,6 +72,43 @@ describe("project domain", () => {
     })).toBe(-1);
   });
 
+
+  it("defaults audio EQ to disabled neutral gains and clamps stored values", () => {
+    const project = createProject({ id: "audio-eq-default" });
+    const audioClip = {
+      id: "eq-clip",
+      assetId: "audio",
+      timelineStartMs: 0,
+      sourceStartMs: 0,
+      sourceEndMs: 5000,
+    };
+
+    expect(getAudioEq(audioClip)).toEqual({
+      enabled: false,
+      lowGainDb: 0,
+      midGainDb: 0,
+      highGainDb: 0,
+    });
+
+    expect(
+      getAudioEq({
+        ...audioClip,
+        audioEq: {
+          enabled: true,
+          lowGainDb: 14,
+          midGainDb: -20,
+          highGainDb: 3.26,
+        },
+      }),
+    ).toEqual({
+      enabled: true,
+      lowGainDb: 12,
+      midGainDb: -12,
+      highGainDb: 3.3,
+    });
+
+    expect(project.tracks.find((track) => track.type === "audio")?.pan).toBe(0);
+  });
 
   it("normalizes audio fade durations against the clip duration", () => {
     const clip = {
