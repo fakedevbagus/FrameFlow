@@ -75,8 +75,6 @@ export function renderVideoPlanToMp4(
     });
   }
 
-  const graph = compileSingleVideoTrackGraph(plan);
-
   return renderVideoGraphToMp4({
     inputs: graph.inputs.map((input) => input.sourcePath),
     outputPath,
