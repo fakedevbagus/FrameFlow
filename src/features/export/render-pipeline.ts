@@ -39,7 +39,7 @@ export function renderVideoPlanToMp4(
   );
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
 
-  if (videoSegments.length > 1 && audioSegments.length === 0 && videoTrackIds.size === 1) {
+  if (videoSegments.length > 0 && audioSegments.length === 0 && videoTrackIds.size === 1) {
     const ordered = [...videoSegments].sort(
       (left, right) => left.timelineStartMs - right.timelineStartMs,
     );
