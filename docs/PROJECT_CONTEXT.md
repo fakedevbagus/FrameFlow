@@ -1,3 +1,13 @@
+## M3.49 Audio Track Pan Control — implementation checkpoint — 2026-09-21
+
+- M3.49 adds backward-compatible pan state to Audio tracks with a centered 0 default and normalized range -1 to +1.
+- Added validated updateTrackPan() command using the existing App -> history path.
+- Timeline exposes compact per-track Pan control alongside Volume.
+- Preview applies pan through a best-effort Web Audio StereoPannerNode when the runtime supports AudioContext.
+- RenderPlan carries trackPan and the native FFmpeg audio graph applies a constant-power stereo balance before clip fades and timeline delay.
+- Existing mute, volume, fade, trim, multi-track mix, and project schema behavior remain unchanged.
+- Deferred: full audio effects/EQ/compression stack, automation, waveform editing, render progress/cancellation.
+
 ## M3.48 test assertion correction — 2026-09-21
 
 - The multi-track regression fixture now gives Track 0 a 0–2 second source range and Track 1 a 1–3 second source range.
