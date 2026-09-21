@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { compileSingleVideoTrackGraph } from "./render-graph";
 import { renderVideoPlanToMp4 } from "./render-pipeline";
-import { renderVideoGraphToMp4 } from "./export-renderer";
+import {
+  renderSingleSourceToMp4,
+  renderVideoGraphToMp4,
+} from "./export-renderer";
 import type { RenderPlan } from "./render-plan";
 
 vi.mock("./export-renderer", () => ({
@@ -31,6 +34,21 @@ describe("render video pipeline", () => {
           trackIndex: 0,
           timelineStartMs: 0,
           timelineEndMs: 2000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
+          durationMs: 2000,
+          isMuted: false,
+        },
+        {
+          inputIndex: 1,
+          assetId: "video-b",
+          sourcePath: "/media/b.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 2000,
+          timelineEndMs: 4000,
           sourceStartMs: 0,
           sourceEndMs: 2000,
           durationMs: 2000,
