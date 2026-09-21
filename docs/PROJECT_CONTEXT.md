@@ -1,3 +1,10 @@
+## M3.48 test assertion correction — 2026-09-21
+
+- The multi-track regression fixture now gives Track 0 a 0–2 second source range and Track 1 a 1–3 second source range.
+- Assertions now match the deterministic compiler ordering: trackIndex 0 -> input 0, trackIndex 1 -> input 1.
+- The test also verifies source-path order and per-track timeline delay to guard against accidental input reordering.
+- No production audio graph behavior changed in this correction.
+
 ## M3.48 validation correction — 2026-09-21
 
 - User validation reached 268/269 tests with build and Rust green.
