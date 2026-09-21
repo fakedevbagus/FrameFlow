@@ -1,3 +1,4 @@
+import { normalizeAudioVolumeKeyframes } from "../audio/automation";
 import {
   getAudioEq,
   getAudioCompressor,
@@ -6,6 +7,7 @@ import {
   getTrackVolume,
   type AudioCompressor,
   type AudioEq,
+  type AudioVolumeKeyframe,
   type Clip,
   type ClipCrop,
   type ClipTransform,
@@ -41,6 +43,7 @@ export interface RenderSegment {
   audioFadeOutMs?: number;
   audioEq?: AudioEq;
   audioCompressor?: AudioCompressor;
+  audioVolumeKeyframes?: AudioVolumeKeyframe[];
   transform?: ClipTransform;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
@@ -147,6 +150,9 @@ export function createRenderPlan(
                 audioFadeOutMs: fades.fadeOutMs,
                 audioEq: getAudioEq(clip),
                 audioCompressor: getAudioCompressor(clip),
+                audioVolumeKeyframes: clip.audioVolumeKeyframes?.length
+                  ? normalizeAudioVolumeKeyframes(clip.audioVolumeKeyframes)
+                  : undefined,
               };
             })()
           : {}),

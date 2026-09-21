@@ -105,6 +105,25 @@ describe("audio render graph", () => {
     );
   });
 
+  it("renders keyframed audio volume as a frame-evaluated envelope", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          trackVolume: 0.5,
+          audioVolumeKeyframes: [
+            { timeMs: 0, volume: 0.25 },
+            { timeMs: 1000, volume: 1 },
+            { timeMs: 2000, volume: 0.5 },
+          ],
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).toContain(
+      ",volume='0.5*if(lt(t,1),0.25+(0.75)*((t-0)/1),if(lt(t,2),1+(-0.5)*((t-1)/1),0.5))':eval=frame",
+    );
+  });
+
   it("does not add compressor filters when compression is disabled", () => {
     const graph = compileSingleAudioTrackGraph(
       createPlan([

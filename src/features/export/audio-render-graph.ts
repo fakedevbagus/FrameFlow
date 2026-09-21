@@ -1,4 +1,9 @@
-import type { AudioCompressor, AudioEq } from "../project/domain";
+import type {
+  AudioCompressor,
+  AudioEq,
+  AudioVolumeKeyframe,
+} from "../project/domain";
+import { normalizeAudioVolumeKeyframes } from "../audio/automation";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface AudioRenderInput {
@@ -134,8 +139,7 @@ function buildAudioSegmentFilter(
     endSeconds +
     ",asetpts=PTS-STARTPTS" +
     ",aformat=sample_rates=48000:channel_layouts=stereo" +
-    ",volume=" +
-    formatNumber(volume) +
+    buildAudioVolumeFilter(volume, segment.audioVolumeKeyframes) +
     buildAudioPanFilter(pan) +
     buildAudioEqFilters(segment.audioEq) +
     buildAudioCompressorFilter(segment.audioCompressor) +
@@ -146,6 +150,55 @@ function buildAudioSegmentFilter(
     label +
     "]"
   );
+}
+
+function buildAudioVolumeFilter(
+  trackVolume: number,
+  keyframes: AudioVolumeKeyframe[] | undefined,
+): string {
+  const normalized = normalizeAudioVolumeKeyframes(keyframes);
+
+  if (!normalized.length) {
+    return ",volume=" + formatNumber(trackVolume);
+  }
+
+  const expression = buildAudioVolumeExpression(normalized);
+  return ",volume='" + formatNumber(trackVolume) + "*" + expression + "':eval=frame";
+}
+
+function buildAudioVolumeExpression(
+  keyframes: AudioVolumeKeyframe[],
+): string {
+  if (keyframes.length === 1) {
+    return formatNumber(keyframes[0].volume);
+  }
+
+  let expression = formatNumber(keyframes[keyframes.length - 1].volume);
+
+  for (let index = keyframes.length - 2; index >= 0; index -= 1) {
+    const current = keyframes[index];
+    const next = keyframes[index + 1];
+    const currentSeconds = formatSeconds(current.timeMs);
+    const nextSeconds = formatSeconds(next.timeMs);
+    const durationSeconds = formatSeconds(next.timeMs - current.timeMs);
+
+    expression =
+      "if(lt(t," +
+      nextSeconds +
+      ")," +
+      formatNumber(current.volume) +
+      "+(" +
+      formatNumber(next.volume - current.volume) +
+      ")*((t-" +
+      currentSeconds +
+      ")/" +
+      durationSeconds +
+      ")," +
+      expression +
+      ")";
+  }
+
+  return expression;
 }
 
 function buildAudioPanFilter(pan: number): string {

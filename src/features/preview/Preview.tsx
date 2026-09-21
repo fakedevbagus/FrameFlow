@@ -5,6 +5,7 @@ import {
   useState,
   type PointerEvent,
 } from "react";
+import { getAudioVolumeAtTime } from "../audio/automation";
 import {
   getAudioCompressor,
   getAudioEq,
@@ -1433,6 +1434,7 @@ function PreviewAudioLayer({
 
     media.volume =
       getTrackVolume(layer.track) *
+      getAudioVolumeAtTime(layer.clip, clipLocalTimeMs) *
       getAudioFadeGain(layer.clip, clipLocalTimeMs);
   }, [
     clipLocalTimeMs,
@@ -1531,6 +1533,7 @@ function PreviewAudioLayer({
           }
           element.volume =
             getTrackVolume(layer.track) *
+            getAudioVolumeAtTime(layer.clip, clipLocalTimeMs) *
             getAudioFadeGain(layer.clip, clipLocalTimeMs);
         }
       }}

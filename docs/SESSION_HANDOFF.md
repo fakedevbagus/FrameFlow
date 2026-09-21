@@ -1,3 +1,15 @@
+## M3.53 kickoff — Audio Clip Volume Automation — 2026-09-21
+
+- M3.52 Audio Clip Dynamics Compressor was squash-merged as PR #66 at `da0b5dc957be094738ac4e657007523f8684fdd8`.
+- M3.53 scope: add backward-compatible per-audio-clip volume automation keyframes with linear interpolation.
+- Inspector edits operate at the selected clip's local playhead time and commit through the existing project/history command path.
+- Preview multiplies track volume by the interpolated clip automation and the existing audio fade gain.
+- RenderPlan carries normalized audio volume keyframes and the native FFmpeg audio graph emits a frame-evaluated volume envelope.
+- Audio keyframes are preserved across clip splits by materializing the split-time interpolated value on both resulting clips.
+- Timeline marker/drag UX is deferred to a follow-up slice; M3.53 focuses on the end-to-end data, edit, preview, and export foundation.
+- Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR #67 draft until the full validation suite and focused manual audio-automation checks are clean.
+
 ## M3.52 kickoff — Audio Clip Dynamics Compressor — 2026-09-21
 
 - M3.51 Audio Clip 3-Band EQ was squash-merged as PR #65 at `52844a8c5f1a1f0605e6c9508d87c52c90ead7de`.
