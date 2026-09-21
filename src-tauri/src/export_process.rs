@@ -91,6 +91,7 @@ impl ExportProcessState {
       .map(|cancelled| cancelled.contains(job_id))
       .unwrap_or(false)
   }
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
