@@ -1,3 +1,39 @@
+## M3.47 Timeline Audio Fade Handles — final interaction primitive correction — 2026-09-21
+
+- Replaced the fade handle native button with an accessible div role="button" interaction target.
+- The visual handle is now a simple CSS border on the interaction element itself.
+- This removes all native button rendering and nested visual-child behavior from the Linux WebView path.
+- Persisted fade behavior and project/history contracts remain unchanged.
+
+## M3.47 Timeline Audio Fade Handles — final WebView handle rendering correction — 2026-09-21
+
+- The first Linux WebView CSS normalization did not resolve the user's screenshot-level visual defect.
+- Replaced the nested handle <span> visual element with a CSS ::after pseudo-element on the handle button itself.
+- The handle button remains the interaction target; only its visual primitive changed.
+- This avoids child flex/layout/UA styling interactions inside .timeline-clip.
+- No persisted fade state, project command, history, Preview, RenderPlan, or FFmpeg behavior changed.
+
+## M3.47 Timeline Audio Fade Handles — Linux WebView visual correction — 2026-09-21
+
+- Normalized the Timeline audio fade handle button appearance for Linux WebView rendering.
+- Disabled native button appearance and explicitly constrained handle geometry so fade controls cannot expand into the Audio clip's flex layout.
+- Added explicit left/right anchoring for fade-in/fade-out handles.
+- No persisted audio fade, command, history, Preview, or FFmpeg behavior changed.
+
+## M3.47 Timeline Audio Fade Handles — edge-case correction — 2026-09-21
+
+- Reviewed the direct-handle rendering at the clip boundaries and adjusted handle positioning so zero-duration and full-duration fade states keep the visible handle inside the clipped Timeline clip.
+- No project/history behavior changed; this is presentation-only hardening for the new interaction.
+## M3.47 Timeline Audio Fade Handles — implementation checkpoint — 2026-09-21
+
+- Added direct Timeline fade-in/fade-out handles for explicit Audio clips.
+- Drag interaction is transient and commits exactly once on pointer release through the existing App -> updateAudioClipFades() -> history path.
+- Escape cancels an active fade-handle interaction without creating history.
+- Keyboard ArrowLeft/ArrowRight adjusts the focused fade handle in 100 ms increments.
+- Fade durations are snapped to 100 ms and clamped so fade-in + fade-out never exceeds clip duration.
+- Timeline renders lightweight fade regions so current fade extents are visible on Audio clips.
+- Added Timeline regression coverage for drag commit, Escape cancellation, and keyboard nudging, plus App-level coverage for persistence into the Inspector.
+- Waveform rendering/editor, advanced audio effects, multiple independent Audio tracks, automation, progress, and cancellation remain deferred.
 ## M3.46 merge reconciliation — 2026-09-21
 
 - M3.46 Audio Clip Fades is complete and PR #59 was squash-merged.

@@ -1268,6 +1268,69 @@ button:disabled {
   background: #2d554b;
 }
 
+.timeline-audio-fade-region {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: rgb(255 255 255 / 8%);
+  border-radius: 4px;
+}
+
+.timeline-audio-fade-in-region {
+  left: 0;
+  border-right: 1px solid rgb(255 255 255 / 25%);
+}
+
+.timeline-audio-fade-out-region {
+  right: 0;
+  border-left: 1px solid rgb(255 255 255 / 25%);
+}
+
+.timeline-audio-fade-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  display: block;
+  width: 14px;
+  min-width: 14px;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 2px solid #d9fff3;
+  border-radius: 0;
+  cursor: ew-resize;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+  box-sizing: border-box;
+}
+
+.timeline-audio-fade-handle-in {
+  left: 0;
+  right: auto;
+}
+
+.timeline-audio-fade-handle-out {
+  right: 0;
+  left: auto;
+  border-right: 2px solid #d9fff3;
+  border-left: 0;
+}
+
+.timeline-audio-fade-handle:hover,
+.timeline-audio-fade-handle:focus-visible {
+  border-color: #ffffff;
+}
+
+.timeline-audio-fade-handle:focus-visible {
+  outline: 2px solid #b9b0ff;
+  outline-offset: -2px;
+}
+
 .timeline-clip-name {
   overflow: hidden;
   font-size: 10px;

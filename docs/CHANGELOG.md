@@ -1,3 +1,36 @@
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — final interaction primitive correction
+
+- Fade handles now use accessible div role="button" hit areas with a vertical border visual.
+- Removed native button rendering from the Timeline fade-handle path to eliminate the remaining Linux WebView horizontal-bar defect.
+
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — final WebView visual correction
+
+- Removed the nested visual span from fade handles.
+- Fade handle lines are now rendered using a button pseudo-element, keeping the interaction target and geometry isolated from clip content layout.
+- This specifically targets the remaining Linux WebView defect where the handles rendered as horizontal bars.
+
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — Linux WebView visual correction
+
+- Fixed Audio Timeline fade handles rendering as full-width horizontal bars in the Linux desktop WebView.
+- Reset native button appearance, geometry, and left/right anchoring for the handle controls.
+- No audio fade behavior or project/history contract changed.
+
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — edge-case correction
+
+- Kept the fade handle visually reachable at both zero and maximum duration by accounting for the handle width within the clip's overflow boundary.
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — implementation pending validation
+
+Implemented:
+- Direct draggable fade-in/fade-out handles on Audio clips.
+- 100 ms keyboard nudging for focused handles.
+- Transient drag preview with one history commit on release.
+- Escape cancellation without history mutation.
+- Duration/overlap clamping using the existing fade rules.
+- Visual fade extent regions on Audio clips.
+- Timeline and App regression coverage.
+
+Validation:
+- Local validation is required after the branch patch is pulled.
 ## 2026-09-21 — M3.46 Audio Clip Fades — merged
 
 PR #59 — squash-merged

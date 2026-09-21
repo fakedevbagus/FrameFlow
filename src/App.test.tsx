@@ -1799,6 +1799,38 @@ describe("App", () => {
     });
   });
 
+  it("updates audio fade controls from the timeline handle", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-audio-fade-handle-ui",
+        name: "fade-handle.mp3",
+        mediaType: "audio",
+        sourcePath: "/media/fade-handle.mp3",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+    await waitFor(() =>
+      expect(screen.getByText("fade-handle.mp3")).toBeInTheDocument(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add fade-handle.mp3 to timeline" }),
+    );
+
+    const handle = screen.getByRole("button", {
+      name: "Adjust audio fade in for fade-handle.mp3 to 0 ms",
+    });
+    fireEvent.pointerDown(handle, { button: 0, clientX: 100, pointerId: 61 });
+    fireEvent.pointerMove(handle, { buttons: 1, clientX: 140, pointerId: 61 });
+    fireEvent.pointerUp(handle, { button: 0, clientX: 140, pointerId: 61 });
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Audio fade in" })).toHaveValue(1000);
+      expect(screen.getByRole("spinbutton", { name: "Audio fade out" })).toHaveValue(0);
+    });
+  });
   it("moves a timeline clip through direct mouse drag", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
