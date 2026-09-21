@@ -38,10 +38,7 @@ describe("export renderer", () => {
     });
 
     const request = {
-      inputs: [
-        { inputIndex: 0, sourcePath: "/media/a.mp4" },
-        { inputIndex: 1, sourcePath: "/media/b.mp4" },
-      ],
+      inputs: ["/media/a.mp4", "/media/b.mp4"],
       outputPath: "/tmp/timeline-export.mp4",
       width: 1080,
       height: 1920,
