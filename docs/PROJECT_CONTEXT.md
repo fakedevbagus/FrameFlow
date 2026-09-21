@@ -1,3 +1,16 @@
+## M3.46 implementation checkpoint — 2026-09-21
+
+- Branch: feat/m3-46-audio-clip-fades.
+- M3.45 and correction PR #58 are complete; latest correction merge is 6f06f473b2a552cc04233ff4ada5c6bba07b7274.
+- M3.46 adds backward-compatible per-audio-clip fade-in/fade-out state.
+- Audio fades are edited in the selected audio clip Inspector; the Timeline track volume control remains independent.
+- Preview applies the fade envelope to the native HTMLAudioElement using clip-local timeline position.
+- RenderPlan carries audio fade durations, and the FFmpeg audio graph applies afade filters before timeline delay/mixing.
+- Locked tracks, visual clips, invalid durations, and overlapping fade ranges are rejected by the project command boundary.
+- Split/trim paths clamp or preserve fade semantics to avoid invalid durations.
+- Multiple independent Audio tracks, audio effects, automation, render progress, and cancellation remain deferred.
+- Local validation is pending user verification.
+
 ## M3.45 correction merge reconciliation — 2026-09-21
 
 - M3.45 correction PR #58 (fix/m3-45-audio-volume-slider-visibility) was marked ready after user validation and squash-merged.
