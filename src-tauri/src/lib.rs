@@ -48,6 +48,8 @@ struct NativeVideoSegmentsRenderRequest {
   width: u32,
   height: u32,
   frame_rate: f64,
+  #[serde(default)]
+  include_audio: bool,
 }
 
 #[derive(Deserialize)]
@@ -503,23 +505,52 @@ fn render_video_segments_to_output(
   for (index, segment) in request.segments.iter().enumerate() {
     let segment_path = temp_root.join(format!("segment-{index:04}.mp4"));
     let args = match &segment.source_path {
-      Some(source_path) => build_ffmpeg_export_args(
-        Path::new(source_path),
-        &segment_path,
-        request.width,
-        request.height,
-        request.frame_rate,
-        segment.source_start_ms,
-        Some(segment.duration_ms),
-        false,
-      ),
-      None => build_ffmpeg_black_segment_args(
-        &segment_path,
-        request.width,
-        request.height,
-        request.frame_rate,
-        segment.duration_ms,
-      ),
+      Some(source_path) => {
+        if request.include_audio {
+          let source_path = Path::new(source_path);
+          let has_audio = probe_has_audio(source_path)?;
+          build_ffmpeg_av_segment_args(
+            source_path,
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.source_start_ms,
+            segment.duration_ms,
+            has_audio,
+          )
+        } else {
+          build_ffmpeg_export_args(
+            Path::new(source_path),
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.source_start_ms,
+            Some(segment.duration_ms),
+            false,
+          )
+        }
+      }
+      None => {
+        if request.include_audio {
+          build_ffmpeg_black_av_segment_args(
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.duration_ms,
+          )
+        } else {
+          build_ffmpeg_black_segment_args(
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.duration_ms,
+          )
+        }
+      },
     };
 
     let output = Command::new("ffmpeg")
@@ -563,6 +594,7 @@ fn render_video_segments_to_output(
     &concat_list_path,
     request.frame_rate,
     output_path,
+    request.include_audio,
   );
 
   let output = Command::new("ffmpeg")
@@ -593,6 +625,136 @@ fn render_video_segments_to_output(
   Ok(NativeExportRenderResult {
     output_path: output_path.to_string_lossy().into_owned(),
   })
+}
+
+fn build_ffmpeg_av_segment_args(
+  source_path: &Path,
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  source_start_ms: Option<u64>,
+  duration_ms: u64,
+  has_audio: bool,
+) -> Vec<std::ffi::OsString> {
+  let duration_seconds = duration_ms as f64 / 1000.0;
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+  ];
+
+  if let Some(source_start_ms) = source_start_ms.filter(|value| *value > 0) {
+    args.push("-ss".into());
+    args.push((source_start_ms as f64 / 1000.0).to_string().into());
+  }
+
+  args.push("-t".into());
+  args.push(duration_seconds.to_string().into());
+  args.push("-i".into());
+  args.push(source_path.as_os_str().to_os_string());
+
+  if !has_audio {
+    args.extend([
+      "-f".into(),
+      "lavfi".into(),
+      "-i".into(),
+      "anullsrc=channel_layout=stereo:sample_rate=48000".into(),
+    ]);
+  }
+
+  args.extend([
+    "-map".into(),
+    "0:v:0".into(),
+    "-map".into(),
+    if has_audio { "0:a:0".into() } else { "1:a:0".into() },
+    "-vf".into(),
+    format!(
+      "scale=w={width}:h={height}:force_original_aspect_ratio=decrease,pad=w={width}:h={height}:x=(ow-iw)/2:y=(oh-ih)/2"
+    ).into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-c:a".into(),
+    "aac".into(),
+    "-b:a".into(),
+    "192k".into(),
+    "-ar".into(),
+    "48000".into(),
+    "-ac".into(),
+    "2".into(),
+    "-shortest".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
+}
+
+fn build_ffmpeg_black_av_segment_args(
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  duration_ms: u64,
+) -> Vec<std::ffi::OsString> {
+  let duration_seconds = duration_ms as f64 / 1000.0;
+
+  vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-f".into(),
+    "lavfi".into(),
+    "-i".into(),
+    format!(
+      "color=c=black:s={width}x{height}:r={frame_rate}:d={duration_seconds}"
+    ).into(),
+    "-f".into(),
+    "lavfi".into(),
+    "-i".into(),
+    "anullsrc=channel_layout=stereo:sample_rate=48000".into(),
+    "-map".into(),
+    "0:v:0".into(),
+    "-map".into(),
+    "1:a:0".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-c:a".into(),
+    "aac".into(),
+    "-b:a".into(),
+    "192k".into(),
+    "-ar".into(),
+    "48000".into(),
+    "-ac".into(),
+    "2".into(),
+    "-shortest".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]
 }
 
 fn build_ffmpeg_black_segment_args(
@@ -638,7 +800,54 @@ fn build_ffmpeg_concat_args(
   concat_list_path: &Path,
   frame_rate: f64,
   output_path: &Path,
+  include_audio: bool,
 ) -> Vec<std::ffi::OsString> {
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-f".into(),
+    "concat".into(),
+    "-safe".into(),
+    "0".into(),
+    "-i".into(),
+    concat_list_path.as_os_str().to_os_string(),
+    "-map".into(),
+    "0:v:0".into(),
+  ];
+
+  if include_audio {
+    args.extend([
+      "-map".into(),
+      "0:a:0".into(),
+      "-r".into(),
+      frame_rate.to_string().into(),
+      "-c:v".into(),
+      "copy".into(),
+      "-c:a".into(),
+      "copy".into(),
+    ]);
+  } else {
+    args.extend([
+      "-an".into(),
+      "-r".into(),
+      frame_rate.to_string().into(),
+      "-c:v".into(),
+      "copy".into(),
+    ]);
+  }
+
+  args.extend([
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
+}
   vec![
     "-hide_banner".into(),
     "-loglevel".into(),
@@ -829,6 +1038,33 @@ fn media_type(path: &Path) -> Result<String, String> {
   };
 
   Ok(media_type.to_string())
+}
+
+fn probe_has_audio(path: &Path) -> Result<bool, String> {
+  let output = run_ffprobe(
+    path,
+    &[
+      "-select_streams",
+      "a:0",
+      "-show_entries",
+      "stream=index",
+      "-of",
+      "csv=p=0",
+    ],
+  )?;
+
+  if !output.status.success() {
+    let detail = ffprobe_detail(&output.stderr, &output.stdout);
+    return Err(if detail.is_empty() {
+      "ffprobe could not determine whether the source has an audio stream.".to_string()
+    } else {
+      format!("ffprobe could not determine whether the source has an audio stream: {detail}")
+    });
+  }
+
+  Ok(String::from_utf8_lossy(&output.stdout)
+    .lines()
+    .any(|line| !line.trim().is_empty()))
 }
 
 fn probe_duration_ms(path: &Path) -> Result<u64, String> {
