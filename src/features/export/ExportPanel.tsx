@@ -172,9 +172,11 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
         </div>
 
         {job?.phase === "failed" ? (
-          <div className="export-panel-summary" role="alert">
+          <div className="export-panel-summary export-job-error" role="alert">
             <span>Status</span>
-            <strong>{job.errorMessage ?? "Export failed."}</strong>
+            <strong title={job.errorMessage ?? "Export failed."}>
+              {job.errorMessage ?? "Export failed."}
+            </strong>
           </div>
         ) : null}
 
