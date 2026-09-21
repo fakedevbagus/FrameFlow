@@ -5,6 +5,7 @@ import {
   renderSingleSourceToMp4,
   renderVideoGraphToMp4,
   renderVideoSegmentsToMp4,
+  renderVideoWithAudioGraphToMp4,
 } from "./export-renderer";
 import type { RenderPlan } from "./render-plan";
 
@@ -12,6 +13,7 @@ vi.mock("./export-renderer", () => ({
   renderVideoGraphToMp4: vi.fn(),
   renderSingleSourceToMp4: vi.fn(),
   renderVideoSegmentsToMp4: vi.fn(),
+  renderVideoWithAudioGraphToMp4: vi.fn(),
 }));
 
 describe("render video pipeline", () => {
@@ -256,6 +258,86 @@ describe("render video pipeline", () => {
       includeAudio: true,
     });
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+  });
+
+
+  it("renders the base video before mixing an explicit audio track", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 5000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 5000,
+          sourceStartMs: 0,
+          sourceEndMs: 5000,
+          durationMs: 5000,
+          isMuted: false,
+        },
+        {
+          inputIndex: 7,
+          assetId: "audio-a",
+          sourcePath: "/media/music.mp3",
+          mediaType: "audio",
+          trackId: "audio-1",
+          trackType: "audio",
+          trackIndex: 1,
+          timelineStartMs: 1000,
+          timelineEndMs: 4000,
+          sourceStartMs: 500,
+          sourceEndMs: 3500,
+          durationMs: 3000,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderSingleSourceToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/project.mp4",
+    });
+    vi.mocked(renderVideoWithAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/project.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/project.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/project.mp4",
+    });
+
+    expect(renderSingleSourceToMp4).toHaveBeenCalledWith({
+      sourcePath: "/media/a.mp4",
+      outputPath: "/tmp/project.mp4",
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      sourceStartMs: 0,
+      sourceDurationMs: 5000,
+      includeAudio: true,
+    });
+
+    expect(renderVideoWithAudioGraphToMp4).toHaveBeenCalledWith({
+      videoSourcePath: "/tmp/project.mp4",
+      audioInputs: ["/media/music.mp3"],
+      audioFilterComplex: expect.stringContaining(
+        "[1:a:0]atrim=start=0.5:end=3.5",
+      ),
+      audioMap: "[aout]",
+      durationMs: 5000,
+      outputPath: "/tmp/project.mp4",
+    });
+
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
   it("does not call the native renderer when graph compilation rejects unsupported state", () => {
