@@ -1251,6 +1251,78 @@ mod tests {
   }
 
   #[test]
+  fn builds_ffmpeg_black_segment_arguments() {
+    let args = super::build_ffmpeg_black_segment_args(
+      Path::new("/tmp/segment-black.mp4"),
+      406,
+      720,
+      30.0,
+      2_500,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-f".to_string(), "lavfi".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "color=c=black:s=406x720:r=30:d=2.5".to_string()]));
+    assert!(values.iter().any(|value| value == "-an"));
+    assert!(values.iter().any(|value| value == "/tmp/segment-black.mp4"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_concat_arguments_from_a_safe_list_file() {
+    let args = super::build_ffmpeg_concat_args(
+      Path::new("/tmp/concat.txt"),
+      30.0,
+      Path::new("/tmp/final.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-f".to_string(), "concat".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-safe".to_string(), "0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/tmp/concat.txt".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
+    assert!(values.iter().any(|value| value == "-an"));
+    assert!(values.iter().any(|value| value == "-c:v"));
+    assert!(values.iter().any(|value| value == "copy"));
+    assert!(values.iter().any(|value| value == "/tmp/final.mp4"));
+  }
+
+  #[test]
+  fn validates_native_video_segments_request_metadata() {
+    let valid = super::NativeVideoSegmentsRenderRequest {
+      segments: vec![
+        super::NativeVideoSegment {
+          source_path: Some("/media/a.mp4".to_string()),
+          source_start_ms: Some(0),
+          duration_ms: 2_000,
+        },
+        super::NativeVideoSegment {
+          source_path: None,
+          source_start_ms: None,
+          duration_ms: 1_000,
+        },
+      ],
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+    };
+
+    assert!(super::validate_native_video_segments_request_metadata(&valid).is_ok());
+
+    let mut missing_segments = valid;
+    missing_segments.segments.clear();
+    assert!(super::validate_native_video_segments_request_metadata(&missing_segments).is_err());
+  }
+
+  #[test]
   fn preview_cache_key_changes_when_media_changes() {
     let first = preview_cache_key(
       Path::new("/media/video.mp4"),
