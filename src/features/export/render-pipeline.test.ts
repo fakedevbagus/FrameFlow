@@ -159,6 +159,56 @@ describe("render video pipeline", () => {
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });
 
+  it("routes an offset single clip through the native segment renderer with a gap", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 5000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 2000,
+          timelineEndMs: 5000,
+          sourceStartMs: 0,
+          sourceEndMs: 3000,
+          durationMs: 3000,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoSegmentsToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/offset-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/offset-export.mp4"),
+    ).resolves.toEqual({ outputPath: "/tmp/offset-export.mp4" });
+
+    expect(renderVideoSegmentsToMp4).toHaveBeenCalledWith({
+      segments: [
+        { durationMs: 2000 },
+        {
+          sourcePath: "/media/a.mp4",
+          sourceStartMs: 0,
+          durationMs: 3000,
+        },
+      ],
+      outputPath: "/tmp/offset-export.mp4",
+      width: 406,
+      height: 720,
+      frameRate: 30,
+    });
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+  });
+
   it("routes a single clip at timeline zero through the native single-source renderer", async () => {
     const plan: RenderPlan = {
       width: 406,
