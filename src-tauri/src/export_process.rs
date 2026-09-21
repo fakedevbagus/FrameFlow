@@ -284,7 +284,13 @@ fn emit_progress(app: &tauri::AppHandle, job_id: &str, stage: &str, progress: f6
 
 #[cfg(test)]
 mod tests {
-  use super::{parse_progress_line_ms, ExportProgressEvent, EXPORT_PROGRESS_EVENT};
+  use super::{
+    append_progress_arguments,
+    parse_progress_line_ms,
+    ExportProcessState,
+    ExportProgressEvent,
+    EXPORT_PROGRESS_EVENT,
+  };
 
   #[test]
   fn parses_ffmpeg_progress_microseconds_to_milliseconds() {
@@ -310,5 +316,43 @@ mod tests {
     assert_eq!(event.stage, "video");
     assert_eq!(event.progress, 0.5);
     assert_eq!(EXPORT_PROGRESS_EVENT, "export-progress");
+  }
+
+  #[test]
+  fn appends_machine_readable_progress_before_the_output_path() {
+    let mut args = vec![
+      "-hide_banner".into(),
+      "-y".into(),
+      "/tmp/export.mp4".into(),
+    ];
+
+    append_progress_arguments(&mut args);
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|value| value.to_string_lossy().into_owned())
+      .collect();
+
+    assert_eq!(
+      values,
+      vec![
+        "-hide_banner",
+        "-y",
+        "-progress",
+        "pipe:1",
+        "-nostats",
+        "/tmp/export.mp4",
+      ],
+    );
+  }
+
+  #[test]
+  fn cancellation_marker_survives_until_a_stage_checks_it() {
+    let state = ExportProcessState::default();
+
+    state.cancel("job-1").expect("unknown jobs should be cancellable");
+    assert!(state.is_cancelled("job-1"));
+    assert!(state.finish("job-1"));
+    assert!(!state.is_cancelled("job-1"));
   }
 }
