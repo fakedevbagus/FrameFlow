@@ -497,7 +497,10 @@ export function updateClipTransition(
     );
   }
 
-  if (transition.type !== "dissolve") {
+  if (
+    transition.type !== "dissolve" &&
+    transition.type !== "fade-through-black"
+  ) {
     throw new Error("Unsupported transition type.");
   }
 
