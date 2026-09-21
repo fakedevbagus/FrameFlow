@@ -1,10 +1,10 @@
 ## M3.37 validation correction — 2026-09-21
 
-- User local validation reached lint success, 25/26 test files with 233/234 tests passing, successful production build, and successful Tauri dev startup.
-- The only failing test was the new render-pipeline.test.ts unsupported-state case. The synchronous .toThrow() assertion itself passed; the following renderer call-count assertion failed because the mock retained the invocation from the previous test.
-- The regression test now clears the native renderer mock before each case.
-- During the same reconciliation, the TypeScript native graph request was aligned with the Rust command: native inputs are now an ordered string[] of source paths rather than inputIndex/sourcePath objects. The pipeline maps compiler inputs to their ordered source paths before invoking Tauri.
-- M3.37 remains pending one fresh clean local validation run.
+- Latest user validation passed lint, all 26 test files, and all 234 TypeScript tests.
+- Production build passed; Tauri dev also started successfully.
+- `cargo test` exposed one Rust test-compilation error: the test module referenced `media_type` without importing it.
+- Corrected the test module import in `src-tauri/src/lib.rs`.
+- M3.37 remains pending one fresh clean validation run.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
