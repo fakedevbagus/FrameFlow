@@ -1,3 +1,14 @@
+## 2026-09-21 — M3.45 audio track volume control — correction merged
+
+PR #58 — merged
+Merge SHA: 6f06f473b2a552cc04233ff4ada5c6bba07b7274
+
+Correction:
+- Wired the Audio-track volume callback through the Timeline track wrapper.
+- Widened the Timeline track-label column so the volume slider and percentage are visible.
+- Assigned preview volume directly to the native HTMLAudioElement.
+- Updated the audio graph regression assertion for the explicit default volume stage.
+
 ## 2026-09-21 — M3.45 audio track volume control — merged
 
 Branch: feat/m3-45-audio-track-volume
