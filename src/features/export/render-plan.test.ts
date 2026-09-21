@@ -119,6 +119,44 @@ describe("render plan", () => {
     ).toBe(-0.55);
   });
 
+  it("carries audio EQ settings into audio render segments", () => {
+    let project = projectWithAssets();
+    project = addAssetToTrack(project, "audio-a", "audio-1", 0);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "audio-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioEq: {
+                  enabled: true,
+                  lowGainDb: 4,
+                  midGainDb: -2.5,
+                  highGainDb: 6,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(
+      plan.segments.find((segment) => segment.assetId === "audio-a")?.audioEq,
+    ).toEqual({
+      enabled: true,
+      lowGainDb: 4,
+      midGainDb: -2.5,
+      highGainDb: 6,
+    });
+  });
+
   it("resolves quality dimensions from the project aspect ratio", () => {
     const project = projectWithAssets();
     const settings = {

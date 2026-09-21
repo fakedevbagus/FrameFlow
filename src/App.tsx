@@ -6,7 +6,9 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
+import { getAudioEq } from "./features/project/domain";
 import type {
+  AudioEq,
   Clip,
   ClipCrop,
   ClipTransform,
@@ -31,6 +33,7 @@ import {
   updateTrackVolume,
   updateTrackPan,
   updateAudioClipFades,
+  updateAudioClipEq,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
   updateClipTransformAnchorWithCompensation,
@@ -575,6 +578,39 @@ function App() {
       fadeOutMs,
     );
   }
+  function handleUpdateAudioClipEq(
+    clipId: string,
+    eq: AudioEq,
+  ) {
+    const clipContext = findClipContext(project, clipId);
+
+    if (
+      !clipContext ||
+      clipContext.track.type !== "audio" ||
+      clipContext.asset?.mediaType !== "audio"
+    ) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) => updateAudioClipEq(currentProject, clipId, eq),
+      "Audio EQ updated.",
+    );
+  }
+
+  function handleUpdateSelectedAudioEq(changes: Partial<AudioEq>) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    const nextEq = {
+      ...getAudioEq(selectedClipContext.clip),
+      ...changes,
+    };
+
+    handleUpdateAudioClipEq(selectedClipContext.clip.id, nextEq);
+  }
+
   function handleToggleTrackMute(trackId: string) {
     applyProjectChange(
       (currentProject) => toggleTrackMute(currentProject, trackId),
@@ -2211,12 +2247,19 @@ function App() {
 
               {selectedClipContext.asset?.mediaType === "audio" &&
               selectedClipContext.track.type === "audio" ? (
-                <AudioFadeInspector
-                  clip={selectedClipContext.clip}
-                  durationMs={getClipDurationMs(selectedClipContext.clip)}
-                  onCommit={handleUpdateSelectedAudioFades}
-                  onKeyDown={handleTransformInputKeyDown}
-                />
+                <>
+                  <AudioFadeInspector
+                    clip={selectedClipContext.clip}
+                    durationMs={getClipDurationMs(selectedClipContext.clip)}
+                    onCommit={handleUpdateSelectedAudioFades}
+                    onKeyDown={handleTransformInputKeyDown}
+                  />
+                  <AudioEqInspector
+                    clip={selectedClipContext.clip}
+                    onCommit={handleUpdateSelectedAudioEq}
+                    onKeyDown={handleTransformInputKeyDown}
+                  />
+                </>
               ) : null}
               {(selectedClipContext.asset?.mediaType === "video" ||
                 selectedClipContext.asset?.mediaType === "image") ? (
@@ -2487,6 +2530,184 @@ function AudioFadeInspector({
               onKeyDown={onKeyDown}
             />
             <span>ms</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function AudioEqInspector({
+  clip,
+  onCommit,
+  onKeyDown,
+}: {
+  clip: Clip;
+  onCommit: (changes: Partial<AudioEq>) => void;
+  onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
+}) {
+  const enabledRef = useRef<HTMLInputElement>(null);
+  const lowRef = useRef<HTMLInputElement>(null);
+  const midRef = useRef<HTMLInputElement>(null);
+  const highRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const eq = getAudioEq(clip);
+
+    if (enabledRef.current) {
+      enabledRef.current.checked = eq.enabled;
+    }
+    if (lowRef.current) {
+      lowRef.current.value = String(eq.lowGainDb);
+    }
+    if (midRef.current) {
+      midRef.current.value = String(eq.midGainDb);
+    }
+    if (highRef.current) {
+      highRef.current.value = String(eq.highGainDb);
+    }
+  }, [
+    clip.id,
+    clip.audioEq?.enabled,
+    clip.audioEq?.lowGainDb,
+    clip.audioEq?.midGainDb,
+    clip.audioEq?.highGainDb,
+  ]);
+
+  function commit(which: "low" | "mid" | "high") {
+    const current = getAudioEq(clip);
+    const refs = { low: lowRef, mid: midRef, high: highRef };
+    const rawValues = {
+      low: lowRef.current?.value.trim() ?? "",
+      mid: midRef.current?.value.trim() ?? "",
+      high: highRef.current?.value.trim() ?? "",
+    };
+
+    if (!rawValues.low || !rawValues.mid || !rawValues.high) {
+      if (which === "low" && lowRef.current) {
+        lowRef.current.value = String(current.lowGainDb);
+      }
+      if (which === "mid" && midRef.current) {
+        midRef.current.value = String(current.midGainDb);
+      }
+      if (which === "high" && highRef.current) {
+        highRef.current.value = String(current.highGainDb);
+      }
+      return;
+    }
+
+    const values = {
+      low: Number(rawValues.low),
+      mid: Number(rawValues.mid),
+      high: Number(rawValues.high),
+    };
+
+    if (
+      !Number.isFinite(values.low) ||
+      !Number.isFinite(values.mid) ||
+      !Number.isFinite(values.high) ||
+      values.low < -12 ||
+      values.low > 12 ||
+      values.mid < -12 ||
+      values.mid > 12 ||
+      values.high < -12 ||
+      values.high > 12
+    ) {
+      refs[which].current?.focus();
+      if (which === "low" && lowRef.current) {
+        lowRef.current.value = String(current.lowGainDb);
+      }
+      if (which === "mid" && midRef.current) {
+        midRef.current.value = String(current.midGainDb);
+      }
+      if (which === "high" && highRef.current) {
+        highRef.current.value = String(current.highGainDb);
+      }
+      return;
+    }
+
+    onCommit({
+      lowGainDb: Math.round(values.low * 10) / 10,
+      midGainDb: Math.round(values.mid * 10) / 10,
+      highGainDb: Math.round(values.high * 10) / 10,
+    });
+  }
+
+  function toggleEnabled() {
+    onCommit({
+      enabled: enabledRef.current?.checked ?? false,
+    });
+  }
+
+  return (
+    <div className="inspector-section">
+      <div className="inspector-section-header">
+        <span className="inspector-section-title">Audio EQ</span>
+        <span className="inspector-keyframe-count">3-band</span>
+      </div>
+      <label className="inspector-toggle-field">
+        <input
+          ref={enabledRef}
+          aria-label="Enable audio EQ"
+          defaultChecked={getAudioEq(clip).enabled}
+          type="checkbox"
+          onChange={toggleEnabled}
+        />
+        <span>Enable EQ</span>
+      </label>
+      <div className="inspector-transform-input-grid">
+        <label className="inspector-transform-field">
+          <span>Low</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              ref={lowRef}
+              aria-label="Audio EQ low gain"
+              className="inspector-transform-input"
+              defaultValue={getAudioEq(clip).lowGainDb}
+              max="12"
+              min="-12"
+              step="0.5"
+              type="number"
+              onBlur={() => commit("low")}
+              onKeyDown={onKeyDown}
+            />
+            <span>dB</span>
+          </div>
+        </label>
+        <label className="inspector-transform-field">
+          <span>Mid</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              ref={midRef}
+              aria-label="Audio EQ mid gain"
+              className="inspector-transform-input"
+              defaultValue={getAudioEq(clip).midGainDb}
+              max="12"
+              min="-12"
+              step="0.5"
+              type="number"
+              onBlur={() => commit("mid")}
+              onKeyDown={onKeyDown}
+            />
+            <span>dB</span>
+          </div>
+        </label>
+        <label className="inspector-transform-field">
+          <span>High</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              ref={highRef}
+              aria-label="Audio EQ high gain"
+              className="inspector-transform-input"
+              defaultValue={getAudioEq(clip).highGainDb}
+              max="12"
+              min="-12"
+              step="0.5"
+              type="number"
+              onBlur={() => commit("high")}
+              onKeyDown={onKeyDown}
+            />
+            <span>dB</span>
           </div>
         </label>
       </div>

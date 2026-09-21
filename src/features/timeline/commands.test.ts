@@ -14,6 +14,7 @@ import {
   updateTrackVolume,
   updateTrackPan,
   updateAudioClipFades,
+  updateAudioClipEq,
   updateClipTransform,
   updateClipTransformAtTime,
   moveClipOnTimeline,
@@ -703,6 +704,115 @@ describe("updateAudioClipFades", () => {
     expect(() =>
       updateAudioClipFades(populated, clipId, 500, 500),
     ).toThrow("only available for audio clips");
+  });
+});
+
+describe("updateAudioClipEq", () => {
+  function createAudioProject() {
+    const project = createProject({
+      id: "audio-eq-command",
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+    project.assets.push({
+      id: "audio",
+      name: "music.mp3",
+      mediaType: "audio",
+      sourcePath: "/music.mp3",
+      durationMs: 5000,
+    });
+    return addAssetToTimeline(project, "audio");
+  }
+
+  it("updates audio clip EQ settings and timestamp", () => {
+    const project = createAudioProject();
+    const clipId = project.tracks[1].clips[0].id;
+
+    const updated = updateAudioClipEq(
+      project,
+      clipId,
+      {
+        enabled: true,
+        lowGainDb: 4.5,
+        midGainDb: -2,
+        highGainDb: 7,
+      },
+      new Date("2026-09-20T00:00:01.000Z"),
+    );
+
+    expect(updated.tracks[1].clips[0].audioEq).toEqual({
+      enabled: true,
+      lowGainDb: 4.5,
+      midGainDb: -2,
+      highGainDb: 7,
+    });
+    expect(updated.updatedAt).toBe("2026-09-20T00:00:01.000Z");
+  });
+
+  it("clears neutral disabled EQ and rejects invalid ranges", () => {
+    const project = createAudioProject();
+    const clipId = project.tracks[1].clips[0].id;
+    const enabled = updateAudioClipEq(project, clipId, {
+      enabled: true,
+      lowGainDb: 3,
+      midGainDb: 0,
+      highGainDb: 0,
+    });
+
+    const cleared = updateAudioClipEq(enabled, clipId, {
+      enabled: false,
+      lowGainDb: 0,
+      midGainDb: 0,
+      highGainDb: 0,
+    });
+
+    expect(cleared.tracks[1].clips[0].audioEq).toBeUndefined();
+
+    expect(() =>
+      updateAudioClipEq(project, clipId, {
+        enabled: true,
+        lowGainDb: 12.1,
+        midGainDb: 0,
+        highGainDb: 0,
+      }),
+    ).toThrow("between -12 and 12 dB.");
+  });
+
+  it("rejects EQ on visual clips and locked audio tracks", () => {
+    const project = createProject({ id: "audio-eq-errors" });
+    project.assets.push({
+      id: "video",
+      name: "clip.mp4",
+      mediaType: "video",
+      sourcePath: "/clip.mp4",
+      durationMs: 5000,
+    });
+
+    const videoProject = addAssetToTimeline(project, "video");
+    expect(() =>
+      updateAudioClipEq(videoProject, videoProject.tracks[0].clips[0].id, {
+        enabled: true,
+        lowGainDb: 1,
+        midGainDb: 0,
+        highGainDb: 0,
+      }),
+    ).toThrow("only available for audio clips");
+
+    const audioProject = createAudioProject();
+    const lockedProject = {
+      ...audioProject,
+      tracks: audioProject.tracks.map((track) =>
+        track.id === "audio-1" ? { ...track, isLocked: true } : track,
+      ),
+    };
+
+    expect(() =>
+      updateAudioClipEq(lockedProject, lockedProject.tracks[1].clips[0].id, {
+        enabled: true,
+        lowGainDb: 1,
+        midGainDb: 0,
+        highGainDb: 0,
+      }),
+    ).toThrow("Track is locked.");
   });
 });
 

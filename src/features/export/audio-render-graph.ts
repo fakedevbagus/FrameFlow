@@ -1,3 +1,4 @@
+import type { AudioEq } from "../project/domain";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface AudioRenderInput {
@@ -136,6 +137,7 @@ function buildAudioSegmentFilter(
     ",volume=" +
     formatNumber(volume) +
     buildAudioPanFilter(pan) +
+    buildAudioEqFilters(segment.audioEq) +
     buildAudioFadeFilters(segment) +
     ",adelay=" +
     Math.max(0, Math.round(segment.timelineStartMs)) +
@@ -161,6 +163,36 @@ function buildAudioPanFilter(pan: number): string {
     formatNumber(rightGain) +
     "*c1"
   );
+}
+
+function buildAudioEqFilters(eq: AudioEq | undefined): string {
+  if (!eq?.enabled) {
+    return "";
+  }
+
+  const filters: string[] = [];
+  const bands: Array<{ frequency: number; q: number; gainDb: number }> = [
+    { frequency: 120, q: 0.8, gainDb: eq.lowGainDb },
+    { frequency: 1000, q: 1, gainDb: eq.midGainDb },
+    { frequency: 8000, q: 0.8, gainDb: eq.highGainDb },
+  ];
+
+  bands.forEach(({ frequency, q, gainDb }) => {
+    if (Math.abs(gainDb) < 0.000001) {
+      return;
+    }
+
+    filters.push(
+      "equalizer=f=" +
+        frequency +
+        ":t=q:w=" +
+        formatNumber(q) +
+        ":g=" +
+        formatNumber(gainDb),
+    );
+  });
+
+  return filters.length ? "," + filters.join(",") : "";
 }
 
 function buildAudioFadeFilters(segment: RenderSegment): string {

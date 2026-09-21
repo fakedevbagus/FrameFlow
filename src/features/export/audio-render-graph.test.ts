@@ -85,6 +85,43 @@ describe("audio render graph", () => {
     );
   });
 
+  it("applies enabled three-band EQ before fades and timeline delay", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          trackPan: 0,
+          audioEq: {
+            enabled: true,
+            lowGainDb: 4,
+            midGainDb: -2.5,
+            highGainDb: 6,
+          },
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).toContain(
+      ",volume=1,equalizer=f=120:t=q:w=0.8:g=4,equalizer=f=1000:t=q:w=1:g=-2.5,equalizer=f=8000:t=q:w=0.8:g=6,adelay=0:all=1[audio0]",
+    );
+  });
+
+  it("does not add EQ filters when the effect is disabled", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          audioEq: {
+            enabled: false,
+            lowGainDb: 8,
+            midGainDb: -4,
+            highGainDb: 2,
+          },
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).not.toContain("equalizer=");
+  });
+
   it("applies audio track pan before fades and timeline delay", () => {
     const graph = compileSingleAudioTrackGraph(
       createPlan([

@@ -3357,3 +3357,20 @@ button:disabled {
   margin-top: 0;
   justify-self: start;
 }
+
+
+.inspector-toggle-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  font-size: 12px;
+}
+
+.inspector-toggle-field input {
+  margin: 0;
+}
+
+.inspector-section-header {
+  align-items: center;
+}

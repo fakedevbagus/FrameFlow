@@ -1,22 +1,20 @@
-## M3.50 validation correction — native cancellation state — 2026-09-21
+## M3.51 Audio Clip 3-Band EQ — 2026-09-21
 
-- User validation passed lint, 285/285 frontend tests, and the production build.
-- Rust/Tauri then exposed a compile error from using `HashSet::take()` in `ExportProcessState::finish()`.
-- Fixed the cancellation-marker cleanup to use `HashSet::remove()`.
-- Re-run the complete M3.50 validation before merging PR #64.
+- Base: M3.50 merge SHA e239c4b355d64c62a090067ad1aaaa80cefe9f55.
+- Scope: add a focused clip-level three-band EQ without changing track volume, pan, mute, fades, or multi-track mixing semantics.
+- Backward-compatible optional `audioEq` stores enabled state plus Low/Mid/High gain values from -12 dB to +12 dB.
+- Inspector exposes Enable EQ and three gain editors on the selected audio clip.
+- Preview applies low-shelf, peaking, and high-shelf Web Audio filters through the existing audio routing cache.
+- RenderPlan carries EQ metadata and the native FFmpeg graph compiles the EQ filters before fades and timeline delay.
+- Regression coverage added across domain, command, RenderPlan, audio graph, and App.
+- Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep M3.51 unmerged until the user reports the full validation suite clean.
 
-## M3.50 Export Progress and Cancellation — 2026-09-21
+## M3.50 merge reconciliation — 2026-09-21
 
-- Started from M3.49 merge SHA 7fbb75a222bcccfc92cb2ee211e1df0db9748233.
-- Scope: expose native FFmpeg export progress and allow the active render to be cancelled without changing existing RenderPlan semantics.
-- Native export processes are tracked by export job ID and emit `export-progress` events with stage and normalized progress.
-- Cancellation kills the active FFmpeg child and remains effective when requested between the sequential video and audio-mix stages.
-- Frontend export jobs aggregate two-stage project export progress monotonically: video contributes the first 80%, audio mixing the final 20%.
-- ExportPanel now shows a progress bar and Cancel export action.
-- Regression coverage was added for progress parsing/subscription, monotonic job progress, native renderer metadata, runner aggregation, and cancellation UI.
-- M3.50 validation required: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
-- Local validation is pending user verification.
-- Deferred: full audio effects/EQ/compression, audio automation, waveform editing.
+- PR #64 was marked ready after the user reported the corrected local validation as passing and squash-merged.
+- Merge SHA: e239c4b355d64c62a090067ad1aaaa80cefe9f55.
+- M3.50 is now part of main and provides export progress streaming plus safe cancellation.
 
 ## M3.49 validation correction — 2026-09-21
 
