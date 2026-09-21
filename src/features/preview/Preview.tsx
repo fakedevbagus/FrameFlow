@@ -5,7 +5,7 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import { getTrackVolume, type 
+import { getTrackPan, getTrackVolume, type 
   ClipCrop,
   ClipTransform,
   CropPosition,
