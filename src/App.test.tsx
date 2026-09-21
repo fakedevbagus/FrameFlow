@@ -60,7 +60,9 @@ describe("App", () => {
       target: { value: "720p" },
     });
 
-    expect(screen.getByText("1280 × 720")).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Export settings" }),
+    ).toHaveTextContent("406 × 720");
 
     fireEvent.click(
       screen.getByRole("button", { name: "Close export settings" }),
