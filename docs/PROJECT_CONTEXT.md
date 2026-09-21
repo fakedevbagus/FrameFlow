@@ -1,3 +1,15 @@
+## M3.45 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-45-audio-track-volume`.
+- M3.44 is complete and squash-merged at `33c36f19735df4967b149e1c16d60e88f1ccf4a4`.
+- M3.45 adds a backward-compatible per-track volume value with a default of 1.0 (100%).
+- Audio track volume is exposed as a compact Timeline slider and applied to audio preview playback.
+- The volume value is carried into RenderPlan and applied in the explicit Audio-track FFmpeg graph before timeline placement/mixing.
+- Existing mute behavior remains separate from volume; volume 0 preserves an unmuted track state while producing silence.
+- Legacy project files without a stored track volume continue to behave as full volume through the normalization helper.
+- Audio fades/effects, multiple independent Audio tracks, and render progress/cancellation remain deferred.
+- Local validation is pending user verification.
+
 ## M3.44 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-44-project-audio-mix`.
