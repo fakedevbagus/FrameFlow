@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createProject, serializeProject } from "../project/domain";
+import { createProject } from "../project/domain";
 import { addAssetToTimeline, addAssetToTrack } from "../timeline/commands";
 import { createDefaultExportSettings } from "./export";
 import { createRenderPlan } from "./render-plan";
