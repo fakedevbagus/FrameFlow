@@ -1,13 +1,29 @@
-## 2026-09-21 — M3.39 single-source audio — in progress
+## 2026-09-21 — M3.40 multi-segment video renderer — in progress
 
-Implemented:
-- Enabled first-source audio muxing for direct single-clip exports.
-- Added regression coverage for audio-enabled and audio-disabled native FFmpeg argument construction.
-- Kept independent timeline audio mixing and audio effects deferred.
+Branch: `feat/m3-40-multi-segment-video`
+
+Planned:
+- Add native sequential multi-clip video rendering without filter_complex.
+- Normalize clip segments and timeline gaps to the export format, then concatenate them safely.
+- Add regression coverage for segment argument construction, gap handling, and pipeline routing.
+
+Deferred:
+- Independent timeline audio mixing.
+- Multi-track compositing.
+- Images and advanced visual filters.
+- Progress streaming and cancellation.
 
 Validation:
-- M3.38 merged after successful real single-clip MP4 export.
-- M3.39 local validation is pending.
+- M3.39 merged after successful local audio export.
+- M3.40 local validation is pending.
+
+## 2026-09-21 — M3.39 single-source audio — merged
+
+- PR #50 `feat: add audio to single-source export` was squash-merged.
+- Merge SHA: `2808ba584932967f7dccf2b273faf79e61e27a9d`.
+- User approved M3.39 after validation of the single-source audio export.
+- Direct single-clip exports now mux the first source audio stream when available.
+
 ## 2026-09-21 — M3.37 native render graph wiring — in progress
 
 Branch: `feat/m3-37-native-render-graph-wiring`
