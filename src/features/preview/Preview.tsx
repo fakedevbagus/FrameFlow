@@ -5,7 +5,7 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import { getTrackPan, getTrackVolume, type 
+import { getAudioEq, getTrackPan, getTrackVolume, type 
   ClipCrop,
   ClipTransform,
   CropPosition,
@@ -1263,6 +1263,9 @@ function PreviewVisualLayer({
 
 interface AudioPreviewRouting {
   context: AudioContext;
+  lowShelf: BiquadFilterNode;
+  midPeak: BiquadFilterNode;
+  highShelf: BiquadFilterNode;
   panner: StereoPannerNode;
 }
 
@@ -1289,17 +1292,50 @@ function getAudioPreviewRouting(
   try {
     const context = new AudioContextConstructor();
     const source = context.createMediaElementSource(media);
+    const lowShelf = context.createBiquadFilter();
+    const midPeak = context.createBiquadFilter();
+    const highShelf = context.createBiquadFilter();
     const panner = context.createStereoPanner();
 
-    source.connect(panner);
+    lowShelf.type = "lowshelf";
+    lowShelf.frequency.value = 120;
+    midPeak.type = "peaking";
+    midPeak.frequency.value = 1000;
+    midPeak.Q.value = 1;
+    highShelf.type = "highshelf";
+    highShelf.frequency.value = 8000;
+
+    source.connect(lowShelf);
+    lowShelf.connect(midPeak);
+    midPeak.connect(highShelf);
+    highShelf.connect(panner);
     panner.connect(context.destination);
 
-    const routing = { context, panner };
+    const routing = {
+      context,
+      lowShelf,
+      midPeak,
+      highShelf,
+      panner,
+    };
     audioPreviewRoutingCache.set(media, routing);
     return routing;
   } catch {
     return null;
   }
+}
+
+function applyAudioPreviewProcessing(
+  routing: AudioPreviewRouting,
+  track: Project["tracks"][number],
+  clip: Clip,
+) {
+  const eq = getAudioEq(clip);
+
+  routing.lowShelf.gain.value = eq.enabled ? eq.lowGainDb : 0;
+  routing.midPeak.gain.value = eq.enabled ? eq.midGainDb : 0;
+  routing.highShelf.gain.value = eq.enabled ? eq.highGainDb : 0;
+  routing.panner.pan.value = getTrackPan(track);
 }
 
 function PreviewAudioLayer({
@@ -1394,7 +1430,11 @@ function PreviewAudioLayer({
     audioRoutingRef.current = getAudioPreviewRouting(media);
 
     if (audioRoutingRef.current) {
-      audioRoutingRef.current.panner.pan.value = getTrackPan(layer.track);
+      applyAudioPreviewProcessing(
+        audioRoutingRef.current,
+        layer.track,
+        layer.clip,
+      );
     }
   }, [layer.track]);
 
@@ -1467,7 +1507,7 @@ function PreviewAudioLayer({
           const routing = getAudioPreviewRouting(element);
           audioRoutingRef.current = routing;
           if (routing) {
-            routing.panner.pan.value = getTrackPan(layer.track);
+            applyAudioPreviewProcessing(routing, layer.track, layer.clip);
           }
           element.volume =
             getTrackVolume(layer.track) *
