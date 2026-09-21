@@ -1,3 +1,13 @@
+## M3.42 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-42-audio-track-graph`.
+- M3.41 is complete at merge SHA `0cfaba472aa57b0606252c82fd15c998775ad6db`.
+- M3.42 adds a pure audio filter-graph compilation layer on top of the existing RenderPlan.
+- The first slice handles one explicit Audio track, source trimming, timeline delay, stereo 48 kHz normalization, project-duration silence, and track mute.
+- The compiler emits a dedicated `[aout]` map but does not invoke FFmpeg yet.
+- Embedded audio from video clips is intentionally left for the native mixing slice because source audio availability must be probed at runtime.
+- Multiple audio tracks, audio effects/transitions, and progress/cancellation remain deferred.
+
 ## M3.41 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-41-multisegment-audio`.
@@ -7,7 +17,8 @@
 - Clips with source audio use the first source audio stream; clips without audio get generated silence.
 - Timeline gaps use black video and generated silence.
 - This remains sequential one-video-track composition; independent Audio Track mixing is a later milestone.
-- Local validation is pending.
+- Local validation passed before merge.
+
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
