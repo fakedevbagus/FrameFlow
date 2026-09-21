@@ -19,10 +19,15 @@ describe("export progress subscription", () => {
     const unlisten = vi.fn();
 
     let listener: ((event: { payload: unknown }) => void) | undefined;
-    listen.mockImplementationOnce(async (_eventName, callback) => {
-      listener = callback;
-      return unlisten;
-    });
+    listen.mockImplementationOnce(
+      async (
+        _eventName: string,
+        callback: (event: { payload: unknown }) => void,
+      ) => {
+        listener = callback;
+        return unlisten;
+      },
+    );
 
     await subscribeToExportProgress("job-1", handler);
 
