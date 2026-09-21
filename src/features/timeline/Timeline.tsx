@@ -1055,6 +1055,7 @@ export function Timeline({
             onUpdateAudioFadeInteraction={updateAudioFadeInteraction}
             onFinishAudioFadeInteraction={finishAudioFadeInteraction}
             onCancelAudioFadeInteraction={cancelAudioFadeInteraction}
+            onHandleAudioFadeKeyDown={handleAudioFadeKeyDown}
             onRemoveTrack={onRemoveTrack}
             onRemoveTransformKeyframe={onRemoveTransformKeyframe}
             onCurrentTimeChange={onCurrentTimeChange}
