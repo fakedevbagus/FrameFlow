@@ -1,3 +1,15 @@
+## 2026-09-21 — M3.33 export destination and render-job boundary merged
+
+- PR #44 `feat: add export destination and render-job boundary` was marked ready and squash-merged.
+- Merge SHA: `a6c40943d2673d3688e218d1d45d79e828b5f39a`.
+- Added native MP4 output destination selection and a renderer-agnostic export-job state contract.
+- M3.33 intentionally stopped before invoking FFmpeg.
+
+## 2026-09-21 — M3.34 started
+
+- M3.34 scope: one controlled native FFmpeg render invocation boundary.
+- Goal: connect the existing export request model to a safe Rust/Tauri command without yet implementing the complete timeline render graph or progress/cancel transport.
+
 ## M3.33 validation correction — 2026-09-21
 
 - User local validation: lint passed; the full test suite executed with 215/215 tests passing, but the ExportPanel suite failed to initialize because its Vitest mock referenced a hoisted module value before initialization.
