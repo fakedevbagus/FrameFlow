@@ -1,3 +1,19 @@
+## Current live reconciliation — M3.32 — 2026-09-21
+
+- Current `main` tip: `3a2a77aca9b30779870e16863fe709661cd02f3e`.
+- Completed milestone: M3.31 — Playback smoothness / render-throttle, PR #42, squash merge SHA `3a2a77aca9b30779870e16863fe709661cd02f3e`.
+- User reported M3.31 validation passed after the follow-up regression-test import fix.
+- Historical PR #22 remains open and is not active project work.
+- Active milestone: M3.32 — Export settings foundation.
+- Branch: `feat/m3-32-export-settings`.
+- M3.32 scope: establish an export configuration model and a real Export Settings workflow in the existing workspace without coupling it to project history or prematurely implementing the full FFmpeg renderer.
+- Export settings support MP4/H.264 as the first renderer target, source/1080p/720p quality presets, project aspect-ratio-preserving dimensions, project frame rate, and sanitized output filenames.
+- The Export Settings panel is opened from the existing toolbar Export action or the workspace Export navigation item.
+- Export rendering and output-path selection remain deliberately deferred to the next export-pipeline slice.
+- Automated regression coverage has been added for export settings normalization, quality dimensions, filename sanitization, panel interaction, and App wiring.
+- Local validation: pending user verification on the M3.32 branch.
+- Next step: user validates lint, tests, build, Tauri dev, and manual Export Settings checks before PR #43 is marked ready and merged.
+
 ## M3.31 validation correction — 2026-09-21
 
 - User local run: lint passed; 18 test files ran with 206 passing tests and 1 failing App regression due to `addAssetToTimeline` missing from the test import. Build also failed only on that same TypeScript symbol; Tauri dev still launched successfully. The implementation itself did not produce a runtime/test failure.
