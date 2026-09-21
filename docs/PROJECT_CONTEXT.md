@@ -517,6 +517,7 @@ Validation:
 - Playback startup/replay synchronization and playback smoothness were reported working.
 
 Important: these changes were implemented from current `main` after M3.12 was already merged. The earlier temporary branch `feat/m3-12-keyframe-keyboard-nudging` was intentionally not used for the final playback fix.
+
 ## Current validation status
 
 M3.13 has been validated locally by the user.
@@ -766,6 +767,7 @@ Next step:
 Branch: `feat/m3-20-crop-aspect-presets`
 PR: #30
 Merge SHA: `8c366b12e6320fe8844096b0c8fda75234de4b61`
+
 Scope delivered:
 - Added common crop aspect-ratio presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
 - Derived normalized crop insets from intrinsic video/image dimensions.
@@ -1015,6 +1017,7 @@ Scope:
 - Make the indicator keyboard accessible and clickable.
 - Selecting the indicator selects the outgoing clip so the existing Inspector transition controls remain the single configuration surface.
 - Keep the indicator derived from existing transition metadata and adjacency helpers; no second transition state is introduced.
+
 Automated coverage:
 - Timeline renders a dissolve indicator only for a valid adjacent visual transition.
 - Indicator activation selects the outgoing clip.
