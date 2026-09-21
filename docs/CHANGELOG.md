@@ -15,7 +15,7 @@ Implemented:
 
 Validation:
 - M3.29: user-reported local validation passed.
-- M3.30: local validation pending user verification.
+- M3.30 first local validation: lint/build/Tauri passed, but 4 TransitionInspector tests failed because picker button accessible names included their descriptions. A focused aria-label/aria-describedby fix has now been committed; rerun validation after pulling the latest branch.
 - Automated execution was not run in this environment because direct GitHub cloning failed due network/DNS resolution.
 
 Known limitations:
