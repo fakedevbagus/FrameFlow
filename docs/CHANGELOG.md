@@ -1,3 +1,8 @@
+## 2026-09-21 — M3.49 test declaration restoration
+
+- Restored three accidentally removed test declarations that caused parser errors.
+- No production behavior changed.
+
 ## 2026-09-21 — M3.49 Audio Track Pan Control — implementation
 
 Implemented:
