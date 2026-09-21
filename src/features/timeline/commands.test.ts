@@ -596,6 +596,77 @@ describe("updateTrackVolume", () => {
   });
 });
 
+describe("updateAudioClipFades", () => {
+  it("updates audio clip fades and project timestamp", () => {
+    const project = createProject({
+      id: "audio-fades",
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+    project.assets.push({
+      id: "audio",
+      name: "music.mp3",
+      mediaType: "audio",
+      sourcePath: "/music.mp3",
+      durationMs: 5000,
+    });
+
+    const populated = addAssetToTimeline(project, "audio");
+    const clipId = populated.tracks[1].clips[0].id;
+
+    const updated = updateAudioClipFades(
+      populated,
+      clipId,
+      1000,
+      1500,
+      new Date("2026-09-20T00:00:01.000Z"),
+    );
+
+    expect(updated.tracks[1].clips[0]).toMatchObject({
+      id: clipId,
+      audioFadeInMs: 1000,
+      audioFadeOutMs: 1500,
+    });
+    expect(updated.updatedAt).toBe("2026-09-20T00:00:01.000Z");
+  });
+
+  it("rejects invalid audio fade values and overlapping fades", () => {
+    const project = createProject({ id: "audio-fade-errors" });
+    project.assets.push({
+      id: "audio",
+      name: "music.mp3",
+      mediaType: "audio",
+      sourcePath: "/music.mp3",
+      durationMs: 5000,
+    });
+    const populated = addAssetToTimeline(project, "audio");
+    const clipId = populated.tracks[1].clips[0].id;
+
+    expect(() =>
+      updateAudioClipFades(populated, clipId, -1, 0),
+    ).toThrow("non-negative integers");
+    expect(() =>
+      updateAudioClipFades(populated, clipId, 3000, 2500),
+    ).toThrow("cannot overlap");
+  });
+
+  it("rejects audio fades on visual clips", () => {
+    const project = createProject({ id: "visual-fade-error" });
+    project.assets.push({
+      id: "video",
+      name: "clip.mp4",
+      mediaType: "video",
+      sourcePath: "/clip.mp4",
+      durationMs: 5000,
+    });
+    const populated = addAssetToTimeline(project, "video");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    expect(() =>
+      updateAudioClipFades(populated, clipId, 500, 500),
+    ).toThrow("only available for audio clips");
+  });
+});
+
 describe("toggleTrackMute", () => {
   it("toggles a track mute state", () => {
     const project = createProject({
