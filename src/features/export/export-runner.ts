@@ -1,5 +1,6 @@
 import type { Project } from "../project/domain";
 import { createRenderPlan } from "./render-plan";
+import { M3_38_DIRECT_GRAPH_MARKER } from "./render-graph";
 import { renderVideoPlanToMp4 } from "./render-pipeline";
 import {
   completeExportJob,
@@ -35,12 +36,12 @@ export async function runExportJob(
 
 function getExportErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    return error.message;
+    return `${M3_38_DIRECT_GRAPH_MARKER}: ${error.message}`;
   }
 
   if (typeof error === "string") {
-    return error;
+    return `${M3_38_DIRECT_GRAPH_MARKER}: ${error}`;
   }
 
-  return "Export failed.";
+  return `${M3_38_DIRECT_GRAPH_MARKER}: Export failed.`;
 }
