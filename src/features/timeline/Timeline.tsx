@@ -2226,12 +2226,22 @@ function AudioWaveformPreview({
 }: {
   sourcePath: string;
 }) {
-  const [waveformPath, setWaveformPath] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [waveformState, setWaveformState] = useState<{
+    sourcePath: string;
+    path: string;
+    isLoading: boolean;
+  }>(() => ({
+    sourcePath,
+    path: "",
+    isLoading: true,
+  }));
+
+  const isCurrentSource = waveformState.sourcePath === sourcePath;
+  const waveformPath = isCurrentSource ? waveformState.path : "";
+  const isLoading = !isCurrentSource || waveformState.isLoading;
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
 
     void getAudioWaveform(sourcePath, 128)
       .then((waveform) => {
@@ -2239,13 +2249,19 @@ function AudioWaveformPreview({
           return;
         }
 
-        setWaveformPath(buildWaveformPath(waveform.peaks, 128, 20));
-        setIsLoading(false);
+        setWaveformState({
+          sourcePath,
+          path: buildWaveformPath(waveform.peaks, 128, 20),
+          isLoading: false,
+        });
       })
       .catch(() => {
         if (!cancelled) {
-          setWaveformPath("");
-          setIsLoading(false);
+          setWaveformState({
+            sourcePath,
+            path: "",
+            isLoading: false,
+          });
         }
       });
 
