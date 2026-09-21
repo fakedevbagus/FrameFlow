@@ -113,8 +113,9 @@ function buildSegmentFilter(
   label: string,
 ): string {
   return [
-    "[" + segment.inputIndex + ":v:0]",
-    "trim=start=" + formatSeconds(segment.sourceStartMs) +
+    "[" + segment.inputIndex + ":v:0]" +
+      "trim=start=" +
+      formatSeconds(segment.sourceStartMs) +
       ":end=" +
       formatSeconds(segment.sourceEndMs),
     "setpts=PTS-STARTPTS",
