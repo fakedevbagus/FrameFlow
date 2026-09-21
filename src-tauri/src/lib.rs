@@ -1305,6 +1305,7 @@ pub fn run() {
       render_video_graph_to_mp4,
       render_video_segments_to_mp4,
       audio_render::render_audio_graph_to_mp4,
+      audio_render::render_video_with_audio_graph_to_mp4,
       get_media_http_url,
       open_project,
       save_project
