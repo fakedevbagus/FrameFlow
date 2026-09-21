@@ -1,3 +1,11 @@
+## M3.50 validation correction — native cancellation state — 2026-09-21
+
+- Local validation reached 29 frontend test files and 285/285 tests, and the frontend production build completed successfully.
+- Rust compilation then failed in `src-tauri/src/export_process.rs` because `HashSet::take()` was used where `HashSet::remove()` is required.
+- Corrected `ExportProcessState::finish()` to remove the cancellation marker with `HashSet::remove()`, preserving the boolean return contract.
+- Fresh Rust/Tauri validation is required before marking PR #64 ready.
+- The reported non-blocking React `act(...)` warnings and jsdom `HTMLMediaElement.play()` message remain known test-environment warnings.
+
 ## M3.49 merge reconciliation and M3.50 kickoff — 2026-09-21
 
 - M3.49 Audio Track Pan Control is complete and PR #63 was squash-merged.
