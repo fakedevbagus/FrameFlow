@@ -152,9 +152,6 @@ describe("ExportPanel", () => {
     expect(await screen.findByText("/home/user/Exports/demo.mp4")).toBeInTheDocument();
     expect(chooseExportOutputPath).toHaveBeenCalledWith("Untitled project.mp4");
   });
-});
-
-
 
   it("shows render progress and requests cancellation", async () => {
     chooseExportOutputPath.mockResolvedValueOnce("/home/user/Exports/demo.mp4");
@@ -190,3 +187,4 @@ describe("ExportPanel", () => {
 
     expect(requestExportJobCancellation).toHaveBeenCalledWith("export-progress");
   });
+});
