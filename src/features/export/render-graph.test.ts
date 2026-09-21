@@ -75,6 +75,20 @@ describe("single video render graph", () => {
   it("rejects multiple video tracks", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: [
+        ...project.tracks,
+        {
+          id: "video-2",
+          name: "Video 2",
+          type: "video",
+          isLocked: false,
+          isMuted: false,
+          clips: [],
+        },
+      ],
+    };
     project = addAssetToTrack(project, "video-b", "video-2", 0);
 
     const plan = createRenderPlan(project, createDefaultExportSettings(project));
