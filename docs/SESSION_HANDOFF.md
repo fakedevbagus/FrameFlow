@@ -1,3 +1,4 @@
+- The single-clip hardening was refined so the direct graph contains only trim, setpts, scale, and pad; frame rate is applied by the native output encoder with -r, and pixel format by -pix_fmt.\n- The simplified graph has been validated with FFmpeg 7.1.5 against a synthetic source and produced the expected 406x720, 30 fps MP4.
 ## M3.38 native render debug checkpoint — 2026-09-21
 
 - User's real export reached the native FFmpeg command but returned Filter not found from the configured filter graph.
