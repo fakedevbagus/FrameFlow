@@ -1,9 +1,4 @@
-## 2026-09-21 — M3.37 validation correction
-
-- Latest user validation: lint passed; 26/26 test files and 234/234 TypeScript tests passed; production build passed; Tauri dev started successfully.
-- Native Rust test compilation failed because `media_type` was not imported into the test module.
-- Corrected the test import in `src-tauri/src/lib.rs`.
-- Fresh local validation is pending.
+## 2026-09-21 — M3.38 export render-job activation — in progress\n\nBranch: `feat/m3-38-export-render-job`\n\nImplemented:\n- Added an export runner that starts the existing export-job state machine, compiles the current project render plan, invokes native video rendering, and converts failures into controlled job state.\n- Activated the ExportPanel Export action when an output file is selected.\n- Added running, completed, and failed status feedback without introducing fake progress reporting.\n- Added regression coverage for ExportPanel render-job wiring and runner success/failure behavior.\n\nArchitecture:\n- ExportPanel owns presentation state only.\n- `export-runner.ts` owns the project-to-render-job orchestration.\n- `render-pipeline.ts` remains the RenderPlan-to-native-render adapter.\n- M3.37's native renderer remains unchanged and video-only.\n\nValidation:\n- M3.37 user validation passed before merge.\n- M3.38 local validation is pending.
 ## 2026-09-21 — M3.37 native render graph wiring — in progress
 
 Branch: `feat/m3-37-native-render-graph-wiring`
