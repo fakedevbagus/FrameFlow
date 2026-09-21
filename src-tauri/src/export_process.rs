@@ -53,7 +53,7 @@ impl ExportProcessState {
       .cloned();
 
     let Some(child) = child else {
-      return Err("Export job is no longer running.".to_string());
+      return Ok(());
     };
 
     let mut child = child
@@ -83,7 +83,14 @@ impl ExportProcessState {
       .and_then(|mut cancelled| cancelled.take(job_id))
       .unwrap_or(false)
   }
-}
+
+  fn is_cancelled(&self, job_id: &str) -> bool {
+    self
+      .cancelled
+      .lock()
+      .map(|cancelled| cancelled.contains(job_id))
+      .unwrap_or(false)
+  }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -110,6 +117,15 @@ pub fn run_ffmpeg_with_progress(
   total_duration_ms: Option<u64>,
   error_context: &str,
 ) -> Result<ExitStatus, String> {
+  if let Some(job_id) = job_id {
+    if state.is_cancelled(job_id) {
+      if let Ok(mut cancelled) = state.cancelled.lock() {
+        cancelled.remove(job_id);
+      }
+      return Err("Export cancelled.".to_string());
+    }
+  }
+
   append_progress_arguments(&mut args);
 
   let mut child = Command::new("ffmpeg")
