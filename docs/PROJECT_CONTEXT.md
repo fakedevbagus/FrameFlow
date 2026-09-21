@@ -10,6 +10,11 @@ The project is being built incrementally. Every milestone must be small, testabl
 
 - GitHub: https://github.com/fakedevbagus/FrameFlow
 - Current default branch: `main`
+- Current `main` tip at this continuity checkpoint: `7d9400634c0f9a4650212110b938a17e0fa685da` (`docs: clarify M3.28 local validation status`).
+- M3.25 was merged as PR #36 with merge SHA `01c90688fe4256278fe7dc1f94c1c94463e6eb6e`.
+- M3.26 was merged as PR #37 with merge SHA `74ebee88b79b99fe9be7c2b8cd641cb28194a7ae`.
+- M3.27 was merged as PR #38 with merge SHA `9eb1512e733e47ab84d37fdbddfe30e24856a2e0`.
+- M3.28 was merged as PR #39 with merge SHA `2e77190ef6474b3ede1ad72af0682a9c5bfb7c61`.
 - M3.13 was merged as PR #23 with merge SHA `595f7498e503aab19052279979fb389ae8300691`.
 - M3.14 was merged as PR #24 with merge SHA `838c5a8dad7ce4214b8e8d4d85084d7e2fd50379`.
 - M3.15 was merged as PR #25 with merge SHA `69c2b5edee8e4ea5e5d530c2402e0c9ce7281abc`.
@@ -36,6 +41,34 @@ Known local environment used for validation:
 - ESLint 9
 
 The AI assistant cannot run the user's local desktop application. Local validation results must come from the user and must never be invented.
+
+## Current continuity checkpoint — 2026-09-21
+
+Canonical current state:
+- Repository: `fakedevbagus/FrameFlow`.
+- Default branch: `main`.
+- Current `main` tip: `7d9400634c0f9a4650212110b938a17e0fa685da`.
+- M3.25, M3.26, M3.27, and M3.28 are all present on `main).
+- M3.28 PR #39 is merged with SHA `2e77190ef6474b3ede1ad72af0682a9c5bfb7c61`.
+- No M3.29 implementation has been started or approved in the repository at this checkpoint.
+- The old M3.28 feature branch still exists, but it is historical and must not be used as the base for new work.
+
+Validation truth:
+- M3.27 was explicitly validated locally by the user before merge.
+- M3.28 was merged remotely after follow-up fixes to reported lint/test/build issues.
+- The latest local log available to this project history was captured before those follow-up fixes: it showed one lint error (`prefer-const`), two failing lifecycle tests, and two TypeScript build errors; Tauri dev nevertheless launched successfully. Do not treat that old failing log as the current state of `main`, but also do not treat the remote merge as proof of fresh local validation.
+- This chat has no separate user report confirming a post-fix local M3.28 validation run.
+- Therefore the current M3.28 local-validation status is: **not confirmed in this chat**.
+
+Working-tree safety:
+- The latest local log showed user-modified `src-tauri/Cargo.lock` and `src-tauri/Cargo.toml`. Preserve those changes; never use a blanket reset that destroys unrelated local work.
+
+Continuity protocol:
+- A new chat must read `docs/SESSION_HANDOFF.md` first, then verify `docs/PROJECT_CONTEXT.md`, `docs/CHANGELOG.md`, current `main`, and open PRs before making code changes.
+- Never infer the latest milestone from model memory or from a stale pasted log.
+- Never mark local validation as passed merely because a PR was merged.
+- At the end of every meaningful milestone, update `docs/SESSION_HANDOFF.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` with the exact branch, PR, merge SHA, validation state, and next step.
+- When a new chat starts, produce a concise state report first. Only then continue implementation from the verified state.
 
 ## Engineering rules
 
@@ -719,38 +752,6 @@ UI/layout direction:
 
 Next step:
 - Start the next focused editor feature from updated `main`, while preserving the current responsive-layout deferral.
-
-## M3.28 — Transition lifecycle integrity — in progress
-
-Branch: `feat/m3-28-transition-lifecycle-integrity`
-PR: pending
-
-Scope:
-- Keep transition metadata consistent when timeline structure changes.
-- Clear stale transitions when move/remove/trim operations break adjacency.
-- Clamp an existing transition when trimming an adjacent clip reduces the available duration.
-- Preserve an outgoing transition on the second half of a clip split instead of duplicating it on both halves.
-- Sanitize the edited track through the existing transition rules without introducing a second transition state.
-
-Architecture decisions:
-- Transition validity remains derived from clip ordering, adjacency, visual-media compatibility, and duration bounds.
-- Structural timeline commands sanitize only the track they mutate; unrelated tracks are not rewritten.
-- Split semantics keep the transition attached to the timeline segment that remains adjacent to the original incoming clip.
-- Existing transition history and preview paths remain unchanged.
-
-Automated coverage:
-- Unit coverage for adjacent-pair normalization and stale-transition cleanup.
-- Command coverage for move, remove, trim-start, trim-end, and split transition lifecycle behavior.
-
-Validation:
-- Local validation is pending user verification.
-
-Known limitations:
-- Only dissolve transitions are supported.
-- Legacy projects with transition metadata are repaired only when the affected track is structurally edited.
-
-Next step:
-- User validates M3.28 locally before merge.
 
 ## M3.28 — Transition lifecycle integrity — completed
 
