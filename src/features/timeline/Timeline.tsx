@@ -9,11 +9,12 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import type {
-  Clip,
-  ClipTransition,
-  Project,
-  Track,
+import {
+  getTrackVolume,
+  type Clip,
+  type ClipTransition,
+  type Project,
+  type Track,
 } from "../project/domain";
 import {
   DEFAULT_TIMELINE_ZOOM,
@@ -47,6 +48,7 @@ interface TimelineProps {
   onTrimClipStart?: (clipId: string, sourceStartMs: number) => void;
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
   onToggleTrackMute?: (trackId: string) => void;
+  onUpdateTrackVolume?: (trackId: string, volume: number) => void;
   onAddAssetToTrack?: (
     assetId: string,
     trackId: string,
@@ -117,6 +119,7 @@ export function Timeline({
   onTrimClipStart,
   onTrimClipEnd,
   onToggleTrackMute,
+  onUpdateTrackVolume,
   onAddAssetToTrack,
   onAddTrack,
   onRemoveTrack,
@@ -974,6 +977,22 @@ function TimelineTrack({
         <div className="track-label-main">
           <strong>{trackLabel}</strong>
           <span>{track.name}</span>
+          {track.type === "audio" ? (
+            <div className="track-volume-control" onClick={(event) => event.stopPropagation()}>
+              <input
+                aria-label={"Volume " + track.name}
+                aria-valuetext={Math.round(getTrackVolume(track) * 100) + "%"}
+                className="track-volume-input"
+                max="1"
+                min="0"
+                onChange={(event) => onUpdateTrackVolume?.(track.id, Number(event.target.value))}
+                step="0.01"
+                type="range"
+                value={getTrackVolume(track)}
+              />
+              <span aria-hidden="true">{Math.round(getTrackVolume(track) * 100)}%</span>
+            </div>
+          ) : null}
         </div>
         <div className="track-label-actions">
           <button

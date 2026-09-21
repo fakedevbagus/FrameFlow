@@ -119,6 +119,7 @@ function buildAudioSegmentFilter(
 ): string {
   const startSeconds = formatSeconds(segment.sourceStartMs);
   const endSeconds = formatSeconds(segment.sourceEndMs);
+  const volume = Math.min(1, Math.max(0, segment.trackVolume ?? 1));
 
   return (
     "[" +
@@ -130,6 +131,8 @@ function buildAudioSegmentFilter(
     endSeconds +
     ",asetpts=PTS-STARTPTS" +
     ",aformat=sample_rates=48000:channel_layouts=stereo" +
+    ",volume=" +
+    formatNumber(volume) +
     ",adelay=" +
     Math.max(0, Math.round(segment.timelineStartMs)) +
     ":all=1[" +

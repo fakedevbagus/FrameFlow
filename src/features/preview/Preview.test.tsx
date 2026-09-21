@@ -506,6 +506,43 @@ describe("Preview", () => {
     expect(screen.getByText("music.mp3")).toBeInTheDocument();
   });
 
+  it("applies the configured audio track volume to the preview media element", async () => {
+    let project = createProject({ id: "audio-volume-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "audio-1",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music/music.mp3",
+          durationMs: 5000,
+        },
+      ],
+      tracks: project.tracks.map((track) =>
+        track.id === "audio-1"
+          ? { ...track, volume: 0.35 }
+          : track,
+      ),
+    };
+
+    project = addAssetToTimeline(project, "audio-1");
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+    const audio = await screen.findByTestId("preview-audio");
+
+    expect((audio as HTMLAudioElement).volume).toBeCloseTo(0.35, 5);
+  });
+
   it("keeps active audio layers mounted while a visual preview is playing", async () => {
     let project = createProject({ id: "mixed-preview" });
 

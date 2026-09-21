@@ -40,6 +40,12 @@ describe("render plan", () => {
     project = addAssetToTimeline(project, "video-a");
     project = addAssetToTrack(project, "video-b", "video-1", 7000);
     project = addAssetToTrack(project, "audio-a", "audio-1", 2000);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "audio-1" ? { ...track, volume: 0.35 } : track,
+      ),
+    };
 
     const plan = createRenderPlan(
       project,
@@ -51,6 +57,8 @@ describe("render plan", () => {
     expect(plan.frameRate).toBe(30);
     expect(plan.durationMs).toBe(11000);
     expect(plan.segments).toHaveLength(3);
+
+    expect(plan.segments.find((segment) => segment.trackType === "audio")?.trackVolume).toBe(0.35);
 
     expect(plan.segments).toEqual([
       expect.objectContaining({

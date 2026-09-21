@@ -5,6 +5,7 @@ import {
   createProject,
   parseProject,
   serializeProject,
+  getTrackVolume,
 } from "./domain";
 
 describe("project domain", () => {
@@ -28,6 +29,25 @@ describe("project domain", () => {
     const project = createProject({ id: "project-1", now: new Date("2026-09-19T12:00:00.000Z") });
 
     expect(parseProject(serializeProject(project))).toEqual(project);
+  });
+
+  it("defaults missing track volume to full volume and clamps explicit values", () => {
+    const project = createProject({ id: "track-volume-default" });
+    const audioTrack = project.tracks.find((track) => track.type === "audio");
+
+    expect(audioTrack?.volume).toBe(1);
+    expect(getTrackVolume({
+      ...audioTrack!,
+      volume: undefined,
+    })).toBe(1);
+    expect(getTrackVolume({
+      ...audioTrack!,
+      volume: 2,
+    })).toBe(1);
+    expect(getTrackVolume({
+      ...audioTrack!,
+      volume: -1,
+    })).toBe(0);
   });
 
   it("rejects invalid JSON and unsupported schemas", () => {

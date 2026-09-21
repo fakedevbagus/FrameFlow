@@ -27,6 +27,7 @@ import {
   resetClipTransform,
   removeTransformKeyframe,
   toggleTrackMute,
+  updateTrackVolume,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
   updateClipTransformAnchorWithCompensation,
@@ -525,6 +526,13 @@ function App() {
     applyProjectChange(
       (currentProject) => toggleTrackMute(currentProject, trackId),
       "Track mute updated.",
+    );
+  }
+
+  function handleUpdateTrackVolume(trackId: string, volume: number) {
+    applyProjectChange(
+      (currentProject) => updateTrackVolume(currentProject, trackId, volume),
+      "Track volume updated.",
     );
   }
 
@@ -1588,6 +1596,7 @@ function App() {
             onTrimClipStart={handleDirectTrimClipStart}
             onTrimClipEnd={handleDirectTrimClipEnd}
             onToggleTrackMute={handleToggleTrackMute}
+            onUpdateTrackVolume={handleUpdateTrackVolume}
             onAddAssetToTrack={handleAddAssetToTrack}
             onAddTrack={handleAddTrack}
             onRemoveTrack={handleRemoveTrack}

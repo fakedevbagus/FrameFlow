@@ -1,3 +1,12 @@
+## M3.45 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-45-audio-track-volume`.
+- M3.44 is completed and squash-merged at `33c36f19735df4967b149e1c16d60e88f1ccf4a4`.
+- M3.45 adds per-track volume state, Audio-track Timeline control, preview volume application, and export graph volume application.
+- Volume defaults to 1.0 for backward compatibility with projects saved before the field existed.
+- User-facing mute remains a separate binary control from continuous volume.
+- Local validation is pending user verification.
+
 ## M3.41 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-41-multisegment-audio`.

@@ -6,6 +6,7 @@ import type {
   ClipTransform,
   Project,
   TrackType,
+  DEFAULT_TRACK_VOLUME,
   TransformEasing,
   ClipTransition,
 } from "../project/domain";
@@ -464,6 +465,32 @@ export function toggleTrackMute(
   tracks[trackIndex] = {
     ...track,
     isMuted: !track.isMuted,
+  };
+
+  return { ...project, tracks, updatedAt: now.toISOString() };
+}
+
+
+export function updateTrackVolume(
+  project: Project,
+  trackId: string,
+  volume: number,
+  now: Date = new Date(),
+): Project {
+  if (!Number.isFinite(volume) || volume < 0 || volume > 1) {
+    throw new Error("Track volume must be between 0 and 1.");
+  }
+
+  const trackIndex = project.tracks.findIndex((track) => track.id === trackId);
+
+  if (trackIndex === -1) {
+    throw new Error("Track does not exist in this project.");
+  }
+
+  const tracks = [...project.tracks];
+  tracks[trackIndex] = {
+    ...tracks[trackIndex],
+    volume,
   };
 
   return { ...project, tracks, updatedAt: now.toISOString() };

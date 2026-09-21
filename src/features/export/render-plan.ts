@@ -1,12 +1,13 @@
-import type {
-  Clip,
-  ClipCrop,
-  ClipTransform,
-  CropPosition,
-  MediaType,
-  Project,
-  TrackType,
-  TransformKeyframe,
+import {
+  getTrackVolume,
+  type Clip,
+  type ClipCrop,
+  type ClipTransform,
+  type CropPosition,
+  type MediaType,
+  type Project,
+  type TrackType,
+  type TransformKeyframe,
 } from "../project/domain";
 import {
   getExportDimensions,
@@ -28,6 +29,7 @@ export interface RenderSegment {
   sourceEndMs: number;
   durationMs: number;
   isMuted: boolean;
+  trackVolume?: number;
   transform?: ClipTransform;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
@@ -120,6 +122,7 @@ export function createRenderPlan(
         sourceEndMs,
         durationMs: clipDurationMs,
         isMuted: track.isMuted,
+        trackVolume: getTrackVolume(track),
         transform: clip.transform,
         crop: clip.crop,
         cropPosition: clip.cropPosition,

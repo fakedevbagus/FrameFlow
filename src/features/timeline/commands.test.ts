@@ -11,6 +11,7 @@ import {
   removeTransformKeyframe,
   resetClipTransform,
   toggleTrackMute,
+  updateTrackVolume,
   updateClipTransform,
   updateClipTransformAtTime,
   moveClipOnTimeline,
@@ -559,6 +560,39 @@ describe("clip transforms", () => {
         scale: 2,
       }),
     ).toThrow("Transform controls are only available for visual media.");
+  });
+});
+
+describe("updateTrackVolume", () => {
+  it("updates the track volume and project timestamp", () => {
+    const project = createProject({
+      id: "volume-command",
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+
+    const updated = updateTrackVolume(
+      project,
+      "audio-1",
+      0.35,
+      new Date("2026-09-20T00:00:01.000Z"),
+    );
+
+    expect(updated.tracks.find((track) => track.id === "audio-1")?.volume).toBe(0.35);
+    expect(updated.updatedAt).toBe("2026-09-20T00:00:01.000Z");
+  });
+
+  it("rejects invalid volume values and unknown tracks", () => {
+    const project = createProject({ id: "volume-command-errors" });
+
+    expect(() => updateTrackVolume(project, "audio-1", -0.01)).toThrow(
+      "Track volume must be between 0 and 1.",
+    );
+    expect(() => updateTrackVolume(project, "audio-1", 1.01)).toThrow(
+      "Track volume must be between 0 and 1.",
+    );
+    expect(() => updateTrackVolume(project, "missing-track", 0.5)).toThrow(
+      "Track does not exist in this project.",
+    );
   });
 });
 

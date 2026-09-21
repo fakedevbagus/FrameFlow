@@ -71,6 +71,20 @@ describe("audio render graph", () => {
   });
 
 
+  it("applies the track volume inside each audio clip graph", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          trackVolume: 0.35,
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).toContain(
+      ",aformat=sample_rates=48000:channel_layouts=stereo,volume=0.35,adelay=0:all=1[audio0]",
+    );
+  });
+
   it("supports a native input offset for combined video and audio execution", () => {
     const graph = compileSingleAudioTrackGraph(
       createPlan([

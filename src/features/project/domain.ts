@@ -2,6 +2,7 @@ export const PROJECT_SCHEMA_VERSION = 1;
 
 export type MediaType = "audio" | "image" | "video";
 export type TrackType = "audio" | "video";
+export const DEFAULT_TRACK_VOLUME = 1;
 
 export interface CanvasSettings {
   width: number;
@@ -86,6 +87,7 @@ export interface Track {
   type: TrackType;
   isLocked: boolean;
   isMuted: boolean;
+  volume?: number;
   clips: Clip[];
 }
 
@@ -186,6 +188,7 @@ function createTrack(id: string, name: string, type: TrackType): Track {
     type,
     isLocked: false,
     isMuted: false,
+    volume: DEFAULT_TRACK_VOLUME,
     clips: [],
   };
 }
@@ -222,4 +225,14 @@ function assertPositiveNumber(value: unknown, field: string): asserts value is n
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function getTrackVolume(track: Track): number {
+  const volume = track.volume;
+
+  if (typeof volume !== "number" || !Number.isFinite(volume)) {
+    return DEFAULT_TRACK_VOLUME;
+  }
+
+  return Math.min(1, Math.max(0, volume));
 }
