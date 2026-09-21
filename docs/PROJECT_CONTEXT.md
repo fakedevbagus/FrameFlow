@@ -1,3 +1,11 @@
+## M3.40 validation correction — 2026-09-21
+
+- Latest user validation: build and Tauri startup passed; Rust tests ran with 18 passing and one failure; TypeScript had 239 passing and two failures.
+- The failures were test-contract mismatches after the multi-segment routing change, not native command compilation failures.
+- `renderVideoPlanToMp4()` now validates the render plan through `compileSingleVideoTrackGraph()` before selecting a renderer.
+- Sequential one-track/video-only timelines use the native segment renderer; a single clip at timeline zero retains the M3.39 audio-capable renderer; offset single clips now become a black-gap segment plus source segment.
+- Rust valid-request coverage uses a synthetic gap so it does not require `/media/a.mp4` to exist.
+- Fresh full validation is pending.
 ## M3.40 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-40-multi-segment-video`.
