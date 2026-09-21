@@ -18,7 +18,7 @@ describe("export settings", () => {
       width: 1080,
       height: 1920,
       frameRate: 60,
-      fileName: "Untitled-project.mp4",
+      fileName: "Untitled project.mp4",
     });
   });
 
