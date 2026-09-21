@@ -6,6 +6,7 @@ import type {
   MediaType,
   Project,
   TrackType,
+  getTrackVolume,
   TransformKeyframe,
 } from "../project/domain";
 import {
@@ -28,6 +29,7 @@ export interface RenderSegment {
   sourceEndMs: number;
   durationMs: number;
   isMuted: boolean;
+  trackVolume?: number;
   transform?: ClipTransform;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
@@ -120,6 +122,7 @@ export function createRenderPlan(
         sourceEndMs,
         durationMs: clipDurationMs,
         isMuted: track.isMuted,
+        trackVolume: getTrackVolume(track),
         transform: clip.transform,
         crop: clip.crop,
         cropPosition: clip.cropPosition,
