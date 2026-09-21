@@ -737,7 +737,7 @@ export function Timeline({
     setAudioFadeInteraction(null);
   }
 
-  function cancelAudioFadeInteraction() {
+  const cancelAudioFadeInteraction = useCallback(() => {
     const target = audioFadeInteractionTargetRef.current;
     if (
       target &&
@@ -750,7 +750,7 @@ export function Timeline({
 
     audioFadeInteractionTargetRef.current = null;
     setAudioFadeInteraction(null);
-  }
+  }, [audioFadeInteraction]);
 
   function handleAudioFadeKeyDown(
     event: KeyboardEvent<HTMLButtonElement>,
