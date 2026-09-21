@@ -1,3 +1,14 @@
+## M3.52 kickoff — Audio Clip Dynamics Compressor — 2026-09-21
+
+- M3.51 Audio Clip 3-Band EQ was squash-merged as PR #65 at `52844a8c5f1a1f0605e6c9508d87c52c90ead7de`.
+- M3.52 adds a focused, backward-compatible clip-level dynamics compressor for Audio clips.
+- Scope: enabled flag plus threshold, ratio, attack, and release; preserve existing EQ, pan, volume, mute, fades, multi-track mixing, and export orchestration semantics.
+- Preview uses Web Audio DynamicsCompressorNode when supported.
+- Native FFmpeg rendering will use the acompressor filter with normalized threshold/ratio/attack/release values.
+- Required validation after implementation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; cd ..; npm run tauri dev.
+- Keep the PR draft until the full local validation suite and focused manual compressor checks are reported clean.
+- Deferred: audio automation and waveform editing.
+
 ## M3.51 Audio Clip 3-Band EQ — 2026-09-21
 
 - Base: M3.50 merge SHA e239c4b355d64c62a090067ad1aaaa80cefe9f55.
