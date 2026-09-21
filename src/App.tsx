@@ -28,6 +28,7 @@ import {
   removeTransformKeyframe,
   toggleTrackMute,
   updateTrackVolume,
+  updateAudioClipFades,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
   updateClipTransformAnchorWithCompensation,
@@ -521,6 +522,30 @@ function App() {
       setIsPlaying(false);
     });
   }, [getPreviewMediaElements, isPlaying, project, setPlaybackTime]);
+
+  function handleUpdateSelectedAudioFades(
+    fadeInMs: number,
+    fadeOutMs: number,
+  ) {
+    if (
+      !selectedClipContext ||
+      selectedClipContext.track.type !== "audio" ||
+      selectedClipContext.asset?.mediaType !== "audio"
+    ) {
+      return;
+    }
+
+    updateSelectedClip(
+      (currentProject) =>
+        updateAudioClipFades(
+          currentProject,
+          selectedClipContext.clip.id,
+          fadeInMs,
+          fadeOutMs,
+        ),
+      "Audio fades updated.",
+    );
+  }
 
   function handleToggleTrackMute(trackId: string) {
     applyProjectChange(
@@ -2143,6 +2168,88 @@ function App() {
                     >
                       Opacity +
                     </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {selectedClipContext.asset?.mediaType === "audio" &&
+              selectedClipContext.track.type === "audio" ? (
+                <div className="inspector-section">
+                  <div className="inspector-section-header">
+                    <span className="inspector-section-title">Audio fades</span>
+                    <span className="inspector-keyframe-count">Per clip</span>
+                  </div>
+                  <div
+                    className="inspector-transform-input-grid"
+                    key={
+                      [
+                        selectedClipContext.clip.audioFadeInMs ?? 0,
+                        selectedClipContext.clip.audioFadeOutMs ?? 0,
+                      ].join("|")
+                    }
+                  >
+                    <label className="inspector-transform-field">
+                      <span>Fade in</span>
+                      <div className="inspector-transform-input-wrap">
+                        <input
+                          aria-label="Audio fade in"
+                          className="inspector-transform-input"
+                          max={Math.max(0, getClipDurationMs(selectedClipContext.clip))}
+                          min="0"
+                          step="100"
+                          type="number"
+                          defaultValue={selectedClipContext.clip.audioFadeInMs ?? 0}
+                          onBlur={(event) => {
+                            const fadeInMs = Number(event.currentTarget.value);
+                            const fadeOutMs =
+                              selectedClipContext.clip.audioFadeOutMs ?? 0;
+                            if (!Number.isFinite(fadeInMs)) {
+                              event.currentTarget.value = String(
+                                selectedClipContext.clip.audioFadeInMs ?? 0,
+                              );
+                              return;
+                            }
+                            handleUpdateSelectedAudioFades(
+                              Math.max(0, Math.round(fadeInMs)),
+                              fadeOutMs,
+                            );
+                          }}
+                          onKeyDown={handleTransformInputKeyDown}
+                        />
+                        <span>ms</span>
+                      </div>
+                    </label>
+                    <label className="inspector-transform-field">
+                      <span>Fade out</span>
+                      <div className="inspector-transform-input-wrap">
+                        <input
+                          aria-label="Audio fade out"
+                          className="inspector-transform-input"
+                          max={Math.max(0, getClipDurationMs(selectedClipContext.clip))}
+                          min="0"
+                          step="100"
+                          type="number"
+                          defaultValue={selectedClipContext.clip.audioFadeOutMs ?? 0}
+                          onBlur={(event) => {
+                            const fadeOutMs = Number(event.currentTarget.value);
+                            const fadeInMs =
+                              selectedClipContext.clip.audioFadeInMs ?? 0;
+                            if (!Number.isFinite(fadeOutMs)) {
+                              event.currentTarget.value = String(
+                                selectedClipContext.clip.audioFadeOutMs ?? 0,
+                              );
+                              return;
+                            }
+                            handleUpdateSelectedAudioFades(
+                              fadeInMs,
+                              Math.max(0, Math.round(fadeOutMs)),
+                            );
+                          }}
+                          onKeyDown={handleTransformInputKeyDown}
+                        />
+                        <span>ms</span>
+                      </div>
+                    </label>
                   </div>
                 </div>
               ) : null}
