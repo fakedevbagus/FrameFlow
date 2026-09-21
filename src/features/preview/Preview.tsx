@@ -5,7 +5,7 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import { getTrackVolume, type 
+import { getTrackPan, getTrackVolume, type 
   ClipCrop,
   ClipTransform,
   CropPosition,
@@ -1261,6 +1261,47 @@ function PreviewVisualLayer({
   );
 }
 
+interface AudioPreviewRouting {
+  context: AudioContext;
+  panner: StereoPannerNode;
+}
+
+const audioPreviewRoutingCache = new WeakMap<
+  HTMLAudioElement,
+  AudioPreviewRouting
+>();
+
+function getAudioPreviewRouting(
+  media: HTMLAudioElement,
+): AudioPreviewRouting | null {
+  const cached = audioPreviewRoutingCache.get(media);
+
+  if (cached) {
+    return cached;
+  }
+
+  const AudioContextConstructor = globalThis.AudioContext;
+
+  if (!AudioContextConstructor) {
+    return null;
+  }
+
+  try {
+    const context = new AudioContextConstructor();
+    const source = context.createMediaElementSource(media);
+    const panner = context.createStereoPanner();
+
+    source.connect(panner);
+    panner.connect(context.destination);
+
+    const routing = { context, panner };
+    audioPreviewRoutingCache.set(media, routing);
+    return routing;
+  } catch {
+    return null;
+  }
+}
+
 function PreviewAudioLayer({
   layer,
   currentTimeMs,
@@ -1269,6 +1310,7 @@ function PreviewAudioLayer({
   onError,
 }: PreviewLayerProps) {
   const mediaRef = useRef<HTMLAudioElement | null>(null);
+  const audioRoutingRef = useRef<AudioPreviewRouting | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
   const clipLocalTimeMs = Math.max(
     0,
@@ -1349,11 +1391,31 @@ function PreviewAudioLayer({
       return;
     }
 
+    audioRoutingRef.current = getAudioPreviewRouting(media);
+
+    if (audioRoutingRef.current) {
+      audioRoutingRef.current.panner.pan.value = getTrackPan(layer.track);
+    }
+  }, [layer.track]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
+
     if (!isPlaying) {
       if (!media.paused) {
         media.pause();
       }
       return;
+    }
+
+    const routing = audioRoutingRef.current;
+
+    if (routing && routing.context.state !== "running") {
+      void routing.context.resume().catch(() => undefined);
     }
 
     void Promise.resolve(media.play()).catch(() => undefined);
@@ -1402,6 +1464,11 @@ function PreviewAudioLayer({
       ref={(element) => {
         mediaRef.current = element;
         if (element) {
+          const routing = getAudioPreviewRouting(element);
+          audioRoutingRef.current = routing;
+          if (routing) {
+            routing.panner.pan.value = getTrackPan(layer.track);
+          }
           element.volume =
             getTrackVolume(layer.track) *
             getAudioFadeGain(layer.clip, clipLocalTimeMs);

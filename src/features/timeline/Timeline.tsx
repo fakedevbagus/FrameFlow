@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   getAudioFadeDurations,
+  getTrackPan,
   getTrackVolume,
   type Clip,
   type ClipTransition,
@@ -50,6 +51,7 @@ interface TimelineProps {
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
   onToggleTrackMute?: (trackId: string) => void;
   onUpdateTrackVolume?: (trackId: string, volume: number) => void;
+  onUpdateTrackPan?: (trackId: string, pan: number) => void;
   onUpdateAudioClipFades?: (
     clipId: string,
     fadeInMs: number,
@@ -140,6 +142,7 @@ export function Timeline({
   onTrimClipEnd,
   onToggleTrackMute,
   onUpdateTrackVolume,
+  onUpdateTrackPan,
   onUpdateAudioClipFades,
   onAddAssetToTrack,
   onAddTrack,
@@ -1050,6 +1053,7 @@ export function Timeline({
             onSelectClip={onSelectClip}
             onToggleTrackMute={onToggleTrackMute}
             onUpdateTrackVolume={onUpdateTrackVolume}
+            onUpdateTrackPan={onUpdateTrackPan}
             audioFadeInteraction={audioFadeInteraction}
             onBeginAudioFadeInteraction={beginAudioFadeInteraction}
             onUpdateAudioFadeInteraction={updateAudioFadeInteraction}
@@ -1100,6 +1104,7 @@ interface TimelineTrackProps {
   onSelectClip?: (clipId: string) => void;
   onToggleTrackMute?: (trackId: string) => void;
   onUpdateTrackVolume?: (trackId: string, volume: number) => void;
+  onUpdateTrackPan?: (trackId: string, pan: number) => void;
   audioFadeInteraction: AudioFadeInteraction | null;
   onBeginAudioFadeInteraction: (
     event: PointerEvent<HTMLDivElement>,
@@ -1192,6 +1197,7 @@ function TimelineTrack({
   onSelectClip,
   onToggleTrackMute,
   onUpdateTrackVolume,
+  onUpdateTrackPan,
   audioFadeInteraction,
   onBeginAudioFadeInteraction,
   onUpdateAudioFadeInteraction,
@@ -1235,19 +1241,37 @@ function TimelineTrack({
           <strong>{trackLabel}</strong>
           <span>{track.name}</span>
           {track.type === "audio" ? (
-            <div className="track-volume-control" onClick={(event) => event.stopPropagation()}>
-              <input
-                aria-label={"Volume " + track.name}
-                aria-valuetext={Math.round(getTrackVolume(track) * 100) + "%"}
-                className="track-volume-input"
-                max="1"
-                min="0"
-                onChange={(event) => onUpdateTrackVolume?.(track.id, Number(event.target.value))}
-                step="0.01"
-                type="range"
-                value={getTrackVolume(track)}
-              />
-              <span aria-hidden="true">{Math.round(getTrackVolume(track) * 100)}%</span>
+            <div className="track-audio-controls" onClick={(event) => event.stopPropagation()}>
+              <div className="track-audio-control">
+                <span aria-hidden="true">V</span>
+                <input
+                  aria-label={"Volume " + track.name}
+                  aria-valuetext={Math.round(getTrackVolume(track) * 100) + "%"}
+                  className="track-volume-input"
+                  max="1"
+                  min="0"
+                  onChange={(event) => onUpdateTrackVolume?.(track.id, Number(event.target.value))}
+                  step="0.01"
+                  type="range"
+                  value={getTrackVolume(track)}
+                />
+                <span aria-hidden="true">{Math.round(getTrackVolume(track) * 100)}%</span>
+              </div>
+              <div className="track-audio-control">
+                <span aria-hidden="true">P</span>
+                <input
+                  aria-label={"Pan " + track.name}
+                  aria-valuetext={formatTrackPan(getTrackPan(track))}
+                  className="track-pan-input"
+                  max="1"
+                  min="-1"
+                  onChange={(event) => onUpdateTrackPan?.(track.id, Number(event.target.value))}
+                  step="0.01"
+                  type="range"
+                  value={getTrackPan(track)}
+                />
+                <span aria-hidden="true">{formatTrackPan(getTrackPan(track))}</span>
+              </div>
             </div>
           ) : null}
         </div>
@@ -1910,6 +1934,16 @@ function createRulerMarks(durationMs: number): number[] {
   }
 
   return marks;
+}
+
+function formatTrackPan(pan: number): string {
+  if (Math.abs(pan) < 0.005) {
+    return "C";
+  }
+
+  return pan < 0
+    ? "L " + Math.round(Math.abs(pan) * 100) + "%"
+    : "R " + Math.round(pan * 100) + "%";
 }
 
 function formatTimecode(durationMs: number): string {

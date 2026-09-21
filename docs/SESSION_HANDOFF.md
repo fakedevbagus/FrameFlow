@@ -1,3 +1,17 @@
+## M3.49 validation correction — 2026-09-21
+
+- Local validation reported three parser errors in test files at their closing lines, while Rust tests 28/28 and Tauri dev startup were successful.
+- Restored the missing test declarations; this was a test-structure-only correction.
+- Re-run the full frontend validation before merging PR #63.
+
+## M3.49 Audio Track Pan Control — 2026-09-21
+
+- Started M3.49 after M3.47 and M3.48 were merged.
+- Scope: add track-level left/center/right audio balance without introducing the deferred full effects stack.
+- Pan is backward compatible, defaulting to center for older project data.
+- Persistence uses the existing track command/history architecture.
+- Required validation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+
 ## M3.48 test assertion correction — 2026-09-21
 
 - Corrected the sole failing multi-track audio test after validation exposed an input-order expectation mismatch.

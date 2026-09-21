@@ -3,6 +3,7 @@ export const PROJECT_SCHEMA_VERSION = 1;
 export type MediaType = "audio" | "image" | "video";
 export type TrackType = "audio" | "video";
 export const DEFAULT_TRACK_VOLUME = 1;
+export const DEFAULT_TRACK_PAN = 0;
 export const DEFAULT_AUDIO_FADE_IN_MS = 0;
 export const DEFAULT_AUDIO_FADE_OUT_MS = 0;
 
@@ -92,6 +93,7 @@ export interface Track {
   isLocked: boolean;
   isMuted: boolean;
   volume?: number;
+  pan?: number;
   clips: Clip[];
 }
 
@@ -193,6 +195,7 @@ function createTrack(id: string, name: string, type: TrackType): Track {
     isLocked: false,
     isMuted: false,
     volume: DEFAULT_TRACK_VOLUME,
+    pan: DEFAULT_TRACK_PAN,
     clips: [],
   };
 }
@@ -241,6 +244,16 @@ export function getTrackVolume(track: Track): number {
   return Math.min(1, Math.max(0, volume));
 }
 
+
+export function getTrackPan(track: Track): number {
+  const pan = track.pan;
+
+  if (typeof pan !== "number" || !Number.isFinite(pan)) {
+    return DEFAULT_TRACK_PAN;
+  }
+
+  return Math.min(1, Math.max(-1, pan));
+}
 
 export function getAudioFadeInMs(clip: Clip): number {
   return normalizeAudioFadeValue(clip.audioFadeInMs, DEFAULT_AUDIO_FADE_IN_MS);

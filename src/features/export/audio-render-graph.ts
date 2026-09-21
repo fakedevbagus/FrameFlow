@@ -121,6 +121,7 @@ function buildAudioSegmentFilter(
   const startSeconds = formatSeconds(segment.sourceStartMs);
   const endSeconds = formatSeconds(segment.sourceEndMs);
   const volume = Math.min(1, Math.max(0, segment.trackVolume ?? 1));
+  const pan = Math.min(1, Math.max(-1, segment.trackPan ?? 0));
 
   return (
     "[" +
@@ -134,12 +135,31 @@ function buildAudioSegmentFilter(
     ",aformat=sample_rates=48000:channel_layouts=stereo" +
     ",volume=" +
     formatNumber(volume) +
+    buildAudioPanFilter(pan) +
     buildAudioFadeFilters(segment) +
     ",adelay=" +
     Math.max(0, Math.round(segment.timelineStartMs)) +
     ":all=1[" +
     label +
     "]"
+  );
+}
+
+function buildAudioPanFilter(pan: number): string {
+  if (Math.abs(pan) < 0.000001) {
+    return "";
+  }
+
+  const normalized = (pan + 1) * Math.PI / 4;
+  const leftGain = Math.cos(normalized);
+  const rightGain = Math.sin(normalized);
+
+  return (
+    ",pan=stereo|c0=" +
+    formatNumber(leftGain) +
+    "*c0|c1=" +
+    formatNumber(rightGain) +
+    "*c1"
   );
 }
 

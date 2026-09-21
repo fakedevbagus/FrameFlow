@@ -6,6 +6,7 @@ import {
   parseProject,
   serializeProject,
   getTrackVolume,
+  getTrackPan,
   getAudioFadeDurations,
 } from "./domain";
 
@@ -50,6 +51,26 @@ describe("project domain", () => {
       volume: -1,
     })).toBe(0);
   });
+
+  it("defaults missing track pan to center and clamps explicit values", () => {
+    const project = createProject({ id: "track-pan-default" });
+    const audioTrack = project.tracks.find((track) => track.type === "audio");
+
+    expect(audioTrack?.pan).toBe(0);
+    expect(getTrackPan({
+      ...audioTrack!,
+      pan: undefined,
+    })).toBe(0);
+    expect(getTrackPan({
+      ...audioTrack!,
+      pan: 2,
+    })).toBe(1);
+    expect(getTrackPan({
+      ...audioTrack!,
+      pan: -2,
+    })).toBe(-1);
+  });
+
 
   it("normalizes audio fade durations against the clip duration", () => {
     const clip = {

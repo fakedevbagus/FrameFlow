@@ -29,6 +29,7 @@ import {
   removeTransformKeyframe,
   toggleTrackMute,
   updateTrackVolume,
+  updateTrackPan,
   updateAudioClipFades,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
@@ -585,6 +586,13 @@ function App() {
     applyProjectChange(
       (currentProject) => updateTrackVolume(currentProject, trackId, volume),
       "Track volume updated.",
+    );
+  }
+
+  function handleUpdateTrackPan(trackId: string, pan: number) {
+    applyProjectChange(
+      (currentProject) => updateTrackPan(currentProject, trackId, pan),
+      "Track pan updated.",
     );
   }
 
@@ -1649,6 +1657,7 @@ function App() {
             onTrimClipEnd={handleDirectTrimClipEnd}
             onToggleTrackMute={handleToggleTrackMute}
             onUpdateTrackVolume={handleUpdateTrackVolume}
+            onUpdateTrackPan={handleUpdateTrackPan}
             onUpdateAudioClipFades={handleUpdateAudioClipFades}
             onAddAssetToTrack={handleAddAssetToTrack}
             onAddTrack={handleAddTrack}

@@ -85,6 +85,20 @@ describe("audio render graph", () => {
     );
   });
 
+  it("applies audio track pan before fades and timeline delay", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          trackPan: -1,
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).toContain(
+      ",volume=1,pan=stereo|c0=1*c0|c1=0*c1,adelay=0:all=1[audio0]",
+    );
+  });
+
   it("renders audio fade-in and fade-out filters before timeline delay", () => {
     const graph = compileSingleAudioTrackGraph(
       createPlan([
