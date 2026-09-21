@@ -899,6 +899,9 @@ mod tests {
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "/tmp/My Export.mp4"));
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=w=1280:h=720:x=(ow-iw)/2:y=(oh-ih)/2"));
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "29.97"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-ss" && pair[1].to_string_lossy() == "1.25"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-t" && pair[1].to_string_lossy() == "4.5"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "-an"));
   }
 
   #[test]
