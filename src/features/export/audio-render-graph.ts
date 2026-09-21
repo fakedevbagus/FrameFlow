@@ -19,7 +19,7 @@ export interface AudioRenderGraphOptions {
   inputIndexOffset?: number;
 }
 
-export function compileSingleAudioTrackGraph(
+export function compileAudioTracksGraph(
   plan: RenderPlan,
   options: AudioRenderGraphOptions = {},
 ): AudioRenderGraph {
@@ -31,13 +31,6 @@ export function compileSingleAudioTrackGraph(
     throw new Error("Render plan has no audio clips.");
   }
 
-  const audioTrackIds = new Set(audioSegments.map((segment) => segment.trackId));
-
-  if (audioTrackIds.size !== 1) {
-    throw new Error(
-      "M3.42 supports one audio track at a time; multi-track audio mixing is deferred.",
-    );
-  }
 
   if (audioSegments.some((segment) => segment.mediaType !== "audio")) {
     throw new Error(
@@ -46,7 +39,9 @@ export function compileSingleAudioTrackGraph(
   }
 
   const ordered = [...audioSegments].sort(
-    (left, right) => left.timelineStartMs - right.timelineStartMs,
+    (left, right) =>
+      left.trackIndex - right.trackIndex ||
+      left.timelineStartMs - right.timelineStartMs,
   );
   const inputIndexOffset = Math.max(
     0,
@@ -97,6 +92,12 @@ export function compileSingleAudioTrackGraph(
     audioMap: "[aout]",
   };
 }
+
+/**
+ * Backward-compatible alias for callers that still use the single-track name.
+ * The compiler now accepts independent Audio tracks and mixes them together.
+ */
+export const compileSingleAudioTrackGraph = compileAudioTracksGraph;
 
 function toAudioRenderInput(
   segment: RenderSegment,
