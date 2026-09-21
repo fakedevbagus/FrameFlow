@@ -1,26 +1,29 @@
-import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { createProject } from "../project/domain";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { ExportPanel } from "./ExportPanel";
+import { createProject } from "../project/domain";
+
+const chooseExportOutputPath = vi.fn();
+
+vi.mock("./export-dialog", () => ({
+  chooseExportOutputPath,
+}));
 
 describe("ExportPanel", () => {
-  it("shows project-derived source export settings", () => {
-    const project = createProject({ id: "export-panel" });
-    project.canvas = { width: 1080, height: 1920, frameRate: 60 };
+  it("shows source settings by default", () => {
+    render(<ExportPanel project={createProject()} onClose={vi.fn()} />);
 
-    render(<ExportPanel project={project} onClose={vi.fn()} />);
+    const dialog = screen.getByRole("dialog", { name: "Export settings" });
 
-    expect(screen.getByRole("dialog", { name: "Export settings" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Export quality" })).toHaveValue("source");
-    expect(screen.getByText("1080 × 1920")).toBeInTheDocument();
-    expect(screen.getByText("60 fps")).toBeInTheDocument();
+    expect(dialog).toHaveTextContent("1080 × 1920");
+    expect(dialog).toHaveTextContent("30 fps");
+    expect(
+      screen.getByRole("textbox", { name: "Export file name" }),
+    ).toHaveValue("Untitled project.mp4");
   });
 
-  it("updates output dimensions for standard quality presets", () => {
-    const project = createProject({ id: "export-quality" });
-    project.canvas = { width: 1920, height: 1080, frameRate: 30 };
-
-    render(<ExportPanel project={project} onClose={vi.fn()} />);
+  it("shows the selected quality dimensions", () => {
+    render(<ExportPanel project={createProject()} onClose={vi.fn()} />);
 
     fireEvent.change(screen.getByRole("combobox", { name: "Export quality" }), {
       target: { value: "720p" },
@@ -28,20 +31,29 @@ describe("ExportPanel", () => {
 
     expect(
       screen.getByRole("dialog", { name: "Export settings" }),
-    ).toHaveTextContent("1280 × 720");
-    expect(
-      screen.getByRole("textbox", { name: "Export file name" }),
-    ).toHaveValue("Untitled project.mp4");
+    ).toHaveTextContent("406 × 720");
   });
 
-  it("closes through the provided callback", () => {
+  it("closes through the supplied callback", () => {
     const onClose = vi.fn();
-    const project = createProject({ id: "export-close" });
 
-    render(<ExportPanel project={project} onClose={onClose} />);
+    render(<ExportPanel project={createProject()} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Close export settings" }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets the user choose and displays an output destination", async () => {
+    chooseExportOutputPath.mockResolvedValueOnce("/home/user/Exports/demo.mp4");
+
+    render(<ExportPanel project={createProject()} onClose={vi.fn()} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Choose export destination" }),
+    );
+
+    expect(await screen.findByText("/home/user/Exports/demo.mp4")).toBeInTheDocument();
+    expect(chooseExportOutputPath).toHaveBeenCalledWith("Untitled project.mp4");
   });
 });
