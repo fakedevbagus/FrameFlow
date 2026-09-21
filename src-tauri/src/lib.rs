@@ -256,6 +256,7 @@ fn render_video_graph_to_mp4(
     &input_paths,
     &request.filter_complex,
     &request.video_map,
+    request.frame_rate,
     &output_path,
   );
 
@@ -413,6 +414,7 @@ fn build_ffmpeg_video_graph_args(
   input_paths: &[PathBuf],
   filter_complex: &str,
   video_map: &str,
+  frame_rate: f64,
   output_path: &Path,
 ) -> Vec<std::ffi::OsString> {
   let mut args = vec![
@@ -433,6 +435,8 @@ fn build_ffmpeg_video_graph_args(
     "-map".into(),
     video_map.into(),
     "-an".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
     "-c:v".into(),
     "libx264".into(),
     "-preset".into(),
@@ -900,6 +904,7 @@ mod tests {
       ],
       "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
       "[vout]",
+      30.0,
       Path::new("/tmp/FrameFlow Export.mp4"),
     );
 
