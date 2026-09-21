@@ -1,3 +1,11 @@
+## M3.38 validation/debug correction — 2026-09-21
+
+- The export action is now reaching the native renderer, but a real media export returned an FFmpeg failure.
+- The UI previously truncated the renderer error text, preventing diagnosis of the underlying FFmpeg stderr.
+- The core M3.37 graph command shape was independently exercised with FFmpeg and completed successfully on a synthetic source.
+- ExportPanel now displays the complete renderer error text and includes regression coverage for that behavior.
+- Next validation should use the updated branch so the precise FFmpeg error is visible if the media-specific render still fails.
+
 ## M3.38 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-38-export-render-job`.
