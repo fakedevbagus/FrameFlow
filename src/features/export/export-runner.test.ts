@@ -91,8 +91,6 @@ describe("runExportJob", () => {
     );
     expect(renderVideoPlanToMp4).not.toHaveBeenCalled();
   });
-});
-
 
   it("maps two-stage video and audio progress into one monotonic progress bar", async () => {
     const project = createProject();
@@ -103,31 +101,17 @@ describe("runExportJob", () => {
       frameRate: 30,
       durationMs: 5000,
       segments: [
-        {
-          trackType: "video",
-          durationMs: 5000,
-        },
-        {
-          trackType: "audio",
-          durationMs: 3000,
-        },
+        { trackType: "video", durationMs: 5000 },
+        { trackType: "audio", durationMs: 3000 },
       ],
     };
     const progressValues: number[] = [];
 
     createRenderPlan.mockReturnValueOnce(plan);
     subscribeToExportProgress.mockImplementationOnce(
-      async (_jobId: string, onProgress: (event: unknown) => void) => {
-        onProgress({
-          jobId: "export-progress",
-          stage: "video",
-          progress: 0.5,
-        });
-        onProgress({
-          jobId: "export-progress",
-          stage: "audio-mix",
-          progress: 0.5,
-        });
+      async (_jobId: string, onProgress: (event: { jobId: string; stage: "video" | "audio" | "audio-mix"; progress: number }) => void) => {
+        onProgress({ jobId: "export-progress", stage: "video", progress: 0.5 });
+        onProgress({ jobId: "export-progress", stage: "audio-mix", progress: 0.5 });
         return vi.fn();
       },
     );
@@ -148,3 +132,4 @@ describe("runExportJob", () => {
     expect(progressValues).toEqual([0, 0.4, 0.9, 1]);
     expect(job.phase).toBe("completed");
   });
+});
