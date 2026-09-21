@@ -535,13 +535,23 @@ function App() {
       return;
     }
 
+    const durationMs = getClipDurationMs(selectedClipContext.clip);
+    const safeFadeInMs = Math.min(
+      durationMs,
+      Math.max(0, Math.round(fadeInMs)),
+    );
+    const safeFadeOutMs = Math.min(
+      Math.max(0, durationMs - safeFadeInMs),
+      Math.max(0, Math.round(fadeOutMs)),
+    );
+
     updateSelectedClip(
       (currentProject) =>
         updateAudioClipFades(
           currentProject,
           selectedClipContext.clip.id,
-          fadeInMs,
-          fadeOutMs,
+          safeFadeInMs,
+          safeFadeOutMs,
         ),
       "Audio fades updated.",
     );
