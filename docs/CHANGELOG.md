@@ -1,22 +1,30 @@
-## 2026-09-21 — M3.45 audio track volume control — in progress
+## 2026-09-21 — M3.45 audio track volume control — merged
 
-Branch: `feat/m3-45-audio-track-volume`
+Branch: feat/m3-45-audio-track-volume
+PR #57 — merged
+Merge SHA: 9ce1bcf1c7a8729f62c65121274029d960eccddb
 
 Implemented:
 - Added backward-compatible per-track volume state with 1.0 as the default.
 - Added a validated volume update command with project timestamp updates.
 - Added a compact Audio-track Timeline volume slider with accessible percentage feedback.
 - Applied track volume to Audio-track preview playback.
-- Carried track volume into RenderPlan and applied it inside the explicit Audio-track FFmpeg graph.
+- Carried track volume into RenderPlan and applied it inside the explicit Audio-track FFmpeg graph before timeline placement/mixing.
+- Preserved the existing binary mute behavior as a separate control.
 - Added domain, command, render-plan, graph, Preview, Timeline, and App regression coverage.
+
+Validation:
+- User local Linux validation reported lint passing.
+- Vitest: 28 test files passed, 253/253 tests passed.
+- Production build completed successfully.
+- Rust tests: 28 passed, 0 failed.
+- tauri dev launched successfully.
+- The initial git pull --ff-only step did not fast-forward because the local branch had diverged; subsequent validation completed successfully.
 
 Deferred:
 - Audio fades, transitions, and effects.
 - Multiple independent Audio tracks.
 - Progress streaming and cancellation.
-
-Validation:
-- Local validation is pending user verification.
 
 ## 2026-09-21 — M3.44 full project audio-track export — merged
 
