@@ -1,3 +1,11 @@
+## M3.38 native render debug checkpoint — 2026-09-21
+
+- User's real export reached the native FFmpeg command but returned Filter not found from the configured filter graph.
+- The same full graph syntax was tested independently with FFmpeg 7.1.5 and succeeded.
+- The failing UI case is a single video clip starting at timeline 0, so the graph compiler was simplified for that common case: it now skips the unnecessary concat filter and maps clip0 through format=yuv420p to vout.
+- Multi-clip and timeline-gap cases still use the existing concat path.
+- Added regression coverage for the direct single-clip graph.
+- M3.38 remains pending another real export validation run.
 ## M3.38 validation/debug correction — 2026-09-21
 
 - User reached a native FFmpeg failure after the crop-related compiler guard was no longer blocking the export.
