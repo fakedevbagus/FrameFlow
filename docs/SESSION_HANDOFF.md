@@ -1,12 +1,11 @@
-## M3.39 implementation checkpoint — 2026-09-21
+## M3.40 implementation checkpoint — 2026-09-21
 
-- Branch: `feat/m3-39-single-source-audio`.
-- M3.38 is completed and squash-merged as PR #49 at `24008e949a106660143ea762c69687ac96519087`.
-- M3.39 enables the first source audio stream on the already-working single-source export path.
-- `render_single_source_to_mp4` accepts optional source timing and `includeAudio`; audio-enabled exports map `0:a:0?` and encode AAC, while disabled exports use `-an`.
-- The direct RenderPlan path now requests `includeAudio: true`.
-- Independent timeline audio-track mixing, audio effects, and multi-source audio composition remain deferred.
-- Local validation for M3.39 is pending.
+- Branch: `feat/m3-40-multi-segment-video`.
+- M3.39 is completed and squash-merged as PR #50 at `2808ba584932967f7dccf2b273faf79e61e27a9d`.
+- M3.40 extends the proven native single-source path to multiple sequential video segments on one video track.
+- Each clip is rendered to a normalized temporary MP4 using the existing native scale/pad/video encoder path; timeline gaps are generated as black normalized segments; the normalized segments are concatenated with FFmpeg's concat demuxer.
+- This slice intentionally avoids `filter_complex` for multi-clip timeline assembly and remains video-only; independent audio-track mixing remains deferred.
+- Local validation is pending.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
