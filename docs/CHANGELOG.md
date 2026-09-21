@@ -1,3 +1,26 @@
+## 2026-09-21 — M3.46 audio clip fade controls — in progress
+
+Branch: feat/m3-46-audio-clip-fades
+
+Implemented:
+- Added optional per-audio-clip fade-in and fade-out state with zero defaults.
+- Added validated updateAudioClipFades() command with duration and overlap checks.
+- Preserved/clamped fade state through audio clip trim operations and split audio clips into endpoint-specific fades.
+- Added Audio fades controls to the selected audio clip Inspector.
+- Applied fade envelope to audio preview playback.
+- Carried audio fade durations through RenderPlan.
+- Added FFmpeg afade stages before timeline delay/mixing.
+- Added regression coverage across domain, commands, render plan, audio graph, Preview, and App.
+
+Deferred:
+- Audio effects/EQ/compression.
+- Multiple independent Audio tracks.
+- Keyframed audio automation.
+- Render progress and cancellation.
+
+Validation:
+- Local validation is pending user verification.
+
 ## 2026-09-21 — M3.45 audio track volume control — correction merged
 
 PR #58 — merged
