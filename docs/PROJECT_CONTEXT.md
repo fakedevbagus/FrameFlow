@@ -1,3 +1,12 @@
+## M3.34 implementation checkpoint — 2026-09-21
+
+- `src-tauri/src/lib.rs` now exposes `render_single_source_to_mp4`.
+- Native validation rejects non-video sources, non-absolute/non-MP4 outputs, missing output directories, invalid dimensions, and invalid frame rates.
+- Native output uses FFmpeg directly via `Command::new("ffmpeg")`, preserving paths as individual process arguments rather than a shell string.
+- Current render primitive is intentionally single-source and does not interpret timeline clips, transforms, crops, transitions, mute state, or layered audio.
+- `src/features/export/export-renderer.ts` provides the frontend invoke boundary for the future render-job orchestration layer.
+- Deferred: project-level render graph, timeline compositing, transition rendering, audio mixing, progress events, cancellation, and UI wiring for a long-running render.
+
 ## Current live reconciliation — M3.34 — 2026-09-21
 
 - Current `main`: `a6c40943d2673d3688e218d1d45d79e828b5f39a`.
