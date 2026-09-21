@@ -35,6 +35,48 @@ function projectWithAssets() {
 }
 
 describe("render plan", () => {
+  it("propagates audio volume keyframes for audio segments", () => {
+    const project = projectWithAssets();
+    const audioTrack = project.tracks.find((track) => track.type === "audio");
+    if (!audioTrack) throw new Error("Expected audio track.");
+
+    const projectWithMedia = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === audioTrack.id
+          ? {
+              ...track,
+              clips: [{
+                id: "volume-automation-clip",
+                assetId: "audio-a",
+                timelineStartMs: 500,
+                sourceStartMs: 0,
+                sourceEndMs: 3000,
+                audioVolumeKeyframes: [
+                  { timeMs: 0, volume: 0.25 },
+                  { timeMs: 1500, volume: 1 },
+                  { timeMs: 3000, volume: 0.5 },
+                ],
+              }],
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      projectWithMedia,
+      createDefaultExportSettings(projectWithMedia),
+    );
+
+    expect(plan.segments).toContainEqual(expect.objectContaining({
+      audioVolumeKeyframes: [
+        { timeMs: 0, volume: 0.25 },
+        { timeMs: 1500, volume: 1 },
+        { timeMs: 3000, volume: 0.5 },
+      ],
+    }));
+  });
+
   it("propagates audio compressor settings for audio segments", () => {
     const project = createProject({ id: "render-compressor" });
     const audioTrack = project.tracks.find((track) => track.type === "audio");
