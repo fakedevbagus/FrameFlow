@@ -1450,4 +1450,3 @@ function updateClipAtLocation(
 
   return { ...project, tracks, updatedAt: now.toISOString() };
 }
-export { getAudioEq };
