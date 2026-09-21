@@ -1,3 +1,12 @@
+## M3.46 validation correction — 2026-09-21
+
+- User local validation of PR #59 found five command-test failures because `updateAudioClipFades` was not imported in `commands.test.ts` and one domain test expected an incorrect 2999 ms value instead of the implemented 3000 ms clamp.
+- These issues are corrected on `feat/m3-46-audio-clip-fades`.
+- The same run reported three Vitest worker startup timeouts/unhandled errors after the deterministic failures. Do not treat those as resolved until a fresh full run completes.
+- Rust validation in that run: 28 passed, 0 failed.
+- `tauri dev` launched successfully.
+- Local validation remains pending user verification.
+
 ## M3.46 implementation checkpoint — 2026-09-21
 
 - Branch: feat/m3-46-audio-clip-fades.
