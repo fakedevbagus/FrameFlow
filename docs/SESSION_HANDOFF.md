@@ -1,3 +1,9 @@
+## M3.31 validation correction — 2026-09-21
+
+- User local run: lint passed; 18 test files ran with 206 passing tests and 1 failing App regression due to `addAssetToTimeline` missing from the test import. Build also failed only on that same TypeScript symbol; Tauri dev still launched successfully. The implementation itself did not produce a runtime/test failure.
+- Follow-up commit `a9e1b5111a1338fd758186969114eee2ab624612` imports the existing timeline command in `src/App.test.tsx`.
+- PR #42 remains draft and requires one fresh local rerun.
+
 ## Current live reconciliation — M3.31 — 2026-09-21
 
 - Current `main` tip: `dedeeccf309238b483e38d041d4928b23227f0a1`.
