@@ -1,4 +1,5 @@
 import {
+  getAudioFadeDurations,
   getTrackVolume,
   type Clip,
   type ClipCrop,
@@ -30,6 +31,8 @@ export interface RenderSegment {
   durationMs: number;
   isMuted: boolean;
   trackVolume?: number;
+  audioFadeInMs?: number;
+  audioFadeOutMs?: number;
   transform?: ClipTransform;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
@@ -123,6 +126,15 @@ export function createRenderPlan(
         durationMs: clipDurationMs,
         isMuted: track.isMuted,
         trackVolume: getTrackVolume(track),
+        ...(track.type === "audio" && asset.mediaType === "audio"
+          ? (() => {
+              const fades = getAudioFadeDurations(clip);
+              return {
+                audioFadeInMs: fades.fadeInMs,
+                audioFadeOutMs: fades.fadeOutMs,
+              };
+            })()
+          : {}),
         transform: clip.transform,
         crop: clip.crop,
         cropPosition: clip.cropPosition,
