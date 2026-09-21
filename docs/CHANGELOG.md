@@ -1,3 +1,9 @@
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — final WebView visual correction
+
+- Removed the nested visual span from fade handles.
+- Fade handle lines are now rendered using a button pseudo-element, keeping the interaction target and geometry isolated from clip content layout.
+- This specifically targets the remaining Linux WebView defect where the handles rendered as horizontal bars.
+
 ## 2026-09-21 — M3.47 Timeline Audio Fade Handles — Linux WebView visual correction
 
 - Fixed Audio Timeline fade handles rendering as full-width horizontal bars in the Linux desktop WebView.
