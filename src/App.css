@@ -3159,6 +3159,15 @@ button:disabled {
   font-size: 10px;
 }
 
+.export-job-error strong {
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  text-align: left;
+}
+
 .export-panel-summary strong {
   max-width: 230px;
   overflow: hidden;
