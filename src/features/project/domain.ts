@@ -6,6 +6,10 @@ export const DEFAULT_TRACK_VOLUME = 1;
 export const DEFAULT_TRACK_PAN = 0;
 export const DEFAULT_AUDIO_FADE_IN_MS = 0;
 export const DEFAULT_AUDIO_FADE_OUT_MS = 0;
+export const DEFAULT_AUDIO_EQ_ENABLED = false;
+export const DEFAULT_AUDIO_EQ_LOW_GAIN_DB = 0;
+export const DEFAULT_AUDIO_EQ_MID_GAIN_DB = 0;
+export const DEFAULT_AUDIO_EQ_HIGH_GAIN_DB = 0;
 
 export interface CanvasSettings {
   width: number;
@@ -58,6 +62,13 @@ export interface CropPosition {
   y: number;
 }
 
+export interface AudioEq {
+  enabled: boolean;
+  lowGainDb: number;
+  midGainDb: number;
+  highGainDb: number;
+}
+
 export interface DissolveTransition {
   type: "dissolve";
   durationMs: number;
@@ -83,6 +94,7 @@ export interface Clip {
   transitionOut?: ClipTransition;
   audioFadeInMs?: number;
   audioFadeOutMs?: number;
+  audioEq?: AudioEq;
   transformKeyframes?: TransformKeyframe[];
 }
 
@@ -253,6 +265,34 @@ export function getTrackPan(track: Track): number {
   }
 
   return Math.min(1, Math.max(-1, pan));
+}
+
+export function getAudioEq(clip: Clip): AudioEq {
+  const value = clip.audioEq;
+
+  return {
+    enabled: value?.enabled === true,
+    lowGainDb: normalizeAudioEqGain(
+      value?.lowGainDb,
+      DEFAULT_AUDIO_EQ_LOW_GAIN_DB,
+    ),
+    midGainDb: normalizeAudioEqGain(
+      value?.midGainDb,
+      DEFAULT_AUDIO_EQ_MID_GAIN_DB,
+    ),
+    highGainDb: normalizeAudioEqGain(
+      value?.highGainDb,
+      DEFAULT_AUDIO_EQ_HIGH_GAIN_DB,
+    ),
+  };
+}
+
+function normalizeAudioEqGain(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(12, Math.max(-12, Math.round(value * 10) / 10));
 }
 
 export function getAudioFadeInMs(clip: Clip): number {
