@@ -80,7 +80,7 @@ describe("runExportJob", () => {
     expect(job.phase).toBe("failed");
     expect(job.progress).toBe(0);
     expect(job.errorMessage).toBe(
-      "Render plan has no supported video clips.",
+      "m3.38-direct-graph-v2: Render plan has no supported video clips.",
     );
     expect(renderVideoPlanToMp4).not.toHaveBeenCalled();
   });
