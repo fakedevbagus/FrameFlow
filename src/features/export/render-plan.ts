@@ -1,13 +1,13 @@
-import type {
-  Clip,
-  ClipCrop,
-  ClipTransform,
-  CropPosition,
-  MediaType,
-  Project,
-  TrackType,
+import {
   getTrackVolume,
-  TransformKeyframe,
+  type Clip,
+  type ClipCrop,
+  type ClipTransform,
+  type CropPosition,
+  type MediaType,
+  type Project,
+  type TrackType,
+  type TransformKeyframe,
 } from "../project/domain";
 import {
   getExportDimensions,
