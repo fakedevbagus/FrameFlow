@@ -1,3 +1,23 @@
+## M3.32 validation correction — 2026-09-21
+
+The first M3.32 local validation run showed the export implementation building and launching successfully. Test failures were limited to two assertions: the default 1080×1920 project correctly produces an even 406×720 720p target, and the filename is an input value. The tests were corrected without changing export behavior. Fresh local validation is still required.
+
+## Live state reconciliation — M3.32 — 2026-09-21
+
+- Current `main`: `3a2a77aca9b30779870e16863fe709661cd02f3e`.
+- M3.31 — Playback smoothness / render-throttle is merged as PR #42 at `3a2a77aca9b30779870e16863fe709661cd02f3e`.
+- User confirmed the M3.31 validation pass before merge.
+- Historical PR #22 remains open as a stale draft and is not active.
+- Active branch: `feat/m3-32-export-settings`.
+- M3.32 establishes the first export workflow boundary: export settings are explicit UI/domain data, separate from project history, while actual rendering remains a future pipeline milestone.
+- `src/features/export/export.ts` owns export settings defaults, normalization, standard quality dimension calculation, and filename sanitization.
+- `src/features/export/ExportPanel.tsx` provides the current Export Settings UI and derives source/1080p/720p output dimensions from the project canvas aspect ratio.
+- App toolbar and Workspace Export navigation now open the Export Settings panel.
+- MP4/H.264 is the current renderer target, but no render job, output file selection, or FFmpeg invocation is introduced in this milestone.
+- Regression coverage covers the pure export model, panel behavior, and App workflow.
+- M3.32 local validation is pending user verification.
+- Deferred: actual FFmpeg render graph, output path selection, export progress/cancel, render-job lifecycle, audio/video muxing validation, and render-result handling.
+
 ## M3.31 validation correction — 2026-09-21
 
 The first M3.31 local validation run reached the full suite: 18 test files passed, with one failure in the newly added App playback-throttle regression because `addAssetToTimeline` was not imported in `App.test.tsx`. The production build reported the same missing symbol. Lint passed and Tauri dev launched. The regression test import was corrected in commit `a9e1b5111a1338fd758186969114eee2ab624612`; fresh validation is still required.

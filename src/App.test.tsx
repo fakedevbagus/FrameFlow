@@ -47,6 +47,32 @@ describe("App", () => {
     expect(screen.getAllByRole("button", { name: "Import media" })).toHaveLength(2);
   });
 
+  it("opens export settings from the toolbar and updates quality", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open export settings" }));
+
+    expect(
+      screen.getByRole("dialog", { name: "Export settings" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Export quality" }), {
+      target: { value: "720p" },
+    });
+
+    expect(
+      screen.getByRole("dialog", { name: "Export settings" }),
+    ).toHaveTextContent("406 × 720");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close export settings" }),
+    );
+
+    expect(
+      screen.queryByRole("dialog", { name: "Export settings" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("fits the preview to the project canvas and changes canvas aspect presets", async () => {
     const project = createProject({ id: "landscape-preview" });
     project.canvas = {
