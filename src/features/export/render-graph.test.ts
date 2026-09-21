@@ -35,7 +35,7 @@ function createVideoProject() {
 }
 
 describe("single video render graph", () => {
-  it("builds trim, canvas fit, and fps filters for one clip without concat", () => {
+  it("builds a minimal direct graph for one clip without concat", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
 
