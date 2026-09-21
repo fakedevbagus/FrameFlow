@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.38 single-clip compatibility path
+
+- Routed one video clip starting at timeline zero through the existing native single-source renderer instead of filter_complex.
+- Added source segment timing and explicit video-only output options.
+- Preserved filter-graph rendering for multi-clip and timeline-gap cases.
+- Added regression coverage for direct routing and native segment FFmpeg arguments.
+- Real-media validation is pending.
 - Refined the single-clip export graph to use only trim, setpts, scale, and pad, with frame rate and yuv420p set at the encoder output.\n- Synthetic FFmpeg validation produced the expected 406x720, 30 fps MP4.
 ## 2026-09-21 — M3.38 single-clip FFmpeg graph hardening
 
