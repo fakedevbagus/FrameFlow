@@ -1,3 +1,15 @@
+## M3.51 — Audio Clip 3-Band EQ — merged — 2026-09-21
+
+- M3.51 is complete and PR #65 was squash-merged at `52844a8c5f1a1f0605e6c9508d87c52c90ead7de`.
+- Added backward-compatible per-audio-clip three-band EQ state with Low/Mid/High gains from -12 dB to +12 dB and an enabled flag.
+- Added validated project/history updateAudioClipEq() command and selected-audio Inspector controls.
+- Added best-effort Web Audio low-shelf, peaking, and high-shelf preview processing.
+- Propagated audio EQ through RenderPlan and native FFmpeg audio rendering.
+- Added regression coverage across domain normalization, commands, RenderPlan, audio graph, and App workflow.
+- User approved M3.51 after the final local validation cycle.
+- Known non-blocking test-environment warnings remain around React act() and jsdom HTMLMediaElement.play().
+- Next milestone: M3.52 — Audio Clip Dynamics Compressor.
+
 ## M3.51 Audio Clip 3-Band EQ — implementation checkpoint — 2026-09-21
 
 - M3.50 Export Progress and Cancellation is complete and PR #64 was squash-merged at e239c4b355d64c62a090067ad1aaaa80cefe9f55.
