@@ -74,6 +74,7 @@ describe("project domain", () => {
 
   it("normalizes audio fade durations against the clip duration", () => {
     const clip = {
+      id: "fade-clip",
       assetId: "audio",
       timelineStartMs: 0,
       sourceStartMs: 0,
