@@ -1,3 +1,7 @@
+## M3.47 edge-case correction — 2026-09-21
+
+- Adjusted Timeline fade-handle edge positioning so handles remain visible when fade duration is zero or reaches the maximum permitted duration.
+- This correction does not alter the underlying fade command/history contract.
 ## M3.47 implementation checkpoint — 2026-09-21
 
 - Branch: feat/m3-47-audio-fade-handles.
