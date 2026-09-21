@@ -1,3 +1,10 @@
+## M3.37 validation correction — 2026-09-21
+
+- The user's first M3.37 local run passed lint, build, and Tauri startup; the full test suite had one assertion failure in the new render-pipeline test.
+- The failure was caused by testing a synchronous graph compilation exception with an asynchronous `.rejects` assertion.
+- The test now uses synchronous `.toThrow()` while preserving the check that the native renderer is not called.
+- A fresh local validation run is required before PR #48 is marked ready.
+
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
