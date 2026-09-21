@@ -1,3 +1,36 @@
+## 2026-09-21 — M3.51 Audio Clip 3-Band EQ — merged
+
+PR #65 — squash-merged
+Merge SHA: 52844a8c5f1a1f0605e6c9508d87c52c90ead7de
+
+Implemented:
+- Backward-compatible clip-level three-band EQ.
+- Validated history command and selected-audio Inspector controls.
+- Best-effort Web Audio preview EQ.
+- RenderPlan propagation and native FFmpeg equalizer filters.
+- Regression coverage across domain, commands, RenderPlan, audio graph, and App.
+
+Validation:
+- User approved continuation with pass after the final local validation cycle.
+- Non-blocking React act() and jsdom media-play test warnings remain known.
+
+Next:
+- M3.52 — Audio Clip Dynamics Compressor.
+
+## 2026-09-21 — M3.52 Audio Clip Dynamics Compressor — in progress
+
+Branch: `feat/m3-52-audio-clip-compressor`
+
+Scope:
+- Add backward-compatible per-audio-clip compressor state.
+- Expose threshold, ratio, attack, and release controls in the selected-audio Inspector.
+- Apply the same compressor semantics in Web Audio preview and native FFmpeg export.
+- Preserve existing EQ, pan, volume, mute, fades, multi-track mix, and history behavior.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required before merge.
+- Keep PR draft until the full validation suite and manual compressor checks are clean.
+
 ## 2026-09-21 — M3.51 Audio Clip 3-Band EQ — implementation
 
 Branch: feat/m3-51-audio-clip-eq
