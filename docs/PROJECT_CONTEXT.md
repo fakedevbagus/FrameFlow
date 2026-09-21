@@ -268,6 +268,7 @@ Continuity protocol:
 13. When starting a new chat, treat this document as the source of truth and verify it against the repository before continuing.
 14. Never claim that a fix is validated until the user reports the local validation result.
 15. For cross-chat continuity, read `docs/SESSION_HANDOFF.md` before continuing work; use `docs/NEW_CHAT_PROMPT.md` as the reusable continuation prompt.
+
 ## GitHub workflow
 
 Typical sequence:
