@@ -3,7 +3,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { ExportPanel } from "./ExportPanel";
 import { createProject } from "../project/domain";
 
-const chooseExportOutputPath = vi.fn();
+const { chooseExportOutputPath } = vi.hoisted(() => ({
+  chooseExportOutputPath: vi.fn(),
+}));
 
 vi.mock("./export-dialog", () => ({
   chooseExportOutputPath,
