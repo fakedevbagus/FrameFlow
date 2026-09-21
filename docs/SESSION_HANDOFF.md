@@ -1,3 +1,10 @@
+## M3.33 validation correction — 2026-09-21
+
+- User local validation: lint passed; the full test suite executed with 215/215 tests passing, but the ExportPanel suite failed to initialize because its Vitest mock referenced a hoisted module value before initialization.
+- The failure is isolated to the test mock setup, not export behavior. `ExportPanel.test.tsx` now creates the mocked `chooseExportOutputPath` with `vi.hoisted`.
+- Build completed successfully and `tauri dev` launched successfully in the same local run.
+- Fresh local test rerun is required after the test-only correction.
+
 ## M3.33 — Export destination and render-job boundary — 2026-09-21
 
 - Branch: `feat/m3-33-export-destination-job-boundary`.
