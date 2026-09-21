@@ -1,3 +1,32 @@
+## 2026-09-21 — M3.44 full project audio-track export — merged
+
+Branch: `feat/m3-44-project-audio-mix`
+PR #56 — merged
+Merge SHA: `33c36f19735df4967b149e1c16d60e88f1ccf4a4`
+
+Implemented:
+- Routed projects with an explicit Audio track through the existing base video renderer first.
+- Compiled the Audio track with dense native input indices.
+- Mixed the compiled Audio track into the base video's first audio stream.
+- Generated timeline-duration silence when the base video had no audio stream.
+- Preserved existing single-source and sequential multi-segment video audio behavior.
+- Added regression coverage for project routing, native video/audio mix arguments, request validation, and the invoke bridge.
+- Used a temporary native mix output before finalizing the requested MP4.
+
+Validation:
+- User confirmed M3.44 local validation passed.
+- Frontend lint passed.
+- 253/253 Vitest tests passed.
+- Production build passed.
+- 28/28 Rust tests passed.
+- `tauri dev` started successfully.
+
+Deferred:
+- Audio volume/gain controls.
+- Fades, transitions, and audio effects.
+- Multiple independent audio tracks.
+- Progress streaming and cancellation.
+
 ## 2026-09-21 — M3.43 native audio render boundary — merged
 
 Branch: `feat/m3-43-native-audio-render`
