@@ -272,6 +272,7 @@ function PreviewVisualLayer({
   const activeTransform =
     anchorGesture?.transform ?? gesture?.transform ?? currentTransform;
   const transitionOpacity = layer.transitionOpacity ?? 1;
+  const transitionOverlayOpacity = layer.transitionOverlayOpacity ?? 0;
   const mediaWidth = mediaSize?.width ?? 0;
   const mediaHeight = mediaSize?.height ?? 0;
   const contentBoundsPercent = getContainedContentPercentageBounds(
@@ -1133,6 +1134,14 @@ function PreviewVisualLayer({
         onPointerUp={finishGesture}
         onPointerCancel={cancelGesture}
       >
+        {transitionOverlayOpacity > 0 ? (
+          <div
+            aria-hidden="true"
+            className="preview-transition-overlay"
+            data-testid={"preview-transition-overlay-" + layer.clip.id}
+            style={{ opacity: transitionOverlayOpacity }}
+          />
+        ) : null}
         <div
           className="preview-content-layer"
           style={{
@@ -1191,6 +1200,14 @@ function PreviewVisualLayer({
       onPointerUp={finishGesture}
       onPointerCancel={cancelGesture}
     >
+      {transitionOverlayOpacity > 0 ? (
+        <div
+          aria-hidden="true"
+          className="preview-transition-overlay"
+          data-testid={"preview-transition-overlay-" + layer.clip.id}
+          style={{ opacity: transitionOverlayOpacity }}
+        />
+      ) : null}
       <div
         className="preview-content-layer"
         style={{
