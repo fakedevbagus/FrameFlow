@@ -795,7 +795,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-  use super::{parse_duration_ms, preview_cache_key};
+  use super::{media_type, parse_duration_ms, preview_cache_key};
   use std::path::Path;
 
   #[test]
