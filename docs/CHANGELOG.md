@@ -1,5 +1,29 @@
 ## 2026-09-21
 
+### Continuity checkpoint — chat handoff
+
+Repository state:
+- `main` tip: `7d9400634c0f9a4650212110b938a17e0fa685da`.
+- Latest completed milestone: M3.28 — Transition lifecycle integrity.
+- PR #39 merge SHA: `2e77190ef6474b3ede1ad72af0682a9c5bfb7c61`.
+- No M3.29 implementation is currently approved or active.
+
+Validation state:
+- M3.27 local validation was confirmed by the user.
+- M3.28 was merged remotely after follow-up fixes.
+- The latest pasted M3.28 local log was from before those fixes and contained one lint error, two failing lifecycle tests, and two TypeScript build errors; Tauri dev launched successfully.
+- No fresh post-fix M3.28 local validation result is recorded in this chat.
+- Do not infer local validation from the merged PR.
+
+Continuity rule:
+- New chats must read `docs/SESSION_HANDOFF.md` and verify the repository before making changes.
+- Preserve unrelated local changes, especially `src-tauri/Cargo.lock` and `src-tauri/Cargo.toml` when they appear modified locally.
+- After every meaningful milestone, update `docs/SESSION_HANDOFF.md`, `docs/PROJECT_CONTEXT.md`, and this changelog.
+
+Next step:
+- Verify the current M3.28 local state first. After validation is explicitly confirmed, choose and document the next focused milestone from the verified `main`.
+
+
 ### M3.28 — Transition lifecycle integrity — merged
 Branch: `feat/m3-28-transition-lifecycle-integrity`
 PR #39
@@ -22,69 +46,6 @@ Known limitations:
 
 Next step:
 - Continue from updated `main` with the next focused editor milestone.
-
-
-### M3.28 — Transition lifecycle integrity — in progress
-Branch: `feat/m3-28-transition-lifecycle-integrity`
-
-Implemented:
-- Added transition-pair normalization and track sanitization helpers.
-- Cleared stale transitions when move/remove/trim operations break adjacency.
-- Clamped transition duration when trimming an adjacent clip reduces available duration.
-- Kept split transitions on the second half of a split outgoing clip and cleared the first half.
-- Added regression tests for transition cleanup and split ownership.
-
-Validation:
-- Local validation is pending user verification.
-
-Known limitations:
-- Only dissolve transitions are supported.
-- Legacy stale metadata is repaired when the affected track is structurally edited.
-
-Next step:
-- User validates M3.28 locally before merge.
-
-
-### M3.27 — Direct timeline transition-duration manipulation — in progress
-Branch: `feat/m3-27-direct-transition-duration`
-
-Implemented:
-- Added a draggable duration handle to the existing dissolve timeline indicator.
-- Previewed duration changes during the drag gesture.
-- Committed one duration update on pointer release.
-- Added Escape cancellation without project history.
-- Added keyboard duration nudging in 50 ms steps.
-- Added Timeline regression coverage for drag, cancellation, and keyboard editing.
-
-Validation:
-- User confirmed local Linux validation passed, including lint, tests, build, Tauri dev, and the requested duration-drag, Escape, keyboard, and Undo/Redo checks.
-
-Known limitations:
-- Only dissolve transitions are supported.
-- The Inspector remains the primary precision-editing surface.
-
-Next step:
-- Start M3.28 from the updated `main`, focusing on transition lifecycle integrity after timeline structure edits.
-
-
-### M3.26 — Timeline transition indicator — in progress
-Branch: `feat/m3-26-transition-timeline-indicator`
-
-Implemented:
-- Added a timeline boundary indicator for active outgoing dissolve transitions.
-- Made the indicator keyboard accessible and clickable.
-- Clicking the indicator selects the outgoing clip so the existing Inspector remains the configuration surface.
-- Reused transition metadata and adjacency helpers without adding duplicate state.
-
-Validation:
-- Local validation is pending user verification.
-
-Known limitations:
-- No draggable transition block yet.
-- Only dissolve is represented.
-
-Next step:
-- User validates M3.26 locally before merge.
 
 
 ### M3.25 — Dissolve transition foundation — merged
