@@ -190,6 +190,7 @@ describe("audio render graph", () => {
         createAudioSegment({
           inputIndex: 2,
           assetId: "audio-track-2",
+          sourcePath: "/media/audio-track-2.mp3",
           trackId: "audio-2",
           trackIndex: 1,
           timelineStartMs: 0,
@@ -198,6 +199,7 @@ describe("audio render graph", () => {
         createAudioSegment({
           inputIndex: 1,
           assetId: "audio-track-1",
+          sourcePath: "/media/audio-track-1.mp3",
           trackId: "audio-1",
           trackIndex: 0,
           timelineStartMs: 1000,
