@@ -16,6 +16,8 @@ import {
   updateAudioClipFades,
   updateAudioClipEq,
   updateAudioClipCompressor,
+  updateAudioClipVolumeAtTime,
+  removeAudioClipVolumeKeyframe,
   updateClipTransform,
   updateClipTransformAtTime,
   moveClipOnTimeline,
@@ -707,6 +709,80 @@ describe("updateAudioClipCompressor", () => {
     expect(() => updateAudioClipCompressor(project, audioId, {
       enabled: true, thresholdDb: -24, ratio: 4, attackMs: 20, releaseMs: 250,
     })).toThrow("Track is locked.");
+  });
+});
+
+describe("audio volume automation", () => {
+  it("adds, updates, and removes an audio volume keyframe", () => {
+    let project = createProject({ id: "audio-volume-automation-command" });
+    project = {
+      ...project,
+      assets: [{
+        id: "audio",
+        name: "voice.mp3",
+        mediaType: "audio",
+        sourcePath: "/voice.mp3",
+        durationMs: 5000,
+      }],
+    };
+    project = addAssetToTimeline(project, "audio");
+    const clipId = project.tracks[1].clips[0].id;
+
+    project = updateAudioClipVolumeAtTime(
+      project,
+      clipId,
+      1000,
+      0.4,
+      new Date("2026-09-21T05:00:00.000Z"),
+    );
+
+    expect(project.tracks[1].clips[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 1000, volume: 0.4 },
+    ]);
+    expect(project.updatedAt).toBe("2026-09-21T05:00:00.000Z");
+
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000.4, 0.7);
+    expect(project.tracks[1].clips[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 1000, volume: 0.7 },
+    ]);
+
+    project = removeAudioClipVolumeKeyframe(project, clipId, 1000);
+    expect(project.tracks[1].clips[0].audioVolumeKeyframes).toBeUndefined();
+  });
+
+  it("rejects invalid audio volume automation routing and values", () => {
+    let project = createProject({ id: "audio-volume-automation-errors" });
+    project = {
+      ...project,
+      assets: [{
+        id: "video",
+        name: "clip.mp4",
+        mediaType: "video",
+        sourcePath: "/clip.mp4",
+        durationMs: 5000,
+      }, {
+        id: "audio",
+        name: "voice.mp3",
+        mediaType: "audio",
+        sourcePath: "/voice.mp3",
+        durationMs: 5000,
+      }],
+    };
+    project = addAssetToTimeline(project, "video");
+    const visualId = project.tracks[0].clips[0].id;
+    expect(() =>
+      updateAudioClipVolumeAtTime(project, visualId, 0, 0.5),
+    ).toThrow("Audio automation is only available for audio clips.");
+
+    project = addAssetToTimeline(project, "audio");
+    const audioId = project.tracks[1].clips[0].id;
+
+    expect(() =>
+      updateAudioClipVolumeAtTime(project, audioId, 5001, 0.5),
+    ).toThrow("Audio volume keyframe time must be inside the clip.");
+    expect(() =>
+      updateAudioClipVolumeAtTime(project, audioId, 0, 1.1),
+    ).toThrow("Audio volume must be between 0 and 1.");
   });
 });
 
