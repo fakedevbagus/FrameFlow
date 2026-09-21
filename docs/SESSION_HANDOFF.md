@@ -1,3 +1,12 @@
+## M3.38 validation/debug correction — 2026-09-21
+
+- User reached a native FFmpeg failure after the crop-related compiler guard was no longer blocking the export.
+- The screenshot only exposed a truncated error string in the ExportPanel, so the exact FFmpeg stderr was not yet visible.
+- The underlying M3.37 filter graph command shape was independently validated with FFmpeg using the same trim/scale/pad/fps/concat structure.
+- Updated ExportPanel failure rendering so the full renderer error can wrap instead of being ellipsized.
+- Added a regression test for full renderer-error visibility.
+- M3.38 remains pending local validation with the new diagnostics.
+
 ## M3.38 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-38-export-render-job`.
