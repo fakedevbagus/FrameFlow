@@ -7,6 +7,7 @@ import {
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
 import type {
+  Clip,
   ClipCrop,
   ClipTransform,
   CropPosition,
@@ -2184,89 +2185,13 @@ function App() {
 
               {selectedClipContext.asset?.mediaType === "audio" &&
               selectedClipContext.track.type === "audio" ? (
-                <div className="inspector-section">
-                  <div className="inspector-section-header">
-                    <span className="inspector-section-title">Audio fades</span>
-                    <span className="inspector-keyframe-count">Per clip</span>
-                  </div>
-                  <div
-                    className="inspector-transform-input-grid"
-
-                  >
-                    <label className="inspector-transform-field">
-                      <span>Fade in</span>
-                      <div className="inspector-transform-input-wrap">
-                        <input
-                          aria-label="Audio fade in"
-                          className="inspector-transform-input"
-                          key={[
-                            selectedClipContext.clip.id,
-                            selectedClipContext.clip.audioFadeInMs ?? 0,
-                          ].join("|")}
-                          max={Math.max(0, getClipDurationMs(selectedClipContext.clip))}
-                          min="0"
-                          step="100"
-                          type="number"
-                          defaultValue={selectedClipContext.clip.audioFadeInMs ?? 0}
-                          onBlur={(event) => {
-                            const fadeInMs = Number(event.currentTarget.value);
-                            const fadeOutMs =
-                              selectedClipContext.clip.audioFadeOutMs ?? 0;
-                            if (!Number.isFinite(fadeInMs)) {
-                              event.currentTarget.value = String(
-                                selectedClipContext.clip.audioFadeInMs ?? 0,
-                              );
-                              return;
-                            }
-                            handleUpdateSelectedAudioFades(
-                              Math.max(0, Math.round(fadeInMs)),
-                              fadeOutMs,
-                            );
-                          }}
-                          onKeyDown={handleTransformInputKeyDown}
-                        />
-                        <span>ms</span>
-                      </div>
-                    </label>
-                    <label className="inspector-transform-field">
-                      <span>Fade out</span>
-                      <div className="inspector-transform-input-wrap">
-                        <input
-                          aria-label="Audio fade out"
-                          className="inspector-transform-input"
-                          key={[
-                            selectedClipContext.clip.id,
-                            selectedClipContext.clip.audioFadeOutMs ?? 0,
-                          ].join("|")}
-                          max={Math.max(0, getClipDurationMs(selectedClipContext.clip))}
-                          min="0"
-                          step="100"
-                          type="number"
-                          defaultValue={selectedClipContext.clip.audioFadeOutMs ?? 0}
-                          onBlur={(event) => {
-                            const fadeOutMs = Number(event.currentTarget.value);
-                            const fadeInMs =
-                              selectedClipContext.clip.audioFadeInMs ?? 0;
-                            if (!Number.isFinite(fadeOutMs)) {
-                              event.currentTarget.value = String(
-                                selectedClipContext.clip.audioFadeOutMs ?? 0,
-                              );
-                              return;
-                            }
-                            handleUpdateSelectedAudioFades(
-                              fadeInMs,
-                              Math.max(0, Math.round(fadeOutMs)),
-                            );
-                          }}
-                          onKeyDown={handleTransformInputKeyDown}
-                        />
-                        <span>ms</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
+                <AudioFadeInspector
+                  clip={selectedClipContext.clip}
+                  durationMs={getClipDurationMs(selectedClipContext.clip)}
+                  onCommit={handleUpdateSelectedAudioFades}
+                  onKeyDown={handleTransformInputKeyDown}
+                />
               ) : null}
-
               {(selectedClipContext.asset?.mediaType === "video" ||
                 selectedClipContext.asset?.mediaType === "image") ? (
                 <TransitionInspector
@@ -2440,6 +2365,101 @@ function getClipDurationMs(clip: { sourceStartMs: number; sourceEndMs: number | 
   return Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
 }
 
+function AudioFadeInspector({
+  clip,
+  durationMs,
+  onCommit,
+  onKeyDown,
+}: {
+  clip: Clip;
+  durationMs: number;
+  onCommit: (fadeInMs: number, fadeOutMs: number) => void;
+  onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
+}) {
+  const [fadeInDraft, setFadeInDraft] = useState(() =>
+    String(clip.audioFadeInMs ?? 0),
+  );
+  const [fadeOutDraft, setFadeOutDraft] = useState(() =>
+    String(clip.audioFadeOutMs ?? 0),
+  );
+
+  useEffect(() => {
+    setFadeInDraft(String(clip.audioFadeInMs ?? 0));
+    setFadeOutDraft(String(clip.audioFadeOutMs ?? 0));
+  }, [clip.id, clip.audioFadeInMs, clip.audioFadeOutMs]);
+
+  function commit(which: "in" | "out") {
+    const rawFadeIn = fadeInDraft.trim();
+    const rawFadeOut = fadeOutDraft.trim();
+
+    if (!rawFadeIn || !rawFadeOut) {
+      if (!rawFadeIn) setFadeInDraft(String(clip.audioFadeInMs ?? 0));
+      if (!rawFadeOut) setFadeOutDraft(String(clip.audioFadeOutMs ?? 0));
+      return;
+    }
+
+    const fadeInMs = Number(rawFadeIn);
+    const fadeOutMs = Number(rawFadeOut);
+
+    if (!Number.isFinite(fadeInMs) || !Number.isFinite(fadeOutMs)) {
+      if (which === "in") {
+        setFadeInDraft(String(clip.audioFadeInMs ?? 0));
+      } else {
+        setFadeOutDraft(String(clip.audioFadeOutMs ?? 0));
+      }
+      return;
+    }
+
+    onCommit(Math.max(0, Math.round(fadeInMs)), Math.max(0, Math.round(fadeOutMs)));
+  }
+
+  return (
+    <div className="inspector-section">
+      <div className="inspector-section-header">
+        <span className="inspector-section-title">Audio fades</span>
+        <span className="inspector-keyframe-count">Per clip</span>
+      </div>
+      <div className="inspector-transform-input-grid">
+        <label className="inspector-transform-field">
+          <span>Fade in</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              aria-label="Audio fade in"
+              className="inspector-transform-input"
+              max={Math.max(0, durationMs)}
+              min="0"
+              step="100"
+              type="number"
+              value={fadeInDraft}
+              onChange={(event) => setFadeInDraft(event.currentTarget.value)}
+              onBlur={() => commit("in")}
+              onKeyDown={onKeyDown}
+            />
+            <span>ms</span>
+          </div>
+        </label>
+        <label className="inspector-transform-field">
+          <span>Fade out</span>
+          <div className="inspector-transform-input-wrap">
+            <input
+              aria-label="Audio fade out"
+              className="inspector-transform-input"
+              max={Math.max(0, durationMs)}
+              min="0"
+              step="100"
+              type="number"
+              value={fadeOutDraft}
+              onChange={(event) => setFadeOutDraft(event.currentTarget.value)}
+              onBlur={() => commit("out")}
+              onKeyDown={onKeyDown}
+            />
+            <span>ms</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
 function formatTimecode(durationMs: number, frameRate: number): string {
   const totalMilliseconds = Math.max(0, durationMs);
   const totalSeconds = Math.floor(totalMilliseconds / 1000);

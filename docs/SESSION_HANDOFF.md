@@ -1,3 +1,13 @@
+## M3.46 Inspector fade draft-state correction — 2026-09-21
+
+- Latest user validation after commit 10c75b5 still showed 268/269 tests.
+- The prior sibling-remount hypothesis was insufficient because the Fade out input remained in the document but its edit still did not persist.
+- Current correction introduces `AudioFadeInspector` with controlled transient draft strings for both fields. Project persistence and history remain unchanged and continue through `handleUpdateSelectedAudioFades()` -> `updateAudioClipFades()`.
+- The App regression test now checks the 1500 ms DOM value immediately after the Fade out change before committing on blur.
+- User-reported validation before this correction: lint completed; build completed; Rust 28/28 passed; Tauri dev launched successfully; Vitest 268/269.
+- Required next validation after this correction: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+- Keep PR #59 draft until the fresh local test run is clean.
+
 ## M3.46 Inspector fade edit fix — 2026-09-21
 
 - Branch: feat/m3-46-audio-clip-fades.

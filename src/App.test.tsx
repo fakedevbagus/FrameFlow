@@ -1786,10 +1786,11 @@ describe("App", () => {
     fireEvent.change(fadeIn, { target: { value: "1000" } });
     fireEvent.blur(fadeIn);
 
-    // Updating one fade must not remount the sibling field before its own edit.
+    // The sibling field must remain editable while the first field commits.
     expect(fadeOut).toBeInTheDocument();
 
     fireEvent.change(fadeOut, { target: { value: "1500" } });
+    expect(fadeOut).toHaveValue(1500);
     fireEvent.blur(fadeOut);
 
     await waitFor(() => {

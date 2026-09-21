@@ -1,3 +1,11 @@
+## 2026-09-21 — M3.46 Inspector fade draft-state correction — validation required
+
+- The user's fresh validation after the prior key-based fix still reported 268/269 tests, with only the Fade out Inspector test failing.
+- Replaced the uncontrolled `defaultValue` audio fade inputs with controlled transient draft values inside `AudioFadeInspector`.
+- Persisted project values remain owned by the existing project/history state and `updateAudioClipFades()` command; the new component only tracks the text currently being edited.
+- Strengthened the integration test to assert that Fade out reaches 1500 ms immediately after the change event before blur.
+- Latest user validation evidence: lint completed, build completed, Rust 28/28 passed, and Tauri dev launched; Vitest still had 1 deterministic failure before this correction.
+
 ## 2026-09-21 — M3.46 Inspector fade edit fix — pending validation
 
 Root cause:

@@ -1,3 +1,12 @@
+## M3.46 Inspector fade draft-state correction — 2026-09-21
+
+- The previous per-input React-key fix did not pass the user's fresh validation run: the suite remained at 268/269 with the same Fade out Inspector failure.
+- Root cause after that validation: the two Inspector fields were still uncontrolled `defaultValue` inputs whose persisted project rerenders could overwrite the effective edit flow. The UI needed an explicit ephemeral draft representation separate from persisted project state.
+- Fix: introduced a small `AudioFadeInspector` UI component with controlled draft strings for the two inputs. The draft state is synchronized from the selected clip's persisted fade values after project changes, while commits still go through `handleUpdateSelectedAudioFades()` and the existing history command.
+- This does not create a second project state model: persisted fade values remain owned by the project/history layer; the component only owns transient text currently being edited.
+- Regression coverage now also asserts that the Fade out input receives the requested 1500 ms value immediately after its change event before blur/commit.
+- User validation before this correction: lint completed; production build completed; Rust tests 28/28 passed; Tauri dev launched; Vitest remained 268/269.
+- Fresh validation is required after this correction.
 ## M3.46 Inspector fade edit fix — 2026-09-21
 
 - Root cause: the Audio fades Inspector placed a React key derived from both fade values on the shared two-input grid. Committing one fade changed that key and remounted both inputs, which detached the sibling input before its pending edit could be committed.
