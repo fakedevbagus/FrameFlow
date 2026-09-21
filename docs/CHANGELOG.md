@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.40 validation correction
+
+- Aligned render-pipeline tests with the native segment-renderer routing introduced by M3.40.
+- Restored pre-render supported-state validation before renderer selection.
+- Added offset single-clip routing through a black-gap segment.
+- Corrected Rust metadata validation coverage to avoid dependence on a real media file.
+- Fresh M3.40 validation is pending.
 ## 2026-09-21 — M3.40 multi-segment video renderer — in progress
 
 Branch: `feat/m3-40-multi-segment-video`
