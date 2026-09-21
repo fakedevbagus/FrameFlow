@@ -50,6 +50,18 @@ describe("transition helpers", () => {
       type: "dissolve",
       durationMs: 50,
     });
+
+    expect(
+      normalizeClipTransition({
+        type: "fade-through-black",
+        durationMs: 333.7,
+      }),
+    ).toEqual({
+      type: "fade-through-black",
+      durationMs: 334,
+    });
+
+
   });
 
   it("returns the next clip by timeline order", () => {
