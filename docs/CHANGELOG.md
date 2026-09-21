@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.46 validation correction — in progress
+
+- Corrected missing `updateAudioClipFades` test import.
+- Corrected the audio fade normalization test expectation to reflect the non-overlap rule.
+- Rust tests remained 28/28 in the reported run; Tauri dev launched successfully.
+- Fresh full validation is still required because the reported Vitest run also contained three worker timeouts/unhandled worker errors.
+
 ## 2026-09-21 — M3.46 audio clip fade controls — in progress
 
 Branch: feat/m3-46-audio-clip-fades
