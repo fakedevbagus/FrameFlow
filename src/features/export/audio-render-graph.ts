@@ -133,12 +133,43 @@ function buildAudioSegmentFilter(
     ",aformat=sample_rates=48000:channel_layouts=stereo" +
     ",volume=" +
     formatNumber(volume) +
+    buildAudioFadeFilters(segment) +
     ",adelay=" +
     Math.max(0, Math.round(segment.timelineStartMs)) +
     ":all=1[" +
     label +
     "]"
   );
+}
+
+function buildAudioFadeFilters(segment: RenderSegment): string {
+  const durationMs = Math.max(0, segment.durationMs);
+  const fadeInMs = Math.min(
+    durationMs,
+    Math.max(0, Math.floor(segment.audioFadeInMs ?? 0)),
+  );
+  const fadeOutMs = Math.min(
+    Math.max(0, durationMs - fadeInMs),
+    Math.max(0, Math.floor(segment.audioFadeOutMs ?? 0)),
+  );
+  const filters: string[] = [];
+
+  if (fadeInMs > 0) {
+    filters.push(
+      "afade=t=in:st=0:d=" + formatSeconds(fadeInMs),
+    );
+  }
+
+  if (fadeOutMs > 0) {
+    filters.push(
+      "afade=t=out:st=" +
+        formatSeconds(durationMs - fadeOutMs) +
+        ":d=" +
+        formatSeconds(fadeOutMs),
+    );
+  }
+
+  return filters.length ? "," + filters.join(",") : "";
 }
 
 function formatSeconds(milliseconds: number): string {
