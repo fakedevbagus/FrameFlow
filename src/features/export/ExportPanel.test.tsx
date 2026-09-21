@@ -3,8 +3,13 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { ExportPanel } from "./ExportPanel";
 import { createProject } from "../project/domain";
 
-const { chooseExportOutputPath, runExportJob } = vi.hoisted(() => ({
+const {
+  chooseExportOutputPath,
+  requestExportJobCancellation,
+  runExportJob,
+} = vi.hoisted(() => ({
   chooseExportOutputPath: vi.fn(),
+  requestExportJobCancellation: vi.fn(),
   runExportJob: vi.fn(),
 }));
 
@@ -13,6 +18,7 @@ vi.mock("./export-dialog", () => ({
 }));
 
 vi.mock("./export-runner", () => ({
+  requestExportJobCancellation,
   runExportJob,
 }));
 
@@ -148,3 +154,39 @@ describe("ExportPanel", () => {
   });
 });
 
+
+
+  it("shows render progress and requests cancellation", async () => {
+    chooseExportOutputPath.mockResolvedValueOnce("/home/user/Exports/demo.mp4");
+    runExportJob.mockImplementationOnce(
+      async (_project, _request, onUpdate) => {
+        const running = {
+          id: "export-progress",
+          phase: "running",
+          progress: 0.42,
+          request: _request,
+          errorMessage: null,
+          outputPath: null,
+        };
+        onUpdate?.(running);
+        return running;
+      },
+    );
+
+    render(<ExportPanel project={createProject()} onClose={vi.fn()} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Choose export destination" }),
+    );
+    await screen.findByText("/home/user/Exports/demo.mp4");
+    fireEvent.click(screen.getByRole("button", { name: "Export video" }));
+
+    expect(await screen.findByRole("progressbar", { name: "Export progress" })).toHaveValue(
+      0.42,
+    );
+    expect(screen.getByText("42%")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel export" }));
+
+    expect(requestExportJobCancellation).toHaveBeenCalledWith("export-progress");
+  });
