@@ -1206,6 +1206,60 @@ describe("App", () => {
     });
   });
 
+  it("selects fade through black from the transition inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-transition-a",
+        name: "transition-a.mp4",
+        mediaType: "video",
+        sourcePath: "/media/transition-a.mp4",
+        durationMs: 5000,
+      },
+      {
+        id: "asset-transition-b",
+        name: "transition-b.mp4",
+        mediaType: "video",
+        sourcePath: "/media/transition-b.mp4",
+        durationMs: 4000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("transition-a.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add transition-a.mp4 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add transition-b.mp4 to timeline" }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select transition-a.mp4 clip" }),
+    );
+
+    const transitionType = screen.getByRole("combobox", {
+      name: "Transition type",
+    });
+
+    fireEvent.change(transitionType, {
+      target: { value: "fade-through-black" },
+    });
+
+    await waitFor(() =>
+      expect(transitionType).toHaveValue("fade-through-black"),
+    );
+    expect(container).toHaveTextContent("Transition updated.");
+    expect(
+      screen.getByRole("spinbutton", { name: "Transition duration" }),
+    ).toHaveValue(300);
+  });
+
   it("changes keyframe interpolation from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
