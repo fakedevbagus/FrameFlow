@@ -1,3 +1,14 @@
+## 2026-09-21 — M3.48 Multiple Audio Track Mix — implementation started
+
+Implemented:
+- Multi-track audio graph compilation with deterministic track/clip ordering.
+- Reused existing per-clip trim, volume, fade, mute, delay, stereo normalization, and project-silence stages.
+- Export pipeline now calls the multi-track compiler.
+- Added regression coverage for two independent Audio tracks being mixed into [aout].
+
+Validation:
+- Local npm/Cargo/Tauri validation is required after pulling the branch.
+
 ## 2026-09-21 — M3.46 Audio Clip Fades — merged
 
 PR #59 — squash-merged
