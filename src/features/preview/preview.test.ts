@@ -116,7 +116,7 @@ describe("preview helpers", () => {
     const layers = getActiveVisualPreviewClips(project, 3500);
 
     expect(layers).toHaveLength(2);
-    expect(layers[0].transitionOpacity).toBe(1);
+    expect(layers[0].transitionOpacity).toBe(0);
     expect(layers[1].transitionOpacity).toBe(1);
     expect(layers[1].transitionOverlayOpacity).toBe(1);
 
