@@ -1319,22 +1319,23 @@ button:disabled {
   left: auto;
 }
 
-.timeline-audio-fade-handle span {
+.timeline-audio-fade-handle::after {
   position: absolute;
   top: 50%;
   left: 50%;
-  display: block;
   width: 3px;
   height: 28px;
   margin: 0;
   border-radius: 2px;
   background: #d9fff3;
   box-shadow: 0 1px 5px rgb(0 0 0 / 35%);
+  content: "";
+  pointer-events: none;
   transform: translate(-50%, -50%);
 }
 
-.timeline-audio-fade-handle:hover span,
-.timeline-audio-fade-handle:focus-visible span {
+.timeline-audio-fade-handle:hover::after,
+.timeline-audio-fade-handle:focus-visible::after {
   width: 4px;
   background: #ffffff;
 }
