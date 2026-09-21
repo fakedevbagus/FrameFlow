@@ -1,19 +1,12 @@
-## M3.40 validation correction — 2026-09-21
+## M3.41 implementation checkpoint — 2026-09-21
 
-- Latest user validation: build and Tauri startup passed; Rust tests ran with 18 passing and one failure; TypeScript had 239 passing and two failures.
-- The failures were test-contract mismatches after the multi-segment routing change, not native command compilation failures.
-- `renderVideoPlanToMp4()` now validates the render plan through `compileSingleVideoTrackGraph()` before selecting a renderer.
-- Sequential one-track/video-only timelines use the native segment renderer; a single clip at timeline zero retains the M3.39 audio-capable renderer; offset single clips now become a black-gap segment plus source segment.
-- Rust valid-request coverage uses a synthetic gap so it does not require `/media/a.mp4` to exist.
-- Fresh full validation is pending.
-## M3.40 implementation checkpoint — 2026-09-21
-
-- Branch: `feat/m3-40-multi-segment-video`.
-- M3.39 is complete at merge SHA `2808ba584932967f7dccf2b273faf79e61e27a9d`.
-- M3.40 adds a native multi-segment renderer for sequential clips on one video track.
-- The renderer normalizes each source segment to the requested canvas/frame-rate/pixel format, generates black segments for timeline gaps, and concatenates the normalized files with the concat demuxer.
-- The existing filter_complex renderer remains available for later graph-driven composition but is no longer required for the simplest multi-clip sequential path.
-- No independent timeline audio mixing is included in this slice.
+- Branch: `feat/m3-41-multisegment-audio`.
+- M3.40 is complete at merge SHA `4d9e15a27dda3c5d5d42f18c2161a9a3d6a6b415`.
+- M3.41 adds synchronized audio to the native multi-segment sequential renderer.
+- Each temporary segment is normalized to one video stream and one AAC audio stream so concat demuxing has a stable stream layout.
+- Clips with source audio use the first source audio stream; clips without audio get generated silence.
+- Timeline gaps use black video and generated silence.
+- This remains sequential one-video-track composition; independent Audio Track mixing is a later milestone.
 - Local validation is pending.
 ## M3.37 implementation checkpoint — 2026-09-21
 
