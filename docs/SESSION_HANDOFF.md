@@ -1,3 +1,11 @@
+## M3.56 bugfix — Audio waveform visual saturation — 2026-09-22
+
+- M3.56 manual validation exposed a presentation defect: the Audio timeline waveform could appear as a large solid block on long/loud clips.
+- The display now requests 512 waveform buckets and contrast-stretches the already-normalized peaks for visual readability.
+- The underlying native waveform data, cache key model, project schema, scrubbing math, and audio edit/export semantics remain unchanged.
+- The SVG path fill is explicitly set to the intended waveform display color.
+- Revalidate the full npm/Cargo/Tauri suite and manually confirm waveform readability, click-to-seek behavior, clip move/trim isolation, and existing audio automation/fade controls.
+
 ## M3.56 kickoff — Audio Waveform Scrubbing — 2026-09-22
 
 - M3.55 Audio Waveform Foundation was squash-merged as PR #69 at `8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`.
