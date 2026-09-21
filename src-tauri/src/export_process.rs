@@ -79,8 +79,7 @@ impl ExportProcessState {
     self
       .cancelled
       .lock()
-      .ok()
-      .and_then(|mut cancelled| cancelled.take(job_id))
+      .map(|mut cancelled| cancelled.remove(job_id))
       .unwrap_or(false)
   }
 
