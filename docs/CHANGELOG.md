@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.36 FFmpeg video filter graph
+
+- Added deterministic compilation from RenderPlan to a basic FFmpeg video filter graph.
+- Added source trim, canvas scale/pad, FPS normalization, sequential concatenation, and timeline-gap black frames.
+- Added explicit unsupported-state validation for multi-track, audio, image, transition, transform, crop, keyframe, and mute rendering.
+- Added regression tests for graph generation and deferred boundaries.
+
 ## 2026-09-21 — M3.35 project render plan
 
 - Added a pure project-to-render-plan compiler for timeline segments.
