@@ -2203,6 +2203,13 @@ function App() {
               {selectedClipContext.asset?.mediaType === "audio" &&
               selectedClipContext.track.type === "audio" ? (
                 <AudioFadeInspector
+                  key={
+                    selectedClipContext.clip.id +
+                    "-" +
+                    (selectedClipContext.clip.audioFadeInMs ?? 0) +
+                    "-" +
+                    (selectedClipContext.clip.audioFadeOutMs ?? 0)
+                  }
                   clip={selectedClipContext.clip}
                   durationMs={getClipDurationMs(selectedClipContext.clip)}
                   onCommit={handleUpdateSelectedAudioFades}
@@ -2399,11 +2406,6 @@ function AudioFadeInspector({
   const [fadeOutDraft, setFadeOutDraft] = useState(() =>
     String(clip.audioFadeOutMs ?? 0),
   );
-
-  useEffect(() => {
-    setFadeInDraft(String(clip.audioFadeInMs ?? 0));
-    setFadeOutDraft(String(clip.audioFadeOutMs ?? 0));
-  }, [clip.id, clip.audioFadeInMs, clip.audioFadeOutMs]);
 
   function commit(which: "in" | "out") {
     const rawFadeIn = fadeInDraft.trim();
