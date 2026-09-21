@@ -1,3 +1,11 @@
+## 2026-09-21 — M3.34 native FFmpeg render boundary
+
+- Added a native Tauri FFmpeg single-source MP4 render command.
+- Added request validation and controlled FFmpeg error handling.
+- Added safe structured argument construction and regression coverage.
+- Added a frontend invoke wrapper for the native render boundary.
+- Full project timeline rendering remains deferred.
+
 ## 2026-09-21 — M3.33 export destination and render-job boundary merged
 
 - PR #44 `feat: add export destination and render-job boundary` was marked ready and squash-merged.
