@@ -18,8 +18,6 @@ describe("export progress subscription", () => {
     const handler = vi.fn();
     const unlisten = vi.fn();
 
-    listen.mockResolvedValueOnce(unlisten);
-
     let listener: ((event: { payload: unknown }) => void) | undefined;
     listen.mockImplementationOnce(async (_eventName, callback) => {
       listener = callback;
