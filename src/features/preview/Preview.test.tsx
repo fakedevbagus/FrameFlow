@@ -137,6 +137,64 @@ describe("Preview", () => {
     });
   });
 
+  it("renders a fade-through-black overlay at its peak", async () => {
+    let project = createProject({ id: "fade-dom-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-a",
+          name: "a.mp4",
+          mediaType: "video",
+          sourcePath: "/media/a.mp4",
+          durationMs: 4000,
+        },
+        {
+          id: "video-b",
+          name: "b.mp4",
+          mediaType: "video",
+          sourcePath: "/media/b.mp4",
+          durationMs: 3000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-a");
+    project = addAssetToTimeline(project, "video-b");
+    project.tracks[0] = {
+      ...project.tracks[0],
+      clips: project.tracks[0].clips.map((clip, index) =>
+        index === 0
+          ? {
+              ...clip,
+              transitionOut: {
+                type: "fade-through-black",
+                durationMs: 1000,
+              },
+            }
+          : clip,
+      ),
+    };
+
+    render(
+      <Preview
+        project={project}
+        currentTimeMs={3500}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+
+    const incomingClipId = project.tracks[0].clips[1].id;
+    const overlay = screen.getByTestId(
+      "preview-transition-overlay-" + incomingClipId,
+    );
+
+    expect(overlay).toHaveStyle({ opacity: "1" });
+  });
+
   it("renders multiple active visual layers in track order", async () => {
     let project = createProject({ id: "multitrack-preview" });
 
