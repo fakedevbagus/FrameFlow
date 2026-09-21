@@ -961,6 +961,55 @@ describe("trimClipEnd", () => {
   });
 });
 
+describe("audio fade preservation through timeline edits", () => {
+  it("clamps fades when an audio clip is trimmed", () => {
+    let project = createProject({ id: "audio-fade-trim" });
+    project.assets.push({
+      id: "audio",
+      name: "music.mp3",
+      mediaType: "audio",
+      sourcePath: "/music.mp3",
+      durationMs: 5000,
+    });
+
+    project = addAssetToTimeline(project, "audio");
+    const clipId = project.tracks[1].clips[0].id;
+    project = updateAudioClipFades(project, clipId, 1500, 1500);
+
+    const trimmed = trimClipEnd(project, clipId, 2000);
+    expect(trimmed.tracks[1].clips[0]).toMatchObject({
+      audioFadeInMs: 1500,
+      audioFadeOutMs: 500,
+    });
+  });
+
+  it("keeps audio fade-in on the first split clip and fade-out on the second", () => {
+    let project = createProject({ id: "audio-fade-split" });
+    project.assets.push({
+      id: "audio",
+      name: "split.mp3",
+      mediaType: "audio",
+      sourcePath: "/split.mp3",
+      durationMs: 5000,
+    });
+
+    project = addAssetToTimeline(project, "audio");
+    const clipId = project.tracks[1].clips[0].id;
+    project = updateAudioClipFades(project, clipId, 500, 700);
+
+    const split = splitClipAtTime(project, clipId, 2000);
+    const clips = [...split.tracks[1].clips].sort(
+      (left, right) => left.timelineStartMs - right.timelineStartMs,
+    );
+
+    expect(clips).toHaveLength(2);
+    expect(clips[0].audioFadeInMs).toBe(500);
+    expect(clips[0].audioFadeOutMs).toBeUndefined();
+    expect(clips[1].audioFadeInMs).toBeUndefined();
+    expect(clips[1].audioFadeOutMs).toBe(700);
+  });
+});
+
 describe("splitClipAtTime", () => {
   it("splits a clip into two adjacent source ranges", () => {
     const project = createProject({ id: "split-project" });
