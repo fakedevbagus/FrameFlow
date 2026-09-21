@@ -1,17 +1,16 @@
-import type {
-  TransformAnchor,
-  ClipCrop,
-  CropPosition,
-  Clip,
-  ClipTransform,
-  Project,
-  TrackType,
-  TransformEasing,
-  ClipTransition,
-} from "../project/domain";
 import {
   getAudioFadeDurations,
-
+  type TransformAnchor,
+  type ClipCrop,
+  type CropPosition,
+  type Clip,
+  type ClipTransform,
+  type Project,
+  type TrackType,
+  type TransformEasing,
+  type ClipTransition,
+} from "../project/domain";
+import {
   DEFAULT_CLIP_TRANSFORM,
   getClipTransform,
   getClipTransformAtTime,
