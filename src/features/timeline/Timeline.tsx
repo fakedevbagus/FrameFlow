@@ -19,6 +19,10 @@ import {
   type Track,
 } from "../project/domain";
 import {
+  buildWaveformPath,
+  getAudioWaveform,
+} from "../audio/waveform";
+import {
   DEFAULT_TIMELINE_ZOOM,
   MAX_TIMELINE_ZOOM,
   MIN_TIMELINE_ZOOM,
@@ -1655,6 +1659,9 @@ function TimelineTrack({
                   {asset?.name ?? "Missing media"}
                 </span>
                 <small>{formatTimecode(durationMs)}</small>
+                {isAudioClip && asset ? (
+                  <AudioWaveformPreview sourcePath={asset.sourcePath} />
+                ) : null}
                 {isAudioClip ? (
                   <>
                     <span
@@ -2211,6 +2218,66 @@ function TimelineTrack({
         />
       </div>
     </div>
+  );
+}
+
+function AudioWaveformPreview({
+  sourcePath,
+}: {
+  sourcePath: string;
+}) {
+  const [waveformPath, setWaveformPath] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+
+    void getAudioWaveform(sourcePath, 128)
+      .then((waveform) => {
+        if (cancelled) {
+          return;
+        }
+
+        setWaveformPath(buildWaveformPath(waveform.peaks, 128, 20));
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWaveformPath("");
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sourcePath]);
+
+  if (isLoading && !waveformPath) {
+    return (
+      <span
+        aria-hidden="true"
+        className="timeline-audio-waveform-placeholder"
+      />
+    );
+  }
+
+  if (!waveformPath) {
+    return null;
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="timeline-audio-waveform"
+      data-testid="timeline-audio-waveform"
+      preserveAspectRatio="none"
+      viewBox="0 0 128 20"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d={waveformPath} />
+    </svg>
   );
 }
 
