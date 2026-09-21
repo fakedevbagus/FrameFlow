@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.35 project render plan
+
+- Added a pure project-to-render-plan compiler for timeline segments.
+- Preserved clip source/timeline timing, track metadata, mute state, visual metadata, and transitions for later FFmpeg graph compilation.
+- Added validation and regression coverage for invalid timeline references and overlap conditions.
+- Actual FFmpeg filter graph generation remains deferred.
+
 ## 2026-09-21 — M3.34 native FFmpeg render boundary
 
 - Added a native Tauri FFmpeg single-source MP4 render command.
