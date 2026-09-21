@@ -73,6 +73,15 @@ interface TimelineProps {
     fromTimeMs: number,
     toTimeMs: number,
   ) => void;
+  onRemoveAudioVolumeKeyframe?: (
+    clipId: string,
+    timeMs: number,
+  ) => void;
+  onMoveAudioVolumeKeyframe?: (
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) => void;
   onUpdateClipTransition?: (
     clipId: string,
     transition: ClipTransition | undefined,
@@ -98,6 +107,15 @@ interface AudioFadeInteraction {
 const AUDIO_FADE_HANDLE_STEP_MS = 100;
 
 interface KeyframeInteraction {
+  clipId: string;
+  pointerId: number;
+  keyframeTimeMs: number;
+  startClientX: number;
+  previewTimeMs: number;
+  hasMoved: boolean;
+}
+
+interface AudioVolumeKeyframeInteraction {
   clipId: string;
   pointerId: number;
   keyframeTimeMs: number;
@@ -149,6 +167,8 @@ export function Timeline({
   onRemoveTrack,
   onRemoveTransformKeyframe,
   onMoveTransformKeyframe,
+  onRemoveAudioVolumeKeyframe,
+  onMoveAudioVolumeKeyframe,
   onUpdateClipTransition,
   zoom = DEFAULT_TIMELINE_ZOOM,
   onZoomChange,
@@ -163,6 +183,10 @@ export function Timeline({
   const transitionInteractionTargetRef = useRef<HTMLElement | null>(null);
   const [keyframeInteraction, setKeyframeInteraction] =
     useState<KeyframeInteraction | null>(null);
+  const [audioVolumeKeyframeInteraction, setAudioVolumeKeyframeInteraction] =
+    useState<AudioVolumeKeyframeInteraction | null>(null);
+  const audioVolumeKeyframeInteractionTargetRef =
+    useRef<HTMLButtonElement | null>(null);
   const [dragOverTrackId, setDragOverTrackId] = useState<string | null>(null);
   const timelineDurationMs = getTimelineDurationMs(project);
   const pixelsPerSecond = basePixelsPerSecond * zoom;
@@ -404,6 +428,201 @@ export function Timeline({
 
     setKeyframeInteraction(null);
   }
+
+  function beginAudioVolumeKeyframeInteraction(
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    keyframeTimeMs: number,
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.stopPropagation();
+    onSelectClip?.(clip.id);
+    onCurrentTimeChange?.(
+      Math.min(
+        Math.max(clip.timelineStartMs + keyframeTimeMs, 0),
+        timelineDurationMs,
+      ),
+    );
+
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    audioVolumeKeyframeInteractionTargetRef.current = event.currentTarget;
+
+    setAudioVolumeKeyframeInteraction({
+      clipId: clip.id,
+      pointerId: event.pointerId,
+      keyframeTimeMs,
+      startClientX: event.clientX,
+      previewTimeMs: keyframeTimeMs,
+      hasMoved: false,
+    });
+  }
+
+  function updateAudioVolumeKeyframeInteraction(
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (
+      !audioVolumeKeyframeInteraction ||
+      event.buttons !== 1 ||
+      event.pointerId !== audioVolumeKeyframeInteraction.pointerId
+    ) {
+      return;
+    }
+
+    const clip = project.tracks
+      .flatMap((track) => track.clips)
+      .find(
+        (candidate) => candidate.id === audioVolumeKeyframeInteraction.clipId,
+      );
+
+    if (!clip) {
+      return;
+    }
+
+    const deltaPixels =
+      event.clientX - audioVolumeKeyframeInteraction.startClientX;
+
+    if (Math.abs(deltaPixels) < 2) {
+      return;
+    }
+
+    const deltaMs = pixelsToMilliseconds(deltaPixels, pixelsPerSecond);
+    const keyframes = [...(clip.audioVolumeKeyframes ?? [])].sort(
+      (a, b) => a.timeMs - b.timeMs,
+    );
+    const index = keyframes.findIndex(
+      (keyframe) =>
+        keyframe.timeMs === audioVolumeKeyframeInteraction.keyframeTimeMs,
+    );
+
+    if (index === -1) {
+      return;
+    }
+
+    const previousTimeMs = index > 0 ? keyframes[index - 1].timeMs : 0;
+    const nextTimeMs =
+      index < keyframes.length - 1
+        ? keyframes[index + 1].timeMs
+        : getClipDurationMs(clip);
+    const frameStepMs = 1000 / project.canvas.frameRate;
+    const minimumTimeMs =
+      index > 0 ? previousTimeMs + frameStepMs : 0;
+    const maximumTimeMs =
+      index < keyframes.length - 1
+        ? nextTimeMs - frameStepMs
+        : nextTimeMs;
+    const nextTimeMsClamped = Math.min(
+      Math.max(
+        Math.round(
+          snapTimelineTime(
+            audioVolumeKeyframeInteraction.keyframeTimeMs + deltaMs,
+          ),
+        ),
+        minimumTimeMs,
+      ),
+      maximumTimeMs,
+    );
+
+    setAudioVolumeKeyframeInteraction({
+      ...audioVolumeKeyframeInteraction,
+      hasMoved: true,
+      previewTimeMs: nextTimeMsClamped,
+    });
+  }
+
+  function finishAudioVolumeKeyframeInteraction(
+    event?: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (!audioVolumeKeyframeInteraction) {
+      return;
+    }
+
+    const target =
+      event?.currentTarget ??
+      audioVolumeKeyframeInteractionTargetRef.current;
+
+    if (
+      target &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(audioVolumeKeyframeInteraction.pointerId)
+    ) {
+      target.releasePointerCapture(
+        audioVolumeKeyframeInteraction.pointerId,
+      );
+    }
+
+    if (
+      !audioVolumeKeyframeInteraction.hasMoved ||
+      audioVolumeKeyframeInteraction.previewTimeMs ===
+        audioVolumeKeyframeInteraction.keyframeTimeMs
+    ) {
+      audioVolumeKeyframeInteractionTargetRef.current = null;
+      setAudioVolumeKeyframeInteraction(null);
+      return;
+    }
+
+    event?.preventDefault();
+    onMoveAudioVolumeKeyframe?.(
+      audioVolumeKeyframeInteraction.clipId,
+      audioVolumeKeyframeInteraction.keyframeTimeMs,
+      audioVolumeKeyframeInteraction.previewTimeMs,
+    );
+    onCurrentTimeChange?.(
+      Math.min(
+        Math.max(
+          project.tracks
+            .flatMap((track) => track.clips)
+            .find(
+              (clip) => clip.id === audioVolumeKeyframeInteraction.clipId,
+            )?.timelineStartMs ?? 0,
+          0,
+        ) + audioVolumeKeyframeInteraction.previewTimeMs,
+        timelineDurationMs,
+      ),
+    );
+    audioVolumeKeyframeInteractionTargetRef.current = null;
+    setAudioVolumeKeyframeInteraction(null);
+  }
+
+  const cancelAudioVolumeKeyframeInteraction = useCallback(() => {
+    const target = audioVolumeKeyframeInteractionTargetRef.current;
+    if (
+      target &&
+      audioVolumeKeyframeInteraction &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(audioVolumeKeyframeInteraction.pointerId)
+    ) {
+      target.releasePointerCapture(audioVolumeKeyframeInteraction.pointerId);
+    }
+
+    audioVolumeKeyframeInteractionTargetRef.current = null;
+    setAudioVolumeKeyframeInteraction(null);
+  }, [audioVolumeKeyframeInteraction]);
+
+  useEffect(() => {
+    if (!audioVolumeKeyframeInteraction) {
+      return;
+    }
+
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      event.preventDefault();
+      cancelAudioVolumeKeyframeInteraction();
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [
+    audioVolumeKeyframeInteraction,
+    cancelAudioVolumeKeyframeInteraction,
+  ]);
 
   function beginClipInteraction(
     event: PointerEvent<HTMLElement>,
