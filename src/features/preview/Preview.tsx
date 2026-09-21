@@ -5,7 +5,12 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import { getAudioEq, getTrackPan, getTrackVolume, type 
+import {
+  getAudioCompressor,
+  getAudioEq,
+  getTrackPan,
+  getTrackVolume,
+  type 
   ClipCrop,
   ClipTransform,
   CropPosition,
@@ -1266,6 +1271,7 @@ interface AudioPreviewRouting {
   lowShelf: BiquadFilterNode;
   midPeak: BiquadFilterNode;
   highShelf: BiquadFilterNode;
+  compressor: DynamicsCompressorNode;
   panner: StereoPannerNode;
 }
 
@@ -1295,6 +1301,7 @@ function getAudioPreviewRouting(
     const lowShelf = context.createBiquadFilter();
     const midPeak = context.createBiquadFilter();
     const highShelf = context.createBiquadFilter();
+    const compressor = context.createDynamicsCompressor();
     const panner = context.createStereoPanner();
 
     lowShelf.type = "lowshelf";
@@ -1308,7 +1315,8 @@ function getAudioPreviewRouting(
     source.connect(lowShelf);
     lowShelf.connect(midPeak);
     midPeak.connect(highShelf);
-    highShelf.connect(panner);
+    highShelf.connect(compressor);
+    compressor.connect(panner);
     panner.connect(context.destination);
 
     const routing = {
@@ -1316,6 +1324,7 @@ function getAudioPreviewRouting(
       lowShelf,
       midPeak,
       highShelf,
+      compressor,
       panner,
     };
     audioPreviewRoutingCache.set(media, routing);
@@ -1331,10 +1340,21 @@ function applyAudioPreviewProcessing(
   clip: ActivePreviewClip["clip"],
 ) {
   const eq = getAudioEq(clip);
+  const compressor = getAudioCompressor(clip);
 
   routing.lowShelf.gain.value = eq.enabled ? eq.lowGainDb : 0;
   routing.midPeak.gain.value = eq.enabled ? eq.midGainDb : 0;
   routing.highShelf.gain.value = eq.enabled ? eq.highGainDb : 0;
+  routing.compressor.threshold.value = compressor.enabled
+    ? compressor.thresholdDb
+    : 0;
+  routing.compressor.ratio.value = compressor.enabled ? compressor.ratio : 1;
+  routing.compressor.attack.value = compressor.enabled
+    ? compressor.attackMs / 1000
+    : 0.003;
+  routing.compressor.release.value = compressor.enabled
+    ? compressor.releaseMs / 1000
+    : 0.25;
   routing.panner.pan.value = getTrackPan(track);
 }
 
@@ -1436,7 +1456,7 @@ function PreviewAudioLayer({
         layer.clip,
       );
     }
-  }, [layer.track]);
+  }, [layer.clip, layer.track]);
 
   useEffect(() => {
     const media = mediaRef.current;
