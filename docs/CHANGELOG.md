@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.33 export pipeline boundary started
+
+- Added a real MP4 output destination picker using the existing Tauri dialog integration.
+- Added a renderer-agnostic export job state contract with queued/running/completed/failed/cancelled transitions.
+- Added regression coverage for destination selection and job state transitions.
+- Actual FFmpeg encoding remains deferred to the next renderer slice.
+
 ## 2026-09-21 — M3.32 Export settings foundation merged
 
 - PR #43 `feat: add export settings foundation` was marked ready and squash-merged.
