@@ -1,3 +1,8 @@
+## 2026-09-21 — M3.38 graph-label validation correction
+
+- Corrected the direct single-clip FFmpeg graph builder to avoid an extra comma before the `[vout]` output label.
+- Latest user validation otherwise passed Rust tests, build, and Tauri startup.
+- Fresh full validation is pending.
 ## 2026-09-21 — M3.38 single-clip compatibility path
 
 - Routed one video clip starting at timeline zero through the existing native single-source renderer instead of filter_complex.
