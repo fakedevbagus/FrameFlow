@@ -1,3 +1,4 @@
+- Refined the single-clip export graph to use only trim, setpts, scale, and pad, with frame rate and yuv420p set at the encoder output.\n- Synthetic FFmpeg validation produced the expected 406x720, 30 fps MP4.
 ## 2026-09-21 — M3.38 single-clip FFmpeg graph hardening
 
 - Simplified the one-clip-at-zero export graph to bypass the concat filter.
