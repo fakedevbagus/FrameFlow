@@ -1,3 +1,19 @@
+## 2026-09-21 — M3.54 Audio Volume Automation Timeline UX — in progress
+
+Branch: `feat/m3-54-audio-volume-automation-timeline`
+
+Scope:
+- Add Timeline markers for persisted audio volume automation keyframes.
+- Allow marker click/focus to select and seek the owning audio clip.
+- Add direct marker dragging with existing timeline snapping and neighbor constraints.
+- Add Delete/Backspace removal plus Arrow/Shift+Arrow keyboard nudging.
+- Cancel active marker drags with Escape without committing history.
+- Preserve keyframe volume values while moving timestamps through a validated command.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required before merge.
+- Existing audio automation, fades, pan, EQ, compressor, mute, mixing, and export semantics remain unchanged.
+
 ## 2026-09-21 — M3.53 Audio Clip Volume Automation — in progress
 
 Branch: `feat/m3-53-audio-volume-automation`
