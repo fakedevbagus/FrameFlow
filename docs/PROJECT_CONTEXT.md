@@ -777,8 +777,8 @@ Automated coverage:
 - Preservation of the outgoing transition on the correct split segment.
 
 Validation:
-- User confirmed local Linux validation passed.
-- User confirmed the M3.28 lint/test/build/Tauri validation and requested transition lifecycle manual checks passed.
+- Remote PR #39 was merged after follow-up fixes for the reported lint/build/test/fixture issues.
+- Local post-fix validation is not confirmed in this chat yet.
 
 Known limitations:
 - Only dissolve transitions are supported.
