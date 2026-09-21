@@ -1,3 +1,23 @@
+## M3.31 validation correction — 2026-09-21
+
+- User local run: lint passed; 18 test files ran with 206 passing tests and 1 failing App regression due to `addAssetToTimeline` missing from the test import. Build also failed only on that same TypeScript symbol; Tauri dev still launched successfully. The implementation itself did not produce a runtime/test failure.
+- Follow-up commit `a9e1b5111a1338fd758186969114eee2ab624612` imports the existing timeline command in `src/App.test.tsx`.
+- PR #42 remains draft and requires one fresh local rerun.
+
+## Current live reconciliation — M3.31 — 2026-09-21
+
+- Current `main` tip: `dedeeccf309238b483e38d041d4928b23227f0a1`.
+- Completed milestone: M3.30 — Transition Browser / Picker, PR #41, squash merge SHA `dedeeccf309238b483e38d041d4928b23227f0a1`.
+- User reported the M3.30 local validation passed, so PR #41 was marked ready and squash-merged.
+- Historical PR #22 remains open and is not active project work.
+- Active milestone: M3.31 — Playback smoothness / render-throttle.
+- Branch: `feat/m3-31-playback-smoothness`.
+- M3.31 scope: reduce React render pressure during playback by throttling playback-driven UI clock publications to at most approximately 30 Hz while keeping the internal playback clock at requestAnimationFrame cadence.
+- Native media elements continue their own playback; this milestone does not add a second media clock, change FFmpeg preview generation, or modify project/history state.
+- Added regression coverage for the publish-throttling helper and an App integration test covering multiple animation-frame callbacks.
+- Local validation: pending user verification on the new branch.
+- Next step: user validates lint, tests, build, Tauri dev, and manual smooth-playback checks before PR #42 is marked ready and merged.
+
 ## Current live reconciliation — M3.30 — 2026-09-21
 
 - Current main after M3.29 squash merge: 1aa5dee0da89a0f80357ad294273025164254a90.

@@ -1,3 +1,22 @@
+## M3.31 validation correction — 2026-09-21
+
+The first M3.31 local validation run reached the full suite: 18 test files passed, with one failure in the newly added App playback-throttle regression because `addAssetToTimeline` was not imported in `App.test.tsx`. The production build reported the same missing symbol. Lint passed and Tauri dev launched. The regression test import was corrected in commit `a9e1b5111a1338fd758186969114eee2ab624612`; fresh validation is still required.
+
+## Live state reconciliation — M3.31 — 2026-09-21
+
+- Current `main` tip: `dedeeccf309238b483e38d041d4928b23227f0a1`.
+- M3.30 — Transition Browser / Picker is merged as PR #41 at `dedeeccf309238b483e38d041d4928b23227f0a1`.
+- User confirmed the M3.30 validation pass before merge.
+- Historical PR #22 remains open as a stale draft and is not active.
+- Active branch: `feat/m3-31-playback-smoothness`.
+- M3.31 addresses the newly observed playback stutter by reducing React UI-clock publication frequency during playback while leaving the internal playback clock at animation-frame cadence.
+- This is a performance-focused vertical slice: no changes to transition state, media preparation, FFmpeg, project history, or native playback APIs.
+- `src/features/playback/playback.ts` owns the UI-publish interval decision so the behavior is deterministic and testable.
+- `src/App.tsx` advances `playbackTimeRef` every animation frame but publishes `currentTimeMs` to React only when the configured interval has elapsed, with an immediate final publish at the timeline end.
+- Added playback helper and App integration regression coverage.
+- M3.31 local validation is pending user verification.
+- Deferred after this slice: deeper media-clock synchronization, decode/render profiling, compositor virtualization, GPU acceleration, and broader performance architecture changes unless measurements show they are required.
+
 ## Live state reconciliation — M3.30 — 2026-09-21
 
 - Current main after M3.29: 1aa5dee0da89a0f80357ad294273025164254a90.

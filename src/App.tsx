@@ -55,7 +55,11 @@ import {
   normalizeClipCrop,
   normalizeClipTransform,
 } from "./features/transform/transform";
-import { stepFrame, stepPlaybackTime } from "./features/playback/playback";
+import {
+  shouldPublishPlaybackTime,
+  stepFrame,
+  stepPlaybackTime,
+} from "./features/playback/playback";
 import {
   commitHistory,
   createHistoryState,
@@ -118,6 +122,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const playbackTimeRef = useRef(0);
+  const playbackUiLastPublishedTimestampRef = useRef<number | null>(null);
   const timelineDurationRef = useRef(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -220,6 +225,7 @@ function App() {
       timelineDurationRef.current,
     );
     playbackTimeRef.current = safeTimeMs;
+    playbackUiLastPublishedTimestampRef.current = null;
     setCurrentTimeMs(safeTimeMs);
   }, []);
 
@@ -261,11 +267,22 @@ function App() {
         timelineDurationMs,
       );
 
-      setPlaybackTime(next.timeMs);
+      playbackTimeRef.current = next.timeMs;
 
       if (next.reachedEnd) {
+        setPlaybackTime(next.timeMs);
         setIsPlaying(false);
         return;
+      }
+
+      if (
+        shouldPublishPlaybackTime(
+          timestamp,
+          playbackUiLastPublishedTimestampRef.current,
+        )
+      ) {
+        playbackUiLastPublishedTimestampRef.current = timestamp;
+        setCurrentTimeMs(next.timeMs);
       }
 
       animationFrameId = window.requestAnimationFrame(tick);

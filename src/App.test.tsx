@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { addAssetToTimeline } from "./features/timeline/commands";
 import { createProject, serializeProject } from "./features/project/domain";
 import { importMediaFiles } from "./features/media/import";
 
@@ -1582,6 +1583,75 @@ describe("App", () => {
     await waitFor(() => {
       expect(playMock).toHaveBeenCalled();
     });
+  });
+
+  it("throttles playback-driven React clock updates while media keeps playing", async () => {
+    const playMock = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockResolvedValue(undefined);
+
+    let project = createProject({ id: "playback-throttle" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-playback-throttle",
+          name: "playback-throttle.mp4",
+          mediaType: "video",
+          sourcePath: "/media/playback-throttle.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "asset-playback-throttle");
+
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    const callbacks: FrameRequestCallback[] = [];
+    const requestAnimationFrameMock = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        callbacks.push(callback);
+        return callbacks.length;
+      });
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+    await waitFor(() => expect(playMock).toHaveBeenCalled());
+    expect(requestAnimationFrameMock).toHaveBeenCalled();
+
+    expect(screen.getByText("00:00:00:00")).toBeInTheDocument();
+
+    const runFrame = (timestamp: number) => {
+      const callback = callbacks.shift();
+
+      if (!callback) {
+        throw new Error("Expected a scheduled playback animation frame.");
+      }
+
+      act(() => {
+        callback(timestamp);
+      });
+    };
+
+    runFrame(0);
+    runFrame(16);
+    runFrame(32);
+
+    expect(screen.getByText("00:00:00:00")).toBeInTheDocument();
+
+    runFrame(34);
+
+    await waitFor(() =>
+      expect(screen.getByText("00:00:00:01")).toBeInTheDocument(),
+    );
+
+    requestAnimationFrameMock.mockRestore();
   });
 
   it("toggles track mute state from the timeline", async () => {

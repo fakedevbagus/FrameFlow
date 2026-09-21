@@ -1,5 +1,43 @@
 ## 2026-09-21
 
+### M3.31 validation correction
+
+First local validation: lint passed; 206/207 tests passed across 19 files, with the only failure caused by a missing `addAssetToTimeline` import in the new App playback-throttle regression. Build reported the same TypeScript error; Tauri dev launched successfully. Corrected in commit `a9e1b5111a1338fd758186969114eee2ab624612`. PR #42 remains draft pending one clean rerun.
+
+## 2026-09-21
+
+### M3.31 — Playback smoothness / render-throttle — in progress
+
+Branch: `feat/m3-31-playback-smoothness`
+Base: M3.30 merge SHA `dedeeccf309238b483e38d041d4928b23227f0a1`
+
+Implemented:
+- Added a deterministic playback UI publication gate with a default 33 ms interval.
+- Kept the internal transport clock at requestAnimationFrame cadence.
+- Reduced `currentTimeMs` React state publications during playback to approximately 30 Hz.
+- Preserved immediate user-driven seeking and immediate final publication when playback reaches the timeline end.
+- Added playback helper regression tests.
+- Added an App integration regression test covering multiple animation-frame callbacks.
+
+Architecture:
+- The browser/native media element remains responsible for continuous media playback.
+- The transport ref remains the authoritative per-frame clock used by playback progression.
+- React-rendered timeline/inspector/preview UI receives a throttled transport snapshot rather than every animation-frame tick.
+- Project history and playback state remain separate.
+
+Validation:
+- M3.30: user-reported local validation passed before merge.
+- M3.31: pending user local validation.
+
+Known limitations:
+- The interval is a UI rendering optimization, not a replacement for true audio/video clock synchronization.
+- Deeper decode/render profiling and compositor/GPU optimization remain future work.
+
+Next step:
+- Validate PR #42 locally before marking it ready for review and merging.
+
+## 2026-09-21
+
 ### M3.30 — Transition Browser / Picker — in progress
 
 Branch: feat/m3-30-transition-browser
