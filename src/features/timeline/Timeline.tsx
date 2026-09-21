@@ -642,7 +642,7 @@ export function Timeline({
   }
 
   function updateAudioFadeInteraction(
-    event: PointerEvent<HTMLButtonElement>,
+    event: PointerEvent<HTMLDivElement>,
   ) {
     if (
       !audioFadeInteraction ||
