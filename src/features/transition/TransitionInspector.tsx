@@ -15,7 +15,7 @@ export function TransitionInspector({
   transition,
   onChange,
 }: TransitionInspectorProps) {
-  const isDissolve = transition?.type === "dissolve";
+  const transitionType = transition?.type ?? "none";
   const durationMs = transition?.durationMs ?? DEFAULT_DISSOLVE_DURATION_MS;
 
   function commitDuration(event: FocusEvent<HTMLInputElement>) {
@@ -27,7 +27,10 @@ export function TransitionInspector({
     }
 
     onChange({
-      type: "dissolve",
+      type:
+        transitionType === "fade-through-black"
+          ? "fade-through-black"
+          : "dissolve",
       durationMs: value,
     });
   }
@@ -44,7 +47,7 @@ export function TransitionInspector({
       <p className="inspector-help">
         {canTransition
           ? "Applies between this clip and the next adjacent visual clip."
-          : isDissolve
+          : transitionType !== "none"
             ? "This transition is currently inactive because the next visual clip is not adjacent."
             : "Place another visual clip directly after this clip to enable a transition."}
       </p>
@@ -54,24 +57,33 @@ export function TransitionInspector({
         <select
           aria-label="Transition type"
           disabled={!canTransition && !isDissolve}
-          value={isDissolve ? "dissolve" : "none"}
+          value={transitionType}
           onChange={(event) => {
-            onChange(
-              event.currentTarget.value === "dissolve"
-                ? {
-                    type: "dissolve",
-                    durationMs,
-                  }
-                : undefined,
-            );
+            switch (event.currentTarget.value) {
+              case "dissolve":
+                onChange({
+                  type: "dissolve",
+                  durationMs,
+                });
+                break;
+              case "fade-through-black":
+                onChange({
+                  type: "fade-through-black",
+                  durationMs,
+                });
+                break;
+              default:
+                onChange(undefined);
+            }
           }}
         >
           <option value="none">None</option>
           <option value="dissolve">Dissolve</option>
+          <option value="fade-through-black">Fade through black</option>
         </select>
       </label>
 
-      {isDissolve ? (
+      {transitionType !== "none" ? (
         <label className="inspector-transform-field">
           <span>Duration</span>
           <div className="inspector-transform-input-wrap">
