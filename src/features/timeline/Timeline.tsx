@@ -808,7 +808,7 @@ export function Timeline({
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [audioFadeInteraction]);
+  }, [audioFadeInteraction, cancelAudioFadeInteraction]);
 
   function beginTransitionInteraction(
     event: PointerEvent<HTMLButtonElement>,
@@ -1051,6 +1051,11 @@ export function Timeline({
             onToggleTrackMute={onToggleTrackMute}
             onUpdateTrackVolume={onUpdateTrackVolume}
             onUpdateAudioClipFades={onUpdateAudioClipFades}
+            audioFadeInteraction={audioFadeInteraction}
+            onBeginAudioFadeInteraction={beginAudioFadeInteraction}
+            onUpdateAudioFadeInteraction={updateAudioFadeInteraction}
+            onFinishAudioFadeInteraction={finishAudioFadeInteraction}
+            onCancelAudioFadeInteraction={cancelAudioFadeInteraction}
             onRemoveTrack={onRemoveTrack}
             onRemoveTransformKeyframe={onRemoveTransformKeyframe}
             onCurrentTimeChange={onCurrentTimeChange}
@@ -1099,6 +1104,24 @@ interface TimelineTrackProps {
     clipId: string,
     fadeInMs: number,
     fadeOutMs: number,
+  ) => void;
+  audioFadeInteraction: AudioFadeInteraction | null;
+  onBeginAudioFadeInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    mode: "fade-in" | "fade-out",
+  ) => void;
+  onUpdateAudioFadeInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onFinishAudioFadeInteraction: (
+    event?: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onCancelAudioFadeInteraction: () => void;
+  onHandleAudioFadeKeyDown: (
+    event: KeyboardEvent<HTMLButtonElement>,
+    clip: Clip,
+    mode: "fade-in" | "fade-out",
   ) => void;
   onRemoveTrack?: (trackId: string) => void;
   onRemoveTransformKeyframe?: (
@@ -1175,6 +1198,12 @@ function TimelineTrack({
   onToggleTrackMute,
   onUpdateTrackVolume,
   onUpdateAudioClipFades,
+  audioFadeInteraction,
+  onBeginAudioFadeInteraction,
+  onUpdateAudioFadeInteraction,
+  onFinishAudioFadeInteraction,
+  onCancelAudioFadeInteraction,
+  onHandleAudioFadeKeyDown,
   onRemoveTrack,
   onRemoveTransformKeyframe,
   onCurrentTimeChange,
@@ -1373,14 +1402,14 @@ function TimelineTrack({
                       className="timeline-audio-fade-handle timeline-audio-fade-handle-in"
                       onClick={(event) => event.stopPropagation()}
                       onKeyDown={(event) =>
-                        handleAudioFadeKeyDown(event, sourceClip, "fade-in")
+                        onHandleAudioFadeKeyDown(event, sourceClip, "fade-in")
                       }
                       onPointerDown={(event) =>
-                        beginAudioFadeInteraction(event, sourceClip, "fade-in")
+                        onBeginAudioFadeInteraction(event, sourceClip, "fade-in")
                       }
-                      onPointerMove={updateAudioFadeInteraction}
-                      onPointerUp={finishAudioFadeInteraction}
-                      onPointerCancel={cancelAudioFadeInteraction}
+                      onPointerMove={onUpdateAudioFadeInteraction}
+                      onPointerUp={onFinishAudioFadeInteraction}
+                      onPointerCancel={onCancelAudioFadeInteraction}
                       style={{ left: Math.max(0, fadeInWidthPx - 6) + "px" }}
                       title="Drag to change audio fade in"
                       type="button"
@@ -1398,14 +1427,14 @@ function TimelineTrack({
                       className="timeline-audio-fade-handle timeline-audio-fade-handle-out"
                       onClick={(event) => event.stopPropagation()}
                       onKeyDown={(event) =>
-                        handleAudioFadeKeyDown(event, sourceClip, "fade-out")
+                        onHandleAudioFadeKeyDown(event, sourceClip, "fade-out")
                       }
                       onPointerDown={(event) =>
-                        beginAudioFadeInteraction(event, sourceClip, "fade-out")
+                        onBeginAudioFadeInteraction(event, sourceClip, "fade-out")
                       }
-                      onPointerMove={updateAudioFadeInteraction}
-                      onPointerUp={finishAudioFadeInteraction}
-                      onPointerCancel={cancelAudioFadeInteraction}
+                      onPointerMove={onUpdateAudioFadeInteraction}
+                      onPointerUp={onFinishAudioFadeInteraction}
+                      onPointerCancel={onCancelAudioFadeInteraction}
                       style={{ right: Math.max(0, fadeOutWidthPx - 6) + "px" }}
                       title="Drag to change audio fade out"
                       type="button"
