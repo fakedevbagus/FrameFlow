@@ -1,3 +1,9 @@
+## M3.48 validation correction — 2026-09-21
+
+- Latest local validation reported 268/269 Vitest tests, with build, Rust tests, and Tauri launch successful.
+- Corrected the inherited Inspector lint violation and the single multi-track audio assertion mismatch.
+- Re-run the full validation suite before marking PR #61 ready.
+
 ## M3.48 Multiple Audio Track Mix — 2026-09-21
 
 - Started the next audio milestone from the verified M3.46 main line while M3.47 UI correction remains under validation.
