@@ -1,3 +1,10 @@
+## M3.47 Timeline Audio Fade Handles — final interaction primitive correction — 2026-09-21
+
+- Replaced the fade handle native button with an accessible div role="button" interaction target.
+- The visual handle is now a simple CSS border on the interaction element itself.
+- This removes all native button rendering and nested visual-child behavior from the Linux WebView path.
+- Persisted fade behavior and project/history contracts remain unchanged.
+
 ## M3.47 Timeline Audio Fade Handles — final WebView handle rendering correction — 2026-09-21
 
 - The first Linux WebView CSS normalization did not resolve the user's screenshot-level visual defect.
