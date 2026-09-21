@@ -13,10 +13,7 @@ export interface NativeExportRenderResult {
 }
 
 export interface NativeVideoGraphRenderRequest {
-  inputs: Array<{
-    inputIndex: number;
-    sourcePath: string;
-  }>;
+  inputs: string[];
   outputPath: string;
   width: number;
   height: number;
