@@ -1,14 +1,21 @@
-## 2026-09-21 — M3.44 full project audio-track export — in progress
+## 2026-09-21 — M3.44 full project audio-track export — merged
 
 Branch: `feat/m3-44-project-audio-mix`
+PR #55 — merged
+Merge SHA: `TBD`
 
 Implemented:
-- Route projects with an explicit Audio track through the existing base video renderer first.
-- Compile the Audio track with dense native input indices.
-- Mix the compiled Audio track into the base video's first audio stream.
-- Generate timeline-duration silence when the base video has no audio stream.
-- Preserve the existing M3.39 single-source and M3.41 multi-segment video audio paths.
-- Add regression coverage for project routing and native video/audio mix bridging.
+- Routed projects with an explicit Audio track through the existing base video renderer first.
+- Compiled the Audio track with dense native input indices.
+- Mixed the compiled Audio track into the base video's first audio stream.
+- Generated timeline-duration silence when the base video had no audio stream.
+- Preserved existing single-source and sequential multi-segment video audio behavior.
+- Added regression coverage for project routing, native video/audio mix arguments, request validation, and the invoke bridge.
+- Used a temporary native mix output and finalized the requested MP4 without reading and writing the same path in one FFmpeg process.
+
+Validation:
+- User confirmed M3.44 local validation passed.
+- Frontend lint, 253/253 Vitest tests, production build, 28/28 Rust tests, and `tauri dev` were successful.
 
 Deferred:
 - Audio volume/gain controls.
@@ -16,64 +23,11 @@ Deferred:
 - Multiple independent audio tracks.
 - Progress streaming and cancellation.
 
-Validation:
-- Local validation is pending.
-
 ## 2026-09-21 — M3.43 native audio render boundary — merged
 
 - PR #54 `feat: add native audio graph render boundary` was squash-merged.
 - M3.43 added the dedicated Tauri audio graph command and structured FFmpeg boundary.
 - M3.43 local validation was approved before merge.
-
-## 2026-09-21 — M3.42 audio-track graph compiler — merged
-
-- PR #53 `feat: add audio track render graph compiler` was squash-merged.
-- Merge SHA: `5c338d0462206d88e6e258b8e433afe2ce897c43`.
-- M3.42 established pure audio graph compilation above the RenderPlan boundary.
-
-## 2026-09-21 — M3.41 multi-segment audio — merged
-
-- PR #52 `feat: add audio to multi-segment video export` was squash-merged.
-- Merge SHA: `0cfaba472aa57b0606252c82fd15c998775ad6db`.
-- User approved M3.41 after local validation.
-- Native sequential multi-segment export now normalizes each segment to synchronized video plus audio, with generated silence for clips without audio and timeline gaps.
-- A follow-up Rust syntax correction removed a duplicate legacy concat argument block before the final merge.
-
-## 2026-09-21 — M3.40 multi-segment video renderer — merged
-
-- PR #51 `feat: add native multi-segment video export` was squash-merged.
-- Merge SHA: `4d9e15a27dda3c5d5d42f18c2161a9a3d6a6b415`.
-- User approved M3.40 after successful local multi-clip export verification.
-## 2026-09-21 — M3.39 single-source audio — merged
-
-- PR #50 `feat: add audio to single-source export` was squash-merged.
-- Merge SHA: `2808ba584932967f7dccf2b273faf79e61e27a9d`.
-- User approved M3.39 after validation of the single-source audio export.
-- Direct single-clip exports now mux the first source audio stream when available.
-
-## 2026-09-21 — M3.37 native render graph wiring — in progress
-
-Branch: `feat/m3-37-native-render-graph-wiring`
-
-Implemented:
-- Added a native Tauri `render_video_graph_to_mp4` command for multiple video inputs plus a compiled FFmpeg `filter_complex`.
-- Added native validation for graph metadata, input media type, absolute paths, output path, and fixed `[vout]` mapping.
-- Added structured FFmpeg argument construction without shell interpolation.
-- Added a TypeScript graph-render bridge and a RenderPlan-to-native pipeline adapter.
-- Added regression tests for the native argument contract, Tauri invoke boundary, and RenderPlan-to-renderer wiring.
-
-Architecture:
-- M3.36 remains the pure graph compiler.
-- M3.37 is only the process-execution boundary; it does not add another graph/state model.
-- Video output is explicitly mapped from `[vout]` and audio is disabled until an audio graph exists.
-- Progress, cancellation, multi-track compositing, images, and advanced visual semantics remain separate milestones.
-
-Validation:
-- User confirmed M3.36 passed locally.
-- M3.37 local validation is pending.
-
-Next step:
-- User validates M3.37 locally before PR readiness and merge.
 
 ## 2026-09-21 — M3.36 FFmpeg video filter graph — merged
 
