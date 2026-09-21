@@ -1,3 +1,8 @@
+## M3.48 test assertion correction — 2026-09-21
+
+- Corrected the sole failing multi-track audio test after validation exposed an input-order expectation mismatch.
+- The production compiler remains unchanged by this test-only correction.
+
 ## M3.48 validation correction — 2026-09-21
 
 - Latest local validation reported 268/269 Vitest tests, with build, Rust tests, and Tauri launch successful.
