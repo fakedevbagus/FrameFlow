@@ -1,3 +1,7 @@
+## M3.47 Timeline Audio Fade Handles — edge-case correction — 2026-09-21
+
+- Reviewed the direct-handle rendering at the clip boundaries and adjusted handle positioning so zero-duration and full-duration fade states keep the visible handle inside the clipped Timeline clip.
+- No project/history behavior changed; this is presentation-only hardening for the new interaction.
 ## M3.47 Timeline Audio Fade Handles — implementation checkpoint — 2026-09-21
 
 - Added direct Timeline fade-in/fade-out handles for explicit Audio clips.
