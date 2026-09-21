@@ -1,11 +1,24 @@
-## M3.45 implementation checkpoint — 2026-09-21
+## M3.45 merge reconciliation — 2026-09-21
 
-- Branch: `feat/m3-45-audio-track-volume`.
-- M3.44 is completed and squash-merged at `33c36f19735df4967b149e1c16d60e88f1ccf4a4`.
-- M3.45 adds per-track volume state, Audio-track Timeline control, preview volume application, and export graph volume application.
-- Volume defaults to 1.0 for backward compatibility with projects saved before the field existed.
-- User-facing mute remains a separate binary control from continuous volume.
-- Local validation is pending user verification.
+- Repository: fakedevbagus/FrameFlow
+- Default branch: main
+- Current main tip after this documentation update: PENDING_DOC_COMMIT_SHA
+- Latest completed milestone: M3.45 — Audio Track Volume Control
+- M3.45 PR: #57
+- M3.45 merge SHA: 9ce1bcf1c7a8729f62c65121274029d960eccddb
+- M3.45 branch: feat/m3-45-audio-track-volume
+- User local validation: npm run lint passed; 28 Vitest files passed with 253/253 tests; npm run build passed; Rust tests passed 28/28; tauri dev launched successfully.
+- The local git pull --ff-only step reported divergent branches and did not fast-forward. No reset or overwrite was performed; the validation commands that followed completed successfully.
+- M3.45 scope is complete: per-track volume defaults to 1.0, the Audio-track Timeline slider updates project state, preview applies the volume, RenderPlan preserves it, and the explicit Audio FFmpeg graph applies it before timeline placement/mixing.
+- Mute remains a separate binary track state.
+- Deferred: audio fades/transitions/effects, multiple independent Audio tracks, progress streaming, and cancellation.
+- Next milestone work must start from this verified post-M3.45 main state.
+
+## Working-tree safety
+
+Never reset or overwrite unrelated local changes.
+
+The latest local validation log showed that the synchronization step could not fast-forward because the local branch had diverged. This does not justify destructive cleanup. Preserve user-local Cargo changes and other unrelated working-tree changes when continuing locally.
 
 ## M3.41 implementation checkpoint — 2026-09-21
 
