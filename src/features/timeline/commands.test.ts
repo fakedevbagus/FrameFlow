@@ -15,6 +15,7 @@ import {
   updateTrackPan,
   updateAudioClipFades,
   updateAudioClipEq,
+  updateAudioClipCompressor,
   updateClipTransform,
   updateClipTransformAtTime,
   moveClipOnTimeline,
@@ -563,6 +564,149 @@ describe("clip transforms", () => {
         scale: 2,
       }),
     ).toThrow("Transform controls are only available for visual media.");
+  });
+});
+
+describe("updateAudioClipCompressor", () => {
+  it("updates compressor settings for an audio clip", () => {
+    let project = createProject({ id: "compressor-command" });
+    project = {
+      ...project,
+      assets: [{
+        id: "audio",
+        name: "voice.mp3",
+        mediaType: "audio",
+        sourcePath: "/voice.mp3",
+        durationMs: 5000,
+      }],
+    };
+    project = addAssetToTimeline(project, "audio");
+    const clipId = project.tracks[1].clips[0].id;
+
+    const updated = updateAudioClipCompressor(
+      project,
+      clipId,
+      {
+        enabled: true,
+        thresholdDb: -18.25,
+        ratio: 6.4,
+        attackMs: 8.126,
+        releaseMs: 320.557,
+      },
+      new Date("2026-09-21T04:00:00.000Z"),
+    );
+
+    expect(updated.tracks[1].clips[0].audioCompressor).toEqual({
+      enabled: true,
+      thresholdDb: -18.3,
+      ratio: 6.4,
+      attackMs: 8.13,
+      releaseMs: 320.56,
+    });
+    expect(updated.updatedAt).toBe("2026-09-21T04:00:00.000Z");
+  });
+
+  it("clears the compressor when disabled at defaults", () => {
+    let project = createProject({ id: "compressor-clear" });
+    project = {
+      ...project,
+      assets: [{
+        id: "audio",
+        name: "voice.mp3",
+        mediaType: "audio",
+        sourcePath: "/voice.mp3",
+        durationMs: 5000,
+      }],
+    };
+    project = addAssetToTimeline(project, "audio");
+    const clipId = project.tracks[1].clips[0].id;
+
+    project = updateAudioClipCompressor(project, clipId, {
+      enabled: true,
+      thresholdDb: -18,
+      ratio: 6,
+      attackMs: 10,
+      releaseMs: 300,
+    });
+
+    const cleared = updateAudioClipCompressor(project, clipId, {
+      enabled: false,
+      thresholdDb: -24,
+      ratio: 4,
+      attackMs: 20,
+      releaseMs: 250,
+    });
+
+    expect(cleared.tracks[1].clips[0].audioCompressor).toBeUndefined();
+  });
+
+  it("rejects compressor settings outside the supported range", () => {
+    let project = createProject({ id: "compressor-errors" });
+    project = {
+      ...project,
+      assets: [{
+        id: "audio",
+        name: "voice.mp3",
+        mediaType: "audio",
+        sourcePath: "/voice.mp3",
+        durationMs: 5000,
+      }],
+    };
+    project = addAssetToTimeline(project, "audio");
+    const clipId = project.tracks[1].clips[0].id;
+
+    expect(() => updateAudioClipCompressor(project, clipId, {
+      enabled: true,
+      thresholdDb: -61,
+      ratio: 4,
+      attackMs: 20,
+      releaseMs: 250,
+    })).toThrow("outside the supported range");
+
+    expect(() => updateAudioClipCompressor(project, clipId, {
+      enabled: true,
+      thresholdDb: -24,
+      ratio: 20.1,
+      attackMs: 20,
+      releaseMs: 250,
+    })).toThrow("outside the supported range");
+
+    expect(() => updateAudioClipCompressor(project, clipId, {
+      enabled: true,
+      thresholdDb: -24,
+      ratio: 4,
+      attackMs: 0,
+      releaseMs: 250,
+    })).toThrow("outside the supported range");
+  });
+
+  it("rejects compression for visual clips and locked audio tracks", () => {
+    let project = createProject({ id: "compressor-routing-errors" });
+    project = {
+      ...project,
+      assets: [{
+        id: "video", name: "clip.mp4", mediaType: "video", sourcePath: "/clip.mp4", durationMs: 5000,
+      }, {
+        id: "audio", name: "voice.mp3", mediaType: "audio", sourcePath: "/voice.mp3", durationMs: 5000,
+      }],
+    };
+    project = addAssetToTimeline(project, "video");
+    const visualId = project.tracks[0].clips[0].id;
+    expect(() => updateAudioClipCompressor(project, visualId, {
+      enabled: true, thresholdDb: -24, ratio: 4, attackMs: 20, releaseMs: 250,
+    })).toThrow("Audio compression is only available for audio clips.");
+
+    project = addAssetToTimeline(project, "audio");
+    const audioId = project.tracks[1].clips[0].id;
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "audio-1" ? { ...track, isLocked: true } : track,
+      ),
+    };
+    expect(() => updateAudioClipCompressor(project, audioId, {
+      enabled: true, thresholdDb: -24, ratio: 4, attackMs: 20, releaseMs: 250,
+    })).toThrow("Track is locked.");
   });
 });
 
