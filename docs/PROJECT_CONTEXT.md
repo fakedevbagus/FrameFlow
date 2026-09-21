@@ -1059,7 +1059,8 @@ Known limitations:
 UI/layout direction:
 - The current workspace layout is intentionally kept stable while core editor behavior is being built and hardened.
 - The preview canvas already follows the selected project aspect ratio, including portrait and landscape modes.
-- A later dedicated responsive-workspace milestone should reflow the editor when the project is portrait/landscape, including moving/resizing the preview relative to the Inspector and timeline rather than introducing this large layout change inside a transform milestone.- That responsive redesign is planned as a UX/layout phase after the core editing primitives are sufficiently stable.
+- A later dedicated responsive-workspace milestone should reflow the editor when the project is portrait/landscape, including moving/resizing the preview relative to the Inspector and timeline rather than introducing this large layout change inside a transform milestone.
+- That responsive redesign is planned as a UX/layout phase after the core editing primitives are sufficiently stable.
 
 Next step:
 - Start M3.23 from the updated `main`, focusing on the next small transform/crop interaction hardening slice.
