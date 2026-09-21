@@ -1,3 +1,10 @@
+## M3.38 validation correction — 2026-09-21
+
+- Latest user validation: all Rust tests passed (15/15), the production build passed, and Tauri dev started successfully.
+- TypeScript tests had one failure in the direct single-clip render-graph regression.
+- The failure was a graph-label formatting bug: the filter builder joined the filter chain with a trailing comma before the final output label, producing `...pad=...,[vout]` instead of `...pad=...[vout]`.
+- Corrected the graph builder so the output label is appended after the filter chain without an extra separator.
+- A fresh TypeScript validation run is required before M3.38 can be marked ready.
 ## M3.38 single-clip compatibility path — 2026-09-21
 
 - Real export on the user's machine continued to return FFmpeg Filter not found from the filter_complex path even after the graph was simplified.
