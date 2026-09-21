@@ -1,27 +1,29 @@
-## 2026-09-21 — M3.43 native audio render boundary — in progress
+## 2026-09-21 — M3.44 full project audio-track export — in progress
 
-Branch: `feat/m3-43-native-audio-render`
+Branch: `feat/m3-44-project-audio-mix`
 
 Implemented:
-- Added a dedicated native Tauri audio-graph render command.
-- Validate absolute audio inputs, MP4 output paths, non-empty filter graphs, and fixed `[aout]` output mapping.
-- Execute FFmpeg through structured `Command` arguments without shell interpolation.
-- Normalize native audio output to AAC stereo 48 kHz.
-- Expose the native audio graph invoke bridge and regression coverage.
-- Keep the existing video rendering paths unchanged.
-
-Important contract correction:
-- Audio graph input indices are local/dense indices rather than project-global indices, so the compiled `[0:a:0]...` references match the native audio input list exactly.
+- Route projects with an explicit Audio track through the existing base video renderer first.
+- Compile the Audio track with dense native input indices.
+- Mix the compiled Audio track into the base video's first audio stream.
+- Generate timeline-duration silence when the base video has no audio stream.
+- Preserve the existing M3.39 single-source and M3.41 multi-segment video audio paths.
+- Add regression coverage for project routing and native video/audio mix bridging.
 
 Deferred:
-- Connect the audio graph to full project export.
-- Mix embedded video-clip audio with the independent Audio track.
-- Audio gain/volume, fades, transitions, and effects.
+- Audio volume/gain controls.
+- Fades, transitions, and audio effects.
 - Multiple independent audio tracks.
 - Progress streaming and cancellation.
 
 Validation:
-- Local M3.43 validation is pending.
+- Local validation is pending.
+
+## 2026-09-21 — M3.43 native audio render boundary — merged
+
+- PR #54 `feat: add native audio graph render boundary` was squash-merged.
+- M3.43 added the dedicated Tauri audio graph command and structured FFmpeg boundary.
+- M3.43 local validation was approved before merge.
 
 ## 2026-09-21 — M3.42 audio-track graph compiler — merged
 
