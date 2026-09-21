@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { addAssetToTimeline } from "./features/timeline/commands";
 import { createProject, serializeProject } from "./features/project/domain";
 import { importMediaFiles } from "./features/media/import";
 
