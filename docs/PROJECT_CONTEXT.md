@@ -1,3 +1,11 @@
+## M3.47 Timeline Audio Fade Handles — final WebView handle rendering correction — 2026-09-21
+
+- The first Linux WebView CSS normalization did not resolve the user's screenshot-level visual defect.
+- Replaced the nested handle <span> visual element with a CSS ::after pseudo-element on the handle button itself.
+- The handle button remains the interaction target; only its visual primitive changed.
+- This avoids child flex/layout/UA styling interactions inside .timeline-clip.
+- No persisted fade state, project command, history, Preview, RenderPlan, or FFmpeg behavior changed.
+
 ## M3.47 Timeline Audio Fade Handles — Linux WebView visual correction — 2026-09-21
 
 - Normalized the Timeline audio fade handle button appearance for Linux WebView rendering.
