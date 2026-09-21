@@ -1,3 +1,9 @@
+## 2026-09-21 — M3.38 single-clip FFmpeg graph hardening
+
+- Simplified the one-clip-at-zero export graph to bypass the concat filter.
+- Added regression coverage for the direct graph path.
+- Verified the resulting graph independently with FFmpeg 7.1.5.
+- M3.38 real-media export validation remains pending.
 ## 2026-09-21 — M3.38 export error diagnostics
 
 - ExportPanel now exposes the full native renderer error instead of truncating it in the status summary.
