@@ -1,3 +1,12 @@
+## M3.38 single-clip compatibility path — 2026-09-21
+
+- Real export on the user's machine continued to return FFmpeg Filter not found from the filter_complex path even after the graph was simplified.
+- The direct one-clip case is now routed through the existing native single-source renderer instead of filter_complex.
+- The native single-source request supports optional sourceStartMs, sourceDurationMs, and includeAudio fields; the direct export path uses source timing and disables audio so it remains aligned with the current video-only render scope.
+- The native command applies source trimming with -ss/-t and output video normalization with the existing scale/pad filter, -r, and -pix_fmt yuv420p.
+- Multi-clip and timeline-gap cases remain on the M3.37 filter-graph renderer.
+- Added regression coverage for direct single-clip routing and native segment arguments.
+- M3.38 remains pending fresh local validation.
 - The single-clip hardening was refined so the direct graph contains only trim, setpts, scale, and pad; frame rate is applied by the native output encoder with -r, and pixel format by -pix_fmt.\n- The simplified graph has been validated with FFmpeg 7.1.5 against a synthetic source and produced the expected 406x720, 30 fps MP4.
 ## M3.38 native render debug checkpoint — 2026-09-21
 
