@@ -1,3 +1,12 @@
+## Current live reconciliation — M3.34 — 2026-09-21
+
+- Current `main` tip: `a6c40943d2673d3688e218d1d45d79e828b5f39a`.
+- Completed milestone: M3.33 — Export destination and render-job boundary, PR #44, squash merge SHA `a6c40943d2673d3688e218d1d45d79e828b5f39a`.
+- User approved M3.33 with `pass`; PR #44 was marked ready and squash-merged.
+- M3.33 added native output destination selection and a renderer-agnostic export-job contract while intentionally deferring FFmpeg rendering.
+- Historical PR #22 remains open and is not active project work.
+- Immediate next slice: M3.34 — native FFmpeg render invocation boundary. The goal is to connect the existing export-job request to one controlled Tauri/Rust FFmpeg command path with safe argument construction and deterministic error handling; broader render graph work remains separate.
+
 ## M3.33 validation correction — 2026-09-21
 
 - User local validation: lint passed; the full test suite executed with 215/215 tests passing, but the ExportPanel suite failed to initialize because its Vitest mock referenced a hoisted module value before initialization.
