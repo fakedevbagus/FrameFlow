@@ -21,6 +21,7 @@ import {
 import {
   buildWaveformPath,
   getAudioWaveform,
+  getWaveformLocalTimeMs,
 } from "../audio/waveform";
 import {
   DEFAULT_TIMELINE_ZOOM,
@@ -1660,7 +1661,22 @@ function TimelineTrack({
                 </span>
                 <small>{formatTimecode(durationMs)}</small>
                 {isAudioClip && asset ? (
-                  <AudioWaveformPreview sourcePath={asset.sourcePath} />
+                  <AudioWaveformPreview
+                    sourcePath={asset.sourcePath}
+                    durationMs={durationMs}
+                    onSeek={(localTimeMs) => {
+                      onSelectClip?.(clip.id);
+                      onCurrentTimeChange?.(
+                        Math.min(
+                          Math.max(
+                            clip.timelineStartMs + localTimeMs,
+                            0,
+                          ),
+                          timelineDurationMs,
+                        ),
+                      );
+                    }}
+                  />
                 ) : null}
                 {isAudioClip ? (
                   <>
@@ -2223,8 +2239,12 @@ function TimelineTrack({
 
 function AudioWaveformPreview({
   sourcePath,
+  durationMs,
+  onSeek,
 }: {
   sourcePath: string;
+  durationMs: number;
+  onSeek: (localTimeMs: number) => void;
 }) {
   const [waveformState, setWaveformState] = useState<{
     sourcePath: string;
@@ -2287,6 +2307,19 @@ function AudioWaveformPreview({
     <svg
       aria-hidden="true"
       className="timeline-audio-waveform"
+      onPointerDown={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const bounds = event.currentTarget.getBoundingClientRect();
+        onSeek(
+          getWaveformLocalTimeMs(
+            event.clientX,
+            bounds.left,
+            bounds.width,
+            durationMs,
+          ),
+        );
+      }}
       data-testid="timeline-audio-waveform"
       preserveAspectRatio="none"
       viewBox="0 0 128 20"
