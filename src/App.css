@@ -749,7 +749,7 @@ button:focus-visible {
 .track {
   display: grid;
   min-height: 69px;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 156px minmax(0, 1fr);
   border-bottom: 1px solid #242a34;
 }
 
@@ -769,6 +769,7 @@ button:focus-visible {
   display: grid;
   min-width: 0;
   gap: 4px;
+  overflow: hidden;
 }
 
 .track-label-actions {
@@ -793,8 +794,8 @@ button:focus-visible {
 }
 
 .track-volume-input {
-  width: 44px;
-  min-width: 0;
+  width: 48px;
+  min-width: 48px;
   margin: 0;
   accent-color: #8f83ff;
   cursor: pointer;
