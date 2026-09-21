@@ -1,29 +1,29 @@
-## 2026-09-21 — M3.40 validation correction
+## 2026-09-21 — M3.41 multi-segment audio — in progress
 
-- Aligned render-pipeline tests with the native segment-renderer routing introduced by M3.40.
-- Restored pre-render supported-state validation before renderer selection.
-- Added offset single-clip routing through a black-gap segment.
-- Corrected Rust metadata validation coverage to avoid dependence on a real media file.
-- Fresh M3.40 validation is pending.
-## 2026-09-21 — M3.40 multi-segment video renderer — in progress
-
-Branch: `feat/m3-40-multi-segment-video`
+Branch: `feat/m3-41-multisegment-audio`
 
 Planned:
-- Add native sequential multi-clip video rendering without filter_complex.
-- Normalize clip segments and timeline gaps to the export format, then concatenate them safely.
-- Add regression coverage for segment argument construction, gap handling, and pipeline routing.
+- Extend native multi-segment rendering to synchronized A/V segments.
+- Add silence for source clips without audio and for timeline gaps.
+- Concatenate normalized A/V segments with a stable stream layout.
+- Add regression coverage for audio-present, audio-absent, gap, and concat arguments.
 
 Deferred:
 - Independent timeline audio mixing.
+- Audio transitions/effects.
 - Multi-track compositing.
 - Images and advanced visual filters.
 - Progress streaming and cancellation.
 
 Validation:
-- M3.39 merged after successful local audio export.
-- M3.40 local validation is pending.
+- M3.40 merged after successful multi-clip video export.
+- M3.41 local validation is pending.
 
+## 2026-09-21 — M3.40 multi-segment video renderer — merged
+
+- PR #51 `feat: add native multi-segment video export` was squash-merged.
+- Merge SHA: `4d9e15a27dda3c5d5d42f18c2161a9a3d6a6b415`.
+- User approved M3.40 after successful local multi-clip export verification.
 ## 2026-09-21 — M3.39 single-source audio — merged
 
 - PR #50 `feat: add audio to single-source export` was squash-merged.
