@@ -10,7 +10,8 @@ vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
 }));
 
-describe("export renderer", () => {\n  it("invokes the native multi-segment renderer with audio enabled", async () => {
+describe("export renderer", () => {
+  it("invokes the native multi-segment renderer with audio enabled", async () => {
     vi.mocked(invoke).mockResolvedValueOnce({
       outputPath: "/tmp/multi-export.mp4",
     });
