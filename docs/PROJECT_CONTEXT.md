@@ -1,3 +1,23 @@
+## M3.37 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-37-native-render-graph-wiring`.
+- The milestone wires the existing deterministic `compileSingleVideoTrackGraph()` output into the native Tauri/FFmpeg execution boundary.
+- `src-tauri/src/lib.rs` now accepts multiple absolute video inputs, a generated `filter_complex`, the fixed `[vout]` output map, output dimensions, and frame rate.
+- FFmpeg paths and graph text are passed as structured `Command` arguments; no shell command interpolation is introduced.
+- `src/features/export/export-renderer.ts` exposes the native graph-render invoke boundary.
+- `src/features/export/render-pipeline.ts` connects `RenderPlan → compileSingleVideoTrackGraph() → renderVideoGraphToMp4()`.
+- M3.37 keeps the graph video-only and does not yet attach ExportPanel, job progress, cancellation, audio mixing, multi-track compositing, images, transforms, crops, keyframes, or transitions.
+- Regression coverage covers the native argument contract, Tauri invoke bridge, and the RenderPlan-to-native pipeline adapter.
+- Local validation is pending user verification.
+
+## M3.36 merge reconciliation — 2026-09-21
+
+- Current `main`: `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- M3.36 — FFmpeg video filter graph, PR #47, squash-merged at `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- User confirmed the corrected M3.36 local validation passed.
+- The graph compiler remains pure TypeScript and the native renderer remains a separate Tauri boundary.
+- M3.37 is the next focused slice: wire the compiled graph into native FFmpeg execution.
+
 ## M3.36 implementation checkpoint — 2026-09-21
 
 - `compileSingleVideoTrackGraph()` is the first filter-graph compiler layered on top of `RenderPlan`.
@@ -248,7 +268,6 @@ Continuity protocol:
 13. When starting a new chat, treat this document as the source of truth and verify it against the repository before continuing.
 14. Never claim that a fix is validated until the user reports the local validation result.
 15. For cross-chat continuity, read `docs/SESSION_HANDOFF.md` before continuing work; use `docs/NEW_CHAT_PROMPT.md` as the reusable continuation prompt.
-
 ## GitHub workflow
 
 Typical sequence:
@@ -498,7 +517,6 @@ Validation:
 - Playback startup/replay synchronization and playback smoothness were reported working.
 
 Important: these changes were implemented from current `main` after M3.12 was already merged. The earlier temporary branch `feat/m3-12-keyframe-keyboard-nudging` was intentionally not used for the final playback fix.
-
 ## Current validation status
 
 M3.13 has been validated locally by the user.
@@ -748,7 +766,6 @@ Next step:
 Branch: `feat/m3-20-crop-aspect-presets`
 PR: #30
 Merge SHA: `8c366b12e6320fe8844096b0c8fda75234de4b61`
-
 Scope delivered:
 - Added common crop aspect-ratio presets: Original, 16:9, 9:16, 1:1, 4:5, and 4:3.
 - Derived normalized crop insets from intrinsic video/image dimensions.
@@ -998,7 +1015,6 @@ Scope:
 - Make the indicator keyboard accessible and clickable.
 - Selecting the indicator selects the outgoing clip so the existing Inspector transition controls remain the single configuration surface.
 - Keep the indicator derived from existing transition metadata and adjacency helpers; no second transition state is introduced.
-
 Automated coverage:
 - Timeline renders a dissolve indicator only for a valid adjacent visual transition.
 - Indicator activation selects the outgoing clip.
