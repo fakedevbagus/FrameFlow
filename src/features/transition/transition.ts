@@ -216,11 +216,18 @@ export function getTransitionVisualState(
     };
   }
 
+  if (progress < 0.5) {
+    return {
+      outgoingOpacity: 1,
+      incomingOpacity: 0,
+      overlayOpacity: progress * 2,
+    };
+  }
+
   return {
-    outgoingOpacity: 1,
+    outgoingOpacity: 0,
     incomingOpacity: 1,
-    overlayOpacity:
-      progress < 0.5 ? progress * 2 : (1 - progress) * 2,
+    overlayOpacity: (1 - progress) * 2,
   };
 }
 
