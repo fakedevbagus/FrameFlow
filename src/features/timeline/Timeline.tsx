@@ -1296,6 +1296,7 @@ export function Timeline({
             onCancelClipInteraction={cancelClipInteraction}
             onKeyframeClick={handleKeyframeClick}
             onMoveTransformKeyframe={onMoveTransformKeyframe}
+            onMoveAudioVolumeKeyframe={onMoveAudioVolumeKeyframe}
             onUpdateClipTransition={onUpdateClipTransition}
             transitionInteraction={transitionInteraction}
             onBeginTransitionInteraction={beginTransitionInteraction}
