@@ -1293,20 +1293,20 @@ button:disabled {
   bottom: 0;
   z-index: 5;
   display: block;
-  width: 12px;
-  min-width: 12px;
+  width: 14px;
+  min-width: 14px;
+  height: auto;
   min-height: 0;
   margin: 0;
   padding: 0;
   border: 0;
+  border-left: 2px solid #d9fff3;
   border-radius: 0;
-  appearance: none;
-  -webkit-appearance: none;
   cursor: ew-resize;
   background: transparent;
   box-shadow: none;
-  font: inherit;
-  line-height: 0;
+  outline: 0;
+  box-sizing: border-box;
 }
 
 .timeline-audio-fade-handle-in {
@@ -1317,27 +1317,13 @@ button:disabled {
 .timeline-audio-fade-handle-out {
   right: 0;
   left: auto;
+  border-right: 2px solid #d9fff3;
+  border-left: 0;
 }
 
-.timeline-audio-fade-handle::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 3px;
-  height: 28px;
-  margin: 0;
-  border-radius: 2px;
-  background: #d9fff3;
-  box-shadow: 0 1px 5px rgb(0 0 0 / 35%);
-  content: "";
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-
-.timeline-audio-fade-handle:hover::after,
-.timeline-audio-fade-handle:focus-visible::after {
-  width: 4px;
-  background: #ffffff;
+.timeline-audio-fade-handle:hover,
+.timeline-audio-fade-handle:focus-visible {
+  border-color: #ffffff;
 }
 
 .timeline-audio-fade-handle:focus-visible {
