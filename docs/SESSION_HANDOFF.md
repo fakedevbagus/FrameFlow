@@ -1,3 +1,9 @@
+## M3.47 Linux WebView visual correction — 2026-09-21
+
+- The user reported a Timeline presentation defect after successful functional validation: Audio clips displayed two full-width horizontal bars instead of compact fade handles.
+- Corrected the fade-handle CSS to disable native button appearance, constrain the handle to 12 px, and explicitly anchor fade-in to the left edge and fade-out to the right edge.
+- This is a presentation-only correction; persisted fade state and the existing App/history command path are unchanged.
+
 ## M3.47 edge-case correction — 2026-09-21
 
 - Adjusted Timeline fade-handle edge positioning so handles remain visible when fade duration is zero or reaches the maximum permitted duration.
