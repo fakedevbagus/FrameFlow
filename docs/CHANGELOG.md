@@ -1,3 +1,23 @@
+## 2026-09-21 — M3.45 audio track volume control — in progress
+
+Branch: `feat/m3-45-audio-track-volume`
+
+Implemented:
+- Added backward-compatible per-track volume state with 1.0 as the default.
+- Added a validated volume update command with project timestamp updates.
+- Added a compact Audio-track Timeline volume slider with accessible percentage feedback.
+- Applied track volume to Audio-track preview playback.
+- Carried track volume into RenderPlan and applied it inside the explicit Audio-track FFmpeg graph.
+- Added domain, command, render-plan, graph, Preview, Timeline, and App regression coverage.
+
+Deferred:
+- Audio fades, transitions, and effects.
+- Multiple independent Audio tracks.
+- Progress streaming and cancellation.
+
+Validation:
+- Local validation is pending user verification.
+
 ## 2026-09-21 — M3.44 full project audio-track export — merged
 
 Branch: `feat/m3-44-project-audio-mix`
