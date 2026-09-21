@@ -60,6 +60,31 @@ export function clearAudioWaveformCache(): void {
   waveformCache.clear();
 }
 
+export function getWaveformLocalTimeMs(
+  clientX: number,
+  left: number,
+  width: number,
+  durationMs: number,
+): number {
+  if (
+    !Number.isFinite(clientX) ||
+    !Number.isFinite(left) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(durationMs) ||
+    width <= 0 ||
+    durationMs <= 0
+  ) {
+    return 0;
+  }
+
+  const progress = Math.min(
+    1,
+    Math.max(0, (clientX - left) / width),
+  );
+
+  return Math.round(progress * durationMs);
+}
+
 export function buildWaveformPath(
   peaks: number[],
   width = 128,
