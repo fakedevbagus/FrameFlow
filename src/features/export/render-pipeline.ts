@@ -6,7 +6,7 @@ import {
   renderVideoWithAudioGraphToMp4,
   type NativeExportRenderResult,
 } from "./export-renderer";
-import { compileSingleAudioTrackGraph } from "./audio-render-graph";
+import { compileAudioTracksGraph } from "./audio-render-graph";
 import { compileSingleVideoTrackGraph } from "./render-graph";
 
 export function renderVideoPlanToMp4(
@@ -33,7 +33,7 @@ export function renderVideoPlanToMp4(
     return renderVideoOnlyPlanToMp4(videoPlan, outputPath);
   }
 
-  const audioGraph = compileSingleAudioTrackGraph(plan, {
+  const audioGraph = compileAudioTracksGraph(plan, {
     inputIndexOffset: 1,
   });
 
