@@ -1,3 +1,10 @@
+## 2026-09-21 — M3.50 native cancellation compile correction
+
+- Local validation reported 285/285 frontend tests and a successful production build.
+- Rust compilation failed because `ExportProcessState::finish()` used `HashSet::take()`; the cancellation collection is a `HashSet`, so cleanup must use `remove()`.
+- Corrected the implementation and kept the boolean return contract unchanged.
+- Fresh Rust/Tauri validation is required before merge.
+
 ## 2026-09-21 — M3.49 Audio Track Pan Control — merged
 
 PR #63 — squash-merged
