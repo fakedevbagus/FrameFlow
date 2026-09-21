@@ -44,6 +44,7 @@ import {
 
 const basePixelsPerSecond = 40;
 const rulerStepMs = 5_000;
+const AUDIO_WAVEFORM_PEAK_COUNT = 512;
 
 interface TimelineProps {
   project: Project;
@@ -2263,7 +2264,7 @@ function AudioWaveformPreview({
   useEffect(() => {
     let cancelled = false;
 
-    void getAudioWaveform(sourcePath, 128)
+    void getAudioWaveform(sourcePath, AUDIO_WAVEFORM_PEAK_COUNT)
       .then((waveform) => {
         if (cancelled) {
           return;
@@ -2271,7 +2272,11 @@ function AudioWaveformPreview({
 
         setWaveformState({
           sourcePath,
-          path: buildWaveformPath(waveform.peaks, 128, 20),
+          path: buildWaveformPath(
+            waveform.peaks,
+            AUDIO_WAVEFORM_PEAK_COUNT,
+            20,
+          ),
           isLoading: false,
         });
       })
@@ -2322,7 +2327,7 @@ function AudioWaveformPreview({
       }}
       data-testid="timeline-audio-waveform"
       preserveAspectRatio="none"
-      viewBox="0 0 128 20"
+      viewBox={"0 0 " + AUDIO_WAVEFORM_PEAK_COUNT + " 20"}
       xmlns="http://www.w3.org/2000/svg"
     >
       <path d={waveformPath} />
