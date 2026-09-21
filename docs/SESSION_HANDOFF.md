@@ -1,3 +1,10 @@
+## M3.47 final WebView handle rendering correction — 2026-09-21
+
+- User confirmed the application had no functional errors, but the Timeline Audio clip still displayed two long horizontal white bars instead of compact fade handles.
+- The correction replaces the nested handle span with a pseudo-element and keeps the handle itself as the only rendered interaction primitive.
+- No project/history or audio-rendering behavior changed.
+- Fresh local validation is required after pulling the latest head.
+
 ## M3.47 Linux WebView visual correction — 2026-09-21
 
 - The user reported a Timeline presentation defect after successful functional validation: Audio clips displayed two full-width horizontal bars instead of compact fade handles.
