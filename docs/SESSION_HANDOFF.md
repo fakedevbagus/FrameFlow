@@ -1,4 +1,13 @@
-## M3.38 implementation checkpoint — 2026-09-21\n\n- Branch: `feat/m3-38-export-render-job`.\n- M3.37 is completed and squash-merged as PR #48 at `90d2489246c80c139dcda02bbb52cf041e738075`.\n- M3.38 connects the existing ExportPanel to the renderer through a focused export-job runner.\n- Added `src/features/export/export-runner.ts` to create/start an export job, compile the RenderPlan, invoke the native video renderer, and convert renderer/planner failures into a controlled failed job.\n- ExportPanel now enables the real Export action after an output destination is selected, disables destination changes while rendering, and reports running/completed/failed states.\n- No progress stream, cancellation, audio mixing, multi-track compositing, images, or advanced visual filters are introduced in this slice.\n- Added regression coverage for successful ExportPanel wiring and export-runner success/failure transitions.\n- Local validation for M3.38 is pending.
+## M3.38 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-38-export-render-job`.
+- M3.37 is completed and squash-merged as PR #48 at `90d2489246c80c139dcda02bbb52cf041e738075`.
+- M3.38 connects the existing ExportPanel to the renderer through a focused export-job runner.
+- Added `src/features/export/export-runner.ts` to create/start an export job, compile the RenderPlan, invoke the native video renderer, and convert renderer/planner failures into a controlled failed job.
+- ExportPanel now enables the real Export action after an output destination is selected, disables destination changes while rendering, and reports running/completed/failed states.
+- No progress stream, cancellation, audio mixing, multi-track compositing, images, or advanced visual filters are introduced in this slice.
+- Added regression coverage for successful ExportPanel wiring and export-runner success/failure transitions.
+- Local validation for M3.38 is pending.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
