@@ -50,7 +50,7 @@ describe("audio render graph", () => {
 
     expect(graph.inputs).toEqual([
       {
-        inputIndex: 2,
+        inputIndex: 0,
         sourcePath: "/media/audio-a.mp3",
         sourceStartMs: 1000,
         sourceEndMs: 3000,
@@ -59,7 +59,7 @@ describe("audio render graph", () => {
       },
     ]);
     expect(graph.filterComplex).toContain(
-      "[2:a:0]atrim=start=1:end=3,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1500:all=1[audio0]",
+      "[0:a:0]atrim=start=1:end=3,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1500:all=1[audio0]",
     );
     expect(graph.filterComplex).toContain(
       "anullsrc=r=48000:cl=stereo,atrim=duration=5,asetpts=PTS-STARTPTS[silence]",
@@ -94,9 +94,9 @@ describe("audio render graph", () => {
       ]),
     );
 
-    expect(graph.inputs.map((input) => input.inputIndex)).toEqual([1, 3]);
+    expect(graph.inputs.map((input) => input.inputIndex)).toEqual([0, 1]);
+    expect(graph.filterComplex).toContain("[0:a:0]");
     expect(graph.filterComplex).toContain("[1:a:0]");
-    expect(graph.filterComplex).toContain("[3:a:0]");
     expect(graph.filterComplex).toMatch(/\[silence\]\[audio0\]\[audio1\]amix=inputs=3/);
   });
 
