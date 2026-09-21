@@ -1,3 +1,19 @@
+## M3.33 validation correction — 2026-09-21
+
+- User local validation: lint passed; the full test suite executed with 215/215 tests passing, but the ExportPanel suite failed to initialize because its Vitest mock referenced a hoisted module value before initialization.
+- The failure is isolated to the test mock setup, not export behavior. `ExportPanel.test.tsx` now creates the mocked `chooseExportOutputPath` with `vi.hoisted`.
+- Build completed successfully and `tauri dev` launched successfully in the same local run.
+- Fresh local test rerun is required after the test-only correction.
+
+## M3.33 — Export destination and render-job boundary — 2026-09-21
+
+- Branch: `feat/m3-33-export-destination-job-boundary`.
+- Added `src/features/export/export-dialog.ts` using the existing Tauri dialog plugin to choose a real MP4 output file.
+- Added `src/features/export/export-job.ts` with a small renderer-agnostic job request/state contract for queued, running, completed, failed, and cancelled states.
+- Export Settings now exposes output destination selection without coupling it to project history.
+- Actual FFmpeg render invocation, timeline compositing, audio/video muxing, progress streaming, and cancellation wiring remain deferred.
+- Local validation is pending user verification.
+
 ## Current live reconciliation — M3.33 — 2026-09-21
 
 - Current `main` tip: `c81df8e7b0901a54c08b19dba2f5df3ee6a63adf`.
