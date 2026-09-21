@@ -1175,7 +1175,6 @@ function PreviewVisualLayer({
               data-media-width={mediaSize?.width || undefined}
               data-media-height={mediaSize?.height || undefined}
               src={mediaUrl ?? undefined}
-      volume={getTrackVolume(layer.track)}
               onLoad={handleImageLoad}
               style={{
                 ...cropMediaStyle,
@@ -1329,6 +1328,16 @@ function PreviewAudioLayer({
       return;
     }
 
+    media.volume = getTrackVolume(layer.track);
+  }, [layer.track]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+
+    if (!media) {
+      return;
+    }
+
     if (!isPlaying) {
       if (!media.paused) {
         media.pause();
@@ -1379,7 +1388,12 @@ function PreviewAudioLayer({
       controls={showControls}
       data-testid="preview-audio"
       preload="auto"
-      ref={mediaRef}
+      ref={(element) => {
+        mediaRef.current = element;
+        if (element) {
+          element.volume = getTrackVolume(layer.track);
+        }
+      }}
       data-clip-id={layer.clip.id}
       src={mediaUrl ?? undefined}
       onLoadedMetadata={handleLoadedMetadata}
