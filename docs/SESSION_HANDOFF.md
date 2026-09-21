@@ -12,7 +12,7 @@
 ## M3.29 — Fade through black transition — in progress
 
 Branch: feat/m3-29-fade-through-black-transition
-PR: pending draft creation
+PR: #40 (draft)
 Base: 468d1d3f0bbcbe28028b547097e5a8810564c5e8
 
 Implementation summary:
@@ -44,7 +44,7 @@ Known limitations:
 - Custom transition easing or non-linear fade profiles are deferred.
 
 Next step:
-- Open M3.29 as a draft PR.
+- Draft PR #40 is open.
 - User validates the branch locally with lint, tests, build, Tauri dev, and manual transition checks.
 
 # FrameFlow Session Handoff
