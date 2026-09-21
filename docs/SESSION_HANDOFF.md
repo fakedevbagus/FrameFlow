@@ -2,20 +2,11 @@
 
 - Branch: `feat/m3-39-single-source-audio`.
 - M3.38 is completed and squash-merged as PR #49 at `24008e949a106660143ea762c69687ac96519087`.
-- M3.39 focuses on audio for the simplest already-working export case: one video clip whose source may contain an audio stream.
-- The direct single-source renderer will optionally map the first source audio stream, encode it as AAC, and preserve video-only behavior when audio is disabled.
-- No independent timeline audio-track mixing is introduced in this slice; that remains a later graph milestone.
+- M3.39 enables the first source audio stream on the already-working single-source export path.
+- `render_single_source_to_mp4` accepts optional source timing and `includeAudio`; audio-enabled exports map `0:a:0?` and encode AAC, while disabled exports use `-an`.
+- The direct RenderPlan path now requests `includeAudio: true`.
+- Independent timeline audio-track mixing, audio effects, and multi-source audio composition remain deferred.
 - Local validation for M3.39 is pending.
-
-## M3.38 merge reconciliation — 2026-09-21
-
-- Current `main`: `24008e949a106660143ea762c69687ac96519087`.
-- Completed milestone: M3.38 — Export render-job activation, PR #49, squash merge SHA `24008e949a106660143ea762c69687ac96519087`.
-- User confirmed real single-clip MP4 export succeeded after the direct native-renderer compatibility path and graph-label correction.
-- The ExportPanel now starts a real export job and reports running/completed/failed state.
-- The direct single-clip path uses native source timing and video normalization; multi-clip/gap timelines use the M3.37 graph renderer.
-- Historical PR #22 remains open and is not active project work.
-- Immediate next slice: M3.39 — single-source audio muxing.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
