@@ -1175,7 +1175,6 @@ function PreviewVisualLayer({
               data-media-width={mediaSize?.width || undefined}
               data-media-height={mediaSize?.height || undefined}
               src={mediaUrl ?? undefined}
-      volume={getTrackVolume(layer.track)}
               onLoad={handleImageLoad}
               style={{
                 ...cropMediaStyle,
@@ -1382,6 +1381,7 @@ function PreviewAudioLayer({
       ref={mediaRef}
       data-clip-id={layer.clip.id}
       src={mediaUrl ?? undefined}
+      volume={getTrackVolume(layer.track)}
       onLoadedMetadata={handleLoadedMetadata}
       onError={() => onError(layer.asset.id, "Audio could not be loaded.")}
     />
