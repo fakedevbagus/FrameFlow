@@ -257,6 +257,15 @@ fn render_video_segments_to_mp4(
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
 
+  for segment in &request.segments {
+    if let Some(source_path) = &segment.source_path {
+      let source = media_path(source_path)?;
+      if same_path(&source, &output_path) {
+        return Err("Export output must differ from every segment source.".to_string());
+      }
+    }
+  }
+
   let temp_root = create_video_segments_temp_dir(&output_path)?;
   let result = render_video_segments_to_output(&request, &output_path, &temp_root);
 
@@ -1082,6 +1091,7 @@ pub fn run() {
       prepare_media_preview,
       render_single_source_to_mp4,
       render_video_graph_to_mp4,
+      render_video_segments_to_mp4,
       get_media_http_url,
       open_project,
       save_project
