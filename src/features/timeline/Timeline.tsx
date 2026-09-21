@@ -51,6 +51,7 @@ interface TimelineProps {
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
   onToggleTrackMute?: (trackId: string) => void;
   onUpdateTrackVolume?: (trackId: string, volume: number) => void;
+  onUpdateTrackPan?: (trackId: string, pan: number) => void;
   onUpdateAudioClipFades?: (
     clipId: string,
     fadeInMs: number,
@@ -141,6 +142,7 @@ export function Timeline({
   onTrimClipEnd,
   onToggleTrackMute,
   onUpdateTrackVolume,
+  onUpdateTrackPan,
   onUpdateAudioClipFades,
   onAddAssetToTrack,
   onAddTrack,
