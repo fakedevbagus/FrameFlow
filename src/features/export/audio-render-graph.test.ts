@@ -100,8 +100,8 @@ describe("audio render graph", () => {
       ]),
     );
 
-    expect(graph.filterComplex).toMatch(
-      /,volume=1,acompressor=threshold=0\\.125893:ratio=6:attack=10:release=300,adelay=0:all=1\\[audio0\\]/,
+    expect(graph.filterComplex).toContain(
+      ",volume=1,acompressor=threshold=0.125893:ratio=6:attack=10:release=300,adelay=0:all=1[audio0]",
     );
   });
 
