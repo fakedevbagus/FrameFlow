@@ -2,12 +2,14 @@
 
 - Branch: `feat/m3-43-native-audio-render`.
 - M3.42 is complete at merge SHA `5c338d0462206d88e6e258b8e433afe2ce897c43`.
-- M3.43 adds a dedicated native Tauri audio-graph render command.
+- M3.43 added a dedicated native Tauri audio-graph render command.
 - The command validates absolute audio inputs, MP4 output, non-empty filter graph, and the fixed `[aout]` map.
 - FFmpeg execution uses structured process arguments rather than shell interpolation.
 - Output is encoded as AAC stereo 48 kHz in an MP4 container.
 - The compiler/native bridge use dense local audio input indices so filter references match the native input list.
-- Full project A/V audio composition is intentionally deferred to the next slice.
+- User approved M3.43 after local validation.
+- PR #54 was squash-merged at `fff690250c1e0ffafe2aae41e09d8ef91be65daa`.
+- Full project A/V audio composition remains the next focused slice.
 
 ## M3.42 implementation checkpoint — 2026-09-21
 
