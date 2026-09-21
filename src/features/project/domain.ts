@@ -3,6 +3,8 @@ export const PROJECT_SCHEMA_VERSION = 1;
 export type MediaType = "audio" | "image" | "video";
 export type TrackType = "audio" | "video";
 export const DEFAULT_TRACK_VOLUME = 1;
+export const DEFAULT_AUDIO_FADE_IN_MS = 0;
+export const DEFAULT_AUDIO_FADE_OUT_MS = 0;
 
 export interface CanvasSettings {
   width: number;
@@ -78,6 +80,8 @@ export interface Clip {
   crop?: ClipCrop;
   cropPosition?: CropPosition;
   transitionOut?: ClipTransition;
+  audioFadeInMs?: number;
+  audioFadeOutMs?: number;
   transformKeyframes?: TransformKeyframe[];
 }
 
@@ -235,4 +239,37 @@ export function getTrackVolume(track: Track): number {
   }
 
   return Math.min(1, Math.max(0, volume));
+}
+
+
+export function getAudioFadeInMs(clip: Clip): number {
+  return normalizeAudioFadeValue(clip.audioFadeInMs, DEFAULT_AUDIO_FADE_IN_MS);
+}
+
+export function getAudioFadeOutMs(clip: Clip): number {
+  return normalizeAudioFadeValue(clip.audioFadeOutMs, DEFAULT_AUDIO_FADE_OUT_MS);
+}
+
+export function getAudioFadeDurations(
+  clip: Clip,
+): { fadeInMs: number; fadeOutMs: number } {
+  const durationMs =
+    clip.sourceEndMs === null
+      ? 0
+      : Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+  const fadeInMs = Math.min(durationMs, getAudioFadeInMs(clip));
+  const fadeOutMs = Math.min(
+    Math.max(0, durationMs - fadeInMs),
+    getAudioFadeOutMs(clip),
+  );
+
+  return { fadeInMs, fadeOutMs };
+}
+
+function normalizeAudioFadeValue(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.floor(value));
 }

@@ -136,6 +136,49 @@ export function findActivePreviewClip(
   return audioClips.length > 0 ? audioClips[audioClips.length - 1] : null;
 }
 
+export function getAudioFadeGain(
+  clip: Clip,
+  clipLocalTimeMs: number,
+): number {
+  const durationMs =
+    clip.sourceEndMs === null
+      ? 0
+      : Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+
+  if (
+    durationMs <= 0 ||
+    !Number.isFinite(clipLocalTimeMs) ||
+    clipLocalTimeMs < 0 ||
+    clipLocalTimeMs > durationMs
+  ) {
+    return 0;
+  }
+
+  const fadeInMs = Math.min(
+    durationMs,
+    Math.max(0, Math.floor(clip.audioFadeInMs ?? 0)),
+  );
+  const fadeOutMs = Math.min(
+    Math.max(0, durationMs - fadeInMs),
+    Math.max(0, Math.floor(clip.audioFadeOutMs ?? 0)),
+  );
+
+  let gain = 1;
+
+  if (fadeInMs > 0 && clipLocalTimeMs < fadeInMs) {
+    gain *= clipLocalTimeMs / fadeInMs;
+  }
+
+  if (fadeOutMs > 0 && clipLocalTimeMs > durationMs - fadeOutMs) {
+    gain *= Math.max(
+      0,
+      (durationMs - clipLocalTimeMs) / fadeOutMs,
+    );
+  }
+
+  return Math.min(1, Math.max(0, gain));
+}
+
 export function getClipLocalTimeMs(clip: Clip, timelineTimeMs: number): number {
   const durationMs =
     clip.sourceEndMs === null

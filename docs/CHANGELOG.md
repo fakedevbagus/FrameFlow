@@ -1,3 +1,58 @@
+## 2026-09-21 — M3.46 Inspector fade draft-state correction — validation required
+
+- The user's fresh validation after the prior key-based fix still reported 268/269 tests, with only the Fade out Inspector test failing.
+- Replaced the uncontrolled `defaultValue` audio fade inputs with controlled transient draft values inside `AudioFadeInspector`.
+- Persisted project values remain owned by the existing project/history state and `updateAudioClipFades()` command; the new component only tracks the text currently being edited.
+- Strengthened the integration test to assert that Fade out reaches 1500 ms immediately after the change event before blur.
+- Latest user validation evidence: lint completed, build completed, Rust 28/28 passed, and Tauri dev launched; Vitest still had 1 deterministic failure before this correction.
+
+## 2026-09-21 — M3.46 Inspector fade edit fix — pending validation
+
+Root cause:
+- The Audio fades Inspector used one React key on the shared Fade in/Fade out grid, derived from both values.
+- Updating one field therefore remounted the sibling input and interrupted the second edit in the same interaction sequence.
+
+Fix:
+- Removed the shared grid key.
+- Added per-field synchronization keys to the Fade in and Fade out inputs.
+- Preserved the existing project/history command path.
+
+Regression:
+- Strengthened the App integration test to assert the sibling Fade out input remains mounted after the Fade in blur and then accepts the 1500 ms value.
+
+Validation:
+- Repository source reconciliation complete.
+- Local npm/Cargo/Tauri validation is still required; this connector runtime cannot execute those repository commands.
+## 2026-09-21 — M3.46 validation correction — in progress
+
+- Corrected missing `updateAudioClipFades` test import.
+- Corrected the audio fade normalization test expectation to reflect the non-overlap rule.
+- Rust tests remained 28/28 in the reported run; Tauri dev launched successfully.
+- Fresh full validation is still required because the reported Vitest run also contained three worker timeouts/unhandled worker errors.
+
+## 2026-09-21 — M3.46 audio clip fade controls — in progress
+
+Branch: feat/m3-46-audio-clip-fades
+
+Implemented:
+- Added optional per-audio-clip fade-in and fade-out state with zero defaults.
+- Added validated updateAudioClipFades() command with duration and overlap checks.
+- Preserved/clamped fade state through audio clip trim operations and split audio clips into endpoint-specific fades.
+- Added Audio fades controls to the selected audio clip Inspector.
+- Applied fade envelope to audio preview playback.
+- Carried audio fade durations through RenderPlan.
+- Added FFmpeg afade stages before timeline delay/mixing.
+- Added regression coverage across domain, commands, render plan, audio graph, Preview, and App.
+
+Deferred:
+- Audio effects/EQ/compression.
+- Multiple independent Audio tracks.
+- Keyframed audio automation.
+- Render progress and cancellation.
+
+Validation:
+- Local validation is pending user verification.
+
 ## 2026-09-21 — M3.45 audio track volume control — correction merged
 
 PR #58 — merged

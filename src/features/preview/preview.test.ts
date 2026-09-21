@@ -5,6 +5,7 @@ import {
   findActivePreviewClip,
   getActiveAudioPreviewClips,
   getActiveVisualPreviewClips,
+  getAudioFadeGain,
   getClipLocalTimeMs,
 } from "./preview";
 
@@ -150,6 +151,25 @@ describe("preview helpers", () => {
     expect(active?.asset.name).toBe("music.mp3");
     expect(audioLayers).toHaveLength(1);
     expect(audioLayers[0].track.type).toBe("audio");
+  });
+
+  it("calculates audio fade gain at clip-local positions", () => {
+    const clip = {
+      id: "fade-clip",
+      assetId: "audio",
+      timelineStartMs: 1000,
+      sourceStartMs: 0,
+      sourceEndMs: 5000,
+      audioFadeInMs: 1000,
+      audioFadeOutMs: 1500,
+    };
+
+    expect(getAudioFadeGain(clip, 0)).toBe(0);
+    expect(getAudioFadeGain(clip, 500)).toBeCloseTo(0.5, 8);
+    expect(getAudioFadeGain(clip, 1000)).toBe(1);
+    expect(getAudioFadeGain(clip, 3500)).toBeCloseTo(1, 8);
+    expect(getAudioFadeGain(clip, 4250)).toBeCloseTo(0.5, 8);
+    expect(getAudioFadeGain(clip, 5000)).toBe(0);
   });
 
   it("converts timeline time into source-local time", () => {

@@ -1,3 +1,41 @@
+## M3.46 Inspector fade draft-state correction — 2026-09-21
+
+- The previous per-input React-key fix did not pass the user's fresh validation run: the suite remained at 268/269 with the same Fade out Inspector failure.
+- Root cause after that validation: the two Inspector fields were still uncontrolled `defaultValue` inputs whose persisted project rerenders could overwrite the effective edit flow. The UI needed an explicit ephemeral draft representation separate from persisted project state.
+- Fix: introduced a small `AudioFadeInspector` UI component with controlled draft strings for the two inputs. The draft state is synchronized from the selected clip's persisted fade values after project changes, while commits still go through `handleUpdateSelectedAudioFades()` and the existing history command.
+- This does not create a second project state model: persisted fade values remain owned by the project/history layer; the component only owns transient text currently being edited.
+- Regression coverage now also asserts that the Fade out input receives the requested 1500 ms value immediately after its change event before blur/commit.
+- User validation before this correction: lint completed; production build completed; Rust tests 28/28 passed; Tauri dev launched; Vitest remained 268/269.
+- Fresh validation is required after this correction.
+## M3.46 Inspector fade edit fix — 2026-09-21
+
+- Root cause: the Audio fades Inspector placed a React key derived from both fade values on the shared two-input grid. Committing one fade changed that key and remounted both inputs, which detached the sibling input before its pending edit could be committed.
+- Fix: removed the shared grid key and applied synchronization keys to the individual Fade in and Fade out inputs. A committed field can now resync itself without remounting the sibling field.
+- Regression coverage: the App workflow test now explicitly verifies that the Fade out input remains mounted after the Fade in blur and still accepts its 1500 ms edit.
+- Validation status: source-level reconciliation and targeted code review are complete. This connector environment cannot execute the repository npm/Cargo/Tauri commands, so local validation remains pending.
+## M3.46 validation correction — 2026-09-21
+
+- User local validation of PR #59 exposed test-only/import issues plus one deliberately incorrect domain expectation.
+- `src/features/timeline/commands.test.ts` was missing the `updateAudioClipFades` import, causing five command-test failures and corresponding TypeScript errors.
+- The domain normalization test expected 2999 ms, while the implemented non-overlap rule correctly clamps a 4000 ms requested fade-out to 3000 ms after a 2000 ms fade-in on a 5000 ms clip.
+- These issues are corrected on the M3.46 branch.
+- The same run reported three Vitest worker timeouts/unhandled worker errors after the test failures; because the core deterministic failures are now fixed, a fresh full test run is required before attributing those timeouts to the implementation.
+- Rust tests remained green at 28/28 and `tauri dev` launched successfully in the reported run.
+- Local validation remains pending.
+
+## M3.46 implementation checkpoint — 2026-09-21
+
+- Branch: feat/m3-46-audio-clip-fades.
+- M3.45 and correction PR #58 are complete; latest correction merge is 6f06f473b2a552cc04233ff4ada5c6bba07b7274.
+- M3.46 adds backward-compatible per-audio-clip fade-in/fade-out state.
+- Audio fades are edited in the selected audio clip Inspector; the Timeline track volume control remains independent.
+- Preview applies the fade envelope to the native HTMLAudioElement using clip-local timeline position.
+- RenderPlan carries audio fade durations, and the FFmpeg audio graph applies afade filters before timeline delay/mixing.
+- Locked tracks, visual clips, invalid durations, and overlapping fade ranges are rejected by the project command boundary.
+- Split/trim paths clamp or preserve fade semantics to avoid invalid durations.
+- Multiple independent Audio tracks, audio effects, automation, render progress, and cancellation remain deferred.
+- Local validation is pending user verification.
+
 ## M3.45 correction merge reconciliation — 2026-09-21
 
 - M3.45 correction PR #58 (fix/m3-45-audio-volume-slider-visibility) was marked ready after user validation and squash-merged.

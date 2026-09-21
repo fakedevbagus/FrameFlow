@@ -6,6 +6,7 @@ import {
   parseProject,
   serializeProject,
   getTrackVolume,
+  getAudioFadeDurations,
 } from "./domain";
 
 describe("project domain", () => {
@@ -48,6 +49,23 @@ describe("project domain", () => {
       ...audioTrack!,
       volume: -1,
     })).toBe(0);
+  });
+
+  it("normalizes audio fade durations against the clip duration", () => {
+    const clip = {
+      id: "fade-clip",
+      assetId: "audio",
+      timelineStartMs: 0,
+      sourceStartMs: 0,
+      sourceEndMs: 5000,
+      audioFadeInMs: 2000.8,
+      audioFadeOutMs: 4000,
+    };
+
+    expect(getAudioFadeDurations(clip)).toEqual({
+      fadeInMs: 2000,
+      fadeOutMs: 3000,
+    });
   });
 
   it("rejects invalid JSON and unsupported schemas", () => {

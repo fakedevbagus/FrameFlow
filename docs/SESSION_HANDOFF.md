@@ -1,3 +1,43 @@
+## M3.46 Inspector fade draft-state correction — 2026-09-21
+
+- Latest user validation after commit 10c75b5 still showed 268/269 tests.
+- The prior sibling-remount hypothesis was insufficient because the Fade out input remained in the document but its edit still did not persist.
+- Current correction introduces `AudioFadeInspector` with controlled transient draft strings for both fields. Project persistence and history remain unchanged and continue through `handleUpdateSelectedAudioFades()` -> `updateAudioClipFades()`.
+- The App regression test now checks the 1500 ms DOM value immediately after the Fade out change before committing on blur.
+- User-reported validation before this correction: lint completed; build completed; Rust 28/28 passed; Tauri dev launched successfully; Vitest 268/269.
+- Required next validation after this correction: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+- Keep PR #59 draft until the fresh local test run is clean.
+
+## M3.46 Inspector fade edit fix — 2026-09-21
+
+- Branch: feat/m3-46-audio-clip-fades.
+- Root cause was a shared React key on the Audio fades two-input grid. The key changed after one field commit, remounting the sibling input and losing the pending edit event.
+- The fix removes the shared grid key and gives each fade input its own synchronization key, so only the field whose persisted value changes is remounted.
+- The App regression test now checks sibling-input continuity after the first blur and verifies the final 1000/1500 ms values.
+- PR #59 remains draft pending fresh local validation.
+- Connector limitation: repository npm/Cargo/Tauri commands cannot be executed from this runtime.
+- Required next validation: npm run lint, npm run test, npm run build, cd src-tauri && cargo test, then npm run tauri dev.
+- Do not merge until that validation is reported clean.
+## M3.46 validation correction — 2026-09-21
+
+- User local validation of PR #59 found five command-test failures because `updateAudioClipFades` was not imported in `commands.test.ts` and one domain test expected an incorrect 2999 ms value instead of the implemented 3000 ms clamp.
+- These issues are corrected on `feat/m3-46-audio-clip-fades`.
+- The same run reported three Vitest worker startup timeouts/unhandled errors after the deterministic failures. Do not treat those as resolved until a fresh full run completes.
+- Rust validation in that run: 28 passed, 0 failed.
+- `tauri dev` launched successfully.
+- Local validation remains pending user verification.
+
+## M3.46 implementation checkpoint — 2026-09-21
+
+- Branch: feat/m3-46-audio-clip-fades.
+- Latest completed milestone: M3.45 Audio Track Volume Control plus correction PR #58.
+- M3.45 correction merge SHA: 6f06f473b2a552cc04233ff4ada5c6bba07b7274.
+- M3.46 adds per-audio-clip fade-in/fade-out state, Inspector controls, preview envelope handling, RenderPlan propagation, and FFmpeg afade stages.
+- Fade commands are history-compatible and validate non-negative integer durations, clip duration bounds, and non-overlapping fade ranges.
+- Audio trim operations clamp fade durations; audio split keeps fade-in on the first segment and fade-out on the second segment.
+- Local validation is pending user verification.
+- Deferred: audio effects, multiple Audio tracks, audio automation, render progress, and cancellation.
+
 ## M3.45 correction merge reconciliation — 2026-09-21
 
 - M3.45 correction PR #58 (fix/m3-45-audio-volume-slider-visibility) was marked ready after user validation and squash-merged.

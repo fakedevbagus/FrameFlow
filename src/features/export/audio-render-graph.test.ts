@@ -85,6 +85,23 @@ describe("audio render graph", () => {
     );
   });
 
+  it("renders audio fade-in and fade-out filters before timeline delay", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          durationMs: 5000,
+          timelineEndMs: 5000,
+          audioFadeInMs: 1000,
+          audioFadeOutMs: 1500,
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).toContain(
+      ",volume=1,afade=t=in:st=0:d=1,afade=t=out:st=3.5:d=1.5,adelay=0:all=1[audio0]",
+    );
+  });
+
   it("supports a native input offset for combined video and audio execution", () => {
     const graph = compileSingleAudioTrackGraph(
       createPlan([

@@ -1751,6 +1751,54 @@ describe("App", () => {
     });
   });
 
+  it("updates audio clip fade controls from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-audio-fades-ui",
+        name: "fade-music.mp3",
+        mediaType: "audio",
+        sourcePath: "/media/fade-music.mp3",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("fade-music.mp3")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add fade-music.mp3 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select fade-music.mp3 clip" }),
+    );
+
+    const fadeIn = screen.getByRole("spinbutton", { name: "Audio fade in" });
+    const fadeOut = screen.getByRole("spinbutton", { name: "Audio fade out" });
+
+    expect(fadeIn).toHaveValue(0);
+    expect(fadeOut).toHaveValue(0);
+
+    fireEvent.change(fadeIn, { target: { value: "1000" } });
+    fireEvent.blur(fadeIn);
+
+    // The sibling field must remain editable while the first field commits.
+    expect(fadeOut).toBeInTheDocument();
+
+    fireEvent.change(fadeOut, { target: { value: "1500" } });
+    expect(fadeOut).toHaveValue(1500);
+    fireEvent.blur(fadeOut);
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Audio fade in" })).toHaveValue(1000);
+      expect(screen.getByRole("spinbutton", { name: "Audio fade out" })).toHaveValue(1500);
+    });
+  });
+
   it("moves a timeline clip through direct mouse drag", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {

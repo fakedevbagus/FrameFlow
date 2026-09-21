@@ -35,6 +35,7 @@ import {
 import {
   getActiveAudioPreviewClips,
   getActiveVisualPreviewClips,
+  getAudioFadeGain,
   getClipLocalTimeMs,
   type ActivePreviewClip,
 } from "./preview";
@@ -1269,6 +1270,10 @@ function PreviewAudioLayer({
 }: PreviewLayerProps) {
   const mediaRef = useRef<HTMLAudioElement | null>(null);
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
+  const clipLocalTimeMs = Math.max(
+    0,
+    currentTimeMs - layer.clip.timelineStartMs,
+  );
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const onErrorRef = useRef(onError);
 
@@ -1328,8 +1333,14 @@ function PreviewAudioLayer({
       return;
     }
 
-    media.volume = getTrackVolume(layer.track);
-  }, [layer.track]);
+    media.volume =
+      getTrackVolume(layer.track) *
+      getAudioFadeGain(layer.clip, clipLocalTimeMs);
+  }, [
+    clipLocalTimeMs,
+    layer.clip,
+    layer.track,
+  ]);
 
   useEffect(() => {
     const media = mediaRef.current;
@@ -1391,7 +1402,9 @@ function PreviewAudioLayer({
       ref={(element) => {
         mediaRef.current = element;
         if (element) {
-          element.volume = getTrackVolume(layer.track);
+          element.volume =
+            getTrackVolume(layer.track) *
+            getAudioFadeGain(layer.clip, clipLocalTimeMs);
         }
       }}
       data-clip-id={layer.clip.id}

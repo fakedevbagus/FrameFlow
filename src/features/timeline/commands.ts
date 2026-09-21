@@ -1,13 +1,14 @@
-import type {
-  TransformAnchor,
-  ClipCrop,
-  CropPosition,
-  Clip,
-  ClipTransform,
-  Project,
-  TrackType,
-  TransformEasing,
-  ClipTransition,
+import {
+  getAudioFadeDurations,
+  type TransformAnchor,
+  type ClipCrop,
+  type CropPosition,
+  type Clip,
+  type ClipTransform,
+  type Project,
+  type TrackType,
+  type TransformEasing,
+  type ClipTransition,
 } from "../project/domain";
 import {
   DEFAULT_CLIP_TRANSFORM,
@@ -495,6 +496,68 @@ export function updateTrackVolume(
   return { ...project, tracks, updatedAt: now.toISOString() };
 }
 
+
+export function updateAudioClipFades(
+  project: Project,
+  clipId: string,
+  fadeInMs: number,
+  fadeOutMs: number,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
+    throw new Error("Audio fades are only available for audio clips.");
+  }
+
+  if (
+    !Number.isFinite(fadeInMs) ||
+    !Number.isInteger(fadeInMs) ||
+    fadeInMs < 0 ||
+    !Number.isFinite(fadeOutMs) ||
+    !Number.isInteger(fadeOutMs) ||
+    fadeOutMs < 0
+  ) {
+    throw new Error("Audio fade durations must be non-negative integers.");
+  }
+
+  const durationMs = getClipDurationMs(location.clip);
+
+  if (fadeInMs > durationMs || fadeOutMs > durationMs) {
+    throw new Error("Audio fade duration cannot exceed the clip duration.");
+  }
+
+  if (fadeInMs + fadeOutMs > durationMs) {
+    throw new Error("Audio fade-in and fade-out cannot overlap.");
+  }
+
+  const current = getAudioFadeDurations(location.clip);
+
+  if (
+    current.fadeInMs === fadeInMs &&
+    current.fadeOutMs === fadeOutMs
+  ) {
+    return project;
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    {
+      audioFadeInMs: fadeInMs || undefined,
+      audioFadeOutMs: fadeOutMs || undefined,
+    },
+    now,
+  );
+}
 
 export function updateClipTransition(
   project: Project,
@@ -1001,6 +1064,7 @@ export function trimClipStart(
     {
       sourceStartMs: newSourceStartMs,
       timelineStartMs,
+      ...getClampedAudioFadePatch(clip, newSourceStartMs, sourceEndMs),
     },
     now,
   );
@@ -1052,7 +1116,14 @@ export function trimClipEnd(
   const updatedProject = updateClipAtLocation(
     project,
     location,
-    { sourceEndMs: newSourceEndMs },
+    {
+      sourceEndMs: newSourceEndMs,
+      ...getClampedAudioFadePatch(
+        clip,
+        clip.sourceStartMs,
+        newSourceEndMs,
+      ),
+    },
     now,
   );
   const tracks = [...updatedProject.tracks];
@@ -1131,6 +1202,7 @@ export function splitClipAtTime(
     ...clip,
     sourceEndMs: sourceSplitMs,
     transitionOut: undefined,
+    audioFadeOutMs: undefined,
     transformKeyframes: firstKeyframes,
   };
   const secondClip: Clip = {
@@ -1138,6 +1210,7 @@ export function splitClipAtTime(
     id: crypto.randomUUID(),
     timelineStartMs: timelineTimeMs,
     sourceStartMs: sourceSplitMs,
+    audioFadeInMs: undefined,
     transformKeyframes: secondKeyframes,
   };
 
@@ -1176,6 +1249,47 @@ function sanitizeProjectTrackTransitions(
       return asset?.mediaType === "video" || asset?.mediaType === "image";
     },
   );
+}
+
+function getClampedAudioFadePatch(
+  clip: Clip,
+  sourceStartMs: number,
+  sourceEndMs: number | null,
+): Pick<Clip, "audioFadeInMs" | "audioFadeOutMs"> {
+  if (sourceEndMs === null) {
+    return {
+      audioFadeInMs: clip.audioFadeInMs,
+      audioFadeOutMs: clip.audioFadeOutMs,
+    };
+  }
+
+  const durationMs = Math.max(0, sourceEndMs - sourceStartMs);
+  const currentFadeInMs = Math.max(
+    0,
+    Math.floor(
+      typeof clip.audioFadeInMs === "number" && Number.isFinite(clip.audioFadeInMs)
+        ? clip.audioFadeInMs
+        : 0,
+    ),
+  );
+  const currentFadeOutMs = Math.max(
+    0,
+    Math.floor(
+      typeof clip.audioFadeOutMs === "number" && Number.isFinite(clip.audioFadeOutMs)
+        ? clip.audioFadeOutMs
+        : 0,
+    ),
+  );
+  const fadeInMs = Math.min(durationMs, currentFadeInMs);
+  const fadeOutMs = Math.min(
+    Math.max(0, durationMs - fadeInMs),
+    currentFadeOutMs,
+  );
+
+  return {
+    audioFadeInMs: fadeInMs || undefined,
+    audioFadeOutMs: fadeOutMs || undefined,
+  };
 }
 
 function hasTimelineOverlap(
