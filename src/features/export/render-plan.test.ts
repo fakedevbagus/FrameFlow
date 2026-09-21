@@ -52,6 +52,8 @@ describe("render plan", () => {
     expect(plan.durationMs).toBe(11000);
     expect(plan.segments).toHaveLength(3);
 
+    expect(plan.segments.find((segment) => segment.trackType === "audio")?.trackVolume).toBe(1);
+
     expect(plan.segments).toEqual([
       expect.objectContaining({
         inputIndex: 0,
