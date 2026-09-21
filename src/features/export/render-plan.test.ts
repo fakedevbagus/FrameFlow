@@ -119,7 +119,7 @@ describe("render plan", () => {
     ).toBe(-0.55);
   });
 
-
+  it("resolves quality dimensions from the project aspect ratio", () => {
     const project = projectWithAssets();
     const settings = {
       ...createDefaultExportSettings(project),
