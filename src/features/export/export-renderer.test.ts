@@ -21,6 +21,9 @@ describe("export renderer", () => {
       width: 1280,
       height: 720,
       frameRate: 30,
+      sourceStartMs: 1000,
+      sourceDurationMs: 2500,
+      includeAudio: false,
     };
 
     await expect(renderSingleSourceToMp4(request)).resolves.toEqual({
