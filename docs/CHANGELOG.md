@@ -1,3 +1,30 @@
+## 2026-09-21
+
+### M3.30 — Transition Browser / Picker — in progress
+
+Branch: feat/m3-30-transition-browser
+
+Base: M3.29 merge SHA 1aa5dee0da89a0f80357ad294273025164254a90
+
+Implemented:
+- Added a discoverable transition picker for None, Dissolve, and Fade through black.
+- Preserved the existing transition mutation contract and history-backed project updates.
+- Preserved transition duration editing and type retention.
+- Kept the existing transition type select as an accessibility/keyboard fallback.
+- Added TransitionInspector regression coverage for rendering, selection, ineligible transitions, and duration retention.
+
+Validation:
+- M3.29: user-reported local validation passed.
+- M3.30: local validation pending user verification.
+- Automated execution was not run in this environment because direct GitHub cloning failed due network/DNS resolution.
+
+Known limitations:
+- Picker currently covers the two implemented visual transition types and None; thumbnails/preview thumbnails are deferred.
+- Rich drag-and-drop placement, audio transitions, custom profiles, and responsive workspace changes remain outside this milestone.
+
+Next step:
+- User validates M3.30 locally before PR readiness and merge.
+
 # FrameFlow Changelog
 
 ## 2026-09-21
