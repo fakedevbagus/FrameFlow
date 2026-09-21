@@ -14,6 +14,7 @@ export function renderVideoPlanToMp4(
   const videoSegments = plan.segments.filter(
     (segment) => segment.trackType === "video",
   );
+  const graph = compileSingleVideoTrackGraph(plan);
 
   if (
     videoSegments.length === 1 &&
@@ -39,8 +40,6 @@ export function renderVideoPlanToMp4(
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
 
   if (videoSegments.length > 1 && audioSegments.length === 0 && videoTrackIds.size === 1) {
-    compileSingleVideoTrackGraph(plan);
-
     const ordered = [...videoSegments].sort(
       (left, right) => left.timelineStartMs - right.timelineStartMs,
     );
