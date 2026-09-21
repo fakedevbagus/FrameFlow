@@ -1281,6 +1281,7 @@ export function Timeline({
             onHandleAudioFadeKeyDown={handleAudioFadeKeyDown}
             onRemoveTrack={onRemoveTrack}
             onRemoveTransformKeyframe={onRemoveTransformKeyframe}
+            onRemoveAudioVolumeKeyframe={onRemoveAudioVolumeKeyframe}
             onCurrentTimeChange={onCurrentTimeChange}
             zoom={zoom}
             interaction={interaction}
@@ -1306,6 +1307,11 @@ export function Timeline({
             onUpdateKeyframeInteraction={updateKeyframeInteraction}
             onFinishKeyframeInteraction={finishKeyframeInteraction}
             onCancelKeyframeInteraction={cancelKeyframeInteraction}
+            audioVolumeKeyframeInteraction={audioVolumeKeyframeInteraction}
+            onBeginAudioVolumeKeyframeInteraction={beginAudioVolumeKeyframeInteraction}
+            onUpdateAudioVolumeKeyframeInteraction={updateAudioVolumeKeyframeInteraction}
+            onFinishAudioVolumeKeyframeInteraction={finishAudioVolumeKeyframeInteraction}
+            onCancelAudioVolumeKeyframeInteraction={cancelAudioVolumeKeyframeInteraction}
           />
         ))}
       </div>
@@ -1347,6 +1353,10 @@ interface TimelineTrackProps {
     clipId: string,
     timeMs: number,
   ) => void;
+  onRemoveAudioVolumeKeyframe?: (
+    clipId: string,
+    timeMs: number,
+  ) => void;
   onCurrentTimeChange?: (timeMs: number) => void;
   zoom: number;
   dragOverTrackId: string | null;
@@ -1369,6 +1379,11 @@ interface TimelineTrackProps {
     keyframeTimeMs: number,
   ) => void;
   onMoveTransformKeyframe?: (
+    clipId: string,
+    fromTimeMs: number,
+    toTimeMs: number,
+  ) => void;
+  onMoveAudioVolumeKeyframe?: (
     clipId: string,
     fromTimeMs: number,
     toTimeMs: number,
@@ -1404,6 +1419,19 @@ interface TimelineTrackProps {
     event?: PointerEvent<HTMLButtonElement>,
   ) => void;
   onCancelKeyframeInteraction: () => void;
+  audioVolumeKeyframeInteraction: AudioVolumeKeyframeInteraction | null;
+  onBeginAudioVolumeKeyframeInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    keyframeTimeMs: number,
+  ) => void;
+  onUpdateAudioVolumeKeyframeInteraction: (
+    event: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onFinishAudioVolumeKeyframeInteraction: (
+    event?: PointerEvent<HTMLButtonElement>,
+  ) => void;
+  onCancelAudioVolumeKeyframeInteraction: () => void;
 }
 
 function TimelineTrack({
@@ -1425,8 +1453,10 @@ function TimelineTrack({
   onHandleAudioFadeKeyDown,
   onRemoveTrack,
   onRemoveTransformKeyframe,
+  onRemoveAudioVolumeKeyframe,
   onCurrentTimeChange,
   onMoveTransformKeyframe,
+  onMoveAudioVolumeKeyframe,
   onUpdateClipTransition,
   transitionInteraction,
   onBeginTransitionInteraction,
@@ -1446,10 +1476,15 @@ function TimelineTrack({
   onCancelClipInteraction,
   onKeyframeClick,
   keyframeInteraction,
+  audioVolumeKeyframeInteraction,
   onBeginKeyframeInteraction,
   onUpdateKeyframeInteraction,
   onFinishKeyframeInteraction,
   onCancelKeyframeInteraction,
+  onBeginAudioVolumeKeyframeInteraction,
+  onUpdateAudioVolumeKeyframeInteraction,
+  onFinishAudioVolumeKeyframeInteraction,
+  onCancelAudioVolumeKeyframeInteraction,
 }: TimelineTrackProps) {
   const pixelsPerSecond = basePixelsPerSecond * zoom;
 
@@ -1570,6 +1605,9 @@ function TimelineTrack({
           }
 
           const keyframes = clip.transformKeyframes ?? [];
+          const audioVolumeKeyframes = isAudioClip
+            ? clip.audioVolumeKeyframes ?? []
+            : [];
           const assetSupportsTransformKeyframes =
             asset?.mediaType === "video" || asset?.mediaType === "image";
 
@@ -1831,6 +1869,178 @@ function TimelineTrack({
                   </div>
                 );
               })()}
+
+              {isAudioClip && audioVolumeKeyframes.length > 0 ? (
+                <div
+                  aria-label={
+                    "Audio volume keyframes for " +
+                    (asset?.name ?? "Missing media")
+                  }
+                  className="timeline-clip-keyframes timeline-audio-volume-keyframes"
+                  style={{
+                    left:
+                      clip.timelineStartMs / 1000 * pixelsPerSecond +
+                      "px",
+                    width: width + "px",
+                  }}
+                >
+                  {audioVolumeKeyframes.map((keyframe, keyframeIndex) => {
+                    const displayTimeMs =
+                      audioVolumeKeyframeInteraction?.clipId === clip.id &&
+                      audioVolumeKeyframeInteraction.keyframeTimeMs ===
+                        keyframe.timeMs
+                        ? audioVolumeKeyframeInteraction.previewTimeMs
+                        : keyframe.timeMs;
+                    const absoluteTimeMs =
+                      clip.timelineStartMs + displayTimeMs;
+                    const isActive =
+                      Math.abs(currentTimeMs - absoluteTimeMs) <=
+                      500 / project.canvas.frameRate;
+
+                    function handleAudioVolumeKeyframeKeyDown(
+                      event: KeyboardEvent<HTMLButtonElement>,
+                    ) {
+                      if (
+                        event.key === "Delete" ||
+                        event.key === "Backspace"
+                      ) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onRemoveAudioVolumeKeyframe?.(
+                          clip.id,
+                          keyframe.timeMs,
+                        );
+                        return;
+                      }
+
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onCancelAudioVolumeKeyframeInteraction();
+                        return;
+                      }
+
+                      if (
+                        event.key !== "ArrowLeft" &&
+                        event.key !== "ArrowRight"
+                      ) {
+                        return;
+                      }
+
+                      const stepMs = event.shiftKey
+                        ? 500
+                        : 1000 / project.canvas.frameRate;
+                      const deltaMs =
+                        event.key === "ArrowLeft" ? -stepMs : stepMs;
+                      const sortedKeyframes = [
+                        ...audioVolumeKeyframes,
+                      ].sort((a, b) => a.timeMs - b.timeMs);
+                      const sortedIndex = sortedKeyframes.findIndex(
+                        (candidate) => candidate.timeMs === keyframe.timeMs,
+                      );
+
+                      if (sortedIndex === -1) {
+                        return;
+                      }
+
+                      const previousTimeMs =
+                        sortedIndex > 0 ? sortedKeyframes[sortedIndex - 1].timeMs : 0;
+                      const nextTimeMs =
+                        sortedIndex < sortedKeyframes.length - 1
+                          ? sortedKeyframes[sortedIndex + 1].timeMs
+                          : getClipDurationMs(clip);
+                      const frameStepMs = 1000 / project.canvas.frameRate;
+                      const minimumTimeMs =
+                        sortedIndex > 0 ? previousTimeMs + frameStepMs : 0;
+                      const maximumTimeMs =
+                        sortedIndex < sortedKeyframes.length - 1
+                          ? nextTimeMs - frameStepMs
+                          : nextTimeMs;
+                      const targetTimeMs = Math.min(
+                        Math.max(
+                          Math.round(keyframe.timeMs + deltaMs),
+                          minimumTimeMs,
+                        ),
+                        maximumTimeMs,
+                      );
+
+                      if (targetTimeMs === keyframe.timeMs) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onMoveAudioVolumeKeyframe?.(
+                        clip.id,
+                        keyframe.timeMs,
+                        targetTimeMs,
+                      );
+                      onCurrentTimeChange?.(
+                        Math.min(
+                          Math.max(
+                            clip.timelineStartMs + targetTimeMs,
+                            0,
+                          ),
+                          timelineDurationMs,
+                        ),
+                      );
+                    }
+
+                    return (
+                      <button
+                        aria-label={
+                          "Go to audio volume keyframe for " +
+                          (asset?.name ?? "Missing media") +
+                          " at " +
+                          formatKeyframeTime(keyframe.timeMs) +
+                          " (" +
+                          Math.round(keyframe.volume * 100) +
+                          "%)"
+                        }
+                        className={
+                          "timeline-keyframe-marker timeline-audio-volume-keyframe-marker" +
+                          (isActive ? " timeline-keyframe-marker-active" : "")
+                        }
+                        key={
+                          clip.id +
+                          "-audio-volume-keyframe-" +
+                          keyframeIndex
+                        }
+                        aria-current={isActive ? "time" : undefined}
+                        onFocus={() => onSelectClip?.(clip.id)}
+                        onClick={(event) =>
+                          onKeyframeClick(event, clip, keyframe.timeMs)
+                        }
+                        onKeyDown={handleAudioVolumeKeyframeKeyDown}
+                        onPointerDown={(event) =>
+                          onBeginAudioVolumeKeyframeInteraction(
+                            event,
+                            clip,
+                            keyframe.timeMs,
+                          )
+                        }
+                        onPointerMove={onUpdateAudioVolumeKeyframeInteraction}
+                        onPointerUp={onFinishAudioVolumeKeyframeInteraction}
+                        onPointerCancel={onCancelAudioVolumeKeyframeInteraction}
+                        style={{
+                          left:
+                            durationMs > 0
+                              ? displayTimeMs / durationMs * 100 + "%"
+                              : "0%",
+                        }}
+                        title={
+                          Math.round(keyframe.volume * 100) +
+                          "% · " +
+                          formatKeyframeTime(keyframe.timeMs)
+                        }
+                        type="button"
+                      >
+                        <span aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
 
               {assetSupportsTransformKeyframes ? (
                 <div
