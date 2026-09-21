@@ -1,3 +1,8 @@
+## 2026-09-21 — M3.48 multi-track test assertion correction
+
+- Corrected the expected input/filter ordering to match deterministic trackIndex ordering.
+- Added source-path and delay assertions for the two independent Audio tracks.
+
 ## 2026-09-21 — M3.48 validation correction
 
 - Fixed the inherited AudioFadeInspector lint violation by using the stable ref-based draft synchronization.
