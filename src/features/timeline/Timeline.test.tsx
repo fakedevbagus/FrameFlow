@@ -348,6 +348,27 @@ describe("Timeline", () => {
     expect(onToggleTrackMute).toHaveBeenCalledWith("video-1");
   });
 
+  it("shows an audio track volume slider and reports changes", () => {
+    const project = createVideoProject();
+    const onUpdateTrackVolume = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onUpdateTrackVolume={onUpdateTrackVolume}
+      />,
+    );
+
+    const volume = screen.getByRole("slider", { name: "Volume Audio 1" });
+
+    expect(volume).toHaveValue("1");
+    expect(volume).toHaveAttribute("aria-valuetext", "100%");
+
+    fireEvent.change(volume, { target: { value: "0.35" } });
+
+    expect(onUpdateTrackVolume).toHaveBeenCalledWith("audio-1", 0.35);
+  });
+
   it("adds video and audio tracks through timeline controls", () => {
     const project = createVideoProject();
     const onAddTrack = vi.fn();
