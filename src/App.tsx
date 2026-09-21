@@ -2203,13 +2203,6 @@ function App() {
               {selectedClipContext.asset?.mediaType === "audio" &&
               selectedClipContext.track.type === "audio" ? (
                 <AudioFadeInspector
-                  key={
-                    selectedClipContext.clip.id +
-                    "-" +
-                    (selectedClipContext.clip.audioFadeInMs ?? 0) +
-                    "-" +
-                    (selectedClipContext.clip.audioFadeOutMs ?? 0)
-                  }
                   clip={selectedClipContext.clip}
                   durationMs={getClipDurationMs(selectedClipContext.clip)}
                   onCommit={handleUpdateSelectedAudioFades}
@@ -2400,20 +2393,29 @@ function AudioFadeInspector({
   onCommit: (fadeInMs: number, fadeOutMs: number) => void;
   onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
 }) {
-  const [fadeInDraft, setFadeInDraft] = useState(() =>
-    String(clip.audioFadeInMs ?? 0),
-  );
-  const [fadeOutDraft, setFadeOutDraft] = useState(() =>
-    String(clip.audioFadeOutMs ?? 0),
-  );
+  const fadeInInputRef = useRef<HTMLInputElement>(null);
+  const fadeOutInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (fadeInInputRef.current) {
+      fadeInInputRef.current.value = String(clip.audioFadeInMs ?? 0);
+    }
+    if (fadeOutInputRef.current) {
+      fadeOutInputRef.current.value = String(clip.audioFadeOutMs ?? 0);
+    }
+  }, [clip.id, clip.audioFadeInMs, clip.audioFadeOutMs]);
 
   function commit(which: "in" | "out") {
-    const rawFadeIn = fadeInDraft.trim();
-    const rawFadeOut = fadeOutDraft.trim();
+    const rawFadeIn = fadeInInputRef.current?.value.trim() ?? "";
+    const rawFadeOut = fadeOutInputRef.current?.value.trim() ?? "";
 
     if (!rawFadeIn || !rawFadeOut) {
-      if (!rawFadeIn) setFadeInDraft(String(clip.audioFadeInMs ?? 0));
-      if (!rawFadeOut) setFadeOutDraft(String(clip.audioFadeOutMs ?? 0));
+      if (!rawFadeIn && fadeInInputRef.current) {
+        fadeInInputRef.current.value = String(clip.audioFadeInMs ?? 0);
+      }
+      if (!rawFadeOut && fadeOutInputRef.current) {
+        fadeOutInputRef.current.value = String(clip.audioFadeOutMs ?? 0);
+      }
       return;
     }
 
@@ -2421,15 +2423,18 @@ function AudioFadeInspector({
     const fadeOutMs = Number(rawFadeOut);
 
     if (!Number.isFinite(fadeInMs) || !Number.isFinite(fadeOutMs)) {
-      if (which === "in") {
-        setFadeInDraft(String(clip.audioFadeInMs ?? 0));
-      } else {
-        setFadeOutDraft(String(clip.audioFadeOutMs ?? 0));
+      if (which === "in" && fadeInInputRef.current) {
+        fadeInInputRef.current.value = String(clip.audioFadeInMs ?? 0);
+      } else if (which === "out" && fadeOutInputRef.current) {
+        fadeOutInputRef.current.value = String(clip.audioFadeOutMs ?? 0);
       }
       return;
     }
 
-    onCommit(Math.max(0, Math.round(fadeInMs)), Math.max(0, Math.round(fadeOutMs)));
+    onCommit(
+      Math.max(0, Math.round(fadeInMs)),
+      Math.max(0, Math.round(fadeOutMs)),
+    );
   }
 
   return (
@@ -2443,14 +2448,14 @@ function AudioFadeInspector({
           <span>Fade in</span>
           <div className="inspector-transform-input-wrap">
             <input
+              ref={fadeInInputRef}
               aria-label="Audio fade in"
               className="inspector-transform-input"
+              defaultValue={clip.audioFadeInMs ?? 0}
               max={Math.max(0, durationMs)}
               min="0"
               step="100"
               type="number"
-              value={fadeInDraft}
-              onChange={(event) => setFadeInDraft(event.currentTarget.value)}
               onBlur={() => commit("in")}
               onKeyDown={onKeyDown}
             />
@@ -2461,14 +2466,14 @@ function AudioFadeInspector({
           <span>Fade out</span>
           <div className="inspector-transform-input-wrap">
             <input
+              ref={fadeOutInputRef}
               aria-label="Audio fade out"
               className="inspector-transform-input"
+              defaultValue={clip.audioFadeOutMs ?? 0}
               max={Math.max(0, durationMs)}
               min="0"
               step="100"
               type="number"
-              value={fadeOutDraft}
-              onChange={(event) => setFadeOutDraft(event.currentTarget.value)}
               onBlur={() => commit("out")}
               onKeyDown={onKeyDown}
             />
@@ -2479,6 +2484,7 @@ function AudioFadeInspector({
     </div>
   );
 }
+
 function formatTimecode(durationMs: number, frameRate: number): string {
   const totalMilliseconds = Math.max(0, durationMs);
   const totalSeconds = Math.floor(totalMilliseconds / 1000);
