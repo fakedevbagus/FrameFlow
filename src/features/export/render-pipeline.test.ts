@@ -118,7 +118,7 @@ describe("render video pipeline", () => {
       frameRate: 30,
       sourceStartMs: 0,
       sourceDurationMs: 5038,
-      includeAudio: false,
+      includeAudio: true,
     });
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });

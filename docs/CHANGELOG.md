@@ -1,30 +1,13 @@
 ## 2026-09-21 — M3.39 single-source audio — in progress
 
-Branch: `feat/m3-39-single-source-audio`
-
-Planned:
-- Add optional first-source audio mapping to the existing native single-source renderer.
-- Preserve explicit video-only export when audio is disabled.
-- Add regression coverage for audio-enabled and audio-disabled argument construction.
-
-Deferred:
-- Independent timeline audio-track mixing.
-- Audio transitions/effects.
-- Multi-source audio composition.
-- Progress streaming and cancellation.
+Implemented:
+- Enabled first-source audio muxing for direct single-clip exports.
+- Added regression coverage for audio-enabled and audio-disabled native FFmpeg argument construction.
+- Kept independent timeline audio mixing and audio effects deferred.
 
 Validation:
-- M3.38 merged after successful local validation and real single-clip MP4 export.
+- M3.38 merged after successful real single-clip MP4 export.
 - M3.39 local validation is pending.
-
-## 2026-09-21 — M3.38 merge reconciliation
-
-- PR #49 `feat: activate export render job` was squash-merged.
-- Merge SHA: `24008e949a106660143ea762c69687ac96519087`.
-- User confirmed real single-clip MP4 export succeeded after the direct native-renderer compatibility path and graph-label fix.
-- ExportPanel now runs a real export job and reports running/completed/failed state.
-- Multi-clip/gap rendering remains on the M3.37 graph path; single-clip uses the native single-source path.
-
 ## 2026-09-21 — M3.37 native render graph wiring — in progress
 
 Branch: `feat/m3-37-native-render-graph-wiring`

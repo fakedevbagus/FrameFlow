@@ -23,7 +23,7 @@ describe("export renderer", () => {
       frameRate: 30,
       sourceStartMs: 1000,
       sourceDurationMs: 2500,
-      includeAudio: false,
+      includeAudio: true,
     };
 
     await expect(renderSingleSourceToMp4(request)).resolves.toEqual({

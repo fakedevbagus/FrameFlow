@@ -892,7 +892,7 @@ mod tests {
       29.97,
       Some(1_250),
       Some(4_500),
-      false,
+      true,
     );
 
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "/media/My Video; clip.mp4"));
@@ -901,7 +901,26 @@ mod tests {
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "29.97"));
     assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-ss" && pair[1].to_string_lossy() == "1.25"));
     assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-t" && pair[1].to_string_lossy() == "4.5"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-map" && pair[1].to_string_lossy() == "0:a:0?"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-c:a" && pair[1].to_string_lossy() == "aac"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-b:a" && pair[1].to_string_lossy() == "192k"));
+  }
+
+  #[test]
+  fn keeps_audio_explicitly_disabled_when_requested() {
+    let args = super::build_ffmpeg_export_args(
+      Path::new("/media/source.mp4"),
+      Path::new("/tmp/output.mp4"),
+      1280,
+      720,
+      30.0,
+      None,
+      None,
+      false,
+    );
+
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "-an"));
+    assert!(!args.windows(2).any(|pair| pair[0].to_string_lossy() == "-map" && pair[1].to_string_lossy() == "0:a:0?"));
   }
 
   #[test]
