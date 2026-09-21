@@ -1050,7 +1050,6 @@ export function Timeline({
             onSelectClip={onSelectClip}
             onToggleTrackMute={onToggleTrackMute}
             onUpdateTrackVolume={onUpdateTrackVolume}
-            onUpdateAudioClipFades={onUpdateAudioClipFades}
             audioFadeInteraction={audioFadeInteraction}
             onBeginAudioFadeInteraction={beginAudioFadeInteraction}
             onUpdateAudioFadeInteraction={updateAudioFadeInteraction}
@@ -1100,11 +1099,6 @@ interface TimelineTrackProps {
   onSelectClip?: (clipId: string) => void;
   onToggleTrackMute?: (trackId: string) => void;
   onUpdateTrackVolume?: (trackId: string, volume: number) => void;
-  onUpdateAudioClipFades?: (
-    clipId: string,
-    fadeInMs: number,
-    fadeOutMs: number,
-  ) => void;
   audioFadeInteraction: AudioFadeInteraction | null;
   onBeginAudioFadeInteraction: (
     event: PointerEvent<HTMLButtonElement>,
@@ -1197,7 +1191,6 @@ function TimelineTrack({
   onSelectClip,
   onToggleTrackMute,
   onUpdateTrackVolume,
-  onUpdateAudioClipFades,
   audioFadeInteraction,
   onBeginAudioFadeInteraction,
   onUpdateAudioFadeInteraction,
