@@ -1,3 +1,8 @@
+## 2026-09-21 — M3.48 validation correction
+
+- Fixed the inherited AudioFadeInspector lint violation by using the stable ref-based draft synchronization.
+- Corrected the multi-track graph regression fixture so its expected second input source range matches the fixture data.
+
 ## 2026-09-21 — M3.48 Multiple Audio Track Mix — implementation started
 
 Implemented:
