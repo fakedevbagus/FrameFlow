@@ -44,7 +44,9 @@ export function compileSingleAudioTrackGraph(
     (left, right) => left.timelineStartMs - right.timelineStartMs,
   );
 
-  const inputs = ordered.map(toAudioRenderInput);
+  const inputs = ordered.map((segment, index) =>
+    toAudioRenderInput(segment, index),
+  );
   const graphParts: string[] = [];
 
   graphParts.push(
@@ -62,7 +64,7 @@ export function compileSingleAudioTrackGraph(
 
     const label = "audio" + index;
     graphParts.push(
-      buildAudioSegmentFilter(segment, label),
+      buildAudioSegmentFilter(segment, label, index),
     );
     mixLabels.push("[" + label + "]");
   });
@@ -83,9 +85,12 @@ export function compileSingleAudioTrackGraph(
   };
 }
 
-function toAudioRenderInput(segment: RenderSegment): AudioRenderInput {
+function toAudioRenderInput(
+  segment: RenderSegment,
+  localInputIndex: number,
+): AudioRenderInput {
   return {
-    inputIndex: segment.inputIndex,
+    inputIndex: localInputIndex,
     sourcePath: segment.sourcePath,
     sourceStartMs: segment.sourceStartMs,
     sourceEndMs: segment.sourceEndMs,
@@ -97,13 +102,14 @@ function toAudioRenderInput(segment: RenderSegment): AudioRenderInput {
 function buildAudioSegmentFilter(
   segment: RenderSegment,
   label: string,
+  localInputIndex: number,
 ): string {
   const startSeconds = formatSeconds(segment.sourceStartMs);
   const endSeconds = formatSeconds(segment.sourceEndMs);
 
   return (
     "[" +
-    segment.inputIndex +
+    localInputIndex +
     ":a:0]" +
     "atrim=start=" +
     startSeconds +

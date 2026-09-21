@@ -30,6 +30,15 @@ export interface NativeVideoSegmentsRenderRequest {
   includeAudio?: boolean;
 }
 
+
+
+export interface NativeAudioGraphRenderRequest {
+  inputs: string[];
+  outputPath: string;
+  filterComplex: string;
+  audioMap: string;
+}
+
 export interface NativeVideoGraphRenderRequest {
   inputs: string[];
   outputPath: string;
@@ -44,6 +53,14 @@ export function renderSingleSourceToMp4(
   request: NativeExportRenderRequest,
 ): Promise<NativeExportRenderResult> {
   return invoke<NativeExportRenderResult>("render_single_source_to_mp4", {
+    request,
+  });
+}
+
+export function renderAudioGraphToMp4(
+  request: NativeAudioGraphRenderRequest,
+): Promise<NativeExportRenderResult> {
+  return invoke<NativeExportRenderResult>("render_audio_graph_to_mp4", {
     request,
   });
 }
