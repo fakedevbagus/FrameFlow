@@ -1,27 +1,18 @@
-## 2026-09-21 — M3.43 native audio render boundary — in progress
+## 2026-09-21 — M3.43 native audio render boundary — merged
 
 Branch: `feat/m3-43-native-audio-render`
 
 Implemented:
 - Added a dedicated native Tauri audio-graph render command.
-- Validate absolute audio inputs, MP4 output paths, non-empty filter graphs, and fixed `[aout]` output mapping.
-- Execute FFmpeg through structured `Command` arguments without shell interpolation.
-- Normalize native audio output to AAC stereo 48 kHz.
-- Expose the native audio graph invoke bridge and regression coverage.
-- Keep the existing video rendering paths unchanged.
-
-Important contract correction:
-- Audio graph input indices are local/dense indices rather than project-global indices, so the compiled `[0:a:0]...` references match the native audio input list exactly.
-
-Deferred:
-- Connect the audio graph to full project export.
-- Mix embedded video-clip audio with the independent Audio track.
-- Audio gain/volume, fades, transitions, and effects.
-- Multiple independent audio tracks.
-- Progress streaming and cancellation.
+- Validated absolute audio inputs, existing files, MP4 output path, non-empty filter graphs, and fixed `[aout]` mapping.
+- Executed FFmpeg through structured `Command` arguments without shell interpolation.
+- Normalized native output to AAC stereo 48 kHz.
+- Exposed the native audio graph invoke bridge and regression coverage.
+- Kept existing video rendering paths unchanged.
 
 Validation:
-- Local M3.43 validation is pending.
+- User approved M3.43 after local validation.
+- PR #54 was squash-merged at `fff690250c1e0ffafe2aae41e09d8ef91be65daa`.
 
 ## 2026-09-21 — M3.42 audio-track graph compiler — merged
 
