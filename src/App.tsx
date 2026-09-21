@@ -71,6 +71,7 @@ import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
 import { TransitionInspector } from "./features/transition/TransitionInspector";
+import { ExportPanel } from "./features/export/ExportPanel";
 import {
   getClipTransition,
   getNextClipForTransition,
@@ -114,6 +115,7 @@ const canvasAspectRatioPresets = [
 
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
+  const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
   const [history, setHistory] = useState(() =>
     createHistoryState(loadWorkspaceProject()),
   );
@@ -1397,7 +1399,10 @@ function App() {
               aria-pressed={activeView === item.id}
               className="nav-button"
               key={item.id}
-              onClick={() => setActiveView(item.id)}
+              onClick={() => {
+                setActiveView(item.id);
+                setIsExportPanelOpen(item.id === "export");
+              }}
               type="button"
             >
               {item.label}
@@ -1487,7 +1492,15 @@ function App() {
                   </option>
                 ))}
               </select>
-              <button className="primary-button" type="button">
+              <button
+                aria-label="Open export settings"
+                className="primary-button"
+                onClick={() => {
+                  setActiveView("export");
+                  setIsExportPanelOpen(true);
+                }}
+                type="button"
+              >
                 Export
               </button>
             </div>
@@ -2248,6 +2261,16 @@ function App() {
           </div>
         </aside>
       </section>
+
+      {isExportPanelOpen ? (
+        <ExportPanel
+          project={project}
+          onClose={() => {
+            setIsExportPanelOpen(false);
+            setActiveView("editor");
+          }}
+        />
+      ) : null}
 
       <footer className="statusbar">
         <span>FrameFlow alpha</span>
