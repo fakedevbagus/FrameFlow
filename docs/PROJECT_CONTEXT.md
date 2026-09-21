@@ -1,3 +1,12 @@
+## Current live reconciliation — M3.33 — 2026-09-21
+
+- Current `main`: `c81df8e7b0901a54c08b19dba2f5df3ee6a63adf`.
+- M3.32 — Export settings foundation is merged as PR #43 at `c81df8e7b0901a54c08b19dba2f5df3ee6a63adf`.
+- User approved M3.32 with `pass`; no additional product-code changes were required after the final assertion corrections.
+- Active work: M3.33 — Export destination and render-job boundary.
+- M3.33 will add native output-file selection using the existing Tauri dialog plugin and define a small render-job request/status/result contract that the UI can use.
+- Full FFmpeg render graph, timeline compositing, audio/video muxing, progress streaming, cancellation, and renderer optimization remain separate follow-up slices.
+
 ## M3.32 validation correction — 2026-09-21
 
 The first M3.32 local validation run showed the export implementation building and launching successfully. Test failures were limited to two assertions: the default 1080×1920 project correctly produces an even 406×720 720p target, and the filename is an input value. The tests were corrected without changing export behavior. Fresh local validation is still required.
