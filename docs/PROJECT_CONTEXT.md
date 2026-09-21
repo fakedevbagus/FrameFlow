@@ -1,3 +1,29 @@
+## M3.37 validation correction — 2026-09-21
+
+- Latest local validation passed lint, 26/26 test files with 234/234 TypeScript tests, production build, and Tauri dev startup.
+- Native Rust tests failed to compile because the `tests` module referenced `media_type` without importing it.
+- Corrected the `src-tauri/src/lib.rs` test import so `media_type` is available in the test scope.
+- A fresh local validation run is required before PR #48 is marked ready.
+## M3.37 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-37-native-render-graph-wiring`.
+- The milestone wires the existing deterministic `compileSingleVideoTrackGraph()` output into the native Tauri/FFmpeg execution boundary.
+- `src-tauri/src/lib.rs` now accepts multiple absolute video inputs, a generated `filter_complex`, the fixed `[vout]` output map, output dimensions, and frame rate.
+- FFmpeg paths and graph text are passed as structured `Command` arguments; no shell command interpolation is introduced.
+- `src/features/export/export-renderer.ts` exposes the native graph-render invoke boundary.
+- `src/features/export/render-pipeline.ts` connects `RenderPlan → compileSingleVideoTrackGraph() → renderVideoGraphToMp4()`.
+- M3.37 keeps the graph video-only and does not yet attach ExportPanel, job progress, cancellation, audio mixing, multi-track compositing, images, transforms, crops, keyframes, or transitions.
+- Regression coverage covers the native argument contract, Tauri invoke bridge, and the RenderPlan-to-native pipeline adapter.
+- Local validation is pending user verification.
+
+## M3.36 merge reconciliation — 2026-09-21
+
+- Current `main`: `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- M3.36 — FFmpeg video filter graph, PR #47, squash-merged at `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- User confirmed the corrected M3.36 local validation passed.
+- The graph compiler remains pure TypeScript and the native renderer remains a separate Tauri boundary.
+- M3.37 is the next focused slice: wire the compiled graph into native FFmpeg execution.
+
 ## M3.36 implementation checkpoint — 2026-09-21
 
 - `compileSingleVideoTrackGraph()` is the first filter-graph compiler layered on top of `RenderPlan`.

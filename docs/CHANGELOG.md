@@ -1,3 +1,41 @@
+## 2026-09-21 — M3.37 validation correction
+
+- Latest user validation: lint passed; 26/26 test files and 234/234 TypeScript tests passed; production build passed; Tauri dev started successfully.
+- Native Rust test compilation failed because `media_type` was not imported into the test module.
+- Corrected the test import in `src-tauri/src/lib.rs`.
+- Fresh local validation is pending.
+## 2026-09-21 — M3.37 native render graph wiring — in progress
+
+Branch: `feat/m3-37-native-render-graph-wiring`
+
+Implemented:
+- Added a native Tauri `render_video_graph_to_mp4` command for multiple video inputs plus a compiled FFmpeg `filter_complex`.
+- Added native validation for graph metadata, input media type, absolute paths, output path, and fixed `[vout]` mapping.
+- Added structured FFmpeg argument construction without shell interpolation.
+- Added a TypeScript graph-render bridge and a RenderPlan-to-native pipeline adapter.
+- Added regression tests for the native argument contract, Tauri invoke boundary, and RenderPlan-to-renderer wiring.
+
+Architecture:
+- M3.36 remains the pure graph compiler.
+- M3.37 is only the process-execution boundary; it does not add another graph/state model.
+- Video output is explicitly mapped from `[vout]` and audio is disabled until an audio graph exists.
+- Progress, cancellation, multi-track compositing, images, and advanced visual semantics remain separate milestones.
+
+Validation:
+- User confirmed M3.36 passed locally.
+- M3.37 local validation is pending.
+
+Next step:
+- User validates M3.37 locally before PR readiness and merge.
+
+## 2026-09-21 — M3.36 FFmpeg video filter graph — merged
+
+- PR #47 `feat: add FFmpeg video filter graph compiler` was marked ready and squash-merged.
+- Merge SHA: `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- User confirmed the corrected local validation passed after the graph-input label and multi-track test fixes.
+- M3.36 adds deterministic RenderPlan-to-video-filter compilation with source trim, canvas fit, FPS normalization, concat, and black timeline gaps.
+- Advanced visual semantics, audio, images, and multi-track compositing remain deferred.
+
 ## 2026-09-21 — M3.36 FFmpeg video filter graph
 
 - Added deterministic compilation from RenderPlan to a basic FFmpeg video filter graph.

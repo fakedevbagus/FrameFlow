@@ -1,3 +1,29 @@
+## M3.37 validation correction — 2026-09-21
+
+- Latest user validation passed lint, all 26 test files, and all 234 TypeScript tests.
+- Production build passed; Tauri dev also started successfully.
+- `cargo test` exposed one Rust test-compilation error: the test module referenced `media_type` without importing it.
+- Corrected the test module import in `src-tauri/src/lib.rs`.
+- M3.37 remains pending one fresh clean validation run.
+## M3.37 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-37-native-render-graph-wiring`.
+- M3.36 is completed and squash-merged as PR #47 at `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- User confirmed the corrected M3.36 local validation passed after the filter-label and multi-track regression test fixes.
+- M3.37 connects the deterministic M3.36 video graph to a native Tauri/FFmpeg renderer through a dedicated request boundary.
+- Added `render_video_graph_to_mp4` in Rust, with structured input arguments, `-filter_complex`, `[vout]` mapping, video-only output, validation, and controlled FFmpeg errors.
+- Added a TypeScript bridge plus `renderVideoPlanToMp4()` adapter so a RenderPlan can flow through graph compilation into the native renderer without coupling project/history state to process execution.
+- M3.37 deliberately defers audio mixing, multi-track compositing, images, advanced visual filters, progress streaming, cancellation, and ExportPanel UI activation.
+- Local validation is pending user verification on M3.37.
+
+## Current live reconciliation — M3.36 — 2026-09-21
+
+- Current `main` tip: `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- Completed milestone: M3.36 — FFmpeg video filter graph, PR #47, squash merge SHA `3b0f3b2f0c5a54ee821fcda1f2a98a611145e814`.
+- User approved M3.36 with `pass`; the follow-up validation run passed after the two reported regression-test issues were corrected.
+- Historical PR #22 remains open and is not active project work.
+- Immediate next slice: M3.37 — native render graph wiring.
+
 ## M3.36 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-36-ffmpeg-filter-graph`.
