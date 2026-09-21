@@ -59,7 +59,7 @@ describe("audio render graph", () => {
       },
     ]);
     expect(graph.filterComplex).toContain(
-      "[0:a:0]atrim=start=1:end=3,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1500:all=1[audio0]",
+      "[0:a:0]atrim=start=1:end=3,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=1,adelay=1500:all=1[audio0]",
     );
     expect(graph.filterComplex).toContain(
       "anullsrc=r=48000:cl=stereo,atrim=duration=5,asetpts=PTS-STARTPTS[silence]",
