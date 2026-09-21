@@ -1,3 +1,15 @@
+## 2026-09-21 — M3.32 Export settings foundation merged
+
+- PR #43 `feat: add export settings foundation` was marked ready and squash-merged.
+- Merge SHA: `c81df8e7b0901a54c08b19dba2f5df3ee6a63adf`.
+- Added MP4/H.264 export settings, Source/1080p/720p quality normalization, aspect-ratio-preserving output sizing, filename sanitization, and the Export Settings panel.
+- M3.32 intentionally stopped before actual output-path selection and FFmpeg rendering.
+
+## 2026-09-21 — M3.33 started
+
+- M3.33 scope: add output-file selection and a focused native render-job boundary without implementing the complete renderer.
+- Goal: make Export move from settings-only UI toward an explicit destination and renderer contract while preserving project/history separation.
+
 ## 2026-09-21
 
 ### M3.32 validation correction
