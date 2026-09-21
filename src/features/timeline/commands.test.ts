@@ -786,6 +786,42 @@ describe("audio volume automation", () => {
   });
 });
 
+describe("audio volume automation split preservation", () => {
+  it("carries the automation state across an audio clip split", () => {
+    let project = createProject({ id: "audio-volume-split" });
+    project = {
+      ...project,
+      assets: [{
+        id: "audio",
+        name: "voice.mp3",
+        mediaType: "audio",
+        sourcePath: "/voice.mp3",
+        durationMs: 6000,
+      }],
+    };
+    project = addAssetToTimeline(project, "audio");
+    const clipId = project.tracks[1].clips[0].id;
+
+    project = updateAudioClipVolumeAtTime(project, clipId, 0, 0.2);
+    project = updateAudioClipVolumeAtTime(project, clipId, 4000, 1);
+
+    const updated = splitClipAtTime(project, clipId, 2000);
+    const clips = updated.tracks[1].clips.sort(
+      (left, right) => left.timelineStartMs - right.timelineStartMs,
+    );
+
+    expect(clips).toHaveLength(2);
+    expect(clips[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 0, volume: 0.2 },
+      { timeMs: 2000, volume: 0.6 },
+    ]);
+    expect(clips[1].audioVolumeKeyframes).toEqual([
+      { timeMs: 0, volume: 0.6 },
+      { timeMs: 2000, volume: 1 },
+    ]);
+  });
+});
+
 describe("updateTrackPan", () => {
   it("updates the track pan and project timestamp", () => {
     const project = createProject({
