@@ -35,7 +35,7 @@ function createVideoProject() {
 }
 
 describe("single video render graph", () => {
-  it("builds trim, canvas fit, fps, and concat filters for one clip", () => {
+  it("builds trim, canvas fit, and fps filters for one clip without concat", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
 
@@ -56,7 +56,8 @@ describe("single video render graph", () => {
       "scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
     );
     expect(graph.filterComplex).toContain("fps=fps=30:round=near");
-    expect(graph.filterComplex).toContain("concat=n=1:v=1:a=0");
+    expect(graph.filterComplex).not.toContain("concat=");
+    expect(graph.filterComplex).toContain("[vout]");
     expect(graph.videoMap).toBe("[vout]");
   });
 
