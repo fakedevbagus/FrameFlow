@@ -1,3 +1,12 @@
+## M3.40 validation correction — 2026-09-21
+
+- User validation reached build success, Tauri startup success, and Rust test execution; the Rust suite had 18 passing tests and one failing metadata-validation test.
+- TypeScript validation had 239 passing tests and two failures in `render-pipeline.test.ts`.
+- The failures were caused by tests still expecting the old filter-graph routing after M3.40 introduced the native segment renderer, plus the unsupported-state test bypassing graph validation for the direct single-source path.
+- Corrected the pipeline to compile/validate the supported render plan before renderer selection; sequential video-only plans now use the segment renderer, while the single clip at timeline zero retains the audio-capable single-source renderer.
+- Corrected the Rust metadata test to use a synthetic gap segment (`sourcePath: None`) for a filesystem-independent valid case.
+- Added an edge-case regression so a single clip offset from timeline zero uses a black gap segment rather than falling back to filter_complex.
+- M3.40 remains pending a fresh full local validation run.
 ## M3.40 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-40-multi-segment-video`.
