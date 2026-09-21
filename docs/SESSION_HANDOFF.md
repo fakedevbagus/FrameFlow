@@ -1,39 +1,22 @@
-## M3.47 final interaction primitive correction — 2026-09-21
+## M3.48 test assertion correction — 2026-09-21
 
-- The Linux WebView visual defect persisted after button and pseudo-element CSS normalization.
-- Replaced both fade handle buttons with accessible div role="button" elements and isolated the visible handle as a border.
-- This is presentation/interaction-target hardening only; fade persistence, history, preview, and export behavior are unchanged.
+- Corrected the sole failing multi-track audio test after validation exposed an input-order expectation mismatch.
+- The production compiler remains unchanged by this test-only correction.
 
-## M3.47 final WebView handle rendering correction — 2026-09-21
+## M3.48 validation correction — 2026-09-21
 
-- User confirmed the application had no functional errors, but the Timeline Audio clip still displayed two long horizontal white bars instead of compact fade handles.
-- The correction replaces the nested handle span with a pseudo-element and keeps the handle itself as the only rendered interaction primitive.
-- No project/history or audio-rendering behavior changed.
-- Fresh local validation is required after pulling the latest head.
+- Latest local validation reported 268/269 Vitest tests, with build, Rust tests, and Tauri launch successful.
+- Corrected the inherited Inspector lint violation and the single multi-track audio assertion mismatch.
+- Re-run the full validation suite before marking PR #61 ready.
 
-## M3.47 Linux WebView visual correction — 2026-09-21
+## M3.48 Multiple Audio Track Mix — 2026-09-21
 
-- The user reported a Timeline presentation defect after successful functional validation: Audio clips displayed two full-width horizontal bars instead of compact fade handles.
-- Corrected the fade-handle CSS to disable native button appearance, constrain the handle to 12 px, and explicitly anchor fade-in to the left edge and fade-out to the right edge.
-- This is a presentation-only correction; persisted fade state and the existing App/history command path are unchanged.
-
-## M3.47 edge-case correction — 2026-09-21
-
-- Adjusted Timeline fade-handle edge positioning so handles remain visible when fade duration is zero or reaches the maximum permitted duration.
-- This correction does not alter the underlying fade command/history contract.
-## M3.47 implementation checkpoint — 2026-09-21
-
-- Branch: feat/m3-47-audio-fade-handles.
-- Base: main documentation reconciliation commit d8b82df8cc36dbf80099649248b7feefacdf7c94.
-- Implemented direct Audio fade handles in Timeline.
-- The Timeline owns only transient pointer interaction state; project persistence remains in App/history via updateAudioClipFades().
-- Dragging fade-in to the right increases fade-in; dragging fade-out to the left increases fade-out.
-- The other fade duration is preserved and the dragged value is clamped to prevent overlap.
-- Keyboard ArrowLeft/ArrowRight nudges the focused handle by 100 ms.
-- Escape cancels the live interaction.
-- Added Timeline drag/Escape/keyboard tests and App persistence coverage.
+- Started the next audio milestone from the verified M3.46 main line while M3.47 UI correction remains under validation.
+- Scope: allow more than one independent Audio track to participate in the existing project audio mix graph.
+- Track order is deterministic; clips retain their existing trim, fade, track volume, mute, and timeline-delay behavior.
+- No new native FFmpeg command is required because the existing video/audio mix boundary already accepts a list of audio input paths.
 - Required validation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
-- Pull patch must be provided with this milestone handoff.
+
 ## M3.47 kickoff — 2026-09-21
 
 - M3.46 PR #59 was squash-merged at 76d0a1cadd9ae7ab31d471f46c4d6cb9ddba0b40.
