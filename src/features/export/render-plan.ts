@@ -1,7 +1,9 @@
 import {
+  getAudioEq,
   getAudioFadeDurations,
   getTrackPan,
   getTrackVolume,
+  type AudioEq,
   type Clip,
   type ClipCrop,
   type ClipTransform,
@@ -35,6 +37,7 @@ export interface RenderSegment {
   trackPan?: number;
   audioFadeInMs?: number;
   audioFadeOutMs?: number;
+  audioEq?: AudioEq;
   transform?: ClipTransform;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
@@ -139,6 +142,7 @@ export function createRenderPlan(
               return {
                 audioFadeInMs: fades.fadeInMs,
                 audioFadeOutMs: fades.fadeOutMs,
+                audioEq: getAudioEq(clip),
               };
             })()
           : {}),
