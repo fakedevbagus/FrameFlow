@@ -1,3 +1,22 @@
+## M3.53 — Audio Clip Volume Automation — in progress — 2026-09-21
+
+- M3.52 Audio Clip Dynamics Compressor is complete and PR #66 was squash-merged at `da0b5dc957be094738ac4e657007523f8684fdd8`.
+- M3.53 adds backward-compatible per-audio-clip volume automation keyframes.
+- Scope: local clip-time volume keyframes, linear interpolation, selected-audio Inspector editing at the playhead, split preservation, Web Audio preview application, RenderPlan propagation, and native FFmpeg frame-evaluated volume envelopes.
+- The automation is independent from Audio track volume; effective preview/export gain is the track volume multiplied by the clip automation envelope and existing fade gain.
+- Existing EQ, compressor, pan, mute, fades, multi-track mixing, and history behavior remain unchanged.
+- Timeline keyframe marker/drag UX is intentionally deferred to a follow-up slice after the model, commands, preview, and export path are validated.
+- Required validation after implementation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR #67 draft until the full local validation and focused audio automation checks are reported clean.
+
+## M3.52 — Audio Clip Dynamics Compressor — merged — 2026-09-21
+
+- M3.52 is complete and PR #66 was squash-merged at `da0b5dc957be094738ac4e657007523f8684fdd8`.
+- Added backward-compatible clip-level dynamics compressor state, Inspector controls, Web Audio preview, RenderPlan propagation, and native FFmpeg `acompressor` export.
+- Added regression coverage across domain, commands, RenderPlan, audio graph, and App workflow.
+- User approved continuation with pass after the final validation corrections.
+- Known non-blocking React act() and jsdom media-play warnings remain.
+
 ## M3.51 — Audio Clip 3-Band EQ — merged — 2026-09-21
 
 - M3.51 is complete and PR #65 was squash-merged at `52844a8c5f1a1f0605e6c9508d87c52c90ead7de`.
