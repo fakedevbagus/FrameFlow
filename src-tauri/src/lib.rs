@@ -848,31 +848,6 @@ fn build_ffmpeg_concat_args(
 
   args
 }
-  vec![
-    "-hide_banner".into(),
-    "-loglevel".into(),
-    "error".into(),
-    "-y".into(),
-    "-f".into(),
-    "concat".into(),
-    "-safe".into(),
-    "0".into(),
-    "-i".into(),
-    concat_list_path.as_os_str().to_os_string(),
-    "-map".into(),
-    "0:v:0".into(),
-    "-an".into(),
-    "-r".into(),
-    frame_rate.to_string().into(),
-    "-c:v".into(),
-    "copy".into(),
-    "-movflags".into(),
-    "+faststart".into(),
-    "-f".into(),
-    "mp4".into(),
-    output_path.as_os_str().to_os_string(),
-  ]
-}
 
 fn validate_native_video_graph_request_metadata(
   request: &NativeVideoGraphRenderRequest,
