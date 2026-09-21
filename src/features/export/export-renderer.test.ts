@@ -6,6 +6,7 @@ import {
   renderVideoWithAudioGraphToMp4,
   renderVideoGraphToMp4,
   renderVideoSegmentsToMp4,
+  requestExportCancellation,
 } from "./export-renderer";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -182,3 +183,42 @@ describe("export renderer", () => {
     });
   });
 });
+
+
+  it("forwards job progress metadata to native graph rendering", async () => {
+    vi.mocked(invoke).mockResolvedValueOnce({
+      outputPath: "/tmp/timeline-export.mp4",
+    });
+
+    const request = {
+      inputs: ["/media/a.mp4"],
+      outputPath: "/tmp/timeline-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      filterComplex: "[0:v:0]null[vout]",
+      videoMap: "[vout]",
+    };
+
+    await expect(
+      renderVideoGraphToMp4(request, "job-1", 5000),
+    ).resolves.toEqual({
+      outputPath: "/tmp/timeline-export.mp4",
+    });
+
+    expect(invoke).toHaveBeenCalledWith("render_video_graph_to_mp4", {
+      request,
+      jobId: "job-1",
+      durationMs: 5000,
+    });
+  });
+
+  it("requests native cancellation for a running export job", async () => {
+    vi.mocked(invoke).mockResolvedValueOnce(undefined);
+
+    await expect(requestExportCancellation("job-1")).resolves.toBeUndefined();
+
+    expect(invoke).toHaveBeenCalledWith("cancel_export_job", {
+      request: { jobId: "job-1" },
+    });
+  });
