@@ -1,17 +1,42 @@
-## 2026-09-21 — M3.49 test declaration restoration
+## 2026-09-21 — M3.49 Audio Track Pan Control — merged
 
-- Restored three accidentally removed test declarations that caused parser errors.
-- No production behavior changed.
-
-## 2026-09-21 — M3.49 Audio Track Pan Control — implementation
+PR #63 — squash-merged
+Merge SHA: 7fbb75a222bcccfc92cb2ee211e1df0db9748233
 
 Implemented:
-- Backward-compatible Audio track pan (-1 left, 0 center, +1 right).
-- Validated project command and history integration.
-- Compact Timeline pan slider with accessible value text.
-- Web Audio preview panning with a safe no-op fallback when unsupported.
-- RenderPlan propagation and FFmpeg pan filter.
-- Domain, command, RenderPlan, audio graph, and App regression coverage.
+- Backward-compatible Audio-track pan from -1 (left) through 0 (center) to +1 (right).
+- Validated project/history command integration.
+- Compact Timeline Pan control with accessible value feedback.
+- Best-effort StereoPannerNode routing for native preview.
+- RenderPlan pan propagation and FFmpeg stereo balance before fades/delay.
+- Regression coverage across domain, commands, RenderPlan, audio graph, Preview, and App.
+- Final build-only import/fixture corrections were applied before approval.
+
+Validation:
+- User approved continuation with pass.
+- 28 frontend test files passed with 279/279 tests.
+- Production build passed after the final corrections.
+- Rust tests: 28 passed, 0 failed.
+- Tauri dev launched successfully.
+
+Deferred:
+- Full audio effects/EQ/compression.
+- Audio automation.
+- Waveform editing.
+
+## 2026-09-21 — M3.50 Export Progress and Cancellation — in progress
+
+Branch: feat/m3-50-export-progress-cancellation
+
+Implemented:
+- Added a native FFmpeg process manager keyed by export job ID.
+- Streamed FFmpeg progress through a Tauri export-progress event.
+- Added native cancellation that terminates the active FFmpeg child.
+- Cancellation also survives the boundary between the video-render and audio-mix stages.
+- Added overall progress aggregation for two-stage video-plus-audio exports.
+- Added ExportPanel progress display and Cancel export action.
+- Preserved existing export output validation and rendering paths.
+- Added regression coverage for progress event filtering, monotonic job progress, native request metadata, runner aggregation, and cancellation UI.
 
 Validation:
 - Local npm/Cargo/Tauri validation is required after pulling this branch.
