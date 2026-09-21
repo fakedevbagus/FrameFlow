@@ -1,3 +1,18 @@
+## 2026-09-22 — M3.56 Audio waveform visual bugfix — in progress
+
+Branch: feat/m3-56-audio-waveform-scrubbing
+
+Implemented:
+- Increased Timeline waveform display density from 128 to 512 time buckets.
+- Added frontend percentile-based display contrast stretching to prevent consistently loud clips from collapsing into a visually solid waveform block.
+- Explicitly set the SVG waveform fill to the intended display color.
+- Preserved native waveform data, caching, project schema, scrubbing behavior, and existing audio processing/export paths.
+- Added regression coverage for waveform display contrast and dense waveform rendering.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required after this bugfix.
+- Manual validation must verify a readable waveform, click-to-seek, move/trim isolation, and unchanged audio automation/fade behavior.
+
 ## 2026-09-22 — M3.56 Audio Waveform Scrubbing — in progress
 
 Branch: `feat/m3-56-audio-waveform-scrubbing`
