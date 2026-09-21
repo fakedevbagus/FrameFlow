@@ -1,9 +1,8 @@
 ## M3.37 validation correction — 2026-09-21
 
-- The user's latest M3.37 local run passed lint, build, and Tauri startup; the full test suite had one failure in the new render-pipeline regression.
-- The graph-compilation exception assertion passed. The reported failure was the renderer mock call-count check, because the mock retained the call made by the preceding successful pipeline test.
-- The test now clears the native renderer mock before each case.
-- The native request contract was also reconciled: Rust accepts inputs: Vec<String>, TypeScript now uses string[], and the RenderPlan-to-native adapter maps compiled graph inputs to their ordered source paths.
+- Latest local validation passed lint, 26/26 test files with 234/234 TypeScript tests, production build, and Tauri dev startup.
+- Native Rust tests failed to compile because the `tests` module referenced `media_type` without importing it.
+- Corrected the `src-tauri/src/lib.rs` test import so `media_type` is available in the test scope.
 - A fresh local validation run is required before PR #48 is marked ready.
 ## M3.37 implementation checkpoint — 2026-09-21
 
