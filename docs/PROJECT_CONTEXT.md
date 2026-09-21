@@ -1,3 +1,10 @@
+## M3.38 validation correction — 2026-09-21
+
+- Latest local validation passed the Rust test suite (15/15), production build, and Tauri dev startup.
+- The TypeScript suite had one regression failure in the direct single-clip graph test.
+- The emitted graph contained an invalid trailing comma before `[vout]`; this was caused by the filter-builder array/join logic.
+- The builder now appends the `[vout]` label after joining filters, producing a valid filter-chain boundary.
+- Fresh TypeScript validation is pending.
 ## M3.38 single-clip compatibility path — 2026-09-21
 
 - The user's environment reports Filter not found when executing the filter_complex path, including the minimal single-clip graph.
