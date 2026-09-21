@@ -3,7 +3,10 @@ import { createProject } from "../project/domain";
 import { addAssetToTimeline, addAssetToTrack } from "../timeline/commands";
 import { createDefaultExportSettings } from "./export";
 import { createRenderPlan } from "./render-plan";
-import { compileSingleVideoTrackGraph } from "./render-graph";
+import {
+  compileSingleVideoTrackGraph,
+  M3_38_DIRECT_GRAPH_MARKER,
+} from "./render-graph";
 
 function createVideoProject() {
   const project = createProject({ id: "render-graph" });
@@ -60,6 +63,10 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).not.toContain("setsar=");
     expect(graph.filterComplex).not.toContain("format=yuv420p");
     expect(graph.filterComplex).toContain("[vout]");
+    expect(graph.filterComplex).toBe(
+      "[0:v:0]trim=start=0:end=5,setpts=PTS-STARTPTS,scale=w=1080:h=1920:force_original_aspect_ratio=decrease,pad=w=1080:h=1920:x=(ow-iw)/2:y=(oh-ih)/2[vout]",
+    );
+    expect(M3_38_DIRECT_GRAPH_MARKER).toBe("m3.38-direct-graph-v2");
     expect(graph.videoMap).toBe("[vout]");
   });
 
