@@ -29,7 +29,7 @@ export function renderVideoPlanToMp4(
       frameRate: plan.frameRate,
       sourceStartMs: segment.sourceStartMs,
       sourceDurationMs: segment.durationMs,
-      includeAudio: false,
+      includeAudio: true,
     });
   }
 
