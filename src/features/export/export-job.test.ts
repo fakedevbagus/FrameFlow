@@ -45,6 +45,20 @@ describe("export job", () => {
     });
   });
 
+  it("never moves progress backwards", () => {
+    const request = {
+      settings: createDefaultExportSettings(createProject()),
+      outputPath: "/tmp/example.mp4",
+    };
+    const job = updateExportJobProgress(
+      startExportJob(createExportJob(request, "job-1")),
+      0.75,
+    );
+
+    expect(updateExportJobProgress(job, 0.25).progress).toBe(0.75);
+    expect(updateExportJobProgress(job, 1.2).progress).toBe(1);
+  });
+
   it("preserves terminal failure and cancellation states", () => {
     const request = {
       settings: createDefaultExportSettings(createProject()),

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { chooseExportOutputPath } from "./export-dialog";
-import { runExportJob } from "./export-runner";
+import { requestExportJobCancellation, runExportJob } from "./export-runner";
 import type { ExportJob } from "./export-job";
 import type { Project } from "../project/domain";
 import {
@@ -190,9 +190,32 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
         ) : null}
 
         {job?.phase === "running" ? (
+          <div className="export-job-progress" role="status">
+            <div className="export-job-progress-header">
+              <span>Rendering…</span>
+              <strong>{Math.round(job.progress * 100)}%</strong>
+            </div>
+            <progress
+              aria-label="Export progress"
+              max={1}
+              value={job.progress}
+            />
+            <button
+              className="secondary-button"
+              onClick={() => {
+                void requestExportJobCancellation(job.id);
+              }}
+              type="button"
+            >
+              Cancel export
+            </button>
+          </div>
+        ) : null}
+
+        {job?.phase === "cancelled" ? (
           <div className="export-panel-summary" role="status">
             <span>Status</span>
-            <strong>Rendering…</strong>
+            <strong>Export cancelled</strong>
           </div>
         ) : null}
 

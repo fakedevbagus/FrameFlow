@@ -1,3 +1,23 @@
+## M3.50 validation correction — native cancellation state — 2026-09-21
+
+- User validation passed lint, 285/285 frontend tests, and the production build.
+- Rust/Tauri then exposed a compile error from using `HashSet::take()` in `ExportProcessState::finish()`.
+- Fixed the cancellation-marker cleanup to use `HashSet::remove()`.
+- Re-run the complete M3.50 validation before merging PR #64.
+
+## M3.50 Export Progress and Cancellation — 2026-09-21
+
+- Started from M3.49 merge SHA 7fbb75a222bcccfc92cb2ee211e1df0db9748233.
+- Scope: expose native FFmpeg export progress and allow the active render to be cancelled without changing existing RenderPlan semantics.
+- Native export processes are tracked by export job ID and emit `export-progress` events with stage and normalized progress.
+- Cancellation kills the active FFmpeg child and remains effective when requested between the sequential video and audio-mix stages.
+- Frontend export jobs aggregate two-stage project export progress monotonically: video contributes the first 80%, audio mixing the final 20%.
+- ExportPanel now shows a progress bar and Cancel export action.
+- Regression coverage was added for progress parsing/subscription, monotonic job progress, native renderer metadata, runner aggregation, and cancellation UI.
+- M3.50 validation required: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Local validation is pending user verification.
+- Deferred: full audio effects/EQ/compression, audio automation, waveform editing.
+
 ## M3.49 validation correction — 2026-09-21
 
 - Local validation reported three parser errors in test files at their closing lines, while Rust tests 28/28 and Tauri dev startup were successful.

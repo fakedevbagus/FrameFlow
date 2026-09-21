@@ -1,5 +1,6 @@
 mod media_server;
 mod audio_render;
+mod export_process;
 
 use std::{
   fs,
@@ -191,6 +192,9 @@ fn prepare_media_preview(
 
 #[tauri::command]
 fn render_single_source_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
   request: NativeExportRenderRequest,
 ) -> Result<NativeExportRenderResult, String> {
   let source_path = media_path(&request.source_path)?;
@@ -223,19 +227,19 @@ fn render_single_source_to_mp4(
     request.include_audio,
   );
 
-  let output = Command::new("ffmpeg")
-    .args(&args)
-    .output()
-    .map_err(|error| format!("Could not run ffmpeg for native export: {error}"))?;
-
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-
-    return Err(if detail.is_empty() {
-      "FFmpeg could not render the requested export.".to_string()
-    } else {
-      format!("FFmpeg could not render the requested export: {detail}")
-    });
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    &app,
+    state.inner(),
+    args,
+    job_id.as_deref(),
+    "video",
+    request.source_duration_ms,
+    0,
+    None,
+    "the requested export",
+  ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
   }
 
   let metadata = fs::metadata(&output_path)
@@ -253,6 +257,9 @@ fn render_single_source_to_mp4(
 
 #[tauri::command]
 fn render_video_segments_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
   request: NativeVideoSegmentsRenderRequest,
 ) -> Result<NativeExportRenderResult, String> {
   validate_native_video_segments_request_metadata(&request)?;
@@ -270,7 +277,14 @@ fn render_video_segments_to_mp4(
   }
 
   let temp_root = create_video_segments_temp_dir(&output_path)?;
-  let result = render_video_segments_to_output(&request, &output_path, &temp_root);
+  let result = render_video_segments_to_output(
+    &app,
+    state.inner(),
+    &request,
+    &output_path,
+    &temp_root,
+    job_id.as_deref(),
+  );
 
   let _ = fs::remove_dir_all(&temp_root);
 
@@ -279,6 +293,10 @@ fn render_video_segments_to_mp4(
 
 #[tauri::command]
 fn render_video_graph_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
+  duration_ms: Option<u64>,
   request: NativeVideoGraphRenderRequest,
 ) -> Result<NativeExportRenderResult, String> {
   validate_native_video_graph_request_metadata(&request)?;
@@ -316,19 +334,19 @@ fn render_video_graph_to_mp4(
     &output_path,
   );
 
-  let output = Command::new("ffmpeg")
-    .args(&args)
-    .output()
-    .map_err(|error| format!("Could not run ffmpeg for native video graph export: {error}"))?;
-
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-
-    return Err(if detail.is_empty() {
-      "FFmpeg could not render the requested video graph.".to_string()
-    } else {
-      format!("FFmpeg could not render the requested video graph: {detail}")
-    });
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    &app,
+    state.inner(),
+    args,
+    job_id.as_deref(),
+    "video",
+    duration_ms,
+    0,
+    None,
+    "the requested video graph",
+  ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
   }
 
   let metadata = fs::metadata(&output_path).map_err(|error| {
@@ -497,11 +515,19 @@ fn create_video_segments_temp_dir(output_path: &Path) -> Result<PathBuf, String>
 }
 
 fn render_video_segments_to_output(
+  app: &tauri::AppHandle,
+  state: &export_process::ExportProcessState,
   request: &NativeVideoSegmentsRenderRequest,
   output_path: &Path,
   temp_root: &Path,
+  job_id: Option<&str>,
 ) -> Result<NativeExportRenderResult, String> {
   let mut segment_files = Vec::with_capacity(request.segments.len());
+  let total_duration_ms = request
+    .segments
+    .iter()
+    .fold(0u64, |total, segment| total.saturating_add(segment.duration_ms));
+  let mut completed_duration_ms = 0u64;
 
   for (index, segment) in request.segments.iter().enumerate() {
     let segment_path = temp_root.join(format!("segment-{index:04}.mp4"));
@@ -554,18 +580,19 @@ fn render_video_segments_to_output(
       },
     };
 
-    let output = Command::new("ffmpeg")
-      .args(&args)
-      .output()
-      .map_err(|error| format!("Could not run ffmpeg for segment render: {error}"))?;
-
-    if !output.status.success() {
-      let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-      return Err(if detail.is_empty() {
-        format!("FFmpeg could not render video segment {index}.")
-      } else {
-        format!("FFmpeg could not render video segment {index}: {detail}")
-      });
+    if let Err(error) = export_process::run_ffmpeg_with_progress(
+      app,
+      state,
+      args,
+      job_id,
+      "video",
+      Some(segment.duration_ms),
+      completed_duration_ms,
+      Some(total_duration_ms),
+      &format!("video segment {index}"),
+    ) {
+      let _ = fs::remove_file(&segment_path);
+      return Err(error);
     }
 
     let metadata = fs::metadata(&segment_path).map_err(|error| {
@@ -580,6 +607,7 @@ fn render_video_segments_to_output(
     }
 
     segment_files.push(segment_path);
+    completed_duration_ms = completed_duration_ms.saturating_add(segment.duration_ms);
   }
 
   let concat_list_path = temp_root.join("concat.txt");
@@ -598,18 +626,19 @@ fn render_video_segments_to_output(
     request.include_audio,
   );
 
-  let output = Command::new("ffmpeg")
-    .args(&concat_args)
-    .output()
-    .map_err(|error| format!("Could not run ffmpeg for video segment concatenation: {error}"))?;
-
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-    return Err(if detail.is_empty() {
-      "FFmpeg could not concatenate the rendered video segments.".to_string()
-    } else {
-      format!("FFmpeg could not concatenate the rendered video segments: {detail}")
-    });
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    app,
+    state,
+    concat_args,
+    job_id,
+    "video",
+    Some(total_duration_ms),
+    total_duration_ms,
+    Some(total_duration_ms),
+    "video segment concatenation",
+  ) {
+    let _ = fs::remove_file(output_path);
+    return Err(error);
   }
 
   let metadata = fs::metadata(output_path).map_err(|error| {
@@ -1298,6 +1327,7 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_opener::init())
     .manage(media_server::MediaServerState::start().expect("could not start local media server"))
+    .manage(export_process::ExportProcessState::default())
     .invoke_handler(tauri::generate_handler![
       inspect_media,
       prepare_media_preview,
@@ -1306,6 +1336,7 @@ pub fn run() {
       render_video_segments_to_mp4,
       audio_render::render_audio_graph_to_mp4,
       audio_render::render_video_with_audio_graph_to_mp4,
+      export_process::cancel_export_job,
       get_media_http_url,
       open_project,
       save_project

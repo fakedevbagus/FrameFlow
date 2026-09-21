@@ -12,6 +12,7 @@ import { compileSingleVideoTrackGraph } from "./render-graph";
 export function renderVideoPlanToMp4(
   plan: RenderPlan,
   outputPath: string,
+  jobId?: string,
 ): Promise<NativeExportRenderResult> {
   const videoSegments = plan.segments.filter(
     (segment) => segment.trackType === "video",
@@ -30,15 +31,15 @@ export function renderVideoPlanToMp4(
   };
 
   if (audioSegments.length === 0) {
-    return renderVideoOnlyPlanToMp4(videoPlan, outputPath);
+    return renderVideoOnlyPlanToMp4(videoPlan, outputPath, jobId);
   }
 
   const audioGraph = compileAudioTracksGraph(plan, {
     inputIndexOffset: 1,
   });
 
-  return renderVideoOnlyPlanToMp4(videoPlan, outputPath).then(() =>
-    renderVideoWithAudioGraphToMp4({
+  return renderVideoOnlyPlanToMp4(videoPlan, outputPath, jobId).then(() => {
+    const request = {
       videoSourcePath: outputPath,
       audioInputs: audioGraph.inputs
         .sort((left, right) => left.inputIndex - right.inputIndex)
@@ -47,13 +48,18 @@ export function renderVideoPlanToMp4(
       audioMap: audioGraph.audioMap,
       durationMs: plan.durationMs,
       outputPath,
-    }),
-  );
+    };
+
+    return jobId
+      ? renderVideoWithAudioGraphToMp4(request, jobId)
+      : renderVideoWithAudioGraphToMp4(request);
+  });
 }
 
 function renderVideoOnlyPlanToMp4(
   plan: RenderPlan,
   outputPath: string,
+  jobId?: string,
 ): Promise<NativeExportRenderResult> {
   const videoSegments = plan.segments.filter(
     (segment) => segment.trackType === "video",
@@ -66,7 +72,7 @@ function renderVideoOnlyPlanToMp4(
   ) {
     const segment = videoSegments[0];
 
-    return renderSingleSourceToMp4({
+    const request = {
       sourcePath: segment.sourcePath,
       outputPath,
       width: plan.width,
@@ -75,7 +81,11 @@ function renderVideoOnlyPlanToMp4(
       sourceStartMs: segment.sourceStartMs,
       sourceDurationMs: segment.durationMs,
       includeAudio: true,
-    });
+    };
+
+    return jobId
+      ? renderSingleSourceToMp4(request, jobId)
+      : renderSingleSourceToMp4(request);
   }
 
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
@@ -106,17 +116,21 @@ function renderVideoOnlyPlanToMp4(
       previousEndMs = segment.timelineEndMs;
     }
 
-    return renderVideoSegmentsToMp4({
+    const request = {
       segments,
       outputPath,
       width: plan.width,
       height: plan.height,
       frameRate: plan.frameRate,
       includeAudio: true,
-    });
+    };
+
+    return jobId
+      ? renderVideoSegmentsToMp4(request, jobId)
+      : renderVideoSegmentsToMp4(request);
   }
 
-  return renderVideoGraphToMp4({
+  const request = {
     inputs: graph.inputs.map((input) => input.sourcePath),
     outputPath,
     width: plan.width,
@@ -124,5 +138,9 @@ function renderVideoOnlyPlanToMp4(
     frameRate: plan.frameRate,
     filterComplex: graph.filterComplex,
     videoMap: graph.videoMap,
-  });
+  };
+
+  return jobId
+    ? renderVideoGraphToMp4(request, jobId, plan.durationMs)
+    : renderVideoGraphToMp4(request);
 }

@@ -1,12 +1,12 @@
 use std::{
   fs,
   path::{Path, PathBuf},
-  process::Command,
+
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::probe_has_audio;
+use crate::{export_process, probe_has_audio};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,6 +38,9 @@ pub struct NativeVideoWithAudioGraphRenderRequest {
 
 #[tauri::command]
 pub fn render_video_with_audio_graph_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
   request: NativeVideoWithAudioGraphRenderRequest,
 ) -> Result<NativeAudioRenderResult, String> {
   validate_video_audio_mix_request(&request)?;
@@ -95,23 +98,19 @@ pub fn render_video_with_audio_graph_to_mp4(
     &temporary_path,
   );
 
-  let output = Command::new("ffmpeg")
-    .args(&args)
-    .output()
-    .map_err(|error| {
-      let _ = fs::remove_file(&temporary_path);
-      format!("Could not run ffmpeg for native video/audio mix: {error}")
-    })?;
-
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    &app,
+    state.inner(),
+    args,
+    job_id.as_deref(),
+    "audio-mix",
+    Some(request.duration_ms),
+    0,
+    None,
+    "the project video and audio graph",
+  ) {
     let _ = fs::remove_file(&temporary_path);
-
-    return Err(if detail.is_empty() {
-      "FFmpeg could not mix the project video and audio graph.".to_string()
-    } else {
-      format!("FFmpeg could not mix the project video and audio graph: {detail}")
-    });
+    return Err(error);
   }
 
   let metadata = fs::metadata(&temporary_path).map_err(|error| {
@@ -279,6 +278,10 @@ fn build_ffmpeg_video_with_audio_graph_args(
 
 #[tauri::command]
 pub fn render_audio_graph_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
+  duration_ms: Option<u64>,
   request: NativeAudioGraphRenderRequest,
 ) -> Result<NativeAudioRenderResult, String> {
   validate_request(&request)?;
@@ -321,19 +324,19 @@ pub fn render_audio_graph_to_mp4(
     &output_path,
   );
 
-  let output = Command::new("ffmpeg")
-    .args(&args)
-    .output()
-    .map_err(|error| format!("Could not run ffmpeg for native audio graph export: {error}"))?;
-
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-
-    return Err(if detail.is_empty() {
-      "FFmpeg could not render the requested audio graph.".to_string()
-    } else {
-      format!("FFmpeg could not render the requested audio graph: {detail}")
-    });
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    &app,
+    state.inner(),
+    args,
+    job_id.as_deref(),
+    "audio",
+    duration_ms,
+    0,
+    None,
+    "the requested audio graph",
+  ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
   }
 
   let metadata = fs::metadata(&output_path).map_err(|error| {

@@ -47,9 +47,11 @@ export function updateExportJobProgress(
   job: ExportJob,
   progress: number,
 ): ExportJob {
+  const normalizedProgress = Math.min(1, Math.max(0, progress));
+
   return {
     ...job,
-    progress: Math.min(1, Math.max(0, progress)),
+    progress: Math.max(job.progress, normalizedProgress),
   };
 }
 
