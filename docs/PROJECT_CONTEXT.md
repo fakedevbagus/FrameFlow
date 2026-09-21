@@ -1,3 +1,10 @@
+## M3.47 Timeline Audio Fade Handles — Linux WebView visual correction — 2026-09-21
+
+- Normalized the Timeline audio fade handle button appearance for Linux WebView rendering.
+- Disabled native button appearance and explicitly constrained handle geometry so fade controls cannot expand into the Audio clip's flex layout.
+- Added explicit left/right anchoring for fade-in/fade-out handles.
+- No persisted audio fade, command, history, Preview, or FFmpeg behavior changed.
+
 ## M3.47 Timeline Audio Fade Handles — edge-case correction — 2026-09-21
 
 - Reviewed the direct-handle rendering at the clip boundaries and adjusted handle positioning so zero-duration and full-duration fade states keep the visible handle inside the clipped Timeline clip.
