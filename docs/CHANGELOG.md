@@ -4,7 +4,7 @@
 
 ### M3.29 — Fade through black transition — in progress
 Branch: feat/m3-29-fade-through-black-transition
-PR: pending draft creation
+PR: #40 (draft)
 Merge SHA: not applicable yet
 
 Implemented:
@@ -30,7 +30,7 @@ Known limitations:
 - Transition browser, richer placement UX, audio transitions, and custom profiles are deferred.
 
 Next step:
-- Open the branch as a draft PR and have the user run the full local validation and manual transition checks.
+- Draft PR #40 is open; the next step is user local validation and manual transition checks.
 
 ## 2026-09-21
 
