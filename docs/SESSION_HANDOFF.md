@@ -1,3 +1,10 @@
+## M3.37 validation correction — 2026-09-21
+
+- User local validation reached lint success, 25/26 test files with 233/234 tests passing, successful production build, and successful Tauri dev startup.
+- The only failing test was the new `render-pipeline.test.ts` unsupported-state case, which used Vitest `.rejects` against a synchronous graph-compilation throw.
+- Corrected the regression assertion to use synchronous `.toThrow()`.
+- M3.37 remains pending one fresh clean local validation run.
+
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
