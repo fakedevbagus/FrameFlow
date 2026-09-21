@@ -70,6 +70,36 @@ describe("audio render graph", () => {
     expect(graph.audioMap).toBe("[aout]");
   });
 
+
+  it("supports a native input offset for combined video and audio execution", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          inputIndex: 7,
+          timelineStartMs: 2500,
+          timelineEndMs: 3500,
+          durationMs: 1000,
+        }),
+      ]),
+      { inputIndexOffset: 1 },
+    );
+
+    expect(graph.inputs).toEqual([
+      {
+        inputIndex: 1,
+        sourcePath: "/media/audio-a.mp3",
+        sourceStartMs: 1000,
+        sourceEndMs: 3000,
+        timelineStartMs: 2500,
+        durationMs: 1000,
+      },
+    ]);
+    expect(graph.filterComplex).toContain(
+      "[1:a:0]atrim=start=1:end=3",
+    );
+    expect(graph.filterComplex).not.toContain("[7:a:0]");
+  });
+
   it("preserves ordered audio inputs by timeline position", () => {
     const graph = compileSingleAudioTrackGraph(
       createPlan([
