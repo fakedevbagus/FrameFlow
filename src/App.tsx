@@ -6,6 +6,10 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
+import {
+  getAudioVolumeAtTime,
+  getAudioVolumeKeyframeAtTime,
+} from "./features/audio/automation";
 import { getAudioCompressor, getAudioEq } from "./features/project/domain";
 import type {
   AudioCompressor,
@@ -36,6 +40,8 @@ import {
   updateAudioClipFades,
   updateAudioClipEq,
   updateAudioClipCompressor,
+  updateAudioClipVolumeAtTime,
+  removeAudioClipVolumeKeyframe,
   updateClipTransformAtTime,
   updateClipTransformAnchor,
   updateClipTransformAnchorWithCompensation,
@@ -184,6 +190,17 @@ function App() {
       )
     : null;
   const selectedKeyframeCount = selectedClipContext?.clip.transformKeyframes?.length ?? 0;
+  const selectedAudioVolume = selectedClipContext
+    ? getAudioVolumeAtTime(selectedClipContext.clip, selectedClipLocalTimeMs)
+    : 1;
+  const selectedAudioVolumeKeyframe = selectedClipContext
+    ? getAudioVolumeKeyframeAtTime(
+        selectedClipContext.clip.audioVolumeKeyframes,
+        selectedClipLocalTimeMs,
+      )
+    : null;
+  const selectedAudioVolumeKeyframeCount =
+    selectedClipContext?.clip.audioVolumeKeyframes?.length ?? 0;
   const selectedTransition = selectedClipContext
     ? getClipTransition(selectedClipContext.clip.transitionOut)
     : undefined;
@@ -649,6 +666,73 @@ function App() {
     handleUpdateAudioClipCompressor(
       selectedClipContext.clip.id,
       nextCompressor,
+    );
+  }
+
+  function handleUpdateAudioClipVolumeAtTime(
+    clipId: string,
+    timeMs: number,
+    volume: number,
+  ) {
+    const clipContext = findClipContext(project, clipId);
+
+    if (
+      !clipContext ||
+      clipContext.track.type !== "audio" ||
+      clipContext.asset?.mediaType !== "audio"
+    ) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        updateAudioClipVolumeAtTime(
+          currentProject,
+          clipId,
+          timeMs,
+          volume,
+        ),
+      "Audio volume keyframe updated.",
+    );
+  }
+
+  function handleUpdateSelectedAudioVolume() {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    handleUpdateAudioClipVolumeAtTime(
+      selectedClipContext.clip.id,
+      selectedClipLocalTimeMs,
+      selectedAudioVolume,
+    );
+  }
+
+  function handleSetSelectedAudioVolume(volume: number) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    handleUpdateAudioClipVolumeAtTime(
+      selectedClipContext.clip.id,
+      selectedClipLocalTimeMs,
+      volume,
+    );
+  }
+
+  function handleRemoveSelectedAudioVolumeKeyframe() {
+    if (!selectedClipContext || !selectedAudioVolumeKeyframe) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        removeAudioClipVolumeKeyframe(
+          currentProject,
+          selectedClipContext.clip.id,
+          selectedAudioVolumeKeyframe.timeMs,
+        ),
+      "Audio volume keyframe removed.",
     );
   }
 
@@ -2300,6 +2384,15 @@ function App() {
                     onCommit={handleUpdateSelectedAudioEq}
                     onKeyDown={handleTransformInputKeyDown}
                   />
+                  <AudioVolumeAutomationInspector
+                    clip={selectedClipContext.clip}
+                    localTimeMs={selectedClipLocalTimeMs}
+                    durationMs={getClipDurationMs(selectedClipContext.clip)}
+                    onSetVolume={handleSetSelectedAudioVolume}
+                    onAddOrUpdateKeyframe={handleUpdateSelectedAudioVolume}
+                    onRemoveKeyframe={handleRemoveSelectedAudioVolumeKeyframe}
+                    onKeyDown={handleTransformInputKeyDown}
+                  />
                   <AudioCompressorInspector
                     clip={selectedClipContext.clip}
                     onCommit={handleUpdateSelectedAudioCompressor}
@@ -2751,6 +2844,121 @@ function AudioEqInspector({
           </div>
         </label>
       </div>
+    </div>
+  );
+}
+
+function AudioVolumeAutomationInspector({
+  clip,
+  localTimeMs,
+  durationMs,
+  onSetVolume,
+  onAddOrUpdateKeyframe,
+  onRemoveKeyframe,
+  onKeyDown,
+}: {
+  clip: Clip;
+  localTimeMs: number;
+  durationMs: number;
+  onSetVolume: (volume: number) => void;
+  onAddOrUpdateKeyframe: () => void;
+  onRemoveKeyframe: () => void;
+  onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
+}) {
+  const volumeRef = useRef<HTMLInputElement>(null);
+  const keyframe = getAudioVolumeKeyframeAtTime(
+    clip.audioVolumeKeyframes,
+    localTimeMs,
+  );
+
+  useEffect(() => {
+    if (volumeRef.current) {
+      volumeRef.current.value = String(
+        Math.round(getAudioVolumeAtTime(clip, localTimeMs) * 100),
+      );
+    }
+  }, [clip, localTimeMs]);
+
+  function commitVolume() {
+    const input = volumeRef.current;
+    const fallback = Math.round(getAudioVolumeAtTime(clip, localTimeMs) * 100);
+    if (!input) return;
+
+    const rawValue = input.value.trim();
+    if (!rawValue) {
+      input.value = String(fallback);
+      return;
+    }
+
+    const value = Number(rawValue);
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      input.value = String(fallback);
+      return;
+    }
+
+    const normalized = Math.round(value) / 100;
+    onSetVolume(normalized);
+  }
+
+  return (
+    <div className="inspector-section">
+      <div className="inspector-section-header">
+        <div className="inspector-section-title-group">
+          <span className="inspector-section-title">Audio Volume Automation</span>
+          {clip.audioVolumeKeyframes?.length ? (
+            <span className="inspector-keyframe-count">
+              {clip.audioVolumeKeyframes.length} keyframe{clip.audioVolumeKeyframes.length === 1 ? "" : "s"}
+            </span>
+          ) : null}
+        </div>
+        <div className="inspector-section-actions">
+          <button
+            aria-label={keyframe ? "Update audio volume keyframe" : "Add audio volume keyframe"}
+            className="inspector-inline-button"
+            onClick={onAddOrUpdateKeyframe}
+            type="button"
+          >
+            {keyframe ? "Update keyframe" : "Add keyframe"}
+          </button>
+          {keyframe ? (
+            <button
+              aria-label="Remove audio volume keyframe"
+              className="inspector-inline-button"
+              onClick={onRemoveKeyframe}
+              type="button"
+            >
+              Remove
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <div className="inspector-keyframe-status">
+        <span>
+          {keyframe ? "Keyframe active at " : "Automation at "}
+          {formatKeyframeTime(Math.min(Math.max(localTimeMs, 0), durationMs))}
+        </span>
+      </div>
+      <label className="inspector-transform-field">
+        <span>Volume</span>
+        <div className="inspector-transform-input-wrap">
+          <input
+            ref={volumeRef}
+            aria-label="Audio volume automation"
+            className="inspector-transform-input"
+            max="100"
+            min="0"
+            step="1"
+            type="number"
+            defaultValue={Math.round(getAudioVolumeAtTime(clip, localTimeMs) * 100)}
+            onBlur={commitVolume}
+            onKeyDown={onKeyDown}
+          />
+          <span>%</span>
+        </div>
+      </label>
+      <small className="inspector-help-text">
+        Volume is automated between keyframes and remains independent from track volume.
+      </small>
     </div>
   );
 }
