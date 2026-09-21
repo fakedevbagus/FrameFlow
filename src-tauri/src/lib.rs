@@ -1299,8 +1299,8 @@ mod tests {
     let valid = super::NativeVideoSegmentsRenderRequest {
       segments: vec![
         super::NativeVideoSegment {
-          source_path: Some("/media/a.mp4".to_string()),
-          source_start_ms: Some(0),
+          source_path: None,
+          source_start_ms: None,
           duration_ms: 2_000,
         },
         super::NativeVideoSegment {
