@@ -266,7 +266,8 @@ Current transition feature supports:
 - only directly adjacent visual clips
 - duration normalization with existing 50–2000 ms bounds
 - preview cross-dissolve layers
-- Inspector configuration- timeline transition indicator
+- Inspector configuration
+- timeline transition indicator
 - direct timeline duration-handle editing
 - keyboard duration nudging
 - Escape cancellation
