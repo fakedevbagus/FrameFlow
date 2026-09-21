@@ -2,7 +2,12 @@ import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createProject } from "../project/domain";
-import { addAssetToTimeline, addTransformKeyframe, addTrack } from "./commands";
+import {
+  addAssetToTimeline,
+  addTransformKeyframe,
+  addTrack,
+  updateAudioClipVolumeAtTime,
+} from "./commands";
 import { Timeline } from "./Timeline";
 
 describe("Timeline", () => {
@@ -265,6 +270,195 @@ describe("Timeline", () => {
       1500,
     );
     expect(onCurrentTimeChange).toHaveBeenLastCalledWith(1500);
+  });
+
+  it("renders audio volume keyframe markers and jumps to them", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "audio-volume-markers",
+      name: "music.mp3",
+      mediaType: "audio",
+      sourcePath: "/music.mp3",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "audio-volume-markers");
+    const clipId = project.tracks[1].clips[0].id;
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.4);
+    project = updateAudioClipVolumeAtTime(project, clipId, 3000, 0.8);
+
+    const onCurrentTimeChange = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={1000}
+        onCurrentTimeChange={onCurrentTimeChange}
+      />,
+    );
+
+    const markers = screen.getAllByRole("button", {
+      name: /Go to audio volume keyframe for music.mp3/,
+    });
+
+    expect(markers).toHaveLength(2);
+    expect(markers[0]).toHaveAttribute("title", "40% · 00:01.000");
+    expect(markers[1]).toHaveAttribute("title", "80% · 00:03.000");
+    expect(markers[0]).toHaveAttribute("aria-current", "time");
+
+    fireEvent.click(markers[1]);
+
+    expect(onCurrentTimeChange).toHaveBeenCalledWith(3000);
+  });
+
+  it("drags an audio volume keyframe and commits once", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "audio-volume-drag",
+      name: "music-drag.mp3",
+      mediaType: "audio",
+      sourcePath: "/music-drag.mp3",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "audio-volume-drag");
+    const clipId = project.tracks[1].clips[0].id;
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.25);
+    project = updateAudioClipVolumeAtTime(project, clipId, 3000, 0.75);
+
+    const onMoveAudioVolumeKeyframe = vi.fn();
+    const onCurrentTimeChange = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={1000}
+        onCurrentTimeChange={onCurrentTimeChange}
+        onMoveAudioVolumeKeyframe={onMoveAudioVolumeKeyframe}
+      />,
+    );
+
+    const marker = screen.getByRole("button", {
+      name: "Go to audio volume keyframe for music-drag.mp3 at 00:01.000 (25%)",
+    });
+
+    fireEvent.pointerDown(marker, {
+      button: 0,
+      buttons: 1,
+      clientX: 40,
+      pointerId: 61,
+    });
+    fireEvent.pointerMove(marker, {
+      buttons: 1,
+      clientX: 80,
+      pointerId: 61,
+    });
+    fireEvent.pointerUp(marker, {
+      button: 0,
+      buttons: 0,
+      clientX: 80,
+      pointerId: 61,
+    });
+
+    expect(onMoveAudioVolumeKeyframe).toHaveBeenCalledTimes(1);
+    expect(onMoveAudioVolumeKeyframe).toHaveBeenCalledWith(
+      clipId,
+      1000,
+      2000,
+    );
+    expect(onCurrentTimeChange).toHaveBeenLastCalledWith(2000);
+  });
+
+  it("cancels audio volume keyframe dragging with Escape", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "audio-volume-cancel",
+      name: "music-cancel.mp3",
+      mediaType: "audio",
+      sourcePath: "/music-cancel.mp3",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "audio-volume-cancel");
+    const clipId = project.tracks[1].clips[0].id;
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.25);
+
+    const onMoveAudioVolumeKeyframe = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onMoveAudioVolumeKeyframe={onMoveAudioVolumeKeyframe}
+      />,
+    );
+
+    const marker = screen.getByRole("button", {
+      name: "Go to audio volume keyframe for music-cancel.mp3 at 00:01.000 (25%)",
+    });
+
+    fireEvent.pointerDown(marker, {
+      button: 0,
+      buttons: 1,
+      clientX: 40,
+      pointerId: 62,
+    });
+    fireEvent.pointerMove(marker, {
+      buttons: 1,
+      clientX: 120,
+      pointerId: 62,
+    });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(marker, {
+      button: 0,
+      buttons: 0,
+      clientX: 120,
+      pointerId: 62,
+    });
+
+    expect(onMoveAudioVolumeKeyframe).not.toHaveBeenCalled();
+  });
+
+  it("deletes and nudges a focused audio volume keyframe", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "audio-volume-keyboard",
+      name: "music-keyboard.mp3",
+      mediaType: "audio",
+      sourcePath: "/music-keyboard.mp3",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "audio-volume-keyboard");
+    const clipId = project.tracks[1].clips[0].id;
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.5);
+    project = updateAudioClipVolumeAtTime(project, clipId, 3000, 0.8);
+
+    const onMoveAudioVolumeKeyframe = vi.fn();
+    const onRemoveAudioVolumeKeyframe = vi.fn();
+    const onCurrentTimeChange = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onMoveAudioVolumeKeyframe={onMoveAudioVolumeKeyframe}
+        onRemoveAudioVolumeKeyframe={onRemoveAudioVolumeKeyframe}
+        onCurrentTimeChange={onCurrentTimeChange}
+      />,
+    );
+
+    const marker = screen.getByRole("button", {
+      name: "Go to audio volume keyframe for music-keyboard.mp3 at 00:01.000 (50%)",
+    });
+
+    marker.focus();
+    fireEvent.keyDown(marker, { key: "ArrowRight" });
+
+    expect(onMoveAudioVolumeKeyframe).toHaveBeenCalledWith(
+      clipId,
+      1000,
+      1033,
+    );
+    expect(onCurrentTimeChange).toHaveBeenCalledWith(1033);
+
+    fireEvent.keyDown(marker, { key: "Delete" });
+
+    expect(onRemoveAudioVolumeKeyframe).toHaveBeenCalledWith(clipId, 1000);
   });
 
   it("moves the playhead when the ruler is clicked", () => {
