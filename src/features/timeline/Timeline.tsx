@@ -611,7 +611,7 @@ export function Timeline({
   }, [interaction, cancelClipInteraction]);
 
   function beginAudioFadeInteraction(
-    event: PointerEvent<HTMLButtonElement>,
+    event: PointerEvent<HTMLDivElement>,
     clip: Clip,
     mode: "fade-in" | "fade-out",
   ) {
@@ -703,7 +703,7 @@ export function Timeline({
   }
 
   function finishAudioFadeInteraction(
-    event?: PointerEvent<HTMLButtonElement>,
+    event?: PointerEvent<HTMLDivElement>,
   ) {
     if (!audioFadeInteraction) {
       return;
@@ -753,7 +753,7 @@ export function Timeline({
   }, [audioFadeInteraction]);
 
   function handleAudioFadeKeyDown(
-    event: KeyboardEvent<HTMLButtonElement>,
+    event: KeyboardEvent<HTMLDivElement>,
     clip: Clip,
     mode: "fade-in" | "fade-out",
   ) {
@@ -1102,19 +1102,19 @@ interface TimelineTrackProps {
   onUpdateTrackVolume?: (trackId: string, volume: number) => void;
   audioFadeInteraction: AudioFadeInteraction | null;
   onBeginAudioFadeInteraction: (
-    event: PointerEvent<HTMLButtonElement>,
+    event: PointerEvent<HTMLDivElement>,
     clip: Clip,
     mode: "fade-in" | "fade-out",
   ) => void;
   onUpdateAudioFadeInteraction: (
-    event: PointerEvent<HTMLButtonElement>,
+    event: PointerEvent<HTMLDivElement>,
   ) => void;
   onFinishAudioFadeInteraction: (
-    event?: PointerEvent<HTMLButtonElement>,
+    event?: PointerEvent<HTMLDivElement>,
   ) => void;
   onCancelAudioFadeInteraction: () => void;
   onHandleAudioFadeKeyDown: (
-    event: KeyboardEvent<HTMLButtonElement>,
+    event: KeyboardEvent<HTMLDivElement>,
     clip: Clip,
     mode: "fade-in" | "fade-out",
   ) => void;
@@ -1385,7 +1385,7 @@ function TimelineTrack({
                       className="timeline-audio-fade-region timeline-audio-fade-out-region"
                       style={{ width: fadeOutWidthPx + "px" }}
                     />
-                    <button
+                    <div
                       aria-label={
                         "Adjust audio fade in for " +
                         (asset?.name ?? "Missing media") +
@@ -1393,6 +1393,12 @@ function TimelineTrack({
                         displayAudioFadeDurations.fadeInMs +
                         " ms"
                       }
+                      aria-valuemax={Math.max(
+                        0,
+                        durationMs - displayAudioFadeDurations.fadeOutMs,
+                      )}
+                      aria-valuemin={0}
+                      aria-valuenow={displayAudioFadeDurations.fadeInMs}
                       className="timeline-audio-fade-handle timeline-audio-fade-handle-in"
                       onClick={(event) => event.stopPropagation()}
                       onKeyDown={(event) =>
@@ -1404,11 +1410,12 @@ function TimelineTrack({
                       onPointerMove={onUpdateAudioFadeInteraction}
                       onPointerUp={onFinishAudioFadeInteraction}
                       onPointerCancel={onCancelAudioFadeInteraction}
-                      style={{ left: Math.max(0, fadeInWidthPx - 6) + "px" }}
+                      role="button"
+                      style={{ left: Math.max(0, fadeInWidthPx - 7) + "px" }}
+                      tabIndex={0}
                       title="Drag to change audio fade in"
-                      type="button"
                     />
-                    <button
+                    <div
                       aria-label={
                         "Adjust audio fade out for " +
                         (asset?.name ?? "Missing media") +
@@ -1416,6 +1423,12 @@ function TimelineTrack({
                         displayAudioFadeDurations.fadeOutMs +
                         " ms"
                       }
+                      aria-valuemax={Math.max(
+                        0,
+                        durationMs - displayAudioFadeDurations.fadeInMs,
+                      )}
+                      aria-valuemin={0}
+                      aria-valuenow={displayAudioFadeDurations.fadeOutMs}
                       className="timeline-audio-fade-handle timeline-audio-fade-handle-out"
                       onClick={(event) => event.stopPropagation()}
                       onKeyDown={(event) =>
@@ -1427,12 +1440,11 @@ function TimelineTrack({
                       onPointerMove={onUpdateAudioFadeInteraction}
                       onPointerUp={onFinishAudioFadeInteraction}
                       onPointerCancel={onCancelAudioFadeInteraction}
-                      style={{ right: Math.max(0, fadeOutWidthPx - 6) + "px" }}
+                      role="button"
+                      style={{ right: Math.max(0, fadeOutWidthPx - 7) + "px" }}
+                      tabIndex={0}
                       title="Drag to change audio fade out"
-                      type="button"
-                    >
-                      <span aria-hidden="true" />
-                    </button>
+                    />
                   </>
                 ) : null}
                 <span
