@@ -3,6 +3,31 @@ export interface PlaybackStep {
   reachedEnd: boolean;
 }
 
+export const PLAYBACK_UI_UPDATE_INTERVAL_MS = 33;
+
+export function shouldPublishPlaybackTime(
+  currentTimestampMs: number,
+  lastPublishedTimestampMs: number | null,
+  intervalMs = PLAYBACK_UI_UPDATE_INTERVAL_MS,
+): boolean {
+  if (!Number.isFinite(currentTimestampMs)) {
+    return false;
+  }
+
+  if (
+    lastPublishedTimestampMs === null ||
+    !Number.isFinite(lastPublishedTimestampMs)
+  ) {
+    return true;
+  }
+
+  const safeIntervalMs = Number.isFinite(intervalMs)
+    ? Math.max(0, intervalMs)
+    : PLAYBACK_UI_UPDATE_INTERVAL_MS;
+
+  return currentTimestampMs - lastPublishedTimestampMs >= safeIntervalMs;
+}
+
 export function frameDurationMs(frameRate: number): number {
   if (!Number.isFinite(frameRate) || frameRate <= 0) {
     return 1000 / 30;
