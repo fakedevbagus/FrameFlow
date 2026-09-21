@@ -1508,7 +1508,7 @@ mod tests {
   }
 
   #[test]
-  fn builds_ffmpeg_concat_arguments_from_a_safe_list_file() {
+  fn builds_ffmpeg_concat_arguments_with_audio_stream() {
     let args = super::build_ffmpeg_concat_args(
       Path::new("/tmp/concat.txt"),
       30.0,
@@ -1525,10 +1525,86 @@ mod tests {
     assert!(values.windows(2).any(|pair| pair == ["-safe".to_string(), "0".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/tmp/concat.txt".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
-    assert!(values.iter().any(|value| value == "-an"));
-    assert!(values.iter().any(|value| value == "-c:v"));
-    assert!(values.iter().any(|value| value == "copy"));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:v".to_string(), "copy".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "copy".to_string()]));
+    assert!(!values.iter().any(|value| value == "-an"));
     assert!(values.iter().any(|value| value == "/tmp/final.mp4"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_av_segment_arguments_with_source_audio() {
+    let args = super::build_ffmpeg_av_segment_args(
+      Path::new("/media/source.mp4"),
+      Path::new("/tmp/segment.mp4"),
+      406,
+      720,
+      30.0,
+      Some(500),
+      2_000,
+      true,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-ss".to_string(), "0.5".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-t".to_string(), "2".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-ar".to_string(), "48000".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-ac".to_string(), "2".to_string()]));
+    assert!(!values.iter().any(|value| value == "-an"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_av_segment_arguments_with_silent_fallback() {
+    let args = super::build_ffmpeg_av_segment_args(
+      Path::new("/media/no-audio.mp4"),
+      Path::new("/tmp/segment-silent.mp4"),
+      406,
+      720,
+      30.0,
+      None,
+      1_500,
+      false,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-f".to_string(), "lavfi".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "anullsrc=channel_layout=stereo:sample_rate=48000".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "1:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
+    assert!(!values.iter().any(|value| value == "-an"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_black_av_segment_arguments() {
+    let args = super::build_ffmpeg_black_av_segment_args(
+      Path::new("/tmp/gap.mp4"),
+      406,
+      720,
+      30.0,
+      2_500,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "color=c=black:s=406x720:r=30:d=2.5".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "anullsrc=channel_layout=stereo:sample_rate=48000".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "1:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
   }
 
   #[test]
