@@ -1,3 +1,8 @@
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — final interaction primitive correction
+
+- Fade handles now use accessible div role="button" hit areas with a vertical border visual.
+- Removed native button rendering from the Timeline fade-handle path to eliminate the remaining Linux WebView horizontal-bar defect.
+
 ## 2026-09-21 — M3.47 Timeline Audio Fade Handles — final WebView visual correction
 
 - Removed the nested visual span from fade handles.
