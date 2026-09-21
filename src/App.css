@@ -793,6 +793,45 @@ button:focus-visible {
   text-align: right;
 }
 
+.track-audio-controls {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.track-audio-control {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  color: #7f899a;
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.track-audio-control > span:first-child {
+  width: 8px;
+  color: #697386;
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.track-audio-control > span:last-child {
+  width: 30px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.track-pan-input {
+  width: 48px;
+  min-width: 48px;
+  margin: 0;
+  accent-color: #8f83ff;
+  cursor: pointer;
+}
+
 .track-volume-input {
   width: 48px;
   min-width: 48px;
