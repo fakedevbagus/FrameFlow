@@ -1,23 +1,34 @@
-## 2026-09-21 — M3.41 multi-segment audio — in progress
+## 2026-09-21 — M3.42 audio-track graph compiler — in progress
 
-Branch: `feat/m3-41-multisegment-audio`
+Branch: `feat/m3-42-audio-track-graph`
 
-Planned:
-- Extend native multi-segment rendering to synchronized A/V segments.
-- Add silence for source clips without audio and for timeline gaps.
-- Concatenate normalized A/V segments with a stable stream layout.
-- Add regression coverage for audio-present, audio-absent, gap, and concat arguments.
+Implemented:
+- Added a pure audio filter-graph compiler for the existing RenderPlan boundary.
+- Supports one explicit Audio track with audio assets.
+- Preserves source trimming and timeline placement through `atrim` + `adelay`.
+- Normalizes mixed audio inputs to stereo 48 kHz.
+- Adds a full-project stereo silence source so the graph retains timeline duration and explicit gaps remain silent.
+- Honors the audio track mute state by omitting muted clips from the mix.
+- Added regression coverage for trimming, ordering, timeline delay, mute handling, silence fallback, and deferred multiple-audio-track/non-audio routing.
 
 Deferred:
-- Independent timeline audio mixing.
-- Audio transitions/effects.
-- Multi-track compositing.
-- Images and advanced visual filters.
+- Native FFmpeg audio graph execution.
+- Mixing embedded video-clip audio with independent Audio track clips.
+- Audio volume/gain, fades, transitions, and effects.
+- Multiple independent audio tracks.
 - Progress streaming and cancellation.
 
 Validation:
-- M3.40 merged after successful multi-clip video export.
-- M3.41 local validation is pending.
+- TypeScript/unit validation is pending for M3.42.
+- Native render wiring is intentionally a later slice.
+
+## 2026-09-21 — M3.41 multi-segment audio — merged
+
+- PR #52 `feat: add audio to multi-segment video export` was squash-merged.
+- Merge SHA: `0cfaba472aa57b0606252c82fd15c998775ad6db`.
+- User approved M3.41 after local validation.
+- Native sequential multi-segment export now normalizes each segment to synchronized video plus audio, with generated silence for clips without audio and timeline gaps.
+- A follow-up Rust syntax correction removed a duplicate legacy concat argument block before the final merge.
 
 ## 2026-09-21 — M3.40 multi-segment video renderer — merged
 
