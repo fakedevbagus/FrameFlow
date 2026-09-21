@@ -1,3 +1,31 @@
+## 2026-09-21 — M3.53 Audio Clip Volume Automation — in progress
+
+Branch: `feat/m3-53-audio-volume-automation`
+
+Scope:
+- Add backward-compatible per-audio-clip volume automation keyframes.
+- Provide linear interpolation between local clip-time keyframes.
+- Expose playhead-based Add/Update/Remove keyframe controls in the selected-audio Inspector.
+- Apply the automation in Web Audio preview.
+- Propagate keyframes through RenderPlan and compile a frame-evaluated FFmpeg volume envelope.
+- Preserve automation semantics across clip splits.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required before merge.
+- Timeline marker/drag UX is deferred to a follow-up slice.
+
+## 2026-09-21 — M3.52 Audio Clip Dynamics Compressor — merged
+
+PR #66 — squash-merged
+Merge SHA: da0b5dc957be094738ac4e657007523f8684fdd8
+
+Implemented:
+- Backward-compatible clip-level compressor state.
+- Threshold, ratio, attack, and release Inspector controls.
+- Web Audio DynamicsCompressorNode preview processing.
+- RenderPlan propagation and native FFmpeg `acompressor` export.
+- Regression coverage across domain, commands, RenderPlan, audio graph, and App.
+
 ## 2026-09-21 — M3.51 Audio Clip 3-Band EQ — merged
 
 PR #65 — squash-merged
