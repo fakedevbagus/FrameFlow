@@ -342,7 +342,8 @@ function normalizeAudioCompressorThreshold(value: unknown, fallback: number): nu
     return fallback;
   }
 
-  return Math.min(0, Math.max(-60, Math.round(value * 10) / 10));
+  const rounded = Math.round(Math.abs(value) * 10) / 10;
+  return Math.min(0, Math.max(-60, value < 0 ? -rounded : rounded));
 }
 
 function normalizeAudioCompressorRatio(value: unknown, fallback: number): number {
