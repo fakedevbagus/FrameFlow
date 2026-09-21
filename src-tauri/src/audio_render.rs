@@ -45,6 +45,13 @@ pub fn render_video_with_audio_graph_to_mp4(
   let video_path = PathBuf::from(&request.video_source_path);
   let output_path = PathBuf::from(&request.output_path);
 
+  if !video_path.is_file() {
+    return Err(format!(
+      "Native video/audio mix video input does not exist: {}",
+      video_path.display()
+    ));
+  }
+
   let audio_paths = request
     .audio_inputs
     .iter()
@@ -154,13 +161,6 @@ fn validate_video_audio_mix_request(
   let video_path = Path::new(&request.video_source_path);
   if !video_path.is_absolute() {
     return Err("Native video/audio mix video input must use an absolute path.".to_string());
-  }
-
-  if !video_path.is_file() {
-    return Err(format!(
-      "Native video/audio mix video input does not exist: {}",
-      video_path.display()
-    ));
   }
 
   if media_type(video_path)? != "video" {
