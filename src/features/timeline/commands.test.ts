@@ -1254,6 +1254,43 @@ describe("transform keyframe commands", () => {
 
 
 describe("clip transitions", () => {
+  it("sets a fade-through-black transition between adjacent visual clips", () => {
+    const project = createProject({ id: "fade-transition-command" });
+    project.assets.push(
+      {
+        id: "fade-a",
+        name: "a.mp4",
+        mediaType: "video",
+        sourcePath: "/a.mp4",
+        durationMs: 4000,
+      },
+      {
+        id: "fade-b",
+        name: "b.mp4",
+        mediaType: "video",
+        sourcePath: "/b.mp4",
+        durationMs: 3000,
+      },
+    );
+
+    const populated = addAssetToTimeline(
+      addAssetToTimeline(project, "fade-a"),
+      "fade-b",
+    );
+    const firstClipId = populated.tracks[0].clips[0].id;
+
+    const updated = updateClipTransition(
+      populated,
+      firstClipId,
+      { type: "fade-through-black", durationMs: 900 },
+    );
+
+    expect(updated.tracks[0].clips[0].transitionOut).toEqual({
+      type: "fade-through-black",
+      durationMs: 900,
+    });
+  });
+
   it("sets a dissolve transition only between directly adjacent visual clips", () => {
     const project = createProject({ id: "transition-command" });
     project.assets.push(

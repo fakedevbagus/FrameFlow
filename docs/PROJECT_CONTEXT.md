@@ -1,3 +1,47 @@
+## Live state reconciliation — 2026-09-21
+
+Verified repository state:
+- main: 468d1d3f0bbcbe28028b547097e5a8810564c5e8
+- Latest merged milestone: M3.28 — Transition lifecycle integrity
+- PR #39 merge SHA: 2e77190ef6474b3ede1ad72af0682a9c5bfb7c61
+- Older checkpoint SHA 7d9400634c0f9a4650212110b938a17e0fa685da is stale and superseded by live GitHub state.
+- User reports the latest local validation run completed without errors. This is user-reported; exact local command output and local HEAD were not independently observed.
+- Open PR #22 is a stale draft for preserving keyframe easing during marker movement and is not active project work.
+- No M3.29 branch was present before this work.
+
+## M3.29 — Fade through black transition — in progress
+
+Branch: feat/m3-29-fade-through-black-transition
+
+Scope:
+Add one additional visual transition type while reusing the current transition model, history engine, preview compositor, Inspector, and Timeline interaction model.
+
+Implementation:
+- Add fade-through-black to ClipTransition.
+- Preserve transition type during normalization and adjacency sanitization.
+- Add shared transition visual-state calculation with dissolve and fade-through-black behavior.
+- Render a black midpoint overlay in the existing Preview layer stack.
+- Generalize transition type labels and Timeline duration editing.
+- Cover command, math, preview, Timeline, and App Inspector regressions.
+
+Architecture:
+- Project/history mutations still use the existing updateClipTransition path.
+- Playback transport remains independent from history.
+- Transition interaction state remains transient UI state and is committed once at gesture completion.
+- The fade overlay is local to the incoming transition preview layer's existing stacking context instead of introducing a parallel compositor/state system.
+
+Validation:
+- M3.28 baseline: user-reported clean latest validation.
+- M3.29: pending user local validation.
+
+Known limitations:
+- Dissolve and Fade through black are the only transition types.
+- Transitions still require directly adjacent visual clips.
+- Transition browser, richer placement UX, audio transitions, and custom transition profiles remain deferred.
+
+Next step:
+- User validates M3.29 branch before the draft PR is marked ready and merged.
+
 # FrameFlow Project Context
 
 ## Purpose

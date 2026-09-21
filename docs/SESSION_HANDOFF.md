@@ -1,3 +1,52 @@
+## Current live reconciliation — 2026-09-21
+
+- Verified live main tip: 468d1d3f0bbcbe28028b547097e5a8810564c5e8.
+- Latest completed milestone remains M3.28 — Transition lifecycle integrity.
+- M3.28 PR: #39.
+- M3.28 merge SHA: 2e77190ef6474b3ede1ad72af0682a9c5bfb7c61.
+- The older checkpoint in this document (7d9400634c0f9a4650212110b938a17e0fa685da) is stale relative to live GitHub and is superseded by live repository state.
+- User has now reported that the latest local validation run completed without errors. The exact local command output and local HEAD SHA are not recorded here, so this is recorded as user-reported validation rather than independently executed validation.
+- PR #22 remains open as a historical draft for keyframe easing preservation; it is not the active milestone branch.
+- No M3.29 merge exists yet.
+
+## M3.29 — Fade through black transition — in progress
+
+Branch: feat/m3-29-fade-through-black-transition
+PR: #40 (draft)
+Base: 468d1d3f0bbcbe28028b547097e5a8810564c5e8
+
+Implementation summary:
+- Extended the backward-compatible clip transition model with a fade-through-black transition type.
+- Preserved the existing transition lifecycle sanitizer and history mutation architecture.
+- Added transition-type-preserving normalization and shared transition visual-state math.
+- Added a per-transition black overlay in the preview compositor without introducing a second project state system.
+- Generalized Inspector and Timeline duration controls so they preserve the selected transition type.
+- Added regression tests for command creation, normalization, preview math, preview overlay rendering, Timeline controls, and App Inspector workflow.
+
+Architecture decisions:
+- ClipTransition remains a discriminated union and transition mutations continue through updateClipTransition and the existing history path.
+- Fade-through-black uses full outgoing/incoming clip opacity with a transient black overlay that peaks at the midpoint.
+- The overlay is rendered inside the incoming transition layer's existing preview stacking context so higher video tracks remain above it.
+- Existing duration limits and adjacency rules remain unchanged.
+
+Tests:
+- New regression coverage has been added, but this branch has not been locally executed in this environment.
+- Current M3.28 baseline validation is recorded from the user's latest clean local test report.
+
+Exact validation status:
+- M3.28: user-reported latest tests clean; exact command output not captured here.
+- M3.29: not yet locally validated by the user.
+
+Known limitations:
+- Only two visual transition types exist: Dissolve and Fade through black.
+- Transition placement remains limited to directly adjacent visual clips.
+- No transition browser or audio transitions are included.
+- Custom transition easing or non-linear fade profiles are deferred.
+
+Next step:
+- Draft PR #40 is open.
+- User validates the branch locally with lint, tests, build, Tauri dev, and manual transition checks.
+
 # FrameFlow Session Handoff
 
 Last updated: 2026-09-21

@@ -484,6 +484,84 @@ describe("Timeline", () => {
     expect(clip.className).toContain("timeline-clip-selected");
   });
 
+  it("shows and edits a fade-through-black transition", () => {
+    const project = createVideoProject();
+    project.assets.push(
+      {
+        id: "fade-outgoing",
+        name: "outgoing.mp4",
+        mediaType: "video",
+        sourcePath: "/outgoing.mp4",
+        durationMs: 5000,
+      },
+      {
+        id: "fade-incoming",
+        name: "incoming.mp4",
+        mediaType: "video",
+        sourcePath: "/incoming.mp4",
+        durationMs: 4000,
+      },
+    );
+
+    const outgoing = project.tracks[0].clips[0];
+    const nextProject = {
+      ...project,
+      tracks: [
+        {
+          ...project.tracks[0],
+          clips: [
+            {
+              ...outgoing,
+              assetId: "fade-outgoing",
+              sourceEndMs: 5000,
+              transitionOut: {
+                type: "fade-through-black" as const,
+                durationMs: 300,
+              },
+            },
+            {
+              ...outgoing,
+              id: "fade-incoming-clip",
+              assetId: "fade-incoming",
+              timelineStartMs: 5000,
+              sourceEndMs: 9000,
+            },
+          ],
+        },
+        project.tracks[1],
+      ],
+    };
+
+    const onUpdateClipTransition = vi.fn();
+
+    render(
+      <Timeline
+        project={nextProject}
+        onUpdateClipTransition={onUpdateClipTransition}
+      />,
+    );
+
+    const indicator = screen.getByRole("button", {
+      name: "Select outgoing.mp4 fade through black transition to incoming.mp4",
+    });
+
+    expect(indicator).toHaveAttribute("title", "Fade through black · 300 ms");
+
+    const handle = screen.getByRole("button", {
+      name: "Adjust fade through black duration for outgoing.mp4 to 300 ms",
+    });
+
+    fireEvent.keyDown(handle, { key: "ArrowLeft" });
+
+    expect(onUpdateClipTransition).toHaveBeenCalledWith(
+      outgoing.id,
+      {
+        type: "fade-through-black",
+        durationMs: 350,
+      },
+    );
+  });
+
   it("shows a dissolve transition indicator between adjacent visual clips", () => {
     const project = createVideoProject();
     project.assets.push({

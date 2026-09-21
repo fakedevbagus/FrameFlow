@@ -1,7 +1,7 @@
 import type { Clip, MediaAsset, Project, Track } from "../project/domain";
 import {
   getClipTransition,
-  getDissolveOpacities,
+  getTransitionVisualState,
   isTransitionAdjacent,
 } from "../transition/transition";
 
@@ -11,6 +11,7 @@ export interface ActivePreviewClip {
   track: Track;
   trackIndex: number;
   transitionOpacity?: number;
+  transitionOverlayOpacity?: number;
 }
 
 export function getActiveVisualPreviewClips(
@@ -58,27 +59,28 @@ export function getActiveVisualPreviewClips(
           transition &&
           isTransitionAdjacent(outgoingClip, incomingClip)
         ) {
-          const opacities = getDissolveOpacities(
+          const visualState = getTransitionVisualState(
             safeTimeMs,
             outgoingClip,
             incomingClip,
             transition,
           );
 
-          if (opacities) {
+          if (visualState) {
             activeLayers.push({
               asset: outgoingAsset,
               clip: outgoingClip,
               track,
               trackIndex,
-              transitionOpacity: opacities.outgoingOpacity,
+              transitionOpacity: visualState.outgoingOpacity,
             });
             activeLayers.push({
               asset: incomingAsset,
               clip: incomingClip,
               track,
               trackIndex,
-              transitionOpacity: opacities.incomingOpacity,
+              transitionOpacity: visualState.incomingOpacity,
+              transitionOverlayOpacity: visualState.overlayOpacity,
             });
             return;
           }

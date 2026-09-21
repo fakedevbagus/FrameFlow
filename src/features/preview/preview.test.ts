@@ -74,6 +74,58 @@ describe("preview helpers", () => {
     expect(topmost?.asset.name).toBe("overlay.mp4");
   });
 
+  it("exposes a fade-through-black overlay during the transition", () => {
+    let project = createProject({ id: "fade-preview-project" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-a",
+          name: "a.mp4",
+          mediaType: "video",
+          sourcePath: "/a.mp4",
+          durationMs: 4000,
+        },
+        {
+          id: "video-b",
+          name: "b.mp4",
+          mediaType: "video",
+          sourcePath: "/b.mp4",
+          durationMs: 3000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-a");
+    project = addAssetToTimeline(project, "video-b");
+    project.tracks[0] = {
+      ...project.tracks[0],
+      clips: project.tracks[0].clips.map((clip, index) =>
+        index === 0
+          ? {
+              ...clip,
+              transitionOut: {
+                type: "fade-through-black",
+                durationMs: 1000,
+              },
+            }
+          : clip,
+      ),
+    };
+
+    const layers = getActiveVisualPreviewClips(project, 3500);
+
+    expect(layers).toHaveLength(2);
+    expect(layers[0].transitionOpacity).toBe(0);
+    expect(layers[1].transitionOpacity).toBe(1);
+    expect(layers[1].transitionOverlayOpacity).toBe(1);
+
+    expect(
+      getActiveVisualPreviewClips(project, 3250)[1].transitionOverlayOpacity,
+    ).toBeCloseTo(0.5, 8);
+    expect(getActiveVisualPreviewClips(project, 3999)[1].transitionOverlayOpacity).toBeCloseTo(0.002, 8);
+  });
+
   it("falls back to an active audio clip when there is no visual clip", () => {
     let project = createProject({ id: "audio-preview-project" });
 

@@ -31,6 +31,7 @@ import {
   isTransitionAdjacent,
   MAX_DISSOLVE_DURATION_MS,
   MIN_DISSOLVE_DURATION_MS,
+  getTransitionLabel,
 } from "../transition/transition";
 
 const basePixelsPerSecond = 40;
@@ -85,6 +86,7 @@ interface TransitionInteraction {
   clipId: string;
   pointerId: number;
   startClientX: number;
+  transitionType: ClipTransition["type"];
   originalDurationMs: number;
   previewDurationMs: number;
   maxDurationMs: number;
@@ -613,6 +615,7 @@ export function Timeline({
       clipId: clip.id,
       pointerId: event.pointerId,
       startClientX: event.clientX,
+      transitionType: transition.type,
       originalDurationMs: durationMs,
       previewDurationMs: durationMs,
       maxDurationMs,
@@ -683,7 +686,7 @@ export function Timeline({
     }
 
     onUpdateClipTransition?.(transitionInteraction.clipId, {
-      type: "dissolve",
+      type: transitionInteraction.transitionType,
       durationMs: transitionInteraction.previewDurationMs,
     });
 
@@ -1129,7 +1132,9 @@ function TimelineTrack({
                   >
                     <button
                       aria-label={
-                        "Adjust dissolve duration for " +
+                        "Adjust " +
+                        getTransitionLabel(transition).toLowerCase() +
+                        " duration for " +
                         (asset?.name ?? "Missing media") +
                         " to " +
                         displayDurationMs +
@@ -1161,7 +1166,7 @@ function TimelineTrack({
 
                         if (nextDurationMs !== transition.durationMs) {
                           onUpdateClipTransition?.(sourceClip.id, {
-                            type: "dissolve",
+                            type: transition.type,
                             durationMs: nextDurationMs,
                           });
                         }
@@ -1178,7 +1183,11 @@ function TimelineTrack({
                       onPointerUp={onFinishTransitionInteraction}
                       onPointerCancel={onCancelTransitionInteraction}
                       style={{ left: "0px" }}
-                      title="Drag to change dissolve duration"
+                      title={
+                        "Drag to change " +
+                        getTransitionLabel(transition).toLowerCase() +
+                        " duration"
+                      }
                       type="button"
                     >
                       <span aria-hidden="true" />
@@ -1187,7 +1196,9 @@ function TimelineTrack({
                       aria-label={
                         "Select " +
                         (asset?.name ?? "Missing media") +
-                        " dissolve transition to " +
+                        " " +
+                        getTransitionLabel(transition).toLowerCase() +
+                        " transition to " +
                         nextAsset.name
                       }
                       className="timeline-transition-indicator"
@@ -1196,7 +1207,12 @@ function TimelineTrack({
                         onSelectClip?.(sourceClip.id);
                       }}
                       style={{ right: "0px" }}
-                      title={"Dissolve · " + displayDurationMs + " ms"}
+                      title={
+                        getTransitionLabel(transition) +
+                        " · " +
+                        displayDurationMs +
+                        " ms"
+                      }
                       type="button"
                     >
                       <span aria-hidden="true">◆</span>

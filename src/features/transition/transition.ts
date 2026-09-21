@@ -3,14 +3,20 @@ import type { Clip, ClipTransition, Track } from "../project/domain";
 export type { ClipTransition } from "../project/domain";
 
 export const DISSOLVE_TRANSITION_TYPE = "dissolve" as const;
+export const FADE_THROUGH_BLACK_TRANSITION_TYPE = "fade-through-black" as const;
 export const DEFAULT_DISSOLVE_DURATION_MS = 300;
+export const DEFAULT_FADE_THROUGH_BLACK_DURATION_MS = 300;
 export const MIN_DISSOLVE_DURATION_MS = 50;
 export const MAX_DISSOLVE_DURATION_MS = 2000;
 
 export function normalizeClipTransition(
   transition: ClipTransition | null | undefined,
 ): ClipTransition | undefined {
-  if (!transition || transition.type !== DISSOLVE_TRANSITION_TYPE) {
+  if (
+    !transition ||
+    (transition.type !== DISSOLVE_TRANSITION_TYPE &&
+      transition.type !== FADE_THROUGH_BLACK_TRANSITION_TYPE)
+  ) {
     return undefined;
   }
 
@@ -19,7 +25,7 @@ export function normalizeClipTransition(
   }
 
   return {
-    type: DISSOLVE_TRANSITION_TYPE,
+    type: transition.type,
     durationMs: Math.min(
       MAX_DISSOLVE_DURATION_MS,
       Math.max(
@@ -34,6 +40,15 @@ export function getClipTransition(
   transition: ClipTransition | null | undefined,
 ): ClipTransition | undefined {
   return normalizeClipTransition(transition);
+}
+
+export function getTransitionLabel(transition: ClipTransition): string {
+  switch (transition.type) {
+    case DISSOLVE_TRANSITION_TYPE:
+      return "Dissolve";
+    case FADE_THROUGH_BLACK_TRANSITION_TYPE:
+      return "Fade through black";
+  }
 }
 
 export function getClipDurationMs(clip: Clip): number {
@@ -66,7 +81,7 @@ export function normalizeTransitionForAdjacentClips(
   }
 
   return {
-    type: DISSOLVE_TRANSITION_TYPE,
+    type: normalized.type,
     durationMs: Math.min(normalized.durationMs, maxDurationMs),
   };
 }
@@ -153,12 +168,18 @@ export function isTransitionAdjacent(
   return outgoingEndMs !== null && outgoingEndMs === incomingClip.timelineStartMs;
 }
 
-export function getDissolveOpacities(
+export interface TransitionVisualState {
+  outgoingOpacity: number;
+  incomingOpacity: number;
+  overlayOpacity: number;
+}
+
+export function getTransitionVisualState(
   timelineTimeMs: number,
   outgoingClip: Clip,
   incomingClip: Clip,
   transition: ClipTransition,
-): { outgoingOpacity: number; incomingOpacity: number } | null {
+): TransitionVisualState | null {
   const normalized = normalizeClipTransition(transition);
   const outgoingEndMs = getClipEndMs(outgoingClip);
 
@@ -187,8 +208,72 @@ export function getDissolveOpacities(
     ),
   );
 
+  if (normalized.type === DISSOLVE_TRANSITION_TYPE) {
+    return {
+      outgoingOpacity: 1 - progress,
+      incomingOpacity: progress,
+      overlayOpacity: 0,
+    };
+  }
+
+  if (progress < 0.5) {
+    return {
+      outgoingOpacity: 1,
+      incomingOpacity: 0,
+      overlayOpacity: progress * 2,
+    };
+  }
+
   return {
-    outgoingOpacity: 1 - progress,
-    incomingOpacity: progress,
+    outgoingOpacity: 0,
+    incomingOpacity: 1,
+    overlayOpacity: (1 - progress) * 2,
   };
+}
+
+export function getDissolveOpacities(
+  timelineTimeMs: number,
+  outgoingClip: Clip,
+  incomingClip: Clip,
+  transition: ClipTransition,
+): { outgoingOpacity: number; incomingOpacity: number } | null {
+  if (transition.type !== DISSOLVE_TRANSITION_TYPE) {
+    return null;
+  }
+
+  const visualState = getTransitionVisualState(
+    timelineTimeMs,
+    outgoingClip,
+    incomingClip,
+    transition,
+  );
+
+  if (!visualState) {
+    return null;
+  }
+
+  return {
+    outgoingOpacity: visualState.outgoingOpacity,
+    incomingOpacity: visualState.incomingOpacity,
+  };
+}
+
+export function getFadeThroughBlackOpacity(
+  timelineTimeMs: number,
+  outgoingClip: Clip,
+  incomingClip: Clip,
+  transition: ClipTransition,
+): number | null {
+  if (transition.type !== FADE_THROUGH_BLACK_TRANSITION_TYPE) {
+    return null;
+  }
+
+  return (
+    getTransitionVisualState(
+      timelineTimeMs,
+      outgoingClip,
+      incomingClip,
+      transition,
+    )?.overlayOpacity ?? null
+  );
 }

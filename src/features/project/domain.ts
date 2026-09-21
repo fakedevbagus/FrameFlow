@@ -54,10 +54,17 @@ export interface CropPosition {
   y: number;
 }
 
-export interface ClipTransition {
+export interface DissolveTransition {
   type: "dissolve";
   durationMs: number;
 }
+
+export interface FadeThroughBlackTransition {
+  type: "fade-through-black";
+  durationMs: number;
+}
+
+export type ClipTransition = DissolveTransition | FadeThroughBlackTransition;
 
 export interface Clip {
   id: string;

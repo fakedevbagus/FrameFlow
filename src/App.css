@@ -373,6 +373,14 @@ button:focus-visible {
   transform-origin: center center;
 }
 
+.preview-transition-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background: #000;
+}
+
 .preview-interaction-layer {
   position: absolute;
   inset: 0;
