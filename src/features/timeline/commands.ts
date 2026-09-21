@@ -497,6 +497,36 @@ export function updateTrackVolume(
 }
 
 
+export function updateTrackPan(
+  project: Project,
+  trackId: string,
+  pan: number,
+  now: Date = new Date(),
+): Project {
+  if (!Number.isFinite(pan) || pan < -1 || pan > 1) {
+    throw new Error("Track pan must be between -1 and 1.");
+  }
+
+  const trackIndex = project.tracks.findIndex((track) => track.id === trackId);
+
+  if (trackIndex === -1) {
+    throw new Error("Track does not exist in this project.");
+  }
+
+  if (project.tracks[trackIndex].type !== "audio") {
+    throw new Error("Track pan is only available for audio tracks.");
+  }
+
+  const tracks = [...project.tracks];
+  tracks[trackIndex] = {
+    ...tracks[trackIndex],
+    pan,
+  };
+
+  return { ...project, tracks, updatedAt: now.toISOString() };
+}
+
+
 export function updateAudioClipFades(
   project: Project,
   clipId: string,
