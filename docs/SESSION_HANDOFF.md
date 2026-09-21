@@ -1,16 +1,15 @@
-## M3.49 validation correction — 2026-09-21
+## M3.50 Export Progress and Cancellation — 2026-09-21
 
-- Local validation reported three parser errors in test files at their closing lines, while Rust tests 28/28 and Tauri dev startup were successful.
-- Restored the missing test declarations; this was a test-structure-only correction.
-- Re-run the full frontend validation before merging PR #63.
-
-## M3.49 Audio Track Pan Control — 2026-09-21
-
-- Started M3.49 after M3.47 and M3.48 were merged.
-- Scope: add track-level left/center/right audio balance without introducing the deferred full effects stack.
-- Pan is backward compatible, defaulting to center for older project data.
-- Persistence uses the existing track command/history architecture.
-- Required validation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+- Started from M3.49 merge SHA 7fbb75a222bcccfc92cb2ee211e1df0db9748233.
+- Scope: expose native FFmpeg export progress and allow the active render to be cancelled without changing existing RenderPlan semantics.
+- Native export processes are tracked by export job ID and emit `export-progress` events with stage and normalized progress.
+- Cancellation kills the active FFmpeg child and remains effective when requested between the sequential video and audio-mix stages.
+- Frontend export jobs aggregate two-stage project export progress monotonically: video contributes the first 80%, audio mixing the final 20%.
+- ExportPanel now shows a progress bar and Cancel export action.
+- Regression coverage was added for progress parsing/subscription, monotonic job progress, native renderer metadata, runner aggregation, and cancellation UI.
+- M3.50 validation required: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Local validation is pending user verification.
+- Deferred: full audio effects/EQ/compression, audio automation, waveform editing.
 
 ## M3.48 test assertion correction — 2026-09-21
 
