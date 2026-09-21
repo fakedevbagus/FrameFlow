@@ -1,0 +1,165 @@
+import { describe, expect, it } from "vitest";
+import { compileSingleAudioTrackGraph } from "./audio-render-graph";
+import type { RenderPlan } from "./render-plan";
+
+function createAudioSegment(
+  overrides: Partial<RenderPlan["segments"][number]> = {},
+): RenderPlan["segments"][number] {
+  return {
+    inputIndex: 0,
+    assetId: "audio-a",
+    sourcePath: "/media/audio-a.mp3",
+    mediaType: "audio",
+    trackId: "audio-1",
+    trackType: "audio",
+    trackIndex: 0,
+    timelineStartMs: 0,
+    timelineEndMs: 2000,
+    sourceStartMs: 1000,
+    sourceEndMs: 3000,
+    durationMs: 2000,
+    isMuted: false,
+    ...overrides,
+  };
+}
+
+function createPlan(
+  segments: RenderPlan["segments"],
+  durationMs = 5000,
+): RenderPlan {
+  return {
+    width: 406,
+    height: 720,
+    frameRate: 30,
+    durationMs,
+    segments,
+  };
+}
+
+describe("audio render graph", () => {
+  it("compiles a trimmed audio clip with timeline delay and stereo normalization", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          inputIndex: 2,
+          timelineStartMs: 1500,
+          timelineEndMs: 3500,
+        }),
+      ]),
+    );
+
+    expect(graph.inputs).toEqual([
+      {
+        inputIndex: 2,
+        sourcePath: "/media/audio-a.mp3",
+        sourceStartMs: 1000,
+        sourceEndMs: 3000,
+        timelineStartMs: 1500,
+        durationMs: 2000,
+      },
+    ]);
+    expect(graph.filterComplex).toContain(
+      "[2:a:0]atrim=start=1:end=3,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1500:all=1[audio0]",
+    );
+    expect(graph.filterComplex).toContain(
+      "anullsrc=r=48000:cl=stereo,atrim=duration=5,asetpts=PTS-STARTPTS[silence]",
+    );
+    expect(graph.filterComplex).toContain(
+      "[silence][audio0]amix=inputs=2:duration=longest:dropout_transition=0[aout]",
+    );
+    expect(graph.audioMap).toBe("[aout]");
+  });
+
+  it("preserves ordered audio inputs by timeline position", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          inputIndex: 3,
+          assetId: "audio-b",
+          sourcePath: "/media/audio-b.wav",
+          timelineStartMs: 4000,
+          timelineEndMs: 5000,
+          sourceStartMs: 2000,
+          sourceEndMs: 3000,
+          durationMs: 1000,
+        }),
+        createAudioSegment({
+          inputIndex: 1,
+          timelineStartMs: 0,
+          timelineEndMs: 1500,
+          sourceStartMs: 500,
+          sourceEndMs: 2000,
+          durationMs: 1500,
+        }),
+      ]),
+    );
+
+    expect(graph.inputs.map((input) => input.inputIndex)).toEqual([1, 3]);
+    expect(graph.filterComplex).toContain("[1:a:0]");
+    expect(graph.filterComplex).toContain("[3:a:0]");
+    expect(graph.filterComplex).toMatch(/\[silence\]\[audio0\]\[audio1\]amix=inputs=3/);
+  });
+
+  it("omits muted audio clips from the mix", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          inputIndex: 0,
+          isMuted: true,
+        }),
+        createAudioSegment({
+          inputIndex: 1,
+          timelineStartMs: 2000,
+          timelineEndMs: 3000,
+          sourceStartMs: 0,
+          sourceEndMs: 1000,
+          durationMs: 1000,
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).not.toContain("[0:a:0]");
+    expect(graph.filterComplex).toContain("[1:a:0]");
+    expect(graph.filterComplex).toContain("[silence][audio1]amix=inputs=2");
+  });
+
+  it("rejects plans with multiple audio tracks", () => {
+    const graphSegments = [
+      createAudioSegment({ trackId: "audio-1" }),
+      createAudioSegment({
+        inputIndex: 1,
+        assetId: "audio-b",
+        trackId: "audio-2",
+      }),
+    ];
+
+    expect(() =>
+      compileSingleAudioTrackGraph(createPlan(graphSegments)),
+    ).toThrow("one audio track");
+  });
+
+  it("rejects non-audio assets placed on an audio track", () => {
+    expect(() =>
+      compileSingleAudioTrackGraph(
+        createPlan([
+          createAudioSegment({
+            mediaType: "video",
+          }),
+        ]),
+      ),
+    ).toThrow("audio assets");
+  });
+
+  it("rejects plans without audio clips", () => {
+    expect(() =>
+      compileSingleAudioTrackGraph(
+        createPlan([
+          {
+            ...createAudioSegment(),
+            trackType: "video",
+          },
+        ]),
+      ),
+    ).toThrow("no audio clips");
+  });
+});
