@@ -1524,6 +1524,105 @@ describe("App", () => {
     expect(container.querySelector(".project-notice")).toHaveTextContent("Redo.");
   });
 
+  it("edits audio volume automation from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-audio-volume-automation",
+        name: "volume-automation.mp3",
+        mediaType: "audio",
+        sourcePath: "/media/volume-automation.mp3",
+        durationMs: 6000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("volume-automation.mp3")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add volume-automation.mp3 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select volume-automation.mp3 clip",
+      }),
+    );
+
+    const volumeInput = screen.getByRole("spinbutton", {
+      name: "Audio volume automation",
+    });
+
+    fireEvent.change(volumeInput, { target: { value: "40" } });
+    fireEvent.blur(volumeInput);
+
+    await waitFor(() => {
+      expect(screen.getByText("1 keyframe")).toBeInTheDocument();
+      expect(volumeInput).toHaveValue(40);
+    });
+
+    const ruler = container.querySelector(".timeline-ruler-scale");
+    expect(ruler).not.toBeNull();
+
+    Object.defineProperty(ruler, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 0,
+        height: 28,
+        left: 0,
+        right: 800,
+        top: 0,
+        width: 800,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 80 });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Playhead at 00:02")).toBeInTheDocument(),
+    );
+
+    fireEvent.change(volumeInput, { target: { value: "80" } });
+    fireEvent.blur(volumeInput);
+
+    await waitFor(() => {
+      expect(screen.getByText("2 keyframes")).toBeInTheDocument();
+      expect(volumeInput).toHaveValue(80);
+    });
+
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 40 });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Playhead at 00:01")).toBeInTheDocument();
+      expect(volumeInput).toHaveValue(60);
+    });
+
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 80 });
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", {
+          name: "Remove audio volume keyframe",
+        }),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Remove audio volume keyframe",
+      }),
+    );
+
+    await waitFor(() => expect(screen.getByText("1 keyframe")).toBeInTheDocument());
+  });
+
   it("splits the selected clip at the playhead", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
