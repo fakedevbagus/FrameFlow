@@ -1,10 +1,22 @@
-## M3.50 validation correction — native cancellation state — 2026-09-21
+## M3.51 Audio Clip 3-Band EQ — implementation checkpoint — 2026-09-21
 
-- Local validation reached 29 frontend test files and 285/285 tests, and the frontend production build completed successfully.
-- Rust compilation then failed in `src-tauri/src/export_process.rs` because `HashSet::take()` was used where `HashSet::remove()` is required.
-- Corrected `ExportProcessState::finish()` to remove the cancellation marker with `HashSet::remove()`, preserving the boolean return contract.
-- Fresh Rust/Tauri validation is required before marking PR #64 ready.
-- The reported non-blocking React `act(...)` warnings and jsdom `HTMLMediaElement.play()` message remain known test-environment warnings.
+- M3.50 Export Progress and Cancellation is complete and PR #64 was squash-merged at e239c4b355d64c62a090067ad1aaaa80cefe9f55.
+- M3.51 starts from the verified M3.50 main state and adds a backward-compatible per-audio-clip three-band EQ.
+- Audio EQ uses Low/Mid/High gain controls with a normalized range of -12 dB to +12 dB and a persisted enabled flag.
+- Audio EQ is intentionally clip-level so existing Audio track volume, pan, mute, fade, multi-track mix, and export sequencing remain independent.
+- Preview uses a best-effort Web Audio chain of low-shelf, peaking, and high-shelf filters before the existing stereo pan stage.
+- RenderPlan carries normalized EQ metadata; the native FFmpeg audio graph applies matching three-band equalizer filters before clip fades and timeline delay.
+- The selected-audio Inspector exposes an Enable EQ toggle and Low/Mid/High gain editors through the existing project/history command path.
+- Added regression coverage across domain normalization, command validation/persistence, RenderPlan propagation, FFmpeg graph compilation, and App Inspector workflow.
+- Local validation is still required before marking M3.51 ready.
+
+## M3.50 merge reconciliation — 2026-09-21
+
+- PR #64 Export Progress and Cancellation was marked ready after user validation and squash-merged.
+- Merge SHA: e239c4b355d64c62a090067ad1aaaa80cefe9f55.
+- User validation passed npm lint, 285/285 frontend tests, the production build, and then the post-fix Rust/Tauri validation after the HashSet cancellation cleanup correction.
+- Known non-blocking React `act(...)` and jsdom `HTMLMediaElement.play()` warnings remain test-environment noise.
+- M3.50 export progress and cancellation is now part of main.
 
 ## M3.49 merge reconciliation and M3.50 kickoff — 2026-09-21
 
@@ -18,7 +30,7 @@
 - Export progress remains monotonic in the frontend; two-stage video-plus-audio exports map video to 80% and final audio mixing to the remaining 20%.
 - ExportPanel now shows a progress bar and Cancel export control, with a cancelled terminal state.
 - Deferred: full audio effects/EQ/compression stack, audio automation, waveform editing.
-- M3.50 local validation is pending user verification.
+- M3.50 local validation was completed before merge.
 
 ## M3.49 validation correction — test declaration restoration — 2026-09-21
 
