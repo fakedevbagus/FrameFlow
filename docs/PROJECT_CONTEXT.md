@@ -1,3 +1,17 @@
+## Live state reconciliation — M3.30 — 2026-09-21
+
+- Current main after M3.29: 1aa5dee0da89a0f80357ad294273025164254a90.
+- M3.29 PR #40 was squash-merged after the user's clean local validation report.
+- Active branch: feat/m3-30-transition-browser.
+- M3.30 adds a focused transition browser/picker for the existing transition types: None, Dissolve, and Fade through black.
+- The picker is presentation-only and reuses the existing TransitionInspector onChange contract and history-backed updateClipTransition flow.
+- Existing transition duration editing remains unchanged.
+- Existing select control remains available as an accessibility/keyboard fallback; no second transition state model is introduced.
+- Regression coverage was added in src/features/transition/TransitionInspector.test.tsx.
+- M3.30 local validation is pending user verification.
+- The environment could not execute the repository locally because direct GitHub cloning failed on DNS resolution, so no automated result is being claimed.
+- Deferred items remain: richer draggable transition placement UX, transition browser with thumbnails, audio transitions, custom transition profiles, and responsive workspace redesign unless a future focused milestone explicitly requires them.
+
 ## Live state reconciliation — 2026-09-21
 
 Verified repository state:

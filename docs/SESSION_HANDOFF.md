@@ -1,3 +1,17 @@
+## Current live reconciliation — M3.30 — 2026-09-21
+
+- Current main after M3.29 squash merge: 1aa5dee0da89a0f80357ad294273025164254a90.
+- Completed milestone: M3.29 — Fade through black transition, PR #40, squash merge SHA 1aa5dee0da89a0f80357ad294273025164254a90.
+- User reported the M3.29 local validation passed without errors, including the requested transition behavior checks.
+- Historical PR #22 remains open and is not active project work.
+- Active milestone: M3.30 — Transition Browser / Picker.
+- Branch: feat/m3-30-transition-browser.
+- M3.30 scope: replace transition selection as a text-only control with a discoverable picker for None, Dissolve, and Fade through black while preserving the existing transition mutation and duration editing paths.
+- M3.30 implementation: picker buttons use the same onChange contract as the existing select; existing select remains as an accessibility/keyboard fallback so current integration coverage is preserved.
+- M3.30 automated coverage: added TransitionInspector.test.tsx for option rendering, selection, duration preservation, and ineligible-state behavior.
+- M3.30 validation: not yet locally validated by the user. Automated execution could not be performed in this environment because direct repository cloning was blocked by network/DNS resolution.
+- Next step: user validates the M3.30 branch with lint, tests, build, Tauri dev, and visual picker checks before the PR is marked ready and merged.
+
 ## Current live reconciliation — 2026-09-21
 
 - Verified live main tip: 468d1d3f0bbcbe28028b547097e5a8810564c5e8.
