@@ -362,6 +362,7 @@ FrameFlow is a Linux-native desktop video editor inspired by the workflow and us
 The project is being built incrementally. Every milestone must be small, testable, reversible, and documented before the next milestone starts.
 
 ## Repository
+
 - GitHub: https://github.com/fakedevbagus/FrameFlow
 - Current default branch: `main`
 - Current `main` tip at this continuity checkpoint: `7d9400634c0f9a4650212110b938a17e0fa685da` (`docs: clarify M3.28 local validation status`).
@@ -710,6 +711,7 @@ npm run test
 npm run build
 npm run tauri dev
 ```
+
 Manual playback checks:
 
 1. Import a real local MP4.
