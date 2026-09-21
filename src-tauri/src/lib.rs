@@ -225,19 +225,7 @@ fn render_single_source_to_mp4(
 fn render_video_graph_to_mp4(
   request: NativeVideoGraphRenderRequest,
 ) -> Result<NativeExportRenderResult, String> {
-  validate_native_export_settings(request.width, request.height, request.frame_rate)?;
-
-  if request.inputs.is_empty() {
-    return Err("Native video graph render requires at least one input.".to_string());
-  }
-
-  if request.filter_complex.trim().is_empty() {
-    return Err("Native video graph render requires a filter graph.".to_string());
-  }
-
-  if request.video_map != "[vout]" {
-    return Err("Native video graph render requires the [vout] output map.".to_string());
-  }
+  validate_native_video_graph_request_metadata(&request)?;
 
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
@@ -401,6 +389,26 @@ fn same_path(first: &Path, second: &Path) -> bool {
   first_canonical.is_some() && first_canonical == second_canonical
 }
 
+fn validate_native_video_graph_request_metadata(
+  request: &NativeVideoGraphRenderRequest,
+) -> Result<(), String> {
+  validate_native_export_settings(request.width, request.height, request.frame_rate)?;
+
+  if request.inputs.is_empty() {
+    return Err("Native video graph render requires at least one input.".to_string());
+  }
+
+  if request.filter_complex.trim().is_empty() {
+    return Err("Native video graph render requires a filter graph.".to_string());
+  }
+
+  if request.video_map != "[vout]" {
+    return Err("Native video graph render requires the [vout] output map.".to_string());
+  }
+
+  Ok(())
+}
+
 fn build_ffmpeg_video_graph_args(
   input_paths: &[PathBuf],
   filter_complex: &str,
@@ -408,7 +416,7 @@ fn build_ffmpeg_video_graph_args(
   output_path: &Path,
 ) -> Vec<std::ffi::OsString> {
   let mut args = vec![
-    " -hide_banner".trim().into(),
+    "-hide_banner".into(),
     "-loglevel".into(),
     "error".into(),
     "-y".into(),
@@ -851,7 +859,7 @@ mod tests {
 
   #[test]
   fn validates_native_video_graph_request_metadata() {
-    assert!(super::NativeVideoGraphRenderRequest {
+    let valid = super::NativeVideoGraphRenderRequest {
       inputs: vec!["/media/a.mp4".to_string()],
       output_path: "/tmp/output.mp4".to_string(),
       width: 1280,
@@ -859,22 +867,28 @@ mod tests {
       frame_rate: 30.0,
       filter_complex: "[0:v:0]trim=start=0:end=1[v0]".to_string(),
       video_map: "[vout]".to_string(),
-    }
-    .video_map == "[vout]");
+    };
 
-    assert_ne!(
-      super::NativeVideoGraphRenderRequest {
-        inputs: vec![],
-        output_path: "/tmp/output.mp4".to_string(),
-        width: 1280,
-        height: 720,
-        frame_rate: 30.0,
-        filter_complex: String::new(),
-        video_map: "[vout]".to_string(),
-      }
-      .video_map,
-      ""
-    );
+    assert!(super::validate_native_video_graph_request_metadata(&valid).is_ok());
+
+    let mut missing_inputs = valid;
+    missing_inputs.inputs.clear();
+    assert!(super::validate_native_video_graph_request_metadata(&missing_inputs).is_err());
+
+    let mut missing_graph = super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/media/a.mp4".to_string()],
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: String::new(),
+      video_map: "[vout]".to_string(),
+    };
+    assert!(super::validate_native_video_graph_request_metadata(&missing_graph).is_err());
+
+    missing_graph.filter_complex = "null[v0]".to_string();
+    missing_graph.video_map = "[other]".to_string();
+    assert!(super::validate_native_video_graph_request_metadata(&missing_graph).is_err());
   }
 
   #[test]
