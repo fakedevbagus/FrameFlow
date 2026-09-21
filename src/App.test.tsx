@@ -1785,6 +1785,58 @@ describe("App", () => {
     });
   });
 
+  it("updates audio clip EQ controls from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-audio-eq-ui",
+        name: "eq-music.mp3",
+        mediaType: "audio",
+        sourcePath: "/media/eq-music.mp3",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("eq-music.mp3")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add eq-music.mp3 to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select eq-music.mp3 clip" }),
+    );
+
+    const enable = screen.getByRole("checkbox", { name: "Enable audio EQ" });
+    const low = screen.getByRole("spinbutton", { name: "Audio EQ low gain" });
+    const mid = screen.getByRole("spinbutton", { name: "Audio EQ mid gain" });
+    const high = screen.getByRole("spinbutton", { name: "Audio EQ high gain" });
+
+    expect(enable).not.toBeChecked();
+    expect(low).toHaveValue(0);
+    expect(mid).toHaveValue(0);
+    expect(high).toHaveValue(0);
+
+    fireEvent.click(enable);
+    fireEvent.change(low, { target: { value: "4.5" } });
+    fireEvent.blur(low);
+    fireEvent.change(mid, { target: { value: "-2" } });
+    fireEvent.blur(mid);
+    fireEvent.change(high, { target: { value: "6" } });
+    fireEvent.blur(high);
+
+    await waitFor(() => {
+      expect(screen.getByRole("checkbox", { name: "Enable audio EQ" })).toBeChecked();
+      expect(screen.getByRole("spinbutton", { name: "Audio EQ low gain" })).toHaveValue(4.5);
+      expect(screen.getByRole("spinbutton", { name: "Audio EQ mid gain" })).toHaveValue(-2);
+      expect(screen.getByRole("spinbutton", { name: "Audio EQ high gain" })).toHaveValue(6);
+    });
+  });
+
   it("updates audio clip fade controls from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
