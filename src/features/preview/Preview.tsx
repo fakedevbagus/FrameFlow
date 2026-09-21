@@ -5,7 +5,7 @@ import {
   useState,
   type PointerEvent,
 } from "react";
-import type {
+import { getTrackVolume, type 
   ClipCrop,
   ClipTransform,
   CropPosition,
@@ -1175,6 +1175,7 @@ function PreviewVisualLayer({
               data-media-width={mediaSize?.width || undefined}
               data-media-height={mediaSize?.height || undefined}
               src={mediaUrl ?? undefined}
+      volume={getTrackVolume(layer.track)}
               onLoad={handleImageLoad}
               style={{
                 ...cropMediaStyle,
