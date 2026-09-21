@@ -1,3 +1,13 @@
+## M3.36 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-36-ffmpeg-filter-graph`.
+- Added `src/features/export/render-graph.ts` to compile a `RenderPlan` into a deterministic FFmpeg video filter graph.
+- The current graph supports one video track, sequential video clips, source trimming, canvas scale/pad, frame-rate normalization, and black-frame gaps.
+- Filter input paths remain separate process arguments; the graph itself contains no shell command interpolation.
+- Multi-track compositing, image sources, audio mixing, transitions, transforms, crops, keyframes, and mute-state rendering are rejected explicitly until their graph semantics are implemented.
+- Added regression coverage for the basic graph and its unsupported-state boundaries.
+- M3.36 local validation is pending user verification.
+
 ## M3.35 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-35-render-plan`.
