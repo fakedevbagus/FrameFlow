@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { chooseExportOutputPath } from "./export-dialog";
 import type { Project } from "../project/domain";
 import {
   createDefaultExportSettings,
@@ -18,6 +19,8 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
   const [fileName, setFileName] = useState(
     () => createDefaultExportSettings(project).fileName,
   );
+  const [outputPath, setOutputPath] = useState<string | null>(null);
+  const [isChoosingOutput, setIsChoosingOutput] = useState(false);
 
   const dimensions = useMemo(
     () => getExportDimensions(quality, project),
@@ -108,6 +111,33 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
           <small>Output path selection and rendering are introduced in the export pipeline milestone.</small>
         </label>
 
+        <div className="export-destination">
+          <div>
+            <span className="export-setting-label">Output destination</span>
+            <strong>
+              {outputPath ?? "No output file selected"}
+            </strong>
+          </div>
+          <button
+            aria-label="Choose export destination"
+            className="toolbar-button"
+            disabled={isChoosingOutput}
+            onClick={() => {
+              setIsChoosingOutput(true);
+              void chooseExportOutputPath(settings.fileName)
+                .then((path) => {
+                  if (path) {
+                    setOutputPath(path);
+                  }
+                })
+                .finally(() => setIsChoosingOutput(false));
+            }}
+            type="button"
+          >
+            {isChoosingOutput ? "Choosing…" : "Choose file"}
+          </button>
+        </div>
+
         <div className="export-panel-summary">
           <span>Project</span>
           <strong>{project.name}</strong>
@@ -127,7 +157,9 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
           disabled
           type="button"
         >
-          Export renderer not connected yet
+          {outputPath
+            ? "Export renderer not connected yet"
+            : "Choose an output file first"} 
         </button>
       </div>
     </div>
