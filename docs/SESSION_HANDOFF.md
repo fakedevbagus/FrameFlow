@@ -1,6 +1,6 @@
 ## Current live reconciliation — M3.30 — 2026-09-21
 
-- Current main after M3.29 squash merge: 1aa5dee0da89a0f80357ad29427302516425490.
+- Current main after M3.29 squash merge: 1aa5dee0da89a0f80357ad294273025164254a90.
 - Completed milestone: M3.29 — Fade through black transition, PR #40, squash merge SHA 1aa5dee0da89a0f80357ad294273025164254a90.
 - User reported the M3.29 local validation passed without errors, including the requested transition behavior checks.
 - Historical PR #22 remains open and is not active project work.
