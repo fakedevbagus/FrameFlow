@@ -1,45 +1,20 @@
-## M3.38 validation correction — 2026-09-21
+## M3.39 implementation checkpoint — 2026-09-21
 
-- Latest local validation passed the Rust test suite (15/15), production build, and Tauri dev startup.
-- The TypeScript suite had one regression failure in the direct single-clip graph test.
-- The emitted graph contained an invalid trailing comma before `[vout]`; this was caused by the filter-builder array/join logic.
-- The builder now appends the `[vout]` label after joining filters, producing a valid filter-chain boundary.
-- Fresh TypeScript validation is pending.
-## M3.38 single-clip compatibility path — 2026-09-21
+- Branch: `feat/m3-39-single-source-audio`.
+- M3.38 is complete at merge SHA `24008e949a106660143ea762c69687ac96519087`.
+- M3.39 adds audio muxing only to the already-working single-source export path.
+- The native single-source request can explicitly include or omit the first source audio stream while keeping the existing video normalization.
+- This does not yet mix an independent Audio Track with a Video Track; timeline audio composition remains a later milestone.
+- Local validation for M3.39 is pending.
 
-- The user's environment reports Filter not found when executing the filter_complex path, including the minimal single-clip graph.
-- To isolate this environment-specific filter_complex issue, the simplest export case now uses the existing native single-source renderer.
-- Segment timing is passed as native input options (-ss/-t), while scale/pad, frame rate, and pixel format remain native output options.
-- Audio is explicitly disabled for this direct path to preserve M3.37's video-only render policy.
-- Multi-clip/gap timelines still use the graph renderer.
-- Local validation of the compatibility path is pending.
-- The direct single-clip graph now avoids fps, setsar, format, and concat filters; native output options apply the requested frame rate and yuv420p pixel format.\n- This is intended to reduce filter dependency surface for the simplest real export path while retaining the existing multi-clip concat path.
-## M3.38 native render debug checkpoint — 2026-09-21
+## M3.38 merge reconciliation — 2026-09-21
 
-- Real ExportPanel execution reaches FFmpeg, but the user's environment reported Filter not found while parsing the video filter graph.
-- The exact graph shape succeeds in an independent FFmpeg 7.1.5 test, so the graph failure is not reproduced in the development environment.
-- M3.38 now optimizes the simplest export case: one video clip starting at 0 ms bypasses concat and emits clip0 through format=yuv420p to vout.
-- Multi-clip and gap timelines retain concat.
-- This removes one unnecessary filter dependency from the most basic export path while preserving the existing render semantics.
-- Local validation of this change is pending.
-## M3.38 validation/debug correction — 2026-09-21
-
-- The export action is now reaching the native renderer, but a real media export returned an FFmpeg failure.
-- The UI previously truncated the renderer error text, preventing diagnosis of the underlying FFmpeg stderr.
-- The core M3.37 graph command shape was independently exercised with FFmpeg and completed successfully on a synthetic source.
-- ExportPanel now displays the complete renderer error text and includes regression coverage for that behavior.
-- Next validation should use the updated branch so the precise FFmpeg error is visible if the media-specific render still fails.
-
-## M3.38 implementation checkpoint — 2026-09-21
-
-- Branch: `feat/m3-38-export-render-job`.
-- M3.37 native render graph wiring is complete at merge SHA `90d2489246c80c139dcda02bbb52cf041e738075`.
-- The next vertical slice activates the existing ExportPanel through a dedicated export-job runner rather than embedding renderer orchestration directly into the component.
-- `runExportJob()` creates and starts the existing renderer-agnostic job state, builds the current RenderPlan, invokes the native video graph renderer, and records completed or failed state.
-- ExportPanel now requires a selected output file, disables destination controls while rendering, and exposes explicit rendering/completed/error feedback.
-- The renderer remains intentionally limited to the M3.36/M3.37 supported subset; unsupported timeline state is surfaced as a controlled failed export.
-- Deferred: progress streaming, cancellation, audio graph/muxing, multi-track compositing, images, transforms, crops, keyframes, transitions, and broader export orchestration.
-- Local validation is pending M3.38.
+- Current `main`: `24008e949a106660143ea762c69687ac96519087`.
+- Completed milestone: M3.38 — Export render-job activation, PR #49, squash-merged at `24008e949a106660143ea762c69687ac96519087`.
+- User confirmed real single-clip MP4 export succeeded.
+- ExportPanel now reaches the native renderer through a renderer-agnostic export-job runner.
+- Single-clip exports avoid the problematic filter_complex path; multi-clip/gap timelines retain graph rendering.
+- Next focused slice: add audio muxing to the single-source path before tackling independent timeline audio mixing.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
