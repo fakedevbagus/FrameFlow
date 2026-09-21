@@ -34,6 +34,18 @@ describe("audio waveform", () => {
     expect(path.endsWith(" Z")).toBe(true);
   });
 
+  it("stretches consistently loud audio peaks for visible timeline contrast", () => {
+    const path = buildWaveformPath(
+      [0.8, 0.85, 0.9, 0.95, 1],
+      100,
+      20,
+    );
+
+    expect(path).toContain("M 0.000 10.000");
+    expect(path).toContain("L 100.000 0.800");
+    expect(path).not.toContain("L 50.000 10.000");
+  });
+
   it("returns an empty path for empty or invalid dimensions", () => {
     expect(buildWaveformPath([], 100, 20)).toBe("");
     expect(buildWaveformPath([1], 0, 20)).toBe("");
