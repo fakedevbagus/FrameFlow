@@ -94,14 +94,30 @@ export function buildWaveformPath(
     return "";
   }
 
+  const normalizedPeaks = peaks.map((peak) =>
+    Math.min(1, Math.max(0, peak)),
+  );
+  const sortedPeaks = [...normalizedPeaks].sort((a, b) => a - b);
+  const lowerIndex = Math.floor((sortedPeaks.length - 1) * 0.1);
+  const upperIndex = Math.floor((sortedPeaks.length - 1) * 0.95);
+  const lowerBound = sortedPeaks[lowerIndex] ?? 0;
+  const upperBound = sortedPeaks[upperIndex] ?? 1;
+  const displayRange = upperBound - lowerBound;
+
   const center = height / 2;
   const amplitude = height * 0.46;
-  const points = peaks.map((peak, index) => {
+  const points = normalizedPeaks.map((peak, index) => {
     const x =
-      peaks.length === 1
+      normalizedPeaks.length === 1
         ? width / 2
-        : index / (peaks.length - 1) * width;
-    const normalizedPeak = Math.min(1, Math.max(0, peak));
+        : index / (normalizedPeaks.length - 1) * width;
+    const normalizedPeak =
+      displayRange > 0.000001
+        ? Math.min(
+            1,
+            Math.max(0, (peak - lowerBound) / displayRange),
+          )
+        : peak;
     const yTop = center - normalizedPeak * amplitude;
     const yBottom = center + normalizedPeak * amplitude;
 
