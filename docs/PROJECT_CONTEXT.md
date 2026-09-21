@@ -1,10 +1,10 @@
 ## M3.37 validation correction — 2026-09-21
 
-- The user's first M3.37 local run passed lint, build, and Tauri startup; the full test suite had one assertion failure in the new render-pipeline test.
-- The failure was caused by testing a synchronous graph compilation exception with an asynchronous `.rejects` assertion.
-- The test now uses synchronous `.toThrow()` while preserving the check that the native renderer is not called.
+- The user's latest M3.37 local run passed lint, build, and Tauri startup; the full test suite had one failure in the new render-pipeline regression.
+- The graph-compilation exception assertion passed. The reported failure was the renderer mock call-count check, because the mock retained the call made by the preceding successful pipeline test.
+- The test now clears the native renderer mock before each case.
+- The native request contract was also reconciled: Rust accepts inputs: Vec<String>, TypeScript now uses string[], and the RenderPlan-to-native adapter maps compiled graph inputs to their ordered source paths.
 - A fresh local validation run is required before PR #48 is marked ready.
-
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.
