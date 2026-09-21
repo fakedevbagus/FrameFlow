@@ -4,6 +4,7 @@ import {
   DEFAULT_DISSOLVE_DURATION_MS,
   getClipEndMs,
   getDissolveOpacities,
+  getFadeThroughBlackOpacity,
   getNextClipForTransition,
   isTransitionAdjacent,
   normalizeClipTransition,
@@ -29,7 +30,7 @@ function createClip(id: string, timelineStartMs: number, durationMs: number): Cl
 }
 
 describe("transition helpers", () => {
-  it("normalizes dissolve duration into supported bounds", () => {
+  it("normalizes supported transition durations into bounds", () => {
     expect(
       normalizeClipTransition({
         type: "dissolve",
@@ -123,6 +124,31 @@ describe("transition helpers", () => {
     const sanitized = sanitizeTrackTransitions(track, () => true);
 
     expect(sanitized.clips[0].transitionOut).toBeUndefined();
+  });
+
+  it("calculates fade through black with a full black midpoint", () => {
+    const first = createClip("first", 0, 4000);
+    const second = createClip("second", 4000, 3000);
+    const transition = {
+      type: "fade-through-black" as const,
+      durationMs: 1000,
+    };
+
+    expect(
+      getFadeThroughBlackOpacity(3500, first, second, transition),
+    ).toBe(0);
+
+    expect(
+      getFadeThroughBlackOpacity(3750, first, second, transition),
+    ).toBeCloseTo(0.5, 8);
+
+    expect(
+      getFadeThroughBlackOpacity(4000 - 500, first, second, transition),
+    ).toBeCloseTo(1, 8);
+
+    expect(
+      getFadeThroughBlackOpacity(3999, first, second, transition),
+    ).toBeCloseTo(0.002, 8);
   });
 
   it("calculates a linear dissolve across the transition window", () => {
