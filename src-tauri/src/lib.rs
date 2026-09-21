@@ -1,4 +1,5 @@
 mod media_server;
+mod audio_render;
 
 use std::{
   fs,
@@ -1303,6 +1304,7 @@ pub fn run() {
       render_single_source_to_mp4,
       render_video_graph_to_mp4,
       render_video_segments_to_mp4,
+      audio_render::render_audio_graph_to_mp4,
       get_media_http_url,
       open_project,
       save_project
