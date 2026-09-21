@@ -1,3 +1,16 @@
+## M3.44 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-44-project-audio-mix`.
+- M3.43 is complete and provides a dedicated native audio-graph boundary.
+- M3.44 connects an explicit Audio track to complete project export.
+- The existing video renderer remains responsible for the base video and embedded video-clip audio.
+- The compiled Audio track is mixed into that base audio in a final native FFmpeg pass.
+- When the base video has no audio, native mixing supplies project-duration stereo silence before mixing.
+- Single-source and sequential multi-segment video rendering paths remain unchanged.
+- User approved M3.44 after local validation.
+- PR #56 was squash-merged at `33c36f19735df4967b149e1c16d60e88f1ccf4a4`.
+- Audio effects, multiple Audio tracks, and progress/cancellation remain deferred.
+
 ## M3.43 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-43-native-audio-render`.
