@@ -41,6 +41,24 @@ Implemented:
 Validation:
 - Local npm/Cargo/Tauri validation is required after pulling this branch.
 
+## 2026-09-21 — M3.49 test declaration restoration
+
+- Restored three accidentally removed test declarations that caused parser errors.
+- No production behavior changed.
+
+## 2026-09-21 — M3.49 Audio Track Pan Control — implementation
+
+Implemented:
+- Backward-compatible Audio track pan (-1 left, 0 center, +1 right).
+- Validated project command and history integration.
+- Compact Timeline pan slider with accessible value text.
+- Web Audio preview panning with a safe no-op fallback when unsupported.
+- RenderPlan propagation and FFmpeg pan filter.
+- Domain, command, RenderPlan, audio graph, and App regression coverage.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required after pulling this branch.
+
 ## 2026-09-21 — M3.48 multi-track test assertion correction
 
 - Corrected the expected input/filter ordering to match deterministic trackIndex ordering.
