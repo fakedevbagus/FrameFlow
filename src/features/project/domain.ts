@@ -15,6 +15,7 @@ export const DEFAULT_AUDIO_COMPRESSOR_THRESHOLD_DB = -24;
 export const DEFAULT_AUDIO_COMPRESSOR_RATIO = 4;
 export const DEFAULT_AUDIO_COMPRESSOR_ATTACK_MS = 20;
 export const DEFAULT_AUDIO_COMPRESSOR_RELEASE_MS = 250;
+export const DEFAULT_AUDIO_CLIP_VOLUME = 1;
 
 export interface CanvasSettings {
   width: number;
@@ -82,6 +83,11 @@ export interface AudioCompressor {
   releaseMs: number;
 }
 
+export interface AudioVolumeKeyframe {
+  timeMs: number;
+  volume: number;
+}
+
 export interface DissolveTransition {
   type: "dissolve";
   durationMs: number;
@@ -109,6 +115,7 @@ export interface Clip {
   audioFadeOutMs?: number;
   audioEq?: AudioEq;
   audioCompressor?: AudioCompressor;
+  audioVolumeKeyframes?: AudioVolumeKeyframe[];
   transformKeyframes?: TransformKeyframe[];
 }
 
