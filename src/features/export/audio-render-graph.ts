@@ -15,8 +15,13 @@ export interface AudioRenderGraph {
   audioMap: string;
 }
 
+export interface AudioRenderGraphOptions {
+  inputIndexOffset?: number;
+}
+
 export function compileSingleAudioTrackGraph(
   plan: RenderPlan,
+  options: AudioRenderGraphOptions = {},
 ): AudioRenderGraph {
   const audioSegments = plan.segments.filter(
     (segment) => segment.trackType === "audio",
@@ -43,9 +48,13 @@ export function compileSingleAudioTrackGraph(
   const ordered = [...audioSegments].sort(
     (left, right) => left.timelineStartMs - right.timelineStartMs,
   );
+  const inputIndexOffset = Math.max(
+    0,
+    Math.floor(options.inputIndexOffset ?? 0),
+  );
 
   const inputs = ordered.map((segment, index) =>
-    toAudioRenderInput(segment, index),
+    toAudioRenderInput(segment, inputIndexOffset + index),
   );
   const graphParts: string[] = [];
 
@@ -64,7 +73,11 @@ export function compileSingleAudioTrackGraph(
 
     const label = "audio" + index;
     graphParts.push(
-      buildAudioSegmentFilter(segment, label, index),
+      buildAudioSegmentFilter(
+        segment,
+        label,
+        inputIndexOffset + index,
+      ),
     );
     mixLabels.push("[" + label + "]");
   });

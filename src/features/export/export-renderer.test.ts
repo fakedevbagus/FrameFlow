@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import {
   renderSingleSourceToMp4,
   renderAudioGraphToMp4,
+  renderVideoWithAudioGraphToMp4,
   renderVideoGraphToMp4,
   renderVideoSegmentsToMp4,
 } from "./export-renderer";
@@ -128,6 +129,32 @@ describe("export renderer", () => {
     expect(invoke).toHaveBeenCalledWith("render_audio_graph_to_mp4", {
       request,
     });
+  });
+
+
+  it("invokes the native video/audio mix renderer with the compiled graph contract", async () => {
+    vi.mocked(invoke).mockResolvedValueOnce({
+      outputPath: "/tmp/project.mp4",
+    });
+
+    const request = {
+      videoSourcePath: "/tmp/project.mp4",
+      audioInputs: ["/media/music.mp3"],
+      audioFilterComplex:
+        "[1:a:0]atrim=start=0:end=2,asetpts=PTS-STARTPTS[audio0];anullsrc=r=48000:cl=stereo[aout]",
+      audioMap: "[aout]",
+      durationMs: 5000,
+      outputPath: "/tmp/project.mp4",
+    };
+
+    await expect(renderVideoWithAudioGraphToMp4(request)).resolves.toEqual({
+      outputPath: "/tmp/project.mp4",
+    });
+
+    expect(invoke).toHaveBeenCalledWith(
+      "render_video_with_audio_graph_to_mp4",
+      { request },
+    );
   });
 
   it("invokes the native video graph renderer with the compiled graph contract", async () => {

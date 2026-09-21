@@ -3,11 +3,55 @@ import {
   renderSingleSourceToMp4,
   renderVideoGraphToMp4,
   renderVideoSegmentsToMp4,
+  renderVideoWithAudioGraphToMp4,
   type NativeExportRenderResult,
 } from "./export-renderer";
+import { compileSingleAudioTrackGraph } from "./audio-render-graph";
 import { compileSingleVideoTrackGraph } from "./render-graph";
 
 export function renderVideoPlanToMp4(
+  plan: RenderPlan,
+  outputPath: string,
+): Promise<NativeExportRenderResult> {
+  const videoSegments = plan.segments.filter(
+    (segment) => segment.trackType === "video",
+  );
+  const audioSegments = plan.segments.filter(
+    (segment) => segment.trackType === "audio" && segment.durationMs > 0,
+  );
+
+  if (videoSegments.length === 0) {
+    throw new Error("Render plan has no video clips.");
+  }
+
+  const videoPlan: RenderPlan = {
+    ...plan,
+    segments: videoSegments,
+  };
+
+  if (audioSegments.length === 0) {
+    return renderVideoOnlyPlanToMp4(videoPlan, outputPath);
+  }
+
+  const audioGraph = compileSingleAudioTrackGraph(plan, {
+    inputIndexOffset: 1,
+  });
+
+  return renderVideoOnlyPlanToMp4(videoPlan, outputPath).then(() =>
+    renderVideoWithAudioGraphToMp4({
+      videoSourcePath: outputPath,
+      audioInputs: audioGraph.inputs
+        .sort((left, right) => left.inputIndex - right.inputIndex)
+        .map((input) => input.sourcePath),
+      audioFilterComplex: audioGraph.filterComplex,
+      audioMap: audioGraph.audioMap,
+      durationMs: plan.durationMs,
+      outputPath,
+    }),
+  );
+}
+
+function renderVideoOnlyPlanToMp4(
   plan: RenderPlan,
   outputPath: string,
 ): Promise<NativeExportRenderResult> {
@@ -34,12 +78,9 @@ export function renderVideoPlanToMp4(
     });
   }
 
-  const audioSegments = plan.segments.filter(
-    (segment) => segment.trackType === "audio" && segment.durationMs > 0,
-  );
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
 
-  if (videoSegments.length > 0 && audioSegments.length === 0 && videoTrackIds.size === 1) {
+  if (videoSegments.length > 0 && videoTrackIds.size === 1) {
     const ordered = [...videoSegments].sort(
       (left, right) => left.timelineStartMs - right.timelineStartMs,
     );
