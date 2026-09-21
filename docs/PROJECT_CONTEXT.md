@@ -1,3 +1,13 @@
+## M3.35 implementation checkpoint — 2026-09-21
+
+- `src/features/export/render-plan.ts` is the first project-to-render compilation boundary.
+- The compiler is intentionally pure TypeScript: it does not invoke FFmpeg and does not mutate project/history state.
+- Render segments retain the timeline/source correspondence required by a later FFmpeg filter graph.
+- Multiple video/audio tracks are represented as separate segments; ordering follows project track order and each track's timeline order.
+- Gaps remain explicit through segment timestamps rather than being silently collapsed.
+- Visual transforms, crops, keyframes, transitions, and track mute metadata are preserved but not yet converted into FFmpeg filters.
+- Deferred next layer: translate RenderPlan into an actual FFmpeg filter graph and connect it to the native renderer boundary.
+
 ## M3.34 implementation checkpoint — 2026-09-21
 
 - `src-tauri/src/lib.rs` now exposes `render_single_source_to_mp4`.
