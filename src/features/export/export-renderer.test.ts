@@ -182,8 +182,6 @@ describe("export renderer", () => {
       request,
     });
   });
-});
-
 
   it("forwards job progress metadata to native graph rendering", async () => {
     vi.mocked(invoke).mockResolvedValueOnce({
@@ -222,3 +220,4 @@ describe("export renderer", () => {
       request: { jobId: "job-1" },
     });
   });
+});
