@@ -1,3 +1,14 @@
+## M3.46 implementation checkpoint — 2026-09-21
+
+- Branch: feat/m3-46-audio-clip-fades.
+- Latest completed milestone: M3.45 Audio Track Volume Control plus correction PR #58.
+- M3.45 correction merge SHA: 6f06f473b2a552cc04233ff4ada5c6bba07b7274.
+- M3.46 adds per-audio-clip fade-in/fade-out state, Inspector controls, preview envelope handling, RenderPlan propagation, and FFmpeg afade stages.
+- Fade commands are history-compatible and validate non-negative integer durations, clip duration bounds, and non-overlapping fade ranges.
+- Audio trim operations clamp fade durations; audio split keeps fade-in on the first segment and fade-out on the second segment.
+- Local validation is pending user verification.
+- Deferred: audio effects, multiple Audio tracks, audio automation, render progress, and cancellation.
+
 ## M3.45 correction merge reconciliation — 2026-09-21
 
 - M3.45 correction PR #58 (fix/m3-45-audio-volume-slider-visibility) was marked ready after user validation and squash-merged.
