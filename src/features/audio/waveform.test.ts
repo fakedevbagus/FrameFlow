@@ -4,13 +4,25 @@ vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
 }));
 
-import { buildWaveformPath, clearAudioWaveformCache, getAudioWaveform } from "./waveform";
+import {
+  buildWaveformPath,
+  clearAudioWaveformCache,
+  getAudioWaveform,
+  getWaveformLocalTimeMs,
+} from "./waveform";
 import { invoke } from "@tauri-apps/api/core";
 
 describe("audio waveform", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearAudioWaveformCache();
+  });
+
+  it("maps waveform pointer positions to clamped local clip time", () => {
+    expect(getWaveformLocalTimeMs(100, 0, 200, 5000)).toBe(2500);
+    expect(getWaveformLocalTimeMs(-50, 0, 200, 5000)).toBe(0);
+    expect(getWaveformLocalTimeMs(250, 0, 200, 5000)).toBe(5000);
+    expect(getWaveformLocalTimeMs(100, 0, 0, 5000)).toBe(0);
   });
 
   it("builds a closed SVG waveform path", () => {
