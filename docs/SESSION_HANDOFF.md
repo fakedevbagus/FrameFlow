@@ -1,3 +1,14 @@
+## M3.45 correction merge reconciliation — 2026-09-21
+
+- M3.45 correction PR #58 (fix/m3-45-audio-volume-slider-visibility) was marked ready after user validation and squash-merged.
+- Correction merge SHA: 6f06f473b2a552cc04233ff4ada5c6bba07b7274.
+- The correction wires the Audio-track volume callback through Timeline -> TimelineTrack.
+- The correction widens the Timeline track-label column so the Audio volume slider and percentage are visible.
+- Preview volume is assigned directly to the native HTMLAudioElement and synchronized on track-volume changes.
+- The existing audio graph regression assertion now accounts for the explicit default volume stage.
+- M3.45 is complete. Deferred: audio fades/transitions/effects, multiple independent Audio tracks, render progress, and cancellation.
+- User approved completion with pass.
+
 ## M3.45 merge reconciliation — 2026-09-21
 
 - Repository: fakedevbagus/FrameFlow
