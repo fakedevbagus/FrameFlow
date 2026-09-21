@@ -24,6 +24,12 @@ struct NativeExportRenderRequest {
   width: u32,
   height: u32,
   frame_rate: f64,
+  #[serde(default)]
+  source_start_ms: Option<u64>,
+  #[serde(default)]
+  source_duration_ms: Option<u64>,
+  #[serde(default)]
+  include_audio: bool,
 }
 
 #[derive(Deserialize)]
@@ -191,6 +197,9 @@ fn render_single_source_to_mp4(
     request.width,
     request.height,
     request.frame_rate,
+    request.source_start_ms,
+    request.source_duration_ms,
+    request.include_audio,
   );
 
   let output = Command::new("ffmpeg")
@@ -461,18 +470,32 @@ fn build_ffmpeg_export_args(
   width: u32,
   height: u32,
   frame_rate: f64,
+  source_start_ms: Option<u64>,
+  source_duration_ms: Option<u64>,
+  include_audio: bool,
 ) -> Vec<std::ffi::OsString> {
-  vec![
+  let mut args = vec![
     "-hide_banner".into(),
     "-loglevel".into(),
     "error".into(),
     "-y".into(),
+  ];
+
+  if let Some(source_start_ms) = source_start_ms.filter(|value| *value > 0) {
+    args.push("-ss".into());
+    args.push((source_start_ms as f64 / 1000.0).to_string().into());
+  }
+
+  if let Some(source_duration_ms) = source_duration_ms.filter(|value| *value > 0) {
+    args.push("-t".into());
+    args.push((source_duration_ms as f64 / 1000.0).to_string().into());
+  }
+
+  args.extend([
     "-i".into(),
     source_path.as_os_str().to_os_string(),
     "-map".into(),
     "0:v:0".into(),
-    "-map".into(),
-    "0:a:0?".into(),
     "-sn".into(),
     "-dn".into(),
     "-vf".into(),
@@ -481,6 +504,22 @@ fn build_ffmpeg_export_args(
     ).into(),
     "-r".into(),
     frame_rate.to_string().into(),
+  ]);
+
+  if include_audio {
+    args.extend([
+      "-map".into(),
+      "0:a:0?".into(),
+      "-c:a".into(),
+      "aac".into(),
+      "-b:a".into(),
+      "192k".into(),
+    ]);
+  } else {
+    args.push("-an".into());
+  }
+
+  args.extend([
     "-c:v".into(),
     "libx264".into(),
     "-preset".into(),
@@ -489,16 +528,14 @@ fn build_ffmpeg_export_args(
     "yuv420p".into(),
     "-crf".into(),
     "18".into(),
-    "-c:a".into(),
-    "aac".into(),
-    "-b:a".into(),
-    "192k".into(),
     "-movflags".into(),
     "+faststart".into(),
     "-f".into(),
     "mp4".into(),
     output_path.as_os_str().to_os_string(),
-  ]
+  ]);
+
+  args
 }
 
 fn media_path(value: &str) -> Result<PathBuf, String> {
