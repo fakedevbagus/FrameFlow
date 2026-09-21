@@ -64,7 +64,7 @@ describe("project domain", () => {
 
     expect(getAudioFadeDurations(clip)).toEqual({
       fadeInMs: 2000,
-      fadeOutMs: 2999,
+      fadeOutMs: 3000,
     });
   });
 
