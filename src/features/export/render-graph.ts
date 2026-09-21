@@ -86,19 +86,24 @@ export function compileSingleVideoTrackGraph(
       gapIndex += 1;
     }
 
-    const videoLabel = "clip" + index;
+    const isDirectSingleClip =
+      ordered.length === 1 && segment.timelineStartMs === 0;
+    const videoLabel = isDirectSingleClip ? "vout" : "clip" + index;
 
-    graphParts.push(buildSegmentFilter(segment, plan, videoLabel));
-    concatInputs.push("[" + videoLabel + "]");
+    graphParts.push(
+      buildSegmentFilter(segment, plan, videoLabel, !isDirectSingleClip),
+    );
+
+    if (!isDirectSingleClip) {
+      concatInputs.push("[" + videoLabel + "]");
+    }
     previousEndMs = segment.timelineEndMs;
   }
 
   const canRenderDirectlyToOutput =
     ordered.length === 1 && ordered[0].timelineStartMs === 0;
 
-  if (canRenderDirectlyToOutput) {
-    graphParts.push("[clip0]format=yuv420p[vout]");
-  } else {
+  if (!canRenderDirectlyToOutput) {
     const concatCount = concatInputs.length;
     graphParts.push(
       concatInputs.join("") +
@@ -119,6 +124,7 @@ function buildSegmentFilter(
   segment: RenderSegment,
   plan: RenderPlan,
   label: string,
+  includeOutputNormalization: boolean,
 ): string {
   return [
     "[" + segment.inputIndex + ":v:0]" +
@@ -137,8 +143,12 @@ function buildSegmentFilter(
       ":h=" +
       plan.height +
       ":x=(ow-iw)/2:y=(oh-ih)/2",
-    "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
-    "setsar=1",
+    ...(includeOutputNormalization
+      ? [
+          "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
+          "setsar=1",
+        ]
+      : []),
     "[" + label + "]",
   ].join(",");
 }
