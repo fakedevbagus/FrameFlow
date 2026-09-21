@@ -34,6 +34,24 @@ struct NativeExportRenderRequest {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct NativeVideoSegment {
+  source_path: Option<String>,
+  source_start_ms: Option<u64>,
+  duration_ms: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeVideoSegmentsRenderRequest {
+  segments: Vec<NativeVideoSegment>,
+  output_path: String,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct NativeVideoGraphRenderRequest {
   inputs: Vec<String>,
   output_path: String,
@@ -231,6 +249,23 @@ fn render_single_source_to_mp4(
 }
 
 #[tauri::command]
+fn render_video_segments_to_mp4(
+  request: NativeVideoSegmentsRenderRequest,
+) -> Result<NativeExportRenderResult, String> {
+  validate_native_video_segments_request_metadata(&request)?;
+
+  let output_path = PathBuf::from(&request.output_path);
+  validate_export_output_path(&output_path)?;
+
+  let temp_root = create_video_segments_temp_dir(&output_path)?;
+  let result = render_video_segments_to_output(&request, &output_path, &temp_root);
+
+  let _ = fs::remove_dir_all(&temp_root);
+
+  result
+}
+
+#[tauri::command]
 fn render_video_graph_to_mp4(
   request: NativeVideoGraphRenderRequest,
 ) -> Result<NativeExportRenderResult, String> {
@@ -397,6 +432,228 @@ fn same_path(first: &Path, second: &Path) -> bool {
     });
 
   first_canonical.is_some() && first_canonical == second_canonical
+}
+
+fn validate_native_video_segments_request_metadata(
+  request: &NativeVideoSegmentsRenderRequest,
+) -> Result<(), String> {
+  validate_native_export_settings(request.width, request.height, request.frame_rate)?;
+
+  if request.segments.is_empty() {
+    return Err("Native multi-segment render requires at least one segment.".to_string());
+  }
+
+  for segment in &request.segments {
+    if segment.duration_ms == 0 {
+      return Err("Native multi-segment render requires positive segment durations.".to_string());
+    }
+
+    if let Some(source_path) = &segment.source_path {
+      let path = media_path(source_path)?;
+
+      if !path.is_absolute() {
+        return Err("Native multi-segment inputs must use absolute paths.".to_string());
+      }
+
+      if media_type(&path)? != "video" {
+        return Err("Native multi-segment render supports video sources only.".to_string());
+      }
+    }
+  }
+
+  Ok(())
+}
+
+fn create_video_segments_temp_dir(output_path: &Path) -> Result<PathBuf, String> {
+  let parent = output_path
+    .parent()
+    .ok_or_else(|| "Export output path must have a parent directory.".to_string())?;
+  let stamp = std::time::SystemTime::now()
+    .duration_since(std::time::UNIX_EPOCH)
+    .map(|value| value.as_nanos())
+    .unwrap_or_default();
+  let temp_root = parent.join(format!(".frameflow-render-{stamp}"));
+
+  fs::create_dir(&temp_root).map_err(|error| {
+    format!(
+      "Could not create temporary render directory '{}': {error}",
+      temp_root.display()
+    )
+  })?;
+
+  Ok(temp_root)
+}
+
+fn render_video_segments_to_output(
+  request: &NativeVideoSegmentsRenderRequest,
+  output_path: &Path,
+  temp_root: &Path,
+) -> Result<NativeExportRenderResult, String> {
+  let mut segment_files = Vec::with_capacity(request.segments.len());
+
+  for (index, segment) in request.segments.iter().enumerate() {
+    let segment_path = temp_root.join(format!("segment-{index:04}.mp4"));
+    let args = match &segment.source_path {
+      Some(source_path) => build_ffmpeg_export_args(
+        Path::new(source_path),
+        &segment_path,
+        request.width,
+        request.height,
+        request.frame_rate,
+        segment.source_start_ms,
+        Some(segment.duration_ms),
+        false,
+      ),
+      None => build_ffmpeg_black_segment_args(
+        &segment_path,
+        request.width,
+        request.height,
+        request.frame_rate,
+        segment.duration_ms,
+      ),
+    };
+
+    let output = Command::new("ffmpeg")
+      .args(&args)
+      .output()
+      .map_err(|error| format!("Could not run ffmpeg for segment render: {error}"))?;
+
+    if !output.status.success() {
+      let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+      return Err(if detail.is_empty() {
+        format!("FFmpeg could not render video segment {index}.")
+      } else {
+        format!("FFmpeg could not render video segment {index}: {detail}")
+      });
+    }
+
+    let metadata = fs::metadata(&segment_path).map_err(|error| {
+      format!(
+        "Rendered video segment {} could not be inspected: {error}",
+        index
+      )
+    })?;
+
+    if metadata.len() == 0 {
+      return Err(format!("Rendered video segment {index} is empty."));
+    }
+
+    segment_files.push(segment_path);
+  }
+
+  let concat_list_path = temp_root.join("concat.txt");
+  let concat_contents = segment_files
+    .iter()
+    .map(|path| format!("file '{}'", path.file_name().unwrap_or_default().to_string_lossy()))
+    .collect::<Vec<_>>()
+    .join("\n");
+  fs::write(&concat_list_path, concat_contents)
+    .map_err(|error| format!("Could not write temporary concat list: {error}"))?;
+
+  let concat_args = build_ffmpeg_concat_args(
+    &concat_list_path,
+    request.frame_rate,
+    output_path,
+  );
+
+  let output = Command::new("ffmpeg")
+    .args(&concat_args)
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg for video segment concatenation: {error}"))?;
+
+  if !output.status.success() {
+    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    return Err(if detail.is_empty() {
+      "FFmpeg could not concatenate the rendered video segments.".to_string()
+    } else {
+      format!("FFmpeg could not concatenate the rendered video segments: {detail}")
+    });
+  }
+
+  let metadata = fs::metadata(output_path).map_err(|error| {
+    format!(
+      "FFmpeg completed but the multi-segment export file could not be inspected: {error}"
+    )
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(output_path);
+    return Err("FFmpeg completed but produced an empty multi-segment export.".to_string());
+  }
+
+  Ok(NativeExportRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+fn build_ffmpeg_black_segment_args(
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  duration_ms: u64,
+) -> Vec<std::ffi::OsString> {
+  vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-f".into(),
+    "lavfi".into(),
+    "-i".into(),
+    format!(
+      "color=c=black:s={width}x{height}:r={frame_rate}:d={}",
+      duration_ms as f64 / 1000.0
+    )
+    .into(),
+    "-an".into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-crf".into(),
+    "18".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]
+}
+
+fn build_ffmpeg_concat_args(
+  concat_list_path: &Path,
+  frame_rate: f64,
+  output_path: &Path,
+) -> Vec<std::ffi::OsString> {
+  vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-f".into(),
+    "concat".into(),
+    "-safe".into(),
+    "0".into(),
+    "-i".into(),
+    concat_list_path.as_os_str().to_os_string(),
+    "-map".into(),
+    "0:v:0".into(),
+    "-an".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "copy".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]
 }
 
 fn validate_native_video_graph_request_metadata(
