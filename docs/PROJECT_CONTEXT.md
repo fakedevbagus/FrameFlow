@@ -1,3 +1,7 @@
+## M3.31 validation correction — 2026-09-21
+
+The first M3.31 local validation run reached the full suite: 18 test files passed, with one failure in the newly added App playback-throttle regression because `addAssetToTimeline` was not imported in `App.test.tsx`. The production build reported the same missing symbol. Lint passed and Tauri dev launched. The regression test import was corrected in commit `a9e1b5111a1338fd758186969114eee2ab624612`; fresh validation is still required.
+
 ## Live state reconciliation — M3.31 — 2026-09-21
 
 - Current `main` tip: `dedeeccf309238b483e38d041d4928b23227f0a1`.
