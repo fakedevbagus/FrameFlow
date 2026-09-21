@@ -8,9 +8,10 @@ import type {
   TrackType,
   TransformEasing,
   ClipTransition,
-  getAudioFadeDurations,
 } from "../project/domain";
 import {
+  getAudioFadeDurations,
+
   DEFAULT_CLIP_TRANSFORM,
   getClipTransform,
   getClipTransformAtTime,
