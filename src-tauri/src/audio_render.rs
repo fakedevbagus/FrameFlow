@@ -6,6 +6,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::probe_has_audio;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeAudioGraphRenderRequest {
