@@ -1,3 +1,9 @@
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — Linux WebView visual correction
+
+- Fixed Audio Timeline fade handles rendering as full-width horizontal bars in the Linux desktop WebView.
+- Reset native button appearance, geometry, and left/right anchoring for the handle controls.
+- No audio fade behavior or project/history contract changed.
+
 ## 2026-09-21 — M3.47 Timeline Audio Fade Handles — edge-case correction
 
 - Kept the fade handle visually reachable at both zero and maximum duration by accounting for the handle width within the clip's overflow boundary.
