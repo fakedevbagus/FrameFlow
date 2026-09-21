@@ -1,3 +1,4 @@
+import { normalizeAudioVolumeKeyframes } from "../audio/automation";
 import {
   getAudioEq,
   getAudioCompressor,
@@ -150,7 +151,7 @@ export function createRenderPlan(
                 audioEq: getAudioEq(clip),
                 audioCompressor: getAudioCompressor(clip),
                 audioVolumeKeyframes: clip.audioVolumeKeyframes?.length
-                  ? clip.audioVolumeKeyframes
+                  ? normalizeAudioVolumeKeyframes(clip.audioVolumeKeyframes)
                   : undefined,
               };
             })()
