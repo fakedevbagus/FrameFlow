@@ -543,6 +543,56 @@ describe("Preview", () => {
     expect((audio as HTMLAudioElement).volume).toBeCloseTo(0.35, 5);
   });
 
+  it("applies interpolated audio volume automation to the preview media element", async () => {
+    let project = createProject({ id: "audio-automation-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "audio-1",
+          name: "voice.mp3",
+          mediaType: "audio",
+          sourcePath: "/media/voice.mp3",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "audio-1");
+    project.tracks[1].clips[0] = {
+      ...project.tracks[1].clips[0],
+      audioVolumeKeyframes: [
+        { timeMs: 0, volume: 0.2 },
+        { timeMs: 2000, volume: 0.8 },
+      ],
+    };
+
+    const { rerender } = render(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+    const audio = (await screen.findByTestId("preview-audio")) as HTMLAudioElement;
+
+    expect(audio.volume).toBeCloseTo(0.5, 5);
+
+    rerender(
+      <Preview
+        project={project}
+        currentTimeMs={2000}
+        isPlaying={false}
+      />,
+    );
+
+    await flushPreviewEffects();
+    expect(audio.volume).toBeCloseTo(0.8, 5);
+  });
+
   it("keeps active audio layers mounted while a visual preview is playing", async () => {
     let project = createProject({ id: "mixed-preview" });
 
