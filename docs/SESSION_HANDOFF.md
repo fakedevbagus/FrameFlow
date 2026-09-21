@@ -1,3 +1,13 @@
+## M3.34 implementation checkpoint — 2026-09-21
+
+- Added `render_single_source_to_mp4` as a narrowly scoped native Tauri command.
+- The command validates video input, MP4 output paths, even output dimensions, and frame-rate bounds before invoking FFmpeg.
+- FFmpeg arguments are passed as structured process arguments through `std::process::Command`; no shell command interpolation is used.
+- The primitive produces a single-source MP4 with H.264/AAC and requested canvas dimensions. It is not yet the project timeline renderer.
+- Added Rust regression coverage for settings validation and FFmpeg argument construction.
+- Added a TypeScript renderer wrapper and regression test for the Tauri invoke boundary.
+- M3.34 local validation is pending user verification.
+
 ## Current live reconciliation — M3.34 — 2026-09-21
 
 - Current `main` tip: `a6c40943d2673d3688e218d1d45d79e828b5f39a`.
