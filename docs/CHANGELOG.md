@@ -1,3 +1,18 @@
+## 2026-09-21 — M3.55 Audio Waveform Foundation — in progress
+
+Branch: `feat/m3-55-audio-waveform-foundation`
+
+Scope:
+- Add native FFmpeg waveform analysis for local audio sources.
+- Return compact normalized peak buckets without changing project schema.
+- Cache waveform requests in the frontend by source path and peak count.
+- Render the waveform as an SVG inside Audio timeline clips.
+- Preserve existing audio automation, fades, volume, pan, EQ, compressor, mute, mix, and export behavior.
+
+Validation:
+- Local npm/Cargo/Tauri validation is required before merge.
+- Waveform editing, selection, and persistent waveform-cache storage remain deferred.
+
 ## 2026-09-21 — M3.54 Audio Volume Automation Timeline UX — in progress
 
 Branch: `feat/m3-54-audio-volume-automation-timeline`
