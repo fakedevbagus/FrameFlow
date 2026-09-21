@@ -1,3 +1,13 @@
+## Current live reconciliation — M3.34 — 2026-09-21
+
+- Current `main`: `a6c40943d2673d3688e218d1d45d79e828b5f39a`.
+- M3.33 — Export destination and render-job boundary is merged as PR #44 at `a6c40943d2673d3688e218d1d45d79e828b5f39a`.
+- User confirmed M3.33 validation and the PR was squash-merged.
+- Active work: M3.34 — native FFmpeg render invocation boundary.
+- The repository already invokes FFmpeg natively for preview generation in `src-tauri/src/lib.rs`; M3.34 should reuse that native execution approach rather than introduce a second runtime.
+- M3.34 target: expose a narrowly scoped Tauri render command that receives a validated export request, constructs FFmpeg arguments without shell interpolation, and returns a controlled success/error result.
+- The full timeline render graph, compositing, audio/video muxing policy, streaming progress, cancellation, and long-running job orchestration remain separate slices.
+
 ## M3.33 validation correction — 2026-09-21
 
 - User local validation: lint passed; the full test suite executed with 215/215 tests passing, but the ExportPanel suite failed to initialize because its Vitest mock referenced a hoisted module value before initialization.
