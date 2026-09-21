@@ -24,6 +24,12 @@ struct NativeExportRenderRequest {
   width: u32,
   height: u32,
   frame_rate: f64,
+  #[serde(default)]
+  source_start_ms: Option<u64>,
+  #[serde(default)]
+  source_duration_ms: Option<u64>,
+  #[serde(default)]
+  include_audio: bool,
 }
 
 #[derive(Deserialize)]
@@ -191,6 +197,9 @@ fn render_single_source_to_mp4(
     request.width,
     request.height,
     request.frame_rate,
+    request.source_start_ms,
+    request.source_duration_ms,
+    request.include_audio,
   );
 
   let output = Command::new("ffmpeg")
@@ -256,6 +265,7 @@ fn render_video_graph_to_mp4(
     &input_paths,
     &request.filter_complex,
     &request.video_map,
+    request.frame_rate,
     &output_path,
   );
 
@@ -413,6 +423,7 @@ fn build_ffmpeg_video_graph_args(
   input_paths: &[PathBuf],
   filter_complex: &str,
   video_map: &str,
+  frame_rate: f64,
   output_path: &Path,
 ) -> Vec<std::ffi::OsString> {
   let mut args = vec![
@@ -433,6 +444,8 @@ fn build_ffmpeg_video_graph_args(
     "-map".into(),
     video_map.into(),
     "-an".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
     "-c:v".into(),
     "libx264".into(),
     "-preset".into(),
@@ -457,18 +470,32 @@ fn build_ffmpeg_export_args(
   width: u32,
   height: u32,
   frame_rate: f64,
+  source_start_ms: Option<u64>,
+  source_duration_ms: Option<u64>,
+  include_audio: bool,
 ) -> Vec<std::ffi::OsString> {
-  vec![
+  let mut args = vec![
     "-hide_banner".into(),
     "-loglevel".into(),
     "error".into(),
     "-y".into(),
+  ];
+
+  if let Some(source_start_ms) = source_start_ms.filter(|value| *value > 0) {
+    args.push("-ss".into());
+    args.push((source_start_ms as f64 / 1000.0).to_string().into());
+  }
+
+  if let Some(source_duration_ms) = source_duration_ms.filter(|value| *value > 0) {
+    args.push("-t".into());
+    args.push((source_duration_ms as f64 / 1000.0).to_string().into());
+  }
+
+  args.extend([
     "-i".into(),
     source_path.as_os_str().to_os_string(),
     "-map".into(),
     "0:v:0".into(),
-    "-map".into(),
-    "0:a:0?".into(),
     "-sn".into(),
     "-dn".into(),
     "-vf".into(),
@@ -477,6 +504,22 @@ fn build_ffmpeg_export_args(
     ).into(),
     "-r".into(),
     frame_rate.to_string().into(),
+  ]);
+
+  if include_audio {
+    args.extend([
+      "-map".into(),
+      "0:a:0?".into(),
+      "-c:a".into(),
+      "aac".into(),
+      "-b:a".into(),
+      "192k".into(),
+    ]);
+  } else {
+    args.push("-an".into());
+  }
+
+  args.extend([
     "-c:v".into(),
     "libx264".into(),
     "-preset".into(),
@@ -485,16 +528,14 @@ fn build_ffmpeg_export_args(
     "yuv420p".into(),
     "-crf".into(),
     "18".into(),
-    "-c:a".into(),
-    "aac".into(),
-    "-b:a".into(),
-    "192k".into(),
     "-movflags".into(),
     "+faststart".into(),
     "-f".into(),
     "mp4".into(),
     output_path.as_os_str().to_os_string(),
-  ]
+  ]);
+
+  args
 }
 
 fn media_path(value: &str) -> Result<PathBuf, String> {
@@ -849,12 +890,18 @@ mod tests {
       1280,
       720,
       29.97,
+      Some(1_250),
+      Some(4_500),
+      false,
     );
 
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "/media/My Video; clip.mp4"));
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "/tmp/My Export.mp4"));
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=w=1280:h=720:x=(ow-iw)/2:y=(oh-ih)/2"));
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "29.97"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-ss" && pair[1].to_string_lossy() == "1.25"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-t" && pair[1].to_string_lossy() == "4.5"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "-an"));
   }
 
   #[test]
@@ -900,6 +947,7 @@ mod tests {
       ],
       "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
       "[vout]",
+      30.0,
       Path::new("/tmp/FrameFlow Export.mp4"),
     );
 

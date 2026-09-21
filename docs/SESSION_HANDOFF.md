@@ -1,10 +1,47 @@
-## M3.37 validation correction — 2026-09-21
+## M3.38 validation correction — 2026-09-21
 
-- Latest user validation passed lint, all 26 test files, and all 234 TypeScript tests.
-- Production build passed; Tauri dev also started successfully.
-- `cargo test` exposed one Rust test-compilation error: the test module referenced `media_type` without importing it.
-- Corrected the test module import in `src-tauri/src/lib.rs`.
-- M3.37 remains pending one fresh clean validation run.
+- Latest user validation: all Rust tests passed (15/15), the production build passed, and Tauri dev started successfully.
+- TypeScript tests had one failure in the direct single-clip render-graph regression.
+- The failure was a graph-label formatting bug: the filter builder joined the filter chain with a trailing comma before the final output label, producing `...pad=...,[vout]` instead of `...pad=...[vout]`.
+- Corrected the graph builder so the output label is appended after the filter chain without an extra separator.
+- A fresh TypeScript validation run is required before M3.38 can be marked ready.
+## M3.38 single-clip compatibility path — 2026-09-21
+
+- Real export on the user's machine continued to return FFmpeg Filter not found from the filter_complex path even after the graph was simplified.
+- The direct one-clip case is now routed through the existing native single-source renderer instead of filter_complex.
+- The native single-source request supports optional sourceStartMs, sourceDurationMs, and includeAudio fields; the direct export path uses source timing and disables audio so it remains aligned with the current video-only render scope.
+- The native command applies source trimming with -ss/-t and output video normalization with the existing scale/pad filter, -r, and -pix_fmt yuv420p.
+- Multi-clip and timeline-gap cases remain on the M3.37 filter-graph renderer.
+- Added regression coverage for direct single-clip routing and native segment arguments.
+- M3.38 remains pending fresh local validation.
+- The single-clip hardening was refined so the direct graph contains only trim, setpts, scale, and pad; frame rate is applied by the native output encoder with -r, and pixel format by -pix_fmt.\n- The simplified graph has been validated with FFmpeg 7.1.5 against a synthetic source and produced the expected 406x720, 30 fps MP4.
+## M3.38 native render debug checkpoint — 2026-09-21
+
+- User's real export reached the native FFmpeg command but returned Filter not found from the configured filter graph.
+- The same full graph syntax was tested independently with FFmpeg 7.1.5 and succeeded.
+- The failing UI case is a single video clip starting at timeline 0, so the graph compiler was simplified for that common case: it now skips the unnecessary concat filter and maps clip0 through format=yuv420p to vout.
+- Multi-clip and timeline-gap cases still use the existing concat path.
+- Added regression coverage for the direct single-clip graph.
+- M3.38 remains pending another real export validation run.
+## M3.38 validation/debug correction — 2026-09-21
+
+- User reached a native FFmpeg failure after the crop-related compiler guard was no longer blocking the export.
+- The screenshot only exposed a truncated error string in the ExportPanel, so the exact FFmpeg stderr was not yet visible.
+- The underlying M3.37 filter graph command shape was independently validated with FFmpeg using the same trim/scale/pad/fps/concat structure.
+- Updated ExportPanel failure rendering so the full renderer error can wrap instead of being ellipsized.
+- Added a regression test for full renderer-error visibility.
+- M3.38 remains pending local validation with the new diagnostics.
+
+## M3.38 implementation checkpoint — 2026-09-21
+
+- Branch: `feat/m3-38-export-render-job`.
+- M3.37 is completed and squash-merged as PR #48 at `90d2489246c80c139dcda02bbb52cf041e738075`.
+- M3.38 connects the existing ExportPanel to the renderer through a focused export-job runner.
+- Added `src/features/export/export-runner.ts` to create/start an export job, compile the RenderPlan, invoke the native video renderer, and convert renderer/planner failures into a controlled failed job.
+- ExportPanel now enables the real Export action after an output destination is selected, disables destination changes while rendering, and reports running/completed/failed states.
+- No progress stream, cancellation, audio mixing, multi-track compositing, images, or advanced visual filters are introduced in this slice.
+- Added regression coverage for successful ExportPanel wiring and export-runner success/failure transitions.
+- Local validation for M3.38 is pending.
 ## M3.37 implementation checkpoint — 2026-09-21
 
 - Branch: `feat/m3-37-native-render-graph-wiring`.

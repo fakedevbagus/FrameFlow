@@ -3,7 +3,10 @@ import { createProject } from "../project/domain";
 import { addAssetToTimeline, addAssetToTrack } from "../timeline/commands";
 import { createDefaultExportSettings } from "./export";
 import { createRenderPlan } from "./render-plan";
-import { compileSingleVideoTrackGraph } from "./render-graph";
+import {
+  compileSingleVideoTrackGraph,
+  M3_38_DIRECT_GRAPH_MARKER,
+} from "./render-graph";
 
 function createVideoProject() {
   const project = createProject({ id: "render-graph" });
@@ -35,7 +38,7 @@ function createVideoProject() {
 }
 
 describe("single video render graph", () => {
-  it("builds trim, canvas fit, fps, and concat filters for one clip", () => {
+  it("builds a minimal direct graph for one clip without concat", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
 
@@ -55,8 +58,15 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain(
       "scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
     );
-    expect(graph.filterComplex).toContain("fps=fps=30:round=near");
-    expect(graph.filterComplex).toContain("concat=n=1:v=1:a=0");
+    expect(graph.filterComplex).not.toContain("fps=");
+    expect(graph.filterComplex).not.toContain("concat=");
+    expect(graph.filterComplex).not.toContain("setsar=");
+    expect(graph.filterComplex).not.toContain("format=yuv420p");
+    expect(graph.filterComplex).toContain("[vout]");
+    expect(graph.filterComplex).toBe(
+      "[0:v:0]trim=start=0:end=5,setpts=PTS-STARTPTS,scale=w=1080:h=1920:force_original_aspect_ratio=decrease,pad=w=1080:h=1920:x=(ow-iw)/2:y=(oh-ih)/2[vout]",
+    );
+    expect(M3_38_DIRECT_GRAPH_MARKER).toBe("m3.38-direct-graph-v2");
     expect(graph.videoMap).toBe("[vout]");
   });
 

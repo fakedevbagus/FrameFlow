@@ -1,9 +1,48 @@
-## 2026-09-21 — M3.37 validation correction
+## 2026-09-21 — M3.38 graph-label validation correction
 
-- Latest user validation: lint passed; 26/26 test files and 234/234 TypeScript tests passed; production build passed; Tauri dev started successfully.
-- Native Rust test compilation failed because `media_type` was not imported into the test module.
-- Corrected the test import in `src-tauri/src/lib.rs`.
-- Fresh local validation is pending.
+- Corrected the direct single-clip FFmpeg graph builder to avoid an extra comma before the `[vout]` output label.
+- Latest user validation otherwise passed Rust tests, build, and Tauri startup.
+- Fresh full validation is pending.
+## 2026-09-21 — M3.38 single-clip compatibility path
+
+- Routed one video clip starting at timeline zero through the existing native single-source renderer instead of filter_complex.
+- Added source segment timing and explicit video-only output options.
+- Preserved filter-graph rendering for multi-clip and timeline-gap cases.
+- Added regression coverage for direct routing and native segment FFmpeg arguments.
+- Real-media validation is pending.
+- Refined the single-clip export graph to use only trim, setpts, scale, and pad, with frame rate and yuv420p set at the encoder output.\n- Synthetic FFmpeg validation produced the expected 406x720, 30 fps MP4.
+## 2026-09-21 — M3.38 single-clip FFmpeg graph hardening
+
+- Simplified the one-clip-at-zero export graph to bypass the concat filter.
+- Added regression coverage for the direct graph path.
+- Verified the resulting graph independently with FFmpeg 7.1.5.
+- M3.38 real-media export validation remains pending.
+## 2026-09-21 — M3.38 export error diagnostics
+
+- ExportPanel now exposes the full native renderer error instead of truncating it in the status summary.
+- Added regression coverage for complete renderer-error visibility.
+- The underlying FFmpeg graph command shape was separately validated with an equivalent synthetic input.
+- M3.38 local media export validation remains pending.
+
+## 2026-09-21 — M3.38 export render-job activation — in progress
+
+Branch: `feat/m3-38-export-render-job`
+
+Implemented:
+- Added an export runner that starts the existing export-job state machine, compiles the current project render plan, invokes native video rendering, and converts failures into controlled job state.
+- Activated the ExportPanel Export action when an output file is selected.
+- Added running, completed, and failed status feedback without introducing fake progress reporting.
+- Added regression coverage for ExportPanel render-job wiring and runner success/failure behavior.
+
+Architecture:
+- ExportPanel owns presentation state only.
+- `export-runner.ts` owns the project-to-render-job orchestration.
+- `render-pipeline.ts` remains the RenderPlan-to-native-render adapter.
+- M3.37's native renderer remains unchanged and video-only.
+
+Validation:
+- M3.37 user validation passed before merge.
+- M3.38 local validation is pending.
 ## 2026-09-21 — M3.37 native render graph wiring — in progress
 
 Branch: `feat/m3-37-native-render-graph-wiring`

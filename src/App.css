@@ -3169,3 +3169,13 @@ button:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+.export-job-error strong {
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  text-align: left;
+}

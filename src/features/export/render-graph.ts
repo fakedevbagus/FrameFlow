@@ -1,3 +1,5 @@
+export const M3_38_DIRECT_GRAPH_MARKER = "m3.38-direct-graph-v2";
+
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
@@ -86,19 +88,32 @@ export function compileSingleVideoTrackGraph(
       gapIndex += 1;
     }
 
-    const videoLabel = "clip" + index;
-    graphParts.push(buildSegmentFilter(segment, plan, videoLabel));
-    concatInputs.push("[" + videoLabel + "]");
+    const isDirectSingleClip =
+      ordered.length === 1 && segment.timelineStartMs === 0;
+    const videoLabel = isDirectSingleClip ? "vout" : "clip" + index;
+
+    graphParts.push(
+      buildSegmentFilter(segment, plan, videoLabel, !isDirectSingleClip),
+    );
+
+    if (!isDirectSingleClip) {
+      concatInputs.push("[" + videoLabel + "]");
+    }
     previousEndMs = segment.timelineEndMs;
   }
 
-  const concatCount = concatInputs.length;
-  graphParts.push(
-    concatInputs.join("") +
-      "concat=n=" +
-      concatCount +
-      ":v=1:a=0,format=yuv420p[vout]",
-  );
+  const canRenderDirectlyToOutput =
+    ordered.length === 1 && ordered[0].timelineStartMs === 0;
+
+  if (!canRenderDirectlyToOutput) {
+    const concatCount = concatInputs.length;
+    graphParts.push(
+      concatInputs.join("") +
+        "concat=n=" +
+        concatCount +
+        ":v=1:a=0,format=yuv420p[vout]",
+    );
+  }
 
   return {
     inputs,
@@ -111,6 +126,7 @@ function buildSegmentFilter(
   segment: RenderSegment,
   plan: RenderPlan,
   label: string,
+  includeOutputNormalization: boolean,
 ): string {
   return [
     "[" + segment.inputIndex + ":v:0]" +
@@ -129,10 +145,13 @@ function buildSegmentFilter(
       ":h=" +
       plan.height +
       ":x=(ow-iw)/2:y=(oh-ih)/2",
-    "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
-    "setsar=1",
-    "[" + label + "]",
-  ].join(",");
+    ...(includeOutputNormalization
+      ? [
+          "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
+          "setsar=1",
+        ]
+      : []),
+  ].join(",") + "[" + label + "]";
 }
 
 function assertSupportedVisualMetadata(segment: RenderSegment): void {

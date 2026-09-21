@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { chooseExportOutputPath } from "./export-dialog";
+import { runExportJob } from "./export-runner";
+import type { ExportJob } from "./export-job";
 import type { Project } from "../project/domain";
 import {
   createDefaultExportSettings,
@@ -21,6 +23,9 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
   );
   const [outputPath, setOutputPath] = useState<string | null>(null);
   const [isChoosingOutput, setIsChoosingOutput] = useState(false);
+  const [job, setJob] = useState<ExportJob | null>(null);
+
+  const isExporting = job?.phase === "queued" || job?.phase === "running";
 
   const dimensions = useMemo(
     () => getExportDimensions(quality, project),
@@ -41,6 +46,21 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
       ),
     [dimensions, fileName, project, quality],
   );
+
+  async function handleExport() {
+    if (!outputPath || isExporting) {
+      return;
+    }
+
+    await runExportJob(
+      project,
+      {
+        settings,
+        outputPath,
+      },
+      setJob,
+    );
+  }
 
   return (
     <div
@@ -108,7 +128,7 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
               setFileName(sanitizeExportFileName(event.currentTarget.value))
             }
           />
-          <small>Output path selection and rendering are introduced in the export pipeline milestone.</small>
+          <small>Choose the output destination before starting the render.</small>
         </label>
 
         <div className="export-destination">
@@ -121,7 +141,7 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
           <button
             aria-label="Choose export destination"
             className="toolbar-button"
-            disabled={isChoosingOutput}
+            disabled={isChoosingOutput || isExporting}
             onClick={() => {
               setIsChoosingOutput(true);
               void chooseExportOutputPath(settings.fileName)
@@ -151,15 +171,45 @@ export function ExportPanel({ project, onClose }: ExportPanelProps) {
           </strong>
         </div>
 
+        {job?.phase === "failed" ? (
+          <div className="export-panel-summary export-job-error" role="alert">
+            <span>Status</span>
+            <strong title={job.errorMessage ?? "Export failed."}>
+              {job.errorMessage ?? "Export failed."}
+            </strong>
+          </div>
+        ) : null}
+
+        {job?.phase === "completed" ? (
+          <div className="export-panel-summary" role="status">
+            <span>Status</span>
+            <strong>Export completed</strong>
+            <span>File</span>
+            <strong>{job.outputPath}</strong>
+          </div>
+        ) : null}
+
+        {job?.phase === "running" ? (
+          <div className="export-panel-summary" role="status">
+            <span>Status</span>
+            <strong>Rendering…</strong>
+          </div>
+        ) : null}
+
         <button
-          aria-disabled="true"
+          aria-disabled={!outputPath || isExporting}
           className="primary-button"
-          disabled
+          disabled={!outputPath || isExporting}
+          onClick={() => {
+            void handleExport();
+          }}
           type="button"
         >
-          {outputPath
-            ? "Export renderer not connected yet"
-            : "Choose an output file first"} 
+          {isExporting
+            ? "Rendering…"
+            : job?.phase === "completed"
+              ? "Export again"
+              : "Export video"}
         </button>
       </div>
     </div>

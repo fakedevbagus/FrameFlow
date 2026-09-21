@@ -6,6 +6,9 @@ export interface NativeExportRenderRequest {
   width: number;
   height: number;
   frameRate: number;
+  sourceStartMs?: number;
+  sourceDurationMs?: number;
+  includeAudio?: boolean;
 }
 
 export interface NativeExportRenderResult {
