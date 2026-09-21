@@ -1,3 +1,9 @@
+## M3.46 Inspector fade edit fix — 2026-09-21
+
+- Root cause: the Audio fades Inspector placed a React key derived from both fade values on the shared two-input grid. Committing one fade changed that key and remounted both inputs, which detached the sibling input before its pending edit could be committed.
+- Fix: removed the shared grid key and applied synchronization keys to the individual Fade in and Fade out inputs. A committed field can now resync itself without remounting the sibling field.
+- Regression coverage: the App workflow test now explicitly verifies that the Fade out input remains mounted after the Fade in blur and still accepts its 1500 ms edit.
+- Validation status: source-level reconciliation and targeted code review are complete. This connector environment cannot execute the repository npm/Cargo/Tauri commands, so local validation remains pending.
 ## M3.46 validation correction — 2026-09-21
 
 - User local validation of PR #59 exposed test-only/import issues plus one deliberately incorrect domain expectation.

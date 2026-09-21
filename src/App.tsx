@@ -2191,12 +2191,7 @@ function App() {
                   </div>
                   <div
                     className="inspector-transform-input-grid"
-                    key={
-                      [
-                        selectedClipContext.clip.audioFadeInMs ?? 0,
-                        selectedClipContext.clip.audioFadeOutMs ?? 0,
-                      ].join("|")
-                    }
+
                   >
                     <label className="inspector-transform-field">
                       <span>Fade in</span>
@@ -2204,6 +2199,10 @@ function App() {
                         <input
                           aria-label="Audio fade in"
                           className="inspector-transform-input"
+                          key={[
+                            selectedClipContext.clip.id,
+                            selectedClipContext.clip.audioFadeInMs ?? 0,
+                          ].join("|")}
                           max={Math.max(0, getClipDurationMs(selectedClipContext.clip))}
                           min="0"
                           step="100"
@@ -2235,6 +2234,10 @@ function App() {
                         <input
                           aria-label="Audio fade out"
                           className="inspector-transform-input"
+                          key={[
+                            selectedClipContext.clip.id,
+                            selectedClipContext.clip.audioFadeOutMs ?? 0,
+                          ].join("|")}
                           max={Math.max(0, getClipDurationMs(selectedClipContext.clip))}
                           min="0"
                           step="100"

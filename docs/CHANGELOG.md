@@ -1,3 +1,20 @@
+## 2026-09-21 — M3.46 Inspector fade edit fix — pending validation
+
+Root cause:
+- The Audio fades Inspector used one React key on the shared Fade in/Fade out grid, derived from both values.
+- Updating one field therefore remounted the sibling input and interrupted the second edit in the same interaction sequence.
+
+Fix:
+- Removed the shared grid key.
+- Added per-field synchronization keys to the Fade in and Fade out inputs.
+- Preserved the existing project/history command path.
+
+Regression:
+- Strengthened the App integration test to assert the sibling Fade out input remains mounted after the Fade in blur and then accepts the 1500 ms value.
+
+Validation:
+- Repository source reconciliation complete.
+- Local npm/Cargo/Tauri validation is still required; this connector runtime cannot execute those repository commands.
 ## 2026-09-21 — M3.46 validation correction — in progress
 
 - Corrected missing `updateAudioClipFades` test import.

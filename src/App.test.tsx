@@ -1786,6 +1786,9 @@ describe("App", () => {
     fireEvent.change(fadeIn, { target: { value: "1000" } });
     fireEvent.blur(fadeIn);
 
+    // Updating one fade must not remount the sibling field before its own edit.
+    expect(fadeOut).toBeInTheDocument();
+
     fireEvent.change(fadeOut, { target: { value: "1500" } });
     fireEvent.blur(fadeOut);
 

@@ -1,3 +1,13 @@
+## M3.46 Inspector fade edit fix — 2026-09-21
+
+- Branch: feat/m3-46-audio-clip-fades.
+- Root cause was a shared React key on the Audio fades two-input grid. The key changed after one field commit, remounting the sibling input and losing the pending edit event.
+- The fix removes the shared grid key and gives each fade input its own synchronization key, so only the field whose persisted value changes is remounted.
+- The App regression test now checks sibling-input continuity after the first blur and verifies the final 1000/1500 ms values.
+- PR #59 remains draft pending fresh local validation.
+- Connector limitation: repository npm/Cargo/Tauri commands cannot be executed from this runtime.
+- Required next validation: npm run lint, npm run test, npm run build, cd src-tauri && cargo test, then npm run tauri dev.
+- Do not merge until that validation is reported clean.
 ## M3.46 validation correction — 2026-09-21
 
 - User local validation of PR #59 found five command-test failures because `updateAudioClipFades` was not imported in `commands.test.ts` and one domain test expected an incorrect 2999 ms value instead of the implemented 3000 ms clamp.
