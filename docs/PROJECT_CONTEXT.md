@@ -1,3 +1,13 @@
+## M3.56 bugfix — Audio waveform visual saturation — 2026-09-22
+
+- Manual validation exposed a Timeline presentation bug where long/loud Audio clips could render as a visually solid block instead of a readable waveform.
+- The waveform display now requests 512 time buckets instead of 128 for denser temporal detail.
+- Frontend waveform rendering applies percentile-based display contrast stretching without mutating the stored/native waveform data or project schema.
+- The SVG waveform fill is explicitly pinned to the waveform display color so the rendered envelope cannot fall back to an unintended solid/default fill.
+- Audio waveform scrubbing continues to map pointer X to local clip time, select the owning clip, and seek the existing Timeline playhead.
+- Required validation after this bugfix: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; cd ..; npm run tauri dev.
+- Manual checks must confirm the Audio clip shows a varying waveform envelope rather than a large solid rectangle, waveform clicks still seek the playhead, and normal clip move/trim interactions remain unaffected.
+
 ## M3.56 — Audio Waveform Scrubbing — in progress — 2026-09-22
 
 - M3.55 Audio Waveform Foundation is complete and PR #69 was squash-merged at `8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`.
