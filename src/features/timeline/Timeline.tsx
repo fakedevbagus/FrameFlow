@@ -1381,7 +1381,7 @@ function TimelineTrack({
                       onPointerMove={updateAudioFadeInteraction}
                       onPointerUp={finishAudioFadeInteraction}
                       onPointerCancel={cancelAudioFadeInteraction}
-                      style={{ left: fadeInWidthPx + "px" }}
+                      style={{ left: Math.max(0, fadeInWidthPx - 6) + "px" }}
                       title="Drag to change audio fade in"
                       type="button"
                     >
@@ -1406,7 +1406,7 @@ function TimelineTrack({
                       onPointerMove={updateAudioFadeInteraction}
                       onPointerUp={finishAudioFadeInteraction}
                       onPointerCancel={cancelAudioFadeInteraction}
-                      style={{ right: fadeOutWidthPx + "px" }}
+                      style={{ right: Math.max(0, fadeOutWidthPx - 6) + "px" }}
                       title="Drag to change audio fade out"
                       type="button"
                     >
