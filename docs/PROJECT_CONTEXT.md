@@ -1,3 +1,13 @@
+## M3.46 validation correction — 2026-09-21
+
+- User local validation of PR #59 exposed test-only/import issues plus one deliberately incorrect domain expectation.
+- `src/features/timeline/commands.test.ts` was missing the `updateAudioClipFades` import, causing five command-test failures and corresponding TypeScript errors.
+- The domain normalization test expected 2999 ms, while the implemented non-overlap rule correctly clamps a 4000 ms requested fade-out to 3000 ms after a 2000 ms fade-in on a 5000 ms clip.
+- These issues are corrected on the M3.46 branch.
+- The same run reported three Vitest worker timeouts/unhandled worker errors after the test failures; because the core deterministic failures are now fixed, a fresh full test run is required before attributing those timeouts to the implementation.
+- Rust tests remained green at 28/28 and `tauri dev` launched successfully in the reported run.
+- Local validation remains pending.
+
 ## M3.46 implementation checkpoint — 2026-09-21
 
 - Branch: feat/m3-46-audio-clip-fades.
