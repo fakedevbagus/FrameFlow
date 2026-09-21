@@ -35,6 +35,60 @@ function projectWithAssets() {
 }
 
 describe("render plan", () => {
+  it("propagates audio compressor settings for audio segments", () => {
+    const project = createProject({ id: "render-compressor" });
+    const audioTrack = project.tracks.find((track) => track.type === "audio");
+    if (!audioTrack) throw new Error("Expected audio track.");
+
+    const projectWithMedia = {
+      ...project,
+      assets: [{
+        id: "audio",
+        name: "voice.mp3",
+        mediaType: "audio" as const,
+        sourcePath: "/voice.mp3",
+        durationMs: 5000,
+      }],
+      tracks: project.tracks.map((track) =>
+        track.id === audioTrack.id
+          ? {
+              ...track,
+              clips: [{
+                id: "compressor-clip",
+                assetId: "audio",
+                timelineStartMs: 1000,
+                sourceStartMs: 0,
+                sourceEndMs: 4000,
+                audioCompressor: {
+                  enabled: true,
+                  thresholdDb: -18,
+                  ratio: 6,
+                  attackMs: 10,
+                  releaseMs: 300,
+                },
+              }],
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(projectWithMedia, {
+      ...createDefaultExportSettings(projectWithMedia),
+      quality: "source",
+    });
+
+    expect(plan.segments).toContainEqual(expect.objectContaining({
+      audioCompressor: {
+        enabled: true,
+        thresholdDb: -18,
+        ratio: 6,
+        attackMs: 10,
+        releaseMs: 300,
+      },
+    }));
+  });
+
+
   it("compiles timeline clips with source and timeline timing", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");

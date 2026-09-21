@@ -10,6 +10,11 @@ export const DEFAULT_AUDIO_EQ_ENABLED = false;
 export const DEFAULT_AUDIO_EQ_LOW_GAIN_DB = 0;
 export const DEFAULT_AUDIO_EQ_MID_GAIN_DB = 0;
 export const DEFAULT_AUDIO_EQ_HIGH_GAIN_DB = 0;
+export const DEFAULT_AUDIO_COMPRESSOR_ENABLED = false;
+export const DEFAULT_AUDIO_COMPRESSOR_THRESHOLD_DB = -24;
+export const DEFAULT_AUDIO_COMPRESSOR_RATIO = 4;
+export const DEFAULT_AUDIO_COMPRESSOR_ATTACK_MS = 20;
+export const DEFAULT_AUDIO_COMPRESSOR_RELEASE_MS = 250;
 
 export interface CanvasSettings {
   width: number;
@@ -69,6 +74,14 @@ export interface AudioEq {
   highGainDb: number;
 }
 
+export interface AudioCompressor {
+  enabled: boolean;
+  thresholdDb: number;
+  ratio: number;
+  attackMs: number;
+  releaseMs: number;
+}
+
 export interface DissolveTransition {
   type: "dissolve";
   durationMs: number;
@@ -95,6 +108,7 @@ export interface Clip {
   audioFadeInMs?: number;
   audioFadeOutMs?: number;
   audioEq?: AudioEq;
+  audioCompressor?: AudioCompressor;
   transformKeyframes?: TransformKeyframe[];
 }
 
@@ -293,6 +307,64 @@ function normalizeAudioEqGain(value: unknown, fallback: number): number {
   }
 
   return Math.min(12, Math.max(-12, Math.round(value * 10) / 10));
+}
+
+export function getAudioCompressor(clip: Clip): AudioCompressor {
+  const value = clip.audioCompressor;
+
+  return {
+    enabled: value?.enabled === true,
+    thresholdDb: normalizeAudioCompressorThreshold(
+      value?.thresholdDb,
+      DEFAULT_AUDIO_COMPRESSOR_THRESHOLD_DB,
+    ),
+    ratio: normalizeAudioCompressorRatio(
+      value?.ratio,
+      DEFAULT_AUDIO_COMPRESSOR_RATIO,
+    ),
+    attackMs: normalizeAudioCompressorTime(
+      value?.attackMs,
+      DEFAULT_AUDIO_COMPRESSOR_ATTACK_MS,
+      0.01,
+      2000,
+    ),
+    releaseMs: normalizeAudioCompressorTime(
+      value?.releaseMs,
+      DEFAULT_AUDIO_COMPRESSOR_RELEASE_MS,
+      0.01,
+      9000,
+    ),
+  };
+}
+
+function normalizeAudioCompressorThreshold(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  const rounded = Math.round(Math.abs(value) * 10) / 10;
+  return Math.min(0, Math.max(-60, value < 0 ? -rounded : rounded));
+}
+
+function normalizeAudioCompressorRatio(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(20, Math.max(1, Math.round(value * 10) / 10));
+}
+
+function normalizeAudioCompressorTime(
+  value: unknown,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(maximum, Math.max(minimum, Math.round(value * 100) / 100));
 }
 
 export function getAudioFadeInMs(clip: Clip): number {

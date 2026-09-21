@@ -85,6 +85,44 @@ describe("audio render graph", () => {
     );
   });
 
+  it("applies the enabled audio compressor after EQ and before fades", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          audioCompressor: {
+            enabled: true,
+            thresholdDb: -18,
+            ratio: 6,
+            attackMs: 10,
+            releaseMs: 300,
+          },
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).toContain(
+      ",volume=1,acompressor=threshold=0.125893:ratio=6:attack=10:release=300,adelay=0:all=1[audio0]",
+    );
+  });
+
+  it("does not add compressor filters when compression is disabled", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          audioCompressor: {
+            enabled: false,
+            thresholdDb: -18,
+            ratio: 6,
+            attackMs: 10,
+            releaseMs: 300,
+          },
+        }),
+      ]),
+    );
+
+    expect(graph.filterComplex).not.toContain("acompressor=");
+  });
+
   it("applies enabled three-band EQ before fades and timeline delay", () => {
     const graph = compileSingleAudioTrackGraph(
       createPlan([

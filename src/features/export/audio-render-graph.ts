@@ -1,4 +1,4 @@
-import type { AudioEq } from "../project/domain";
+import type { AudioCompressor, AudioEq } from "../project/domain";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface AudioRenderInput {
@@ -138,6 +138,7 @@ function buildAudioSegmentFilter(
     formatNumber(volume) +
     buildAudioPanFilter(pan) +
     buildAudioEqFilters(segment.audioEq) +
+    buildAudioCompressorFilter(segment.audioCompressor) +
     buildAudioFadeFilters(segment) +
     ",adelay=" +
     Math.max(0, Math.round(segment.timelineStartMs)) +
@@ -193,6 +194,29 @@ function buildAudioEqFilters(eq: AudioEq | undefined): string {
   });
 
   return filters.length ? "," + filters.join(",") : "";
+}
+
+function buildAudioCompressorFilter(compressor: AudioCompressor | undefined): string {
+  if (!compressor?.enabled) {
+    return "";
+  }
+
+  const thresholdDb = Math.min(0, Math.max(-60, compressor.thresholdDb));
+  const threshold = Math.pow(10, thresholdDb / 20);
+  const ratio = Math.min(20, Math.max(1, compressor.ratio));
+  const attackMs = Math.min(2000, Math.max(0.01, compressor.attackMs));
+  const releaseMs = Math.min(9000, Math.max(0.01, compressor.releaseMs));
+
+  return (
+    ",acompressor=threshold=" +
+    formatNumber(threshold) +
+    ":ratio=" +
+    formatNumber(ratio) +
+    ":attack=" +
+    formatNumber(attackMs) +
+    ":release=" +
+    formatNumber(releaseMs)
+  );
 }
 
 function buildAudioFadeFilters(segment: RenderSegment): string {
