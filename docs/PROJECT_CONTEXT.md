@@ -1,3 +1,4 @@
+- The direct single-clip graph now avoids fps, setsar, format, and concat filters; native output options apply the requested frame rate and yuv420p pixel format.\n- This is intended to reduce filter dependency surface for the simplest real export path while retaining the existing multi-clip concat path.
 ## M3.38 native render debug checkpoint — 2026-09-21
 
 - Real ExportPanel execution reaches FFmpeg, but the user's environment reported Filter not found while parsing the video filter graph.
