@@ -1513,6 +1513,7 @@ mod tests {
       Path::new("/tmp/concat.txt"),
       30.0,
       Path::new("/tmp/final.mp4"),
+      true,
     );
 
     let values: Vec<String> = args
@@ -1549,6 +1550,7 @@ mod tests {
       width: 1280,
       height: 720,
       frame_rate: 30.0,
+      include_audio: true,
     };
 
     assert!(super::validate_native_video_segments_request_metadata(&valid).is_ok());
