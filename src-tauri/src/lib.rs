@@ -6,7 +6,7 @@ use std::{
   process::Command,
 };
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::Manager;
 
 #[derive(Serialize)]
@@ -14,6 +14,22 @@ use tauri::Manager;
 struct MediaProbe {
   media_type: String,
   duration_ms: Option<u64>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeExportRenderRequest {
+  source_path: String,
+  output_path: String,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeExportRenderResult {
+  output_path: String,
 }
 
 #[tauri::command]
@@ -135,6 +151,65 @@ fn prepare_media_preview(
 }
 
 #[tauri::command]
+fn render_single_source_to_mp4(
+  request: NativeExportRenderRequest,
+) -> Result<NativeExportRenderResult, String> {
+  let source_path = media_path(&request.source_path)?;
+
+  if media_type(&source_path)? != "video" {
+    return Err("Native export currently requires a video source.".to_string());
+  }
+
+  validate_native_export_settings(
+    request.width,
+    request.height,
+    request.frame_rate,
+  )?;
+
+  let output_path = PathBuf::from(&request.output_path);
+  validate_export_output_path(&output_path)?;
+
+  if same_path(&source_path, &output_path) {
+    return Err("Export output must differ from the source media.".to_string());
+  }
+
+  let args = build_ffmpeg_export_args(
+    &source_path,
+    &output_path,
+    request.width,
+    request.height,
+    request.frame_rate,
+  );
+
+  let output = Command::new("ffmpeg")
+    .args(&args)
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg for native export: {error}"))?;
+
+  if !output.status.success() {
+    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+
+    return Err(if detail.is_empty() {
+      "FFmpeg could not render the requested export.".to_string()
+    } else {
+      format!("FFmpeg could not render the requested export: {detail}")
+    });
+  }
+
+  let metadata = fs::metadata(&output_path)
+    .map_err(|error| format!("FFmpeg completed but the export file could not be inspected: {error}"))?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&output_path);
+    return Err("FFmpeg completed but produced an empty export file.".to_string());
+  }
+
+  Ok(NativeExportRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+#[tauri::command]
 fn get_media_http_url(
   state: tauri::State<'_, media_server::MediaServerState>,
   path: String,
@@ -175,6 +250,108 @@ fn save_project(path: String, content: String) -> Result<(), String> {
       project_path.display()
     )
   })
+}
+
+fn validate_native_export_settings(width: u32, height: u32, frame_rate: f64) -> Result<(), String> {
+  if width < 2 || width % 2 != 0 {
+    return Err("Export width must be a positive even number.".to_string());
+  }
+
+  if height < 2 || height % 2 != 0 {
+    return Err("Export height must be a positive even number.".to_string());
+  }
+
+  if !frame_rate.is_finite() || frame_rate <= 0.0 || frame_rate > 240.0 {
+    return Err("Export frame rate must be between 0 and 240 fps.".to_string());
+  }
+
+  Ok(())
+}
+
+fn validate_export_output_path(path: &Path) -> Result<(), String> {
+  if !path.is_absolute() {
+    return Err("Export output path must be absolute.".to_string());
+  }
+
+  let extension = path
+    .extension()
+    .and_then(|value| value.to_str())
+    .map(str::to_ascii_lowercase);
+
+  if extension.as_deref() != Some("mp4") {
+    return Err("Export output path must use the .mp4 extension.".to_string());
+  }
+
+  let parent = path
+    .parent()
+    .filter(|parent| !parent.as_os_str().is_empty())
+    .ok_or_else(|| "Export output path must have a parent directory.".to_string())?;
+
+  if !parent.is_dir() {
+    return Err("Export output directory does not exist.".to_string());
+  }
+
+  Ok(())
+}
+
+fn same_path(first: &Path, second: &Path) -> bool {
+  let first_canonical = fs::canonicalize(first).ok();
+  let second_canonical = fs::canonicalize(second)
+    .ok()
+    .or_else(|| {
+      second
+        .parent()
+        .and_then(|parent| fs::canonicalize(parent).ok())
+        .map(|parent| parent.join(second.file_name().unwrap_or_default()))
+    });
+
+  first_canonical.is_some() && first_canonical == second_canonical
+}
+
+fn build_ffmpeg_export_args(
+  source_path: &Path,
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+) -> Vec<std::ffi::OsString> {
+  vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-i".into(),
+    source_path.as_os_str().to_os_string(),
+    "-map".into(),
+    "0:v:0".into(),
+    "-map".into(),
+    "0:a:0?".into(),
+    "-sn".into(),
+    "-dn".into(),
+    "-vf".into(),
+    format!(
+      "scale=w={width}:h={height}:force_original_aspect_ratio=decrease,pad=w={width}:h={height}:x=(ow-iw)/2:y=(oh-ih)/2"
+    ).into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-c:a".into(),
+    "aac".into(),
+    "-b:a".into(),
+    "192k".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]
 }
 
 fn media_path(value: &str) -> Result<PathBuf, String> {
@@ -462,6 +639,7 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       inspect_media,
       prepare_media_preview,
+      render_single_source_to_mp4,
       get_media_http_url,
       open_project,
       save_project
@@ -502,6 +680,38 @@ mod tests {
     );
   }
 
+
+  #[test]
+  fn validates_native_export_settings() {
+    assert!(super::validate_native_export_settings(1280, 720, 30.0).is_ok());
+    assert!(super::validate_native_export_settings(1279, 720, 30.0).is_err());
+    assert!(super::validate_native_export_settings(1280, 719, 30.0).is_err());
+    assert!(super::validate_native_export_settings(1280, 720, 0.0).is_err());
+    assert!(super::validate_native_export_settings(1280, 720, 241.0).is_err());
+  }
+
+  #[test]
+  fn validates_native_mp4_output_paths() {
+    assert!(super::validate_export_output_path(Path::new("/tmp/output.mp4")).is_ok());
+    assert!(super::validate_export_output_path(Path::new("relative/output.mp4")).is_err());
+    assert!(super::validate_export_output_path(Path::new("/tmp/output.mov")).is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_export_arguments_without_shell_interpolation() {
+    let args = super::build_ffmpeg_export_args(
+      Path::new("/media/My Video; clip.mp4"),
+      Path::new("/tmp/My Export.mp4"),
+      1280,
+      720,
+      29.97,
+    );
+
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "/media/My Video; clip.mp4"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "/tmp/My Export.mp4"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=w=1280:h=720:x=(ow-iw)/2:y=(oh-ih)/2"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "29.97"));
+  }
 
   #[test]
   fn preview_cache_key_changes_when_media_changes() {
