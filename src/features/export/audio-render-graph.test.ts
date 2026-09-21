@@ -184,19 +184,44 @@ describe("audio render graph", () => {
     expect(graph.filterComplex).toContain("[silence][audio1]amix=inputs=2");
   });
 
-  it("rejects plans with multiple audio tracks", () => {
-    const graphSegments = [
-      createAudioSegment({ trackId: "audio-1" }),
-      createAudioSegment({
-        inputIndex: 1,
-        assetId: "audio-b",
-        trackId: "audio-2",
-      }),
-    ];
+  it("mixes independent audio tracks while preserving deterministic track order", () => {
+    const graph = compileSingleAudioTrackGraph(
+      createPlan([
+        createAudioSegment({
+          inputIndex: 2,
+          assetId: "audio-track-2",
+          sourcePath: "/media/audio-track-2.mp3",
+          trackId: "audio-2",
+          trackIndex: 1,
+          timelineStartMs: 0,
+          timelineEndMs: 2000,
+        }),
+        createAudioSegment({
+          inputIndex: 1,
+          assetId: "audio-track-1",
+          sourcePath: "/media/audio-track-1.mp3",
+          trackId: "audio-1",
+          trackIndex: 0,
+          timelineStartMs: 1000,
+          timelineEndMs: 3000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
+        }),
+      ]),
+    );
 
-    expect(() =>
-      compileSingleAudioTrackGraph(createPlan(graphSegments)),
-    ).toThrow("one audio track");
+    expect(graph.inputs.map((input) => input.inputIndex)).toEqual([0, 1]);
+    expect(graph.inputs.map((input) => input.sourcePath)).toEqual([
+      "/media/audio-track-1.mp3",
+      "/media/audio-track-2.mp3",
+    ]);
+    expect(graph.filterComplex).toContain("[0:a:0]atrim=start=0:end=2");
+    expect(graph.filterComplex).toContain("[1:a:0]atrim=start=1:end=3");
+    expect(graph.filterComplex).toContain("adelay=1000:all=1[audio0]");
+    expect(graph.filterComplex).toContain("adelay=0:all=1[audio1]");
+    expect(graph.filterComplex).toMatch(
+      /\[silence\]\[audio0\]\[audio1\]amix=inputs=3:duration=longest:dropout_transition=0\[aout\]/,
+    );
   });
 
   it("rejects non-audio assets placed on an audio track", () => {
