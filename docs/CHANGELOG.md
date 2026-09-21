@@ -13,7 +13,8 @@ Implemented:
 - Added regression coverage for the lifecycle cases.
 
 Validation:
-- User confirmed local Linux validation passed, including lint, tests, build, Tauri dev, and manual transition lifecycle checks.
+- Remote PR #39 was merged after follow-up fixes addressing the reported lint/build/test/fixture issues.
+- Local post-fix validation is not confirmed in this chat yet.
 
 Known limitations:
 - Only dissolve transitions are supported.
