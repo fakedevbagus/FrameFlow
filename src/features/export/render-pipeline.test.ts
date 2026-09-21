@@ -84,6 +84,7 @@ describe("render video pipeline", () => {
       width: 1080,
       height: 1920,
       frameRate: 30,
+      includeAudio: true,
     });
   });
 
@@ -155,6 +156,7 @@ describe("render video pipeline", () => {
       width: 406,
       height: 720,
       frameRate: 30,
+      includeAudio: true,
     });
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });
@@ -205,6 +207,7 @@ describe("render video pipeline", () => {
       width: 406,
       height: 720,
       frameRate: 30,
+      includeAudio: true,
     });
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });

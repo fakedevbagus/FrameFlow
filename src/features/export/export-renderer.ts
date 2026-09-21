@@ -27,6 +27,7 @@ export interface NativeVideoSegmentsRenderRequest {
   width: number;
   height: number;
   frameRate: number;
+  includeAudio?: boolean;
 }
 
 export interface NativeVideoGraphRenderRequest {

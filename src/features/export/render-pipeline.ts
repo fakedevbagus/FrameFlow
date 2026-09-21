@@ -71,6 +71,7 @@ export function renderVideoPlanToMp4(
       width: plan.width,
       height: plan.height,
       frameRate: plan.frameRate,
+      includeAudio: true,
     });
   }
 
