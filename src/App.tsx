@@ -524,19 +524,21 @@ function App() {
     });
   }, [getPreviewMediaElements, isPlaying, project, setPlaybackTime]);
 
-  function handleUpdateSelectedAudioFades(
+  function handleUpdateAudioClipFades(
+    clipId: string,
     fadeInMs: number,
     fadeOutMs: number,
   ) {
+    const clipContext = findClipContext(project, clipId);
     if (
-      !selectedClipContext ||
-      selectedClipContext.track.type !== "audio" ||
-      selectedClipContext.asset?.mediaType !== "audio"
+      !clipContext ||
+      clipContext.track.type !== "audio" ||
+      clipContext.asset?.mediaType !== "audio"
     ) {
       return;
     }
 
-    const durationMs = getClipDurationMs(selectedClipContext.clip);
+    const durationMs = getClipDurationMs(clipContext.clip);
     const safeFadeInMs = Math.min(
       durationMs,
       Math.max(0, Math.round(fadeInMs)),
@@ -546,11 +548,11 @@ function App() {
       Math.max(0, Math.round(fadeOutMs)),
     );
 
-    updateSelectedClip(
+    applyProjectChange(
       (currentProject) =>
         updateAudioClipFades(
           currentProject,
-          selectedClipContext.clip.id,
+          clipId,
           safeFadeInMs,
           safeFadeOutMs,
         ),
@@ -558,6 +560,20 @@ function App() {
     );
   }
 
+  function handleUpdateSelectedAudioFades(
+    fadeInMs: number,
+    fadeOutMs: number,
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    handleUpdateAudioClipFades(
+      selectedClipContext.clip.id,
+      fadeInMs,
+      fadeOutMs,
+    );
+  }
   function handleToggleTrackMute(trackId: string) {
     applyProjectChange(
       (currentProject) => toggleTrackMute(currentProject, trackId),
@@ -1633,6 +1649,7 @@ function App() {
             onTrimClipEnd={handleDirectTrimClipEnd}
             onToggleTrackMute={handleToggleTrackMute}
             onUpdateTrackVolume={handleUpdateTrackVolume}
+            onUpdateAudioClipFades={handleUpdateAudioClipFades}
             onAddAssetToTrack={handleAddAssetToTrack}
             onAddTrack={handleAddTrack}
             onRemoveTrack={handleRemoveTrack}

@@ -10,6 +10,7 @@ import {
   type PointerEvent,
 } from "react";
 import {
+  getAudioFadeDurations,
   getTrackVolume,
   type Clip,
   type ClipTransition,
@@ -49,6 +50,11 @@ interface TimelineProps {
   onTrimClipEnd?: (clipId: string, sourceEndMs: number) => void;
   onToggleTrackMute?: (trackId: string) => void;
   onUpdateTrackVolume?: (trackId: string, volume: number) => void;
+  onUpdateAudioClipFades?: (
+    clipId: string,
+    fadeInMs: number,
+    fadeOutMs: number,
+  ) => void;
   onAddAssetToTrack?: (
     assetId: string,
     trackId: string,
@@ -74,6 +80,20 @@ interface TimelineProps {
 }
 
 type ClipInteractionMode = "move" | "trim-start" | "trim-end";
+
+interface AudioFadeInteraction {
+  clipId: string;
+  mode: "fade-in" | "fade-out";
+  pointerId: number;
+  startClientX: number;
+  originalFadeInMs: number;
+  originalFadeOutMs: number;
+  previewFadeInMs: number;
+  previewFadeOutMs: number;
+  hasMoved: boolean;
+}
+
+const AUDIO_FADE_HANDLE_STEP_MS = 100;
 
 interface KeyframeInteraction {
   clipId: string;
@@ -130,6 +150,9 @@ export function Timeline({
   onZoomChange,
 }: TimelineProps) {
   const [interaction, setInteraction] = useState<ClipInteraction | null>(null);
+  const [audioFadeInteraction, setAudioFadeInteraction] =
+    useState<AudioFadeInteraction | null>(null);
+  const audioFadeInteractionTargetRef = useRef<HTMLElement | null>(null);
   const clipInteractionTargetRef = useRef<HTMLElement | null>(null);
   const [transitionInteraction, setTransitionInteraction] =
     useState<TransitionInteraction | null>(null);
@@ -586,6 +609,206 @@ export function Timeline({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [interaction, cancelClipInteraction]);
 
+  function beginAudioFadeInteraction(
+    event: PointerEvent<HTMLButtonElement>,
+    clip: Clip,
+    mode: "fade-in" | "fade-out",
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.stopPropagation();
+    onSelectClip?.(clip.id);
+    const fadeDurations = getAudioFadeDurations(clip);
+
+    if ("setPointerCapture" in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    audioFadeInteractionTargetRef.current = event.currentTarget;
+
+    setAudioFadeInteraction({
+      clipId: clip.id,
+      mode,
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      originalFadeInMs: fadeDurations.fadeInMs,
+      originalFadeOutMs: fadeDurations.fadeOutMs,
+      previewFadeInMs: fadeDurations.fadeInMs,
+      previewFadeOutMs: fadeDurations.fadeOutMs,
+      hasMoved: false,
+    });
+  }
+
+  function updateAudioFadeInteraction(
+    event: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (
+      !audioFadeInteraction ||
+      event.buttons !== 1 ||
+      event.pointerId !== audioFadeInteraction.pointerId
+    ) {
+      return;
+    }
+
+    const clip = project.tracks
+      .flatMap((track) => track.clips)
+      .find((candidate) => candidate.id === audioFadeInteraction.clipId);
+    if (!clip) {
+      return;
+    }
+
+    const deltaPixels =
+      audioFadeInteraction.mode === "fade-in"
+        ? event.clientX - audioFadeInteraction.startClientX
+        : audioFadeInteraction.startClientX - event.clientX;
+    if (Math.abs(deltaPixels) < 2) {
+      return;
+    }
+
+    const deltaMs = pixelsToMilliseconds(deltaPixels, pixelsPerSecond);
+    const durationMs = getClipDurationMs(clip);
+
+    if (audioFadeInteraction.mode === "fade-in") {
+      const maxFadeMs = Math.max(
+        0,
+        durationMs - audioFadeInteraction.originalFadeOutMs,
+      );
+      const nextFadeInMs = snapAudioFadeDuration(
+        audioFadeInteraction.originalFadeInMs + deltaMs,
+        maxFadeMs,
+      );
+      setAudioFadeInteraction({
+        ...audioFadeInteraction,
+        hasMoved: true,
+        previewFadeInMs: nextFadeInMs,
+      });
+      return;
+    }
+
+    const maxFadeMs = Math.max(
+      0,
+      durationMs - audioFadeInteraction.originalFadeInMs,
+    );
+    const nextFadeOutMs = snapAudioFadeDuration(
+      audioFadeInteraction.originalFadeOutMs + deltaMs,
+      maxFadeMs,
+    );
+    setAudioFadeInteraction({
+      ...audioFadeInteraction,
+      hasMoved: true,
+      previewFadeOutMs: nextFadeOutMs,
+    });
+  }
+
+  function finishAudioFadeInteraction(
+    event?: PointerEvent<HTMLButtonElement>,
+  ) {
+    if (!audioFadeInteraction) {
+      return;
+    }
+
+    const target =
+      event?.currentTarget ?? audioFadeInteractionTargetRef.current;
+    if (
+      target &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(audioFadeInteraction.pointerId)
+    ) {
+      target.releasePointerCapture(audioFadeInteraction.pointerId);
+    }
+
+    const changed =
+      audioFadeInteraction.previewFadeInMs !==
+        audioFadeInteraction.originalFadeInMs ||
+      audioFadeInteraction.previewFadeOutMs !==
+        audioFadeInteraction.originalFadeOutMs;
+
+    if (audioFadeInteraction.hasMoved && changed) {
+      onUpdateAudioClipFades?.(
+        audioFadeInteraction.clipId,
+        audioFadeInteraction.previewFadeInMs,
+        audioFadeInteraction.previewFadeOutMs,
+      );
+    }
+
+    audioFadeInteractionTargetRef.current = null;
+    setAudioFadeInteraction(null);
+  }
+
+  function cancelAudioFadeInteraction() {
+    const target = audioFadeInteractionTargetRef.current;
+    if (
+      target &&
+      audioFadeInteraction &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(audioFadeInteraction.pointerId)
+    ) {
+      target.releasePointerCapture(audioFadeInteraction.pointerId);
+    }
+
+    audioFadeInteractionTargetRef.current = null;
+    setAudioFadeInteraction(null);
+  }
+
+  function handleAudioFadeKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    clip: Clip,
+    mode: "fade-in" | "fade-out",
+  ) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const current = getAudioFadeDurations(clip);
+    const durationMs = getClipDurationMs(clip);
+    const direction =
+      mode === "fade-in"
+        ? event.key === "ArrowRight" ? 1 : -1
+        : event.key === "ArrowLeft" ? 1 : -1;
+    const deltaMs = direction * AUDIO_FADE_HANDLE_STEP_MS;
+
+    if (mode === "fade-in") {
+      const nextFadeInMs = snapAudioFadeDuration(
+        current.fadeInMs + deltaMs,
+        Math.max(0, durationMs - current.fadeOutMs),
+      );
+      if (nextFadeInMs !== current.fadeInMs) {
+        onUpdateAudioClipFades?.(clip.id, nextFadeInMs, current.fadeOutMs);
+      }
+      return;
+    }
+
+    const nextFadeOutMs = snapAudioFadeDuration(
+      current.fadeOutMs + deltaMs,
+      Math.max(0, durationMs - current.fadeInMs),
+    );
+    if (nextFadeOutMs !== current.fadeOutMs) {
+      onUpdateAudioClipFades?.(clip.id, current.fadeInMs, nextFadeOutMs);
+    }
+  }
+
+  useEffect(() => {
+    if (!audioFadeInteraction) {
+      return;
+    }
+
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      event.preventDefault();
+      cancelAudioFadeInteraction();
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [audioFadeInteraction]);
+
   function beginTransitionInteraction(
     event: PointerEvent<HTMLButtonElement>,
     clip: Clip,
@@ -870,6 +1093,11 @@ interface TimelineTrackProps {
   onSelectClip?: (clipId: string) => void;
   onToggleTrackMute?: (trackId: string) => void;
   onUpdateTrackVolume?: (trackId: string, volume: number) => void;
+  onUpdateAudioClipFades?: (
+    clipId: string,
+    fadeInMs: number,
+    fadeOutMs: number,
+  ) => void;
   onRemoveTrack?: (trackId: string) => void;
   onRemoveTransformKeyframe?: (
     clipId: string,
@@ -944,6 +1172,7 @@ function TimelineTrack({
   onSelectClip,
   onToggleTrackMute,
   onUpdateTrackVolume,
+  onUpdateAudioClipFades,
   onRemoveTrack,
   onRemoveTransformKeyframe,
   onCurrentTimeChange,
@@ -1046,6 +1275,24 @@ function TimelineTrack({
           const width = Math.max(72, durationMs / 1000 * pixelsPerSecond);
           const isSelected = clip.id === selectedClipId;
           const isInteracting = interaction?.clipId === clip.id;
+          const isAudioClip =
+            track.type === "audio" && asset?.mediaType === "audio";
+          const audioFadeDurations = getAudioFadeDurations(clip);
+          const displayAudioFadeDurations =
+            audioFadeInteraction?.clipId === clip.id
+              ? {
+                  fadeInMs: audioFadeInteraction.previewFadeInMs,
+                  fadeOutMs: audioFadeInteraction.previewFadeOutMs,
+                }
+              : audioFadeDurations;
+          const fadeInWidthPx = Math.min(
+            width,
+            displayAudioFadeDurations.fadeInMs / 1000 * pixelsPerSecond,
+          );
+          const fadeOutWidthPx = Math.min(
+            width,
+            displayAudioFadeDurations.fadeOutMs / 1000 * pixelsPerSecond,
+          );
 
           function handleClipKeyDown(event: KeyboardEvent<HTMLDivElement>) {
             if (event.key === "Enter" || event.key === " ") {
@@ -1101,6 +1348,70 @@ function TimelineTrack({
                   {asset?.name ?? "Missing media"}
                 </span>
                 <small>{formatTimecode(durationMs)}</small>
+                {isAudioClip ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="timeline-audio-fade-region timeline-audio-fade-in-region"
+                      style={{ width: fadeInWidthPx + "px" }}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="timeline-audio-fade-region timeline-audio-fade-out-region"
+                      style={{ width: fadeOutWidthPx + "px" }}
+                    />
+                    <button
+                      aria-label={
+                        "Adjust audio fade in for " +
+                        (asset?.name ?? "Missing media") +
+                        " to " +
+                        displayAudioFadeDurations.fadeInMs +
+                        " ms"
+                      }
+                      className="timeline-audio-fade-handle timeline-audio-fade-handle-in"
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) =>
+                        handleAudioFadeKeyDown(event, sourceClip, "fade-in")
+                      }
+                      onPointerDown={(event) =>
+                        beginAudioFadeInteraction(event, sourceClip, "fade-in")
+                      }
+                      onPointerMove={updateAudioFadeInteraction}
+                      onPointerUp={finishAudioFadeInteraction}
+                      onPointerCancel={cancelAudioFadeInteraction}
+                      style={{ left: fadeInWidthPx + "px" }}
+                      title="Drag to change audio fade in"
+                      type="button"
+                    >
+                      <span aria-hidden="true" />
+                    </button>
+                    <button
+                      aria-label={
+                        "Adjust audio fade out for " +
+                        (asset?.name ?? "Missing media") +
+                        " to " +
+                        displayAudioFadeDurations.fadeOutMs +
+                        " ms"
+                      }
+                      className="timeline-audio-fade-handle timeline-audio-fade-handle-out"
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) =>
+                        handleAudioFadeKeyDown(event, sourceClip, "fade-out")
+                      }
+                      onPointerDown={(event) =>
+                        beginAudioFadeInteraction(event, sourceClip, "fade-out")
+                      }
+                      onPointerMove={updateAudioFadeInteraction}
+                      onPointerUp={finishAudioFadeInteraction}
+                      onPointerCancel={cancelAudioFadeInteraction}
+                      style={{ right: fadeOutWidthPx + "px" }}
+                      title="Drag to change audio fade out"
+                      type="button"
+                    >
+                      <span aria-hidden="true" />
+                    </button>
+                  </>
+                ) : null}
                 <span
                   aria-label="Trim clip end"
                   className="timeline-trim-handle timeline-trim-handle-end"
@@ -1543,6 +1854,15 @@ function timelineWidth(durationMs: number, zoom: number): number {
   return durationMs / 1000 * basePixelsPerSecond * zoom;
 }
 
+function snapAudioFadeDuration(durationMs: number, maxDurationMs: number): number {
+  const safeMaxMs =
+    Math.max(0, Math.floor(maxDurationMs / AUDIO_FADE_HANDLE_STEP_MS)) *
+    AUDIO_FADE_HANDLE_STEP_MS;
+  const safeDurationMs =
+    Math.round(durationMs / AUDIO_FADE_HANDLE_STEP_MS) *
+    AUDIO_FADE_HANDLE_STEP_MS;
+  return Math.min(safeMaxMs, Math.max(0, safeDurationMs));
+}
 function clampZoom(zoom: number): number {
   return Math.min(MAX_TIMELINE_ZOOM, Math.max(MIN_TIMELINE_ZOOM, zoom));
 }

@@ -1,3 +1,16 @@
+## M3.47 implementation checkpoint — 2026-09-21
+
+- Branch: feat/m3-47-audio-fade-handles.
+- Base: main documentation reconciliation commit d8b82df8cc36dbf80099649248b7feefacdf7c94.
+- Implemented direct Audio fade handles in Timeline.
+- The Timeline owns only transient pointer interaction state; project persistence remains in App/history via updateAudioClipFades().
+- Dragging fade-in to the right increases fade-in; dragging fade-out to the left increases fade-out.
+- The other fade duration is preserved and the dragged value is clamped to prevent overlap.
+- Keyboard ArrowLeft/ArrowRight nudges the focused handle by 100 ms.
+- Escape cancels the live interaction.
+- Added Timeline drag/Escape/keyboard tests and App persistence coverage.
+- Required validation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+- Pull patch must be provided with this milestone handoff.
 ## M3.47 kickoff — 2026-09-21
 
 - M3.46 PR #59 was squash-merged at 76d0a1cadd9ae7ab31d471f46c4d6cb9ddba0b40.

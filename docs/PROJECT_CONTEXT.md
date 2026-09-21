@@ -1,3 +1,13 @@
+## M3.47 Timeline Audio Fade Handles — implementation checkpoint — 2026-09-21
+
+- Added direct Timeline fade-in/fade-out handles for explicit Audio clips.
+- Drag interaction is transient and commits exactly once on pointer release through the existing App -> updateAudioClipFades() -> history path.
+- Escape cancels an active fade-handle interaction without creating history.
+- Keyboard ArrowLeft/ArrowRight adjusts the focused fade handle in 100 ms increments.
+- Fade durations are snapped to 100 ms and clamped so fade-in + fade-out never exceeds clip duration.
+- Timeline renders lightweight fade regions so current fade extents are visible on Audio clips.
+- Added Timeline regression coverage for drag commit, Escape cancellation, and keyboard nudging, plus App-level coverage for persistence into the Inspector.
+- Waveform rendering/editor, advanced audio effects, multiple independent Audio tracks, automation, progress, and cancellation remain deferred.
 ## M3.46 merge reconciliation — 2026-09-21
 
 - M3.46 Audio Clip Fades is complete and PR #59 was squash-merged.

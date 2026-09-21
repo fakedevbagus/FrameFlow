@@ -1,3 +1,16 @@
+## 2026-09-21 — M3.47 Timeline Audio Fade Handles — implementation pending validation
+
+Implemented:
+- Direct draggable fade-in/fade-out handles on Audio clips.
+- 100 ms keyboard nudging for focused handles.
+- Transient drag preview with one history commit on release.
+- Escape cancellation without history mutation.
+- Duration/overlap clamping using the existing fade rules.
+- Visual fade extent regions on Audio clips.
+- Timeline and App regression coverage.
+
+Validation:
+- Local validation is required after the branch patch is pulled.
 ## 2026-09-21 — M3.46 Audio Clip Fades — merged
 
 PR #59 — squash-merged

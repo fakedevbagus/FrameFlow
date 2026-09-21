@@ -1268,6 +1268,60 @@ button:disabled {
   background: #2d554b;
 }
 
+.timeline-audio-fade-region {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: rgb(255 255 255 / 8%);
+  border-radius: 4px;
+}
+
+.timeline-audio-fade-in-region {
+  left: 0;
+  border-right: 1px solid rgb(255 255 255 / 25%);
+}
+
+.timeline-audio-fade-out-region {
+  right: 0;
+  border-left: 1px solid rgb(255 255 255 / 25%);
+}
+
+.timeline-audio-fade-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 12px;
+  padding: 0;
+  border: 0;
+  cursor: ew-resize;
+  background: transparent;
+}
+
+.timeline-audio-fade-handle span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+  background: #d9fff3;
+  box-shadow: 0 1px 5px rgb(0 0 0 / 35%);
+  transform: translate(-50%, -50%);
+}
+
+.timeline-audio-fade-handle:hover span,
+.timeline-audio-fade-handle:focus-visible span {
+  width: 4px;
+  background: #ffffff;
+}
+
+.timeline-audio-fade-handle:focus-visible {
+  outline: 2px solid #b9b0ff;
+  outline-offset: -2px;
+}
+
 .timeline-clip-name {
   overflow: hidden;
   font-size: 10px;

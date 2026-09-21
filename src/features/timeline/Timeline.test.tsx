@@ -348,6 +348,123 @@ describe("Timeline", () => {
     expect(onToggleTrackMute).toHaveBeenCalledWith("video-1");
   });
 
+  it("drags the audio fade-in handle and commits once", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "audio-fade",
+      name: "music.mp3",
+      mediaType: "audio",
+      sourcePath: "/music.mp3",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "audio-fade");
+
+    const clip = project.tracks[1].clips[0];
+    const onUpdateAudioClipFades = vi.fn();
+    render(
+      <Timeline
+        project={project}
+        onUpdateAudioClipFades={onUpdateAudioClipFades}
+      />,
+    );
+
+    const handle = screen.getByRole("button", {
+      name: "Adjust audio fade in for music.mp3 to 0 ms",
+    });
+    fireEvent.pointerDown(handle, {
+      button: 0,
+      clientX: 100,
+      pointerId: 51,
+    });
+    fireEvent.pointerMove(handle, {
+      buttons: 1,
+      clientX: 140,
+      pointerId: 51,
+    });
+    fireEvent.pointerUp(handle, {
+      button: 0,
+      clientX: 140,
+      pointerId: 51,
+    });
+
+    expect(onUpdateAudioClipFades).toHaveBeenCalledTimes(1);
+    expect(onUpdateAudioClipFades).toHaveBeenCalledWith(clip.id, 1000, 0);
+  });
+
+  it("cancels audio fade-handle dragging with Escape without committing", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "audio-fade-cancel",
+      name: "music-cancel.mp3",
+      mediaType: "audio",
+      sourcePath: "/music-cancel.mp3",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "audio-fade-cancel");
+
+    const onUpdateAudioClipFades = vi.fn();
+    render(
+      <Timeline
+        project={project}
+        onUpdateAudioClipFades={onUpdateAudioClipFades}
+      />,
+    );
+
+    const handle = screen.getByRole("button", {
+      name: "Adjust audio fade out for music-cancel.mp3 to 0 ms",
+    });
+    fireEvent.pointerDown(handle, {
+      button: 0,
+      clientX: 300,
+      pointerId: 52,
+    });
+    fireEvent.pointerMove(handle, {
+      buttons: 1,
+      clientX: 240,
+      pointerId: 52,
+    });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(handle, {
+      button: 0,
+      clientX: 240,
+      pointerId: 52,
+    });
+
+    expect(onUpdateAudioClipFades).not.toHaveBeenCalled();
+  });
+
+  it("nudges a focused audio fade handle by 100 ms", () => {
+    let project = createVideoProject();
+    project.assets.push({
+      id: "audio-fade-keyboard",
+      name: "music-keyboard.mp3",
+      mediaType: "audio",
+      sourcePath: "/music-keyboard.mp3",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "audio-fade-keyboard");
+
+    const onUpdateAudioClipFades = vi.fn();
+    render(
+      <Timeline
+        project={project}
+        onUpdateAudioClipFades={onUpdateAudioClipFades}
+      />,
+    );
+
+    fireEvent.keyDown(
+      screen.getByRole("button", {
+        name: "Adjust audio fade in for music-keyboard.mp3 to 0 ms",
+      }),
+      { key: "ArrowRight" },
+    );
+
+    expect(onUpdateAudioClipFades).toHaveBeenCalledWith(
+      project.tracks[1].clips[0].id,
+      100,
+      0,
+    );
+  });
   it("shows an audio track volume slider and reports changes", () => {
     const project = createVideoProject();
     const onUpdateTrackVolume = vi.fn();
