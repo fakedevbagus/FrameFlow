@@ -1,3 +1,11 @@
+## M3.48 Multiple Audio Track Mix — 2026-09-21
+
+- Started the next audio milestone from the latest M3.47 head.
+- Scope: allow more than one independent Audio track to participate in the existing project audio mix graph.
+- Track order is deterministic; clips retain their existing trim, fade, track volume, mute, and timeline-delay behavior.
+- No new native FFmpeg command is required because the existing video/audio mix boundary already accepts a list of audio input paths.
+- Required validation: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; npm run tauri dev.
+
 ## M3.47 Linux WebView visual correction — 2026-09-21
 
 - The user reported a Timeline presentation defect after successful functional validation: Audio clips displayed two full-width horizontal bars instead of compact fade handles.
