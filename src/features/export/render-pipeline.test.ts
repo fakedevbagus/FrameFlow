@@ -84,6 +84,7 @@ describe("render video pipeline", () => {
       width: 1080,
       height: 1920,
       frameRate: 30,
+      includeAudio: true,
     });
   });
 
