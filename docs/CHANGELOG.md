@@ -1,5 +1,32 @@
 ## 2026-09-21
 
+### M3.32 — Export settings foundation — in progress
+
+Branch: `feat/m3-32-export-settings`
+Base: M3.31 merge SHA `3a2a77aca9b30779870e16863fe709661cd02f3e`
+
+Implemented:
+- Added a dedicated export settings domain model.
+- Added source, 1080p, and 720p quality presets that preserve the project canvas aspect ratio.
+- Added MP4/H.264 as the initial renderer target.
+- Added project-derived frame rate and sanitized output filename defaults.
+- Added an Export Settings panel opened by the toolbar Export action and Workspace Export navigation.
+- Kept export settings out of project history.
+- Added regression tests for settings normalization, quality dimensions, filename sanitization, panel behavior, and App wiring.
+
+Validation:
+- M3.31: user-reported local validation passed before merge.
+- M3.32: pending user local validation.
+
+Known limitations:
+- The Export button in the panel is intentionally not connected to rendering yet.
+- No output directory picker, render queue, progress, cancellation, or FFmpeg encoding graph exists yet.
+
+Next step:
+- Validate PR #43 locally before marking it ready for review and merging.
+
+## 2026-09-21
+
 ### M3.31 validation correction
 
 First local validation: lint passed; 206/207 tests passed across 19 files, with the only failure caused by a missing `addAssetToTimeline` import in the new App playback-throttle regression. Build reported the same TypeScript error; Tauri dev launched successfully. Corrected in commit `a9e1b5111a1338fd758186969114eee2ab624612`. PR #42 remains draft pending one clean rerun.
