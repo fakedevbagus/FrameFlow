@@ -6,6 +6,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { MediaBin } from "./features/media/MediaBin";
+import { getAudioEq } from "./features/project/domain";
 import type {
   AudioEq,
   Clip,
@@ -17,7 +18,6 @@ import type {
   ClipTransition,
 } from "./features/project/domain";
 import {
-  getAudioEq,
   addAssetToTimeline,
   addAssetToTrack,
   addTrack,
