@@ -5,6 +5,7 @@
 - Repository inspection after M3.60 shows text/captions are the next major editor capability not represented in the product surface.
 - M3.61 adds a backward-compatible optional per-visual-clip text overlay model with text content, normalized X/Y position, font size, color, and left/center/right alignment.
 - Text overlays are edited through the existing project history mutation path and therefore persist automatically with project files.
+- The text-overlay command only accepts clips on video tracks with video/image assets, matching the existing visual-editing safety boundary.
 - Preview renders the text overlay above the visual clip for both video and image media and keeps it coupled to the clip transform/opacity.
 - The Inspector exposes the text content, position, font size, color, alignment, reset, and quick-access controls.
 - Empty text clears the optional overlay state; existing projects remain compatible without a schema version bump.
