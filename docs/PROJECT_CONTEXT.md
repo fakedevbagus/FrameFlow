@@ -1,4 +1,13 @@
-## M3.61 — Text Overlay Foundation — in progress — 2026-09-22
+## M3.62 — Text Overlay Export Rendering — in progress — 2026-09-22
+
+- M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
+- M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
+- The export slice will reuse the existing optional per-clip text overlay model and keep rendering deterministic without introducing a new project schema version.
+- Font selection will use a small explicit renderer-owned font family policy rather than relying on arbitrary platform defaults.
+- Preserve the existing single-video FFmpeg graph architecture and keep transform/crop/transition interactions explicitly validated.
+- Local validation remains required before the M3.62 PR is marked ready.
+
+## M3.61 — Text Overlay Foundation — merged — 2026-09-22
 
 - Follow-up test correction: the invalid-alignment normalization fixture now intentionally bypasses the static union type so the runtime fallback path remains covered without changing production typing.
 - PR #75: https://github.com/fakedevbagus/FrameFlow/pull/75
@@ -13,7 +22,7 @@
 - Export/render-graph compilation of text is intentionally deferred to a dedicated text-rendering milestone so this foundation does not introduce platform-dependent font assumptions.
 - Added domain, timeline-command, and App Inspector/Preview regression coverage.
 - Required validation: `git fetch origin --prune`; checkout/pull the feature branch; `npm ci`; `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
-- Keep M3.61 Draft until the user reports clean local validation.
+- User reported local validation as PASS; PR #75 was marked ready and squash-merged at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
 
 ## M3.60 — Visual Effects Foundation — merged — 2026-09-22
 
