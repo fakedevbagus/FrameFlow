@@ -9,6 +9,7 @@ import {
   getTrackPan,
   getAudioEq,
   getAudioCompressor,
+  getVisualEffects,
   getAudioFadeDurations,
 } from "./domain";
 
@@ -109,6 +110,37 @@ describe("project domain", () => {
     });
 
     expect(project.tracks.find((track) => track.type === "audio")?.pan).toBe(0);
+  });
+
+  it("defaults visual effects to neutral values and clamps stored values", () => {
+    const clip = {
+      id: "visual-effects-clip",
+      assetId: "video",
+      timelineStartMs: 0,
+      sourceStartMs: 0,
+      sourceEndMs: 5000,
+    };
+
+    expect(getVisualEffects(clip)).toEqual({
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+    });
+
+    expect(
+      getVisualEffects({
+        ...clip,
+        visualEffects: {
+          brightness: 2,
+          contrast: -2,
+          saturation: 0.237,
+        },
+      }),
+    ).toEqual({
+      brightness: 1,
+      contrast: -1,
+      saturation: 0.24,
+    });
   });
 
   it("defaults the audio compressor and clamps stored settings", () => {
