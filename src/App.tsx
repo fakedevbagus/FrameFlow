@@ -207,54 +207,6 @@ function App() {
   }, [selectedClipId, project.updatedAt]);
 
   useEffect(() => {
-    const textInput = textOverlayTextInputRef.current;
-    const xInput = textOverlayXInputRef.current;
-    const yInput = textOverlayYInputRef.current;
-    const sizeInput = textOverlaySizeInputRef.current;
-
-    const handleTextInput = () => {
-      if (!textInput) return;
-      handleUpdateTextOverlayDraft({ text: textInput.value });
-    };
-
-    const handleXInput = () => {
-      if (!xInput) return;
-      const value = Number(xInput.value);
-      if (Number.isFinite(value) && value >= 0 && value <= 100) {
-        handleUpdateTextOverlayDraft({ x: value / 100 });
-      }
-    };
-
-    const handleYInput = () => {
-      if (!yInput) return;
-      const value = Number(yInput.value);
-      if (Number.isFinite(value) && value >= 0 && value <= 100) {
-        handleUpdateTextOverlayDraft({ y: value / 100 });
-      }
-    };
-
-    const handleSizeInput = () => {
-      if (!sizeInput) return;
-      const value = Number(sizeInput.value);
-      if (Number.isFinite(value) && value >= 12 && value <= 240) {
-        handleUpdateTextOverlayDraft({ fontSize: Math.round(value) });
-      }
-    };
-
-    textInput?.addEventListener("input", handleTextInput);
-    xInput?.addEventListener("input", handleXInput);
-    yInput?.addEventListener("input", handleYInput);
-    sizeInput?.addEventListener("input", handleSizeInput);
-
-    return () => {
-      textInput?.removeEventListener("input", handleTextInput);
-      xInput?.removeEventListener("input", handleXInput);
-      yInput?.removeEventListener("input", handleYInput);
-      sizeInput?.removeEventListener("input", handleSizeInput);
-    };
-  });
-
-  useEffect(() => {
     if (!textOverlayDraft) {
       return;
     }
@@ -586,10 +538,6 @@ function App() {
 
   const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
   const textOverlayRef = useRef<HTMLDivElement | null>(null);
-  const textOverlayTextInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const textOverlayXInputRef = useRef<HTMLInputElement | null>(null);
-  const textOverlayYInputRef = useRef<HTMLInputElement | null>(null);
-  const textOverlaySizeInputRef = useRef<HTMLInputElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
@@ -898,6 +846,70 @@ function App() {
         ...changes,
       },
     });
+  }
+
+  function handleTextOverlayTextInput(value: string) {
+    handleUpdateTextOverlayDraft({ text: value });
+  }
+
+  function handleTextOverlayPositionInput(
+    axis: "x" | "y",
+    value: string,
+  ) {
+    const parsed = Number(value.trim());
+
+    if (
+      !value.trim() ||
+      !Number.isFinite(parsed) ||
+      parsed < 0 ||
+      parsed > 100
+    ) {
+      return;
+    }
+
+    handleUpdateTextOverlayDraft({ [axis]: parsed / 100 });
+  }
+
+  function handleTextOverlayFontSizeInput(value: string) {
+    const parsed = Number(value.trim());
+
+    if (
+      !value.trim() ||
+      !Number.isFinite(parsed) ||
+      parsed < 12 ||
+      parsed > 240
+    ) {
+      return;
+    }
+
+    handleUpdateTextOverlayDraft({ fontSize: Math.round(parsed) });
+  }
+
+  function handleTextOverlayKeyUp(
+    event: ReactKeyboardEvent<
+      HTMLTextAreaElement | HTMLInputElement
+    >,
+  ) {
+    const target = event.currentTarget;
+
+    if (target instanceof HTMLTextAreaElement) {
+      handleTextOverlayTextInput(target.value);
+      return;
+    }
+
+    if (target.getAttribute("aria-label") === "Text overlay X position") {
+      handleTextOverlayPositionInput("x", target.value);
+      return;
+    }
+
+    if (target.getAttribute("aria-label") === "Text overlay Y position") {
+      handleTextOverlayPositionInput("y", target.value);
+      return;
+    }
+
+    if (target.getAttribute("aria-label") === "Text overlay font size") {
+      handleTextOverlayFontSizeInput(target.value);
+    }
   }
 
   function clearTextOverlayAutoCommitTimer() {
