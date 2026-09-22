@@ -795,28 +795,41 @@ describe("App", () => {
       screen.getByRole("textbox", { name: "Text overlay content" }),
       { target: { value: "Hello FrameFlow" } },
     );
-    fireEvent.blur(
-      screen.getByRole("textbox", { name: "Text overlay content" }),
-    );
 
     await waitFor(() =>
-      expect(screen.getByTestId("preview-text-overlay-" + project.tracks[0].clips[0].id)).toHaveTextContent(
-        "Hello FrameFlow",
-      ),
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveTextContent("Hello FrameFlow"),
     );
 
     fireEvent.change(
       screen.getByRole("spinbutton", { name: "Text overlay X position" }),
       { target: { value: "20" } },
     );
-    fireEvent.blur(
-      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ left: "20%" }),
     );
 
     fireEvent.change(
       screen.getByRole("spinbutton", { name: "Text overlay font size" }),
       { target: { value: "72" } },
     );
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ fontSize: "72px" }),
+    );
+
     fireEvent.blur(
       screen.getByRole("spinbutton", { name: "Text overlay font size" }),
     );
