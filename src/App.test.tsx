@@ -891,10 +891,11 @@ describe("App", () => {
       screen.getByRole("button", { name: "Select autosave-text.mp4 clip" }),
     );
 
-    fireEvent.input(
-      screen.getByRole("textbox", { name: "Text overlay content" }),
-      { target: { value: "Autosave now" } },
-    );
+    const textInput = screen.getByRole("textbox", {
+      name: "Text overlay content",
+    });
+    fireEvent.input(textInput, { target: { value: "Autosave now" } });
+    fireEvent.keyUp(textInput, { key: "w" });
 
     await waitFor(() =>
       expect(
@@ -916,10 +917,11 @@ describe("App", () => {
       { timeout: 1500 },
     );
 
-    fireEvent.input(
-      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
-      { target: { value: "20" } },
-    );
+    const xInput = screen.getByRole("spinbutton", {
+      name: "Text overlay X position",
+    });
+    fireEvent.input(xInput, { target: { value: "20" } });
+    fireEvent.keyUp(xInput, { key: "0" });
 
     await waitFor(() =>
       expect(
@@ -929,10 +931,11 @@ describe("App", () => {
       ).toHaveStyle({ left: "20%" }),
     );
 
-    fireEvent.input(
-      screen.getByRole("spinbutton", { name: "Text overlay Y position" }),
-      { target: { value: "80" } },
-    );
+    const yInput = screen.getByRole("spinbutton", {
+      name: "Text overlay Y position",
+    });
+    fireEvent.input(yInput, { target: { value: "80" } });
+    fireEvent.keyUp(yInput, { key: "0" });
 
     await waitFor(() =>
       expect(
@@ -942,10 +945,11 @@ describe("App", () => {
       ).toHaveStyle({ top: "80%" }),
     );
 
-    fireEvent.input(
-      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
-      { target: { value: "72" } },
-    );
+    const sizeInput = screen.getByRole("spinbutton", {
+      name: "Text overlay font size",
+    });
+    fireEvent.input(sizeInput, { target: { value: "72" } });
+    fireEvent.keyUp(sizeInput, { key: "2" });
 
     await waitFor(() =>
       expect(
