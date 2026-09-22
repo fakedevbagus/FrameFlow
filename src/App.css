@@ -211,6 +211,62 @@ button:focus-visible {
   box-shadow: inset 0 0 0 1px rgb(139 124 255 / 12%);
 }
 
+.inspector-text-overlay {
+  padding-top: 2px;
+}
+
+.inspector-textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  padding: 8px 9px;
+  border: 1px solid #333b49;
+  border-radius: 6px;
+  color: #e7eaf0;
+  background: #171b23;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.inspector-textarea::placeholder {
+  color: #697384;
+}
+
+.inspector-textarea:focus {
+  border-color: #655c99;
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(139 124 255 / 12%);
+}
+
+.inspector-color-input-wrap {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+}
+
+.inspector-color-input-wrap input[type="color"] {
+  width: 100%;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid #333b49;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #171b23;
+}
+
+.inspector-text-alignment {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.inspector-text-alignment .inspector-inline-button[aria-pressed="true"] {
+  border-color: #8b7cff;
+  color: #f1efff;
+  background: #302c48;
+}
+
 .panel-heading h1,
 .panel-heading h2,
 .editor-toolbar h2 {
