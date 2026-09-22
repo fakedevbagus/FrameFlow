@@ -2,10 +2,13 @@ import {
   getAudioEq,
   getAudioFadeDurations,
   getVisualEffects,
+  getTextOverlay,
   getAudioCompressor,
+  normalizeTextOverlay,
   type AudioCompressor,
   type AudioEq,
   type VisualEffects,
+  type TextOverlay,
   type TransformAnchor,
   type ClipCrop,
   type CropPosition,
@@ -536,7 +539,80 @@ export function updateTrackPan(
     pan,
   };
 
-  return { ...project, tracks, updatedAt: now.toISOString() };
+  return { ...project, trexport function updateClipTextOverlay(
+  project: Project,
+  clipId: string,
+  overlay: TextOverlay | undefined,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (
+    !asset ||
+    (asset.mediaType !== "video" && asset.mediaType !== "image")
+  ) {
+    throw new Error("Text overlays are only available for visual clips.");
+  }
+
+  const normalized = normalizeTextOverlay(overlay);
+  const current = getTextOverlay(location.clip);
+
+  if (areTextOverlaysEqual(current, normalized)) {
+    return project;
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { textOverlay: normalized },
+    now,
+  );
+}
+
+function normalizeTextOverlay(value: TextOverlay | undefined): TextOverlay | undefined {
+  if (!value || !value.text.trim()) {
+    return undefined;
+  }
+
+  return {
+    ...value,
+    text: value.text.trim().slice(0, 500),
+    x: Math.min(1, Math.max(0, value.x)),
+    y: Math.min(1, Math.max(0, value.y)),
+    fontSize: Math.min(240, Math.max(12, Math.round(value.fontSize))),
+    color: /^#[0-9a-fA-F]{6}$/.test(value.color) ? value.color.toLowerCase() : "#ffffff",
+    alignment:
+      value.alignment === "left" ||
+      value.alignment === "right" ||
+      value.alignment === "center"
+        ? value.alignment
+        : "center",
+  };
+}
+
+function areTextOverlaysEqual(
+  left: TextOverlay | undefined,
+  right: TextOverlay | undefined,
+): boolean {
+  return (
+    left?.text === right?.text &&
+    left?.x === right?.x &&
+    left?.y === right?.y &&
+    left?.fontSize === right?.fontSize &&
+    left?.color === right?.color &&
+    left?.alignment === right?.alignment
+  );
+}
+
+acks, updatedAt: now.toISOString() };
 }
 
 
