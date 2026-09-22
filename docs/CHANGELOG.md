@@ -1,6 +1,7 @@
 ## 2026-09-22 — M3.61 Text Overlay Foundation — in progress
 
 Branch: feat/m3-61-text-overlay-foundation
+PR: #75 — draft
 
 Base:
 - M3.60 squash merge SHA: bb5ea26ea3598f33dda7f07837eebaf093a4dfce
