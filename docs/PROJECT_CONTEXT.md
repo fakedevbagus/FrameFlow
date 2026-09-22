@@ -7,6 +7,8 @@
 - Vitest's default fork pool uses available parallelism. The latest supplied run showed simultaneous fork worker startup timeouts. The test configuration now caps the forks pool at two workers; this requires fresh local validation before the failure can be considered fully resolved.
 - Preview tests now await asynchronous preview effects through a shared test render helper, and the jsdom media play() method has a deterministic resolved default so tests can focus on application behavior.
 - Timeline waveform regression coverage now checks left/center/right seeking and verifies waveform pointer interaction does not invoke clip movement.
+- Waveform interaction is keyboard-accessible as a button; Enter/Space seeks to the clip midpoint.
+- SVG waveform path construction now rejects non-finite dimensions as well as invalid peak data.
 - Required local validation remains pending in this environment because repository execution is unavailable here: npm run lint; targeted Vitest tests; npm run test; npm run build; cd src-tauri && cargo test; cd ..; npm run tauri dev.
 
 ## M3.56 — Audio Waveform Scrubbing — in progress — 2026-09-22
