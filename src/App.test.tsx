@@ -914,7 +914,7 @@ describe("App", () => {
       name: "Text overlay content",
     });
     textInput.value = "Keyboard live";
-    fireEvent.keyUp(textInput, { key: "e" });
+    fireEvent.input(textInput, { target: { value: "Keyboard live" } });
 
     await waitFor(() =>
       expect(
@@ -952,7 +952,7 @@ describe("App", () => {
       name: "Text overlay X position",
     });
     fireEvent.input(xInput, { target: { value: "20" } });
-    fireEvent.keyUp(xInput, { key: "0" });
+    fireEvent.input(xInput, { target: { value: "20" } });
 
     await waitFor(() =>
       expect(
@@ -966,7 +966,7 @@ describe("App", () => {
       name: "Text overlay Y position",
     });
     fireEvent.input(yInput, { target: { value: "80" } });
-    fireEvent.keyUp(yInput, { key: "0" });
+    fireEvent.input(yInput, { target: { value: "80" } });
 
     await waitFor(() =>
       expect(
@@ -980,7 +980,7 @@ describe("App", () => {
       name: "Text overlay font size",
     });
     fireEvent.input(sizeInput, { target: { value: "72" } });
-    fireEvent.keyUp(sizeInput, { key: "2" });
+    fireEvent.input(sizeInput, { target: { value: "72" } });
 
     await waitFor(() =>
       expect(
