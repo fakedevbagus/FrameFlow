@@ -706,6 +706,9 @@ describe("App", () => {
     );
 
     expect(screen.getByText("Color adjustments")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Show color adjustments" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: "Brightness" })).toHaveValue(0);
     expect(screen.getByRole("spinbutton", { name: "Contrast" })).toHaveValue(0);
     expect(screen.getByRole("spinbutton", { name: "Saturation" })).toHaveValue(0);
