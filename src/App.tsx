@@ -1994,21 +1994,8 @@ function App() {
                 <strong>{selectedClipContext.asset?.name ?? "Missing media"}</strong>
               </div>
 
-              <div className="inspector-fields">
-                <span>Track</span>
-                <strong>{selectedClipContext.track.name}</strong>
-                <span>Start</span>
-                <strong>{formatDuration(selectedClipContext.clip.timelineStartMs)}</strong>
-                <span>Duration</span>
-                <strong>{formatDuration(getClipDurationMs(selectedClipContext.clip))}</strong>
-                <span>Source</span>
-                <strong>
-                  {formatDuration(selectedClipContext.clip.sourceStartMs)} –{" "}
-                  {formatDuration(selectedClipContext.clip.sourceEndMs)}
-                </strong>
-              </div>
-
                   <div
+                    data-testid="color-adjustments"
                     ref={colorAdjustmentsRef}
                     className={
                       "inspector-section inspector-color-adjustments" +
@@ -2392,6 +2379,22 @@ function App() {
                       </button>
                     </div>
                   </div>
+
+
+
+              <div className="inspector-fields">
+                <span>Track</span>
+                <strong>{selectedClipContext.track.name}</strong>
+                <span>Start</span>
+                <strong>{formatDuration(selectedClipContext.clip.timelineStartMs)}</strong>
+                <span>Duration</span>
+                <strong>{formatDuration(getClipDurationMs(selectedClipContext.clip))}</strong>
+                <span>Source</span>
+                <strong>
+                  {formatDuration(selectedClipContext.clip.sourceStartMs)} –{" "}
+                  {formatDuration(selectedClipContext.clip.sourceEndMs)}
+                </strong>
+              </div>
 
                   <div className="inspector-keyframe-status">
                     <span>
