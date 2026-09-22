@@ -1,5 +1,8 @@
 ## 2026-09-22 — M3.61 Text Overlay Foundation — in progress
 
+Validation fix:
+- Corrected the domain normalization fixture so its intentionally invalid alignment value is accepted by the test compiler while still exercising the runtime fallback to center.
+
 Branch: feat/m3-61-text-overlay-foundation
 PR: #75 — draft
 
