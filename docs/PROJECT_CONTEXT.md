@@ -2,10 +2,18 @@
 
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
 - M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
-- The export slice will reuse the existing optional per-clip text overlay model and keep rendering deterministic without introducing a new project schema version.
-- Font selection will use a small explicit renderer-owned font family policy rather than relying on arbitrary platform defaults.
-- Preserve the existing single-video FFmpeg graph architecture and keep transform/crop/transition interactions explicitly validated.
-- Local validation remains required before the M3.62 PR is marked ready.
+- RenderPlan now carries the normalized optional TextOverlay metadata for visual segments.
+- The single-video FFmpeg graph now compiles text overlays with a deterministic `drawtext` stage using the explicit renderer font policy `DejaVu Sans`.
+- Drawtext positions mirror the Preview anchor semantics for left, center, and right alignment.
+- Text content escaping covers FFmpeg filter delimiters and multiline text while disabling drawtext expression expansion.
+- Preview alignment semantics were corrected so left/center/right change the text anchor rather than only the internal text alignment property.
+- No project schema version bump is required; the existing optional textOverlay clip field remains backward compatible.
+- Added renderer helper, RenderPlan, render-graph, and Preview regression coverage.
+- Image clips remain outside the existing single-video FFmpeg graph, matching the pre-existing export limitation.
+- The first local run reached 364/365 tests; the only failure was an incorrect expected escaping string in the renderer regression test. The production renderer/build were otherwise compiling, and the test expectation has been corrected.
+- The text/position/font-size Inspector controls now update a transient text-overlay draft and Preview immediately; the draft is committed through project history when the field is exited, avoiding the previous blur-only Preview lag and avoiding one history entry per typed character.
+- Local validation remains required on the corrected head before the M3.62 PR is marked ready.
+
 
 ## M3.61 — Text Overlay Foundation — merged — 2026-09-22
 
