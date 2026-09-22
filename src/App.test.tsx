@@ -690,11 +690,15 @@ describe("App", () => {
     };
 
     project = addAssetToTimeline(project, "asset-visual-effects");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
 
     render(<App />);
 
     await waitFor(() =>
-      expect(screen.getByText("effects-ui.mp4")).toBeInTheDocument(),
+      expect(screen.getByTitle("effects-ui.mp4 · 00:05")).toBeInTheDocument(),
     );
 
     fireEvent.click(
