@@ -928,6 +928,32 @@ describe("App", () => {
         ),
       ).toHaveStyle({ left: "20%" }),
     );
+
+    fireEvent.input(
+      screen.getByRole("spinbutton", { name: "Text overlay Y position" }),
+      { target: { value: "80" } },
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ top: "80%" }),
+    );
+
+    fireEvent.input(
+      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
+      { target: { value: "72" } },
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ fontSize: "72px" }),
+    );
   });
 
   it("edits transform values precisely from the inspector", async () => {
