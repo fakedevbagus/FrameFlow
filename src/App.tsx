@@ -207,6 +207,54 @@ function App() {
   }, [selectedClipId, project.updatedAt]);
 
   useEffect(() => {
+    const textInput = textOverlayTextInputRef.current;
+    const xInput = textOverlayXInputRef.current;
+    const yInput = textOverlayYInputRef.current;
+    const sizeInput = textOverlaySizeInputRef.current;
+
+    const handleTextInput = () => {
+      if (!textInput) return;
+      handleUpdateTextOverlayDraft({ text: textInput.value });
+    };
+
+    const handleXInput = () => {
+      if (!xInput) return;
+      const value = Number(xInput.value);
+      if (Number.isFinite(value) && value >= 0 && value <= 100) {
+        handleUpdateTextOverlayDraft({ x: value / 100 });
+      }
+    };
+
+    const handleYInput = () => {
+      if (!yInput) return;
+      const value = Number(yInput.value);
+      if (Number.isFinite(value) && value >= 0 && value <= 100) {
+        handleUpdateTextOverlayDraft({ y: value / 100 });
+      }
+    };
+
+    const handleSizeInput = () => {
+      if (!sizeInput) return;
+      const value = Number(sizeInput.value);
+      if (Number.isFinite(value) && value >= 12 && value <= 240) {
+        handleUpdateTextOverlayDraft({ fontSize: Math.round(value) });
+      }
+    };
+
+    textInput?.addEventListener("input", handleTextInput);
+    xInput?.addEventListener("input", handleXInput);
+    yInput?.addEventListener("input", handleYInput);
+    sizeInput?.addEventListener("input", handleSizeInput);
+
+    return () => {
+      textInput?.removeEventListener("input", handleTextInput);
+      xInput?.removeEventListener("input", handleXInput);
+      yInput?.removeEventListener("input", handleYInput);
+      sizeInput?.removeEventListener("input", handleSizeInput);
+    };
+  });
+
+  useEffect(() => {
     if (!textOverlayDraft) {
       return;
     }
@@ -538,6 +586,10 @@ function App() {
 
   const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
   const textOverlayRef = useRef<HTMLDivElement | null>(null);
+  const textOverlayTextInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const textOverlayXInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlayYInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlaySizeInputRef = useRef<HTMLInputElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
@@ -2616,15 +2668,12 @@ function App() {
                     <textarea
                       aria-label="Text overlay content"
                       className="inspector-textarea"
-                      value={activeTextOverlay?.text ?? ""}
+                      defaultValue={activeTextOverlay?.text ?? ""}
+                      key={"text-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.text ?? "")}
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
-                      onInput={(event) =>
-                        handleUpdateTextOverlayDraft({
-                          text: event.currentTarget.value,
-                        })
-                      }
+                      ref={textOverlayTextInputRef}
                       onBlur={handleCommitSelectedTextOverlayDraft}
                     />
                     <div className="inspector-transform-input-grid">
@@ -2634,26 +2683,15 @@ function App() {
                           <input
                             aria-label="Text overlay X position"
                             className="inspector-transform-input"
-                            value={Math.round(
+                            defaultValue={Math.round(
                               (activeTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
                             )}
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            onInput={(event) => {
-                              const rawValue = event.currentTarget.value.trim();
-                              const value = Number(rawValue);
-                              if (
-                                !rawValue ||
-                                !Number.isFinite(value) ||
-                                value < 0 ||
-                                value > 100
-                              ) {
-                                return;
-                              }
-                              handleUpdateTextOverlayDraft({ x: value / 100 });
-                            }}
+                            ref={textOverlayXInputRef}
+                            key={"x-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
@@ -2677,26 +2715,15 @@ function App() {
                           <input
                             aria-label="Text overlay Y position"
                             className="inspector-transform-input"
-                            value={Math.round(
+                            defaultValue={Math.round(
                               (activeTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
                             )}
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            onInput={(event) => {
-                              const rawValue = event.currentTarget.value.trim();
-                              const value = Number(rawValue);
-                              if (
-                                !rawValue ||
-                                !Number.isFinite(value) ||
-                                value < 0 ||
-                                value > 100
-                              ) {
-                                return;
-                              }
-                              handleUpdateTextOverlayDraft({ y: value / 100 });
-                            }}
+                            ref={textOverlayYInputRef}
+                            key={"y-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
@@ -2720,7 +2747,7 @@ function App() {
                           <input
                             aria-label="Text overlay font size"
                             className="inspector-transform-input"
-                            value={
+                            defaultValue={
                               activeTextOverlay?.fontSize ??
                               DEFAULT_TEXT_OVERLAY_FONT_SIZE
                             }
@@ -2728,21 +2755,8 @@ function App() {
                             min="12"
                             step="1"
                             type="number"
-                            onInput={(event) => {
-                              const rawValue = event.currentTarget.value.trim();
-                              const value = Number(rawValue);
-                              if (
-                                !rawValue ||
-                                !Number.isFinite(value) ||
-                                value < 12 ||
-                                value > 240
-                              ) {
-                                return;
-                              }
-                              handleUpdateTextOverlayDraft({
-                                fontSize: Math.round(value),
-                              });
-                            }}
+                            ref={textOverlaySizeInputRef}
+                            key={"size-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.fontSize ?? DEFAULT_TEXT_OVERLAY_FONT_SIZE)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 12 || value > 240) {
