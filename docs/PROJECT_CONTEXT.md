@@ -1,4 +1,18 @@
-## M3.58 — Persistent Waveform Cache — in progress — 2026-09-22
+## M3.59 — Project File Persistence Hardening — in progress — 2026-09-22
+
+- M3.58 Persistent Waveform Cache was completed and squash-merged into main at `50f90252546fd65a83f31260b123ca185646a816`.
+- Repository persistence is the next focused slice because project save/open already exists but the native file boundary still accepts arbitrary paths.
+- M3.59 hardens the native project path boundary to require an absolute file path with the `.frameflow.json` suffix.
+- Project filename extension matching is case-insensitive so valid project files remain portable across normal filesystem naming conventions.
+- Failed atomic project finalization now removes the temporary `.tmp` file so interrupted saves do not leave stale temporary artifacts.
+- Existing temp-file-then-rename save behavior remains unchanged for successful saves.
+- No project schema or history semantics change in this milestone.
+- Added native regression coverage for valid/invalid project paths.
+- CI build exposed a TypeScript narrowing issue in the persisted waveform-store reader; the cache parser now uses an explicit type guard before passing data to typed helpers.
+- Required validation: `git fetch origin --prune`; checkout/pull the feature branch; `npm ci`; `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep M3.59 Draft until the user reports clean local validation.
+
+## M3.58 — Persistent Waveform Cache — merged — 2026-09-22
 
 - M3.57 Audio Waveform Region Selection was squash-merged into main at `c8b89684665f61d5f03e78ccbcc66cc52beb28af`.
 - M3.58 adds a best-effort persistent waveform cache backed by browser local storage while keeping waveform selection state ephemeral.
@@ -10,8 +24,8 @@
 - No project schema or history state is changed.
 - Existing waveform selection, click-to-seek, audio fades, automation, pan, EQ, compressor, mute, multi-track mixing, RenderPlan, and export paths remain unchanged.
 - Added regression coverage for cache reuse, fingerprint invalidation, malformed persisted data, storage failures, and existing waveform normalization behavior.
-- Required validation: `git fetch origin --prune`; checkout/pull the feature branch; `npm ci`; `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
-- Keep M3.58 Draft until the user reports clean local validation and manual cache behavior.
+- User reported local validation as PASS; PR #72 was marked ready and squash-merged.
+- A pre-merge CI run exposed stale test mocks/assertions for the new fingerprint invocation path; those tests were corrected before merge. No fresh post-correction CI result is being claimed here.
 
 ## M3.57 — Audio Waveform Region Selection — merged — 2026-09-22
 

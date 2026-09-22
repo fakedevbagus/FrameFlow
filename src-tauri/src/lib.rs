@@ -401,12 +401,15 @@ fn save_project(path: String, content: String) -> Result<(), String> {
     )
   })?;
 
-  fs::rename(&temporary_path, &project_path).map_err(|error| {
-    format!(
+  if let Err(error) = fs::rename(&temporary_path, &project_path) {
+    let _ = fs::remove_file(&temporary_path);
+    return Err(format!(
       "Could not finalize project '{}': {error}",
       project_path.display()
-    )
-  })
+    ));
+  }
+
+  Ok(())
 }
 
 fn validate_native_export_settings(width: u32, height: u32, frame_rate: f64) -> Result<(), String> {
@@ -1309,8 +1312,18 @@ fn preview_cache_key(path: &Path, size: u64, modified: Option<std::time::SystemT
 fn project_path(value: &str) -> Result<PathBuf, String> {
   let path = PathBuf::from(value);
 
-  if value.trim().is_empty() || path.file_name().is_none() {
-    return Err("Project path must point to a file.".to_string());
+  if value.trim().is_empty() || !path.is_absolute() || path.file_name().is_none() {
+    return Err("Project path must be an absolute file path.".to_string());
+  }
+
+  let file_name = path
+    .file_name()
+    .and_then(|name| name.to_str())
+    .map(str::to_ascii_lowercase)
+    .ok_or_else(|| "Project path must use a valid UTF-8 filename.".to_string())?;
+
+  if !file_name.ends_with(".frameflow.json") {
+    return Err("Project path must use the .frameflow.json extension.".to_string());
   }
 
   Ok(path)
@@ -1646,6 +1659,18 @@ mod tests {
     let mut missing_segments = valid;
     missing_segments.segments.clear();
     assert!(super::validate_native_video_segments_request_metadata(&missing_segments).is_err());
+  }
+
+  #[test]
+  fn validates_frameflow_project_paths() {
+    assert!(super::project_path("/tmp/first-edit.frameflow.json").is_ok());
+    assert!(super::project_path("/tmp/FIRST-EDIT.FRAMEFLOW.JSON").is_ok());
+
+    assert!(super::project_path("").is_err());
+    assert!(super::project_path("relative/first-edit.frameflow.json").is_err());
+    assert!(super::project_path("/tmp/first-edit.json").is_err());
+    assert!(super::project_path("/tmp/first-edit.mp4").is_err());
+    assert!(super::project_path("/tmp").is_err());
   }
 
   #[test]

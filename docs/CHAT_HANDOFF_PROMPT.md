@@ -94,34 +94,28 @@ cd ..
 
 ## Current repository state
 
-### M3.58 — Persistent Waveform Cache — active draft PR
-
-PR #72:
-https://github.com/fakedevbagus/FrameFlow/pull/72
+### M3.59 — Project File Persistence Hardening — active draft PR
 
 Branch:
-`feat/m3-58-persistent-waveform-cache`
+`feat/m3-59-project-persistence-hardening`
 
 Base:
-`main @ c8b89684665f61d5f03e78ccbcc66cc52beb28af`
+`main @ 50f90252546fd65a83f31260b123ca185646a816`
 
 Implemented:
-- Persistent waveform cache in browser local storage.
-- Native audio source fingerprint from file size and modification timestamp.
-- Cache identity includes source path, peak count, and fingerprint.
-- Changed media invalidates the previous waveform cache automatically.
-- Cache is capped at 32 entries.
-- Malformed or unavailable persistent storage falls back to normal native waveform generation.
-- In-flight waveform requests remain deduplicated.
-- Existing M3.57 click-seek and drag region-selection behavior remains intact.
+- Native project open/save paths must be absolute file paths.
+- Native project files must use the `.frameflow.json` suffix, case-insensitively.
+- Successful saves retain the existing temp-file-then-rename atomic boundary.
+- Failed finalization removes the temporary `.tmp` artifact.
 - No project schema/history changes.
+- Added native regression coverage for valid/invalid project paths.
 
-### Required local validation
+Required local validation:
 
 ```bash
 git fetch origin --prune
-git checkout feat/m3-58-persistent-waveform-cache
-git pull --ff-only origin feat/m3-58-persistent-waveform-cache
+git checkout feat/m3-59-project-persistence-hardening
+git pull --ff-only origin feat/m3-59-project-persistence-hardening
 git status
 git log -1 --oneline
 
@@ -137,18 +131,43 @@ cd ..
 npm run tauri dev
 ```
 
-Manual M3.58 checks:
-- Open an audio project and confirm the waveform renders normally.
-- Restart the app and confirm a previously generated waveform does not invoke FFmpeg regeneration unnecessarily.
-- Modify/replace the source audio file and confirm the changed fingerprint causes regeneration.
-- Verify malformed/local-storage failure does not prevent waveform rendering.
-- Confirm M3.57 click seek and drag selection still work.
-- Confirm clip move/trim, playback, and existing audio effects remain intact.
+Manual M3.59 checks:
+- Save a project as a normal `.frameflow.json` file and reopen it successfully.
+- Confirm a wrong project extension is rejected by the native boundary when invoked directly.
+- Confirm relative project paths are rejected by the native boundary.
+- Confirm an interrupted/failed finalization does not leave a stale `.tmp` project artifact.
+- Confirm existing autosave/workspace behavior and normal editor history remain unchanged.
 
-Do not mark PR #72 ready or merge it until the user reports local PASS.
+Do not mark the M3.59 PR ready or merge it until the user reports local PASS.
 
+### M3.58 — Persistent Waveform Cache — merged
 
-### M3.56 — Audio Waveform Scrubbing — active draft PR
+PR #72:
+https://github.com/fakedevbagus/FrameFlow/pull/72
+
+Branch:
+`feat/m3-58-persistent-waveform-cache`
+
+Merge SHA:
+`50f90252546fd65a83f31260b123ca185646a816`
+
+Implemented:
+- Persistent waveform cache in browser local storage.
+- Native audio source fingerprint from file size and modification timestamp.
+- Cache identity includes source path, peak count, and fingerprint.
+- Changed media invalidates the previous waveform cache automatically.
+- Cache is capped at 32 entries.
+- Malformed or unavailable persistent storage falls back to normal native waveform generation.
+- In-flight waveform requests remain deduplicated.
+- M3.57 click-seek and drag region-selection behavior remains intact.
+- No project schema/history changes.
+
+User validation:
+- PASS reported before merge.
+- Pre-merge CI exposed stale test assumptions; those tests were corrected before merge.
+- No fresh post-correction CI result is claimed.
+
+### Historical M3.56 — Audio Waveform Scrubbing
 
 PR #70:
 https://github.com/fakedevbagus/FrameFlow/pull/70
