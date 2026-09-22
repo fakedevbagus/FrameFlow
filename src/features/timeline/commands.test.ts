@@ -17,6 +17,7 @@ import {
   updateAudioClipEq,
   updateAudioClipCompressor,
   updateClipVisualEffects,
+  updateClipTextOverlay,
   updateAudioClipVolumeAtTime,
   removeAudioClipVolumeKeyframe,
   moveAudioClipVolumeKeyframe,
@@ -284,6 +285,95 @@ describe("visual effects", () => {
     });
 
     expect(reset.tracks[0].clips[0].visualEffects).toBeUndefined();
+  });
+});
+
+describe("text overlays", () => {
+  it("updates, normalizes, and clears a visual clip text overlay", () => {
+    let project = createProject({ id: "text-overlay-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+        {
+          id: "audio",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music.mp3",
+          durationMs: 4000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipTextOverlay(
+      project,
+      clipId,
+      {
+        text: "  Hello  ",
+        x: 1.4,
+        y: -0.2,
+        fontSize: 300,
+        color: "#AABBCC",
+        alignment: "right",
+      },
+      new Date("2026-09-22T09:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].textOverlay).toEqual({
+      text: "Hello",
+      x: 1,
+      y: 0,
+      fontSize: 240,
+      color: "#aabbcc",
+      alignment: "right",
+    });
+    expect(updated.updatedAt).toBe("2026-09-22T09:00:00.000Z");
+
+    expect(() =>
+      updateClipTextOverlay(
+        project,
+        clipId,
+        {
+          text: "Title",
+          x: 0.5,
+          y: 0.5,
+          fontSize: 56,
+          color: "#ffffff",
+          alignment: "center",
+        },
+      ),
+    ).toBeDefined;
+
+    const audioProject = addAssetToTrack(project, "audio", "audio-1", 0);
+    const audioClipId = audioProject.tracks[1].clips[0].id;
+
+    expect(() =>
+      updateClipTextOverlay(audioProject, audioClipId, {
+        text: "Not valid on audio",
+        x: 0.5,
+        y: 0.5,
+        fontSize: 56,
+        color: "#ffffff",
+        alignment: "center",
+      }),
+    ).toThrow("Text overlays are only available for visual clips.");
+
+    const reset = updateClipTextOverlay(
+      updated,
+      clipId,
+      undefined,
+      new Date("2026-09-22T09:00:02.000Z"),
+    );
+
+    expect(reset.tracks[0].clips[0].textOverlay).toBeUndefined();
   });
 });
 
