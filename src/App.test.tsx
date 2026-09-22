@@ -891,7 +891,7 @@ describe("App", () => {
       screen.getByRole("button", { name: "Select autosave-text.mp4 clip" }),
     );
 
-    fireEvent.change(
+    fireEvent.input(
       screen.getByRole("textbox", { name: "Text overlay content" }),
       { target: { value: "Autosave now" } },
     );
@@ -916,7 +916,7 @@ describe("App", () => {
       { timeout: 1500 },
     );
 
-    fireEvent.change(
+    fireEvent.input(
       screen.getByRole("spinbutton", { name: "Text overlay X position" }),
       { target: { value: "20" } },
     );
