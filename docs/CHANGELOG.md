@@ -15,6 +15,33 @@ Validation:
 - Local validation pending implementation.
 - Keep PR Draft until user reports PASS.
 
+## 2026-09-22 — M3.62 Text Overlay live-edit stabilization — in progress
+
+Branch: feat/m3-62-text-overlay-export-rendering
+PR: #76
+
+Problem:
+- On the Linux/Tauri WebView, Text Overlay Inspector edits to text content, X, Y, and font size could appear in the Inspector while Preview stayed stale until a later control interaction.
+- The previous implementation coupled the transient draft to App `useState` and reset that draft when `project.updatedAt` changed. It also accumulated native DOM listeners, polling, keyboard fallbacks, and `flushSync` attempts.
+
+Fix:
+- Replaced the App-local transient draft with a synchronous external React edit-session store exposed through `useSyncExternalStore`.
+- Live Preview now consumes the same edit-session snapshot that the Inspector updates, while committed project/history state remains separate.
+- Removed the polling/native-listener/flushSync workaround path.
+- Commit handlers read the latest external session at commit time, reducing stale-closure risk.
+- The session is cleared on selection changes and App cleanup, but is no longer cleared merely because another committed project update changes `project.updatedAt`.
+
+Regression coverage:
+- App-level live text/X/Y/size updates before blur.
+- No Undo history entry while edits remain live.
+- Single commit followed by Undo/Redo.
+- Reset behavior.
+- External edit-session publish/replace/clear behavior.
+
+Validation:
+- Local lint/test/build/Tauri validation pending user verification.
+- GitHub CI must be rechecked on the updated branch head.
+
 ## 2026-09-22 — M3.61 Text Overlay Foundation — merged
 
 Merge SHA:
