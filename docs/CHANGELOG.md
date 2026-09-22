@@ -1,31 +1,20 @@
-## 2026-09-22 — M3.56 Audio waveform visual bugfix — in progress
+## 2026-09-22 — M3.56 stabilization — validation pending
 
 Branch: feat/m3-56-audio-waveform-scrubbing
 
 Implemented:
-- Increased Timeline waveform display density from 128 to 512 time buckets.
-- Added frontend percentile-based display contrast stretching to prevent consistently loud clips from collapsing into a visually solid waveform block.
-- Explicitly set the SVG waveform fill to the intended display color.
-- Preserved native waveform data, caching, project schema, scrubbing behavior, and existing audio processing/export paths.
-- Added regression coverage for waveform display contrast and dense waveform rendering.
+- Hardened waveform peak normalization and SVG path generation against empty and non-finite peak data.
+- Rejected empty native waveform results at the frontend boundary.
+- Prevented expected HTMLMediaElement.play() AbortError interruptions from surfacing raw abort text in the project status.
+- Added playback request invalidation so stale play promises cannot overwrite later pause/seek state.
+- Awaited Preview asynchronous effects in interaction tests and added a deterministic jsdom media play() mock.
+- Reduced Vitest fork-worker concurrency to two workers as a targeted worker-startup stability mitigation.
+- Expanded Timeline waveform scrubbing regression coverage to left/center/right pointer positions and drag isolation.
 
 Validation:
-- Local npm/Cargo/Tauri validation is required after this bugfix.
-- Manual validation must verify a readable waveform, click-to-seek, move/trim isolation, and unchanged audio automation/fade behavior.
+- Repository execution is not available in this connector environment, so fresh npm, Vitest, build, Cargo, and Tauri results are intentionally not claimed here.
+- Before marking PR #70 ready, run the required local validation gate and the manual waveform/playback checks from the M3.56 handoff.
 
-## 2026-09-22 — M3.56 Audio Waveform Scrubbing — in progress
-
-Branch: `feat/m3-56-audio-waveform-scrubbing`
-
-Scope:
-- Map pointer position on an Audio waveform to local clip time.
-- Select the owning clip and seek the timeline playhead on waveform interaction.
-- Prevent waveform seeking from starting the parent clip move gesture.
-- Preserve existing waveform generation, caching, audio automation, fades, mixer, and export behavior.
-
-Validation:
-- Local npm/Cargo/Tauri validation is required before merge.
-- Waveform editing and region selection remain deferred.
 
 ## 2026-09-21 — M3.55 Audio Waveform Foundation — in progress
 
