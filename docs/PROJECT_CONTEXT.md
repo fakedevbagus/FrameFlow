@@ -1,12 +1,13 @@
-## M3.56 bugfix — Audio waveform visual saturation — 2026-09-22
+## M3.56 stabilization — Audio waveform, playback aborts, and test reliability — 2026-09-22
 
-- Manual validation exposed a Timeline presentation bug where long/loud Audio clips could render as a visually solid block instead of a readable waveform.
-- The waveform display now requests 512 time buckets instead of 128 for denser temporal detail.
-- Frontend waveform rendering applies percentile-based display contrast stretching without mutating the stored/native waveform data or project schema.
-- The SVG waveform fill is explicitly pinned to the waveform display color so the rendered envelope cannot fall back to an unintended solid/default fill.
-- Audio waveform scrubbing continues to map pointer X to local clip time, select the owning clip, and seek the existing Timeline playhead.
-- Required validation after this bugfix: npm run lint; npm run test; npm run build; cd src-tauri && cargo test; cd ..; npm run tauri dev.
-- Manual checks must confirm the Audio clip shows a varying waveform envelope rather than a large solid rectangle, waveform clicks still seek the playhead, and normal clip move/trim interactions remain unaffected.
+- Current repository inspection confirms M3.56 remains PR #70 (feat/m3-56-audio-waveform-scrubbing) based on main at 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b; the PR is still open and Draft.
+- Waveform static tracing found two frontend robustness gaps: native peak arrays could be reduced to an empty result after filtering invalid values, and SVG path construction could receive non-finite peaks.
+- Waveform peak normalization now preserves bucket positions, converts non-finite peaks to zero, rejects empty native peak arrays, and keeps the existing native FFmpeg generation architecture unchanged.
+- Playback static tracing found App.handleTogglePlayback() surfaced the raw rejection message from HTMLMediaElement.play() through projectNotice. Expected AbortError rejections are now treated as playback interruption rather than a user-facing error, and a request id invalidates stale play promises after pause/seek.
+- Vitest's default fork pool uses available parallelism. The latest supplied run showed simultaneous fork worker startup timeouts. The test configuration now caps the forks pool at two workers; this requires fresh local validation before the failure can be considered fully resolved.
+- Preview tests now await asynchronous preview effects through a shared test render helper, and the jsdom media play() method has a deterministic resolved default so tests can focus on application behavior.
+- Timeline waveform regression coverage now checks left/center/right seeking and verifies waveform pointer interaction does not invoke clip movement.
+- Required local validation remains pending in this environment because repository execution is unavailable here: npm run lint; targeted Vitest tests; npm run test; npm run build; cd src-tauri && cargo test; cd ..; npm run tauri dev.
 
 ## M3.56 — Audio Waveform Scrubbing — in progress — 2026-09-22
 
