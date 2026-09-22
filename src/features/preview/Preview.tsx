@@ -18,6 +18,7 @@ import {
   ClipTransform,
   CropPosition,
   Project,
+  TextOverlay,
   TransformAnchor,
 } from "../project/domain";
 import {
@@ -63,6 +64,7 @@ interface PreviewProps {
   ) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
+  textOverlayOverride?: { clipId: string; overlay?: TextOverlay } | null;
 }
 
 interface PreviewError {
@@ -81,6 +83,7 @@ export function Preview({
   onVisualMediaDimensionsChange,
   onCropCommit,
   onCropPositionCommit,
+  textOverlayOverride = null,
 }: PreviewProps) {
   const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
   const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
@@ -123,6 +126,7 @@ export function Preview({
           onVisualMediaDimensionsChange={onVisualMediaDimensionsChange}
           onCropCommit={onCropCommit}
           onCropPositionCommit={onCropPositionCommit}
+          textOverlayOverride={textOverlayOverride}
           onError={handleMediaError}
         />
       ))}
@@ -181,6 +185,7 @@ interface PreviewVisualLayerProps extends PreviewLayerProps {
   ) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
+  textOverlayOverride?: { clipId: string; overlay?: TextOverlay } | null;
 }
 
 interface CanvasGesture {
@@ -234,6 +239,7 @@ function PreviewVisualLayer({
   onVisualMediaDimensionsChange,
   onCropCommit,
   onCropPositionCommit,
+  textOverlayOverride = null,
   onError,
 }: PreviewVisualLayerProps) {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
@@ -331,7 +337,10 @@ function PreviewVisualLayer({
   const visualEffectsFilter = buildVisualEffectsCssFilter(
     getVisualEffects(layer.clip),
   );
-  const textOverlay = getTextOverlay(layer.clip);
+  const textOverlay =
+    textOverlayOverride?.clipId === layer.clip.id
+      ? textOverlayOverride.overlay
+      : getTextOverlay(layer.clip);
   const cropMediaStyle = {
     position: "absolute" as const,
     left: `${50 - (cropPosition.x / visibleWidth) * 100}%`,
@@ -1082,6 +1091,13 @@ function PreviewVisualLayer({
       return null;
     }
 
+    const horizontalTransform =
+      textOverlay.alignment === "left"
+        ? "translate(0, -50%)"
+        : textOverlay.alignment === "right"
+          ? "translate(-100%, -50%)"
+          : "translate(-50%, -50%)";
+
     return (
       <div
         className="preview-text-overlay"
@@ -1092,6 +1108,7 @@ function PreviewVisualLayer({
           color: textOverlay.color,
           fontSize: textOverlay.fontSize + "px",
           textAlign: textOverlay.alignment,
+          transform: horizontalTransform,
         }}
       >
         {textOverlay.text}

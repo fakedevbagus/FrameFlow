@@ -1,6 +1,7 @@
 export const M3_38_DIRECT_GRAPH_MARKER = "m3.38-direct-graph-v2";
 
 import { buildVisualEffectsFfmpegFilters } from "../effects/visual-effects";
+import { buildTextOverlayFfmpegFilter } from "../effects/text-overlay";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
@@ -149,6 +150,9 @@ function buildSegmentFilter(
     ...(segment.visualEffects &&
     buildVisualEffectsFfmpegFilters(segment.visualEffects)
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
+      : []),
+    ...(segment.textOverlay && buildTextOverlayFfmpegFilter(segment.textOverlay)
+      ? [buildTextOverlayFfmpegFilter(segment.textOverlay)]
       : []),
     ...(includeOutputNormalization
       ? [

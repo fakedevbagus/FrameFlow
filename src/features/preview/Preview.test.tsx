@@ -201,6 +201,58 @@ describe("Preview", () => {
     expect(overlay).toHaveStyle({ opacity: "1" });
   });
 
+  it("renders a text overlay with its configured anchor position and style", async () => {
+    let project = createProject({ id: "text-overlay-preview" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-text",
+          name: "text.mp4",
+          mediaType: "video",
+          sourcePath: "/media/text.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-text");
+    project.tracks[0].clips[0] = {
+      ...project.tracks[0].clips[0],
+      textOverlay: {
+        text: "Hello\\nFrameFlow",
+        x: 0.25,
+        y: 0.75,
+        fontSize: 64,
+        color: "#aabbcc",
+        alignment: "right",
+      },
+    };
+
+    await renderPreview(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    const overlay = screen.getByTestId(
+      "preview-text-overlay-" + project.tracks[0].clips[0].id,
+    );
+
+    expect(overlay).toHaveTextContent("Hello\\nFrameFlow");
+    expect(overlay).toHaveStyle({
+      left: "25%",
+      top: "75%",
+      color: "#aabbcc",
+      fontSize: "64px",
+      textAlign: "right",
+      transform: "translate(-100%, -50%)",
+    });
+  });
+
   it("renders multiple active visual layers in track order", async () => {
     let project = createProject({ id: "multitrack-preview" });
 

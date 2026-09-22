@@ -4,12 +4,14 @@ import {
   getAudioCompressor,
   getAudioFadeDurations,
   getVisualEffects,
+  getTextOverlay,
   getTrackPan,
   getTrackVolume,
   type AudioCompressor,
   type AudioEq,
   type AudioVolumeKeyframe,
   type VisualEffects,
+  type TextOverlay,
   type Clip,
   type ClipCrop,
   type ClipTransform,
@@ -47,6 +49,7 @@ export interface RenderSegment {
   audioCompressor?: AudioCompressor;
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
   visualEffects?: VisualEffects;
+  textOverlay?: TextOverlay;
   transform?: ClipTransform;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
@@ -162,6 +165,7 @@ export function createRenderPlan(
         ...(track.type === "video"
           ? {
               visualEffects: getVisualEffects(clip),
+              textOverlay: getTextOverlay(clip),
             }
           : {}),
         transform: clip.transform,

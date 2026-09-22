@@ -103,6 +103,42 @@ describe("single video render graph", () => {
     );
   });
 
+  it("compiles text overlays into the segment filter chain", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Hello, FrameFlow!",
+                  x: 0.25,
+                  y: 0.75,
+                  fontSize: 64,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+    const graph = compileSingleVideoTrackGraph(plan);
+
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Hello\\, FrameFlow!':fontsize=64:fontcolor=#ffffff:x=(w-text_w)*0.25:y=(h-text_h)*0.75:line_spacing=4:expansion=none",
+    );
+  });
+
   it("inserts black video for timeline gaps", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");

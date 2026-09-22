@@ -168,6 +168,49 @@ describe("render plan", () => {
     });
   });
 
+  it("propagates text overlays for visual clips", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Hello FrameFlow",
+                  x: 0.2,
+                  y: 0.75,
+                  fontSize: 72,
+                  color: "#AABBCC",
+                  alignment: "right" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(
+      plan.segments.find((segment) => segment.assetId === "video-a")
+        ?.textOverlay,
+    ).toEqual({
+      text: "Hello FrameFlow",
+      x: 0.2,
+      y: 0.75,
+      fontSize: 72,
+      color: "#aabbcc",
+      alignment: "right",
+    });
+  });
+
   it("compiles timeline clips with source and timeline timing", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");

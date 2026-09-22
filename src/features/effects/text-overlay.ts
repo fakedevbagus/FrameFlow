@@ -15,9 +15,7 @@ export function buildTextOverlayFfmpegFilter(
     normalized.alignment === "left"
       ? "w*" + formatNumber(normalized.x)
       : normalized.alignment === "right"
-        ? "w*" +
-          formatNumber(normalized.x) +
-          "-text_w"
+        ? "w*" + formatNumber(normalized.x) + "-text_w"
         : "(w-text_w)*" + formatNumber(normalized.x);
   const yExpression = "(h-text_h)*" + formatNumber(normalized.y);
 
