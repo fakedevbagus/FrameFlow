@@ -1256,6 +1256,7 @@ function PreviewVisualLayer({
             src={videoSourceUrl ?? undefined}
             style={{
               ...cropMediaStyle,
+              filter: visualEffectsFilter,
               zIndex,
             }}
             onLoadedMetadata={handleLoadedMetadata}
