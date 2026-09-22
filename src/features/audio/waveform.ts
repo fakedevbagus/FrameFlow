@@ -140,10 +140,12 @@ function readPersistentWaveform(cacheKey: string): AudioWaveform | null {
       return null;
     }
 
-    const store = JSON.parse(raw) as Partial<PersistentWaveformStore>;
-    if (store.version !== 1 || !Array.isArray(store.entries)) {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isPersistentWaveformStore(parsed)) {
       return null;
     }
+
+    const store = parsed;
 
     const entry = store.entries.find((candidate) => candidate.cacheKey === cacheKey);
     if (!entry || !isValidAudioWaveform(entry.waveform)) {
@@ -235,6 +237,17 @@ function isValidAudioWaveform(
     typeof candidate.sourceFingerprint === "string" &&
     candidate.sourceFingerprint.length > 0
   );
+}
+
+function isPersistentWaveformStore(
+  value: unknown,
+): value is PersistentWaveformStore {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<PersistentWaveformStore>;
+  return candidate.version === 1 && Array.isArray(candidate.entries);
 }
 
 function normalizeWaveformPeak(peak: number): number {
