@@ -1,4 +1,31 @@
-## 2026-09-22 — M3.59 Project File Persistence Hardening — in progress
+## 2026-09-22 — M3.60 Visual Effects Foundation — in progress
+
+Branch: feat/m3-60-visual-effects-foundation
+
+Base:
+- M3.59 squash merge SHA: b693df59a4a879b7a4bf53067ad20bbba258f181
+
+Scope:
+- Add backward-compatible per-visual-clip brightness, contrast, and saturation state.
+- Expose the adjustments in the existing visual-clip Inspector.
+- Apply equivalent CSS filters in Preview for image and video clips.
+- Propagate normalized visual effects through RenderPlan.
+- Compile the adjustments into FFmpeg eq filters in the existing single-video render graph.
+- Keep neutral/default effects omitted from persisted clip data.
+- Preserve transform, crop, transition, timeline, history, and audio behavior.
+
+Tests:
+- Added visual-effects helper coverage.
+- Added project-domain normalization coverage.
+- Added command validation/reset coverage.
+- Added RenderPlan and FFmpeg graph propagation coverage.
+- Added App Inspector/Preview workflow coverage.
+
+Validation:
+- Local validation is pending user verification.
+- Keep the PR Draft until the user reports PASS.
+
+## 2026-09-22 — M3.59 Project File Persistence Hardening — merged
 
 Branch: feat/m3-59-project-persistence-hardening
 
@@ -6,42 +33,20 @@ Base:
 - M3.58 squash merge SHA: 50f90252546fd65a83f31260b123ca185646a816
 
 Scope:
-- Require native project open/save paths to be absolute file paths.
-- Require the `.frameflow.json` project suffix, case-insensitively.
-- Preserve the existing temp-file-then-rename atomic-save path for successful writes.
-- Remove the temporary `.tmp` project artifact when final rename fails.
+- Require native project open/save paths to be absolute.
+- Require the .frameflow.json suffix, case-insensitively.
+- Preserve successful temp-file-then-rename atomic saves.
+- Remove stale .tmp project artifacts when finalization fails.
 - Keep project schema/history semantics unchanged.
 
 Tests:
-- Added native project-path validation coverage for valid absolute project files and invalid relative, wrong-extension, empty, and directory paths.
+- Added native project-path validation coverage.
 
 Validation:
-- Local validation is pending user verification.
-- Keep the PR Draft until the user reports PASS.
-
-## 2026-09-22 — M3.58 Persistent Waveform Cache — merged
-
-Branch: feat/m3-58-persistent-waveform-cache
-
-Base:
-- M3.57 squash merge SHA: c8b89684665f61d5f03e78ccbcc66cc52beb28af
-
-Scope:
-- Persist generated audio waveform data in browser local storage.
-- Use the native source fingerprint plus source path and peak count as the cache identity.
-- Invalidate cached waveform data when the source file size or modification timestamp changes.
-- Cap persistent entries at 32 most-recently-used waveforms.
-- Treat malformed/unavailable storage as a cache miss and preserve in-flight request deduplication.
-- Preserve M3.57 waveform click seek and drag selection behavior.
-
-Tests:
-- Added coverage for persistence reuse, fingerprint invalidation, malformed cache data, storage failures, and waveform normalization.
-- Corrected Timeline and waveform test mocks/assertions after the pre-merge CI run exposed assumptions that predated the fingerprint command.
-
-Validation:
-- User reported local validation as PASS.
-- PR #72 was marked ready and squash-merged at `50f90252546fd65a83f31260b123ca185646a816`.
-- No fresh post-correction CI result is claimed.
+- User reported the corrected local validation as PASS.
+- PR #73 was marked ready and squash-merged at b693df59a4a879b7a4bf53067ad20bbba258f181.
+- GitHub CI run #40 passed for the final corrected branch head.
+- An earlier build failure was caused by TypeScript narrowing in the M3.58 waveform cache reader; that issue was corrected before the successful CI run.
 
 ## 2026-09-22 — M3.57 Audio Waveform Region Selection — merged
 
