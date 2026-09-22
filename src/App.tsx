@@ -183,6 +183,10 @@ function App() {
   const textOverlayAutoCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const textOverlayTextInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const textOverlayXInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlayYInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlaySizeInputRef = useRef<HTMLInputElement | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
@@ -315,6 +319,8 @@ function App() {
   const selectedTextOverlay = selectedClipContext
     ? getTextOverlay(selectedClipContext.clip)
     : null;
+  const selectedTextOverlayRef = useRef(selectedTextOverlay);
+  selectedTextOverlayRef.current = selectedTextOverlay;
   const activeTextOverlay =
     textOverlayDraft?.clipId === selectedClipId
       ? textOverlayDraft.overlay
@@ -567,6 +573,92 @@ function App() {
   const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
   const textOverlayRef = useRef<HTMLDivElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedClipId) {
+      return;
+    }
+
+    const clipId = selectedClipId;
+
+    const pollTextOverlayInputs = () => {
+      const textInput = textOverlayTextInputRef.current;
+      const xInput = textOverlayXInputRef.current;
+      const yInput = textOverlayYInputRef.current;
+      const sizeInput = textOverlaySizeInputRef.current;
+
+      if (!textInput || !xInput || !yInput || !sizeInput) {
+        return;
+      }
+
+      const committedOverlay = selectedTextOverlayRef.current ?? {
+        text: "",
+        x: DEFAULT_TEXT_OVERLAY_X,
+        y: DEFAULT_TEXT_OVERLAY_Y,
+        fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+        color: DEFAULT_TEXT_OVERLAY_COLOR,
+        alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
+      };
+
+      const currentSession = getTextOverlayEditSession();
+      const currentOverlay =
+        currentSession?.clipId === clipId
+          ? currentSession.overlay
+          : committedOverlay;
+      const nextOverlay = { ...currentOverlay };
+      let changed = false;
+
+      if (textInput.value !== currentOverlay.text) {
+        nextOverlay.text = textInput.value;
+        changed = true;
+      }
+
+      const xValue = Number(xInput.value);
+      if (
+        Number.isFinite(xValue) &&
+        xValue >= 0 &&
+        xValue <= 100 &&
+        xValue / 100 !== currentOverlay.x
+      ) {
+        nextOverlay.x = xValue / 100;
+        changed = true;
+      }
+
+      const yValue = Number(yInput.value);
+      if (
+        Number.isFinite(yValue) &&
+        yValue >= 0 &&
+        yValue <= 100 &&
+        yValue / 100 !== currentOverlay.y
+      ) {
+        nextOverlay.y = yValue / 100;
+        changed = true;
+      }
+
+      const sizeValue = Number(sizeInput.value);
+      if (
+        Number.isFinite(sizeValue) &&
+        sizeValue >= 12 &&
+        sizeValue <= 240 &&
+        Math.round(sizeValue) !== currentOverlay.fontSize
+      ) {
+        nextOverlay.fontSize = Math.round(sizeValue);
+        changed = true;
+      }
+
+      if (changed) {
+        setTextOverlayEditSession({
+          clipId,
+          overlay: nextOverlay,
+        });
+      }
+    };
+
+    pollTextOverlayInputs();
+    const intervalId = window.setInterval(pollTextOverlayInputs, 50);
+
+    return () => window.clearInterval(intervalId);
+  }, [selectedClipId]);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
     width: 0,
@@ -2673,6 +2765,7 @@ function App() {
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
+                      ref={textOverlayTextInputRef}
                       onInput={(event) =>
                         handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
@@ -2705,6 +2798,7 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
+                            ref={textOverlayXInputRef}
                             onInput={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
@@ -2753,6 +2847,7 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
+                            ref={textOverlayYInputRef}
                             onInput={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
@@ -2803,6 +2898,7 @@ function App() {
                             min="12"
                             step="1"
                             type="number"
+                            ref={textOverlaySizeInputRef}
                             onInput={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 12 && value <= 240) {
