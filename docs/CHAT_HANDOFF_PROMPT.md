@@ -94,28 +94,30 @@ cd ..
 
 ## Current repository state
 
-### M3.59 — Project File Persistence Hardening — active draft PR
+### M3.60 — Visual Effects Foundation — active draft PR
 
 Branch:
-`feat/m3-59-project-persistence-hardening`
+`feat/m3-60-visual-effects-foundation`
 
 Base:
-`main @ 50f90252546fd65a83f31260b123ca185646a816`
+`main @ b693df59a4a879b7a4bf53067ad20bbba258f181`
 
 Implemented:
-- Native project open/save paths must be absolute file paths.
-- Native project files must use the `.frameflow.json` suffix, case-insensitively.
-- Successful saves retain the existing temp-file-then-rename atomic boundary.
-- Failed finalization removes the temporary `.tmp` artifact.
-- No project schema/history changes.
-- Added native regression coverage for valid/invalid project paths.
+- Backward-compatible per-visual-clip brightness, contrast, and saturation state.
+- Neutral adjustments are omitted from clip data.
+- Color Adjustments controls are available in the visual-clip Inspector.
+- Preview applies CSS brightness/contrast/saturate filters to image/video media.
+- RenderPlan carries normalized visual effects metadata.
+- Single-video FFmpeg graph compiles the adjustments to an eq filter.
+- Existing transform/crop/transition/audio/history behavior remains unchanged.
+- Regression coverage added across helpers, domain, commands, RenderPlan, render graph, and App workflow.
 
 Required local validation:
 
 ```bash
 git fetch origin --prune
-git checkout feat/m3-59-project-persistence-hardening
-git pull --ff-only origin feat/m3-59-project-persistence-hardening
+git checkout feat/m3-60-visual-effects-foundation
+git pull --ff-only origin feat/m3-60-visual-effects-foundation
 git status
 git log -1 --oneline
 
@@ -131,41 +133,35 @@ cd ..
 npm run tauri dev
 ```
 
-Manual M3.59 checks:
-- Save a project as a normal `.frameflow.json` file and reopen it successfully.
-- Confirm a wrong project extension is rejected by the native boundary when invoked directly.
-- Confirm relative project paths are rejected by the native boundary.
-- Confirm an interrupted/failed finalization does not leave a stale `.tmp` project artifact.
-- Confirm existing autosave/workspace behavior and normal editor history remain unchanged.
+Manual M3.60 checks:
+- Select a video clip and open Color adjustments.
+- Change Brightness, Contrast, and Saturation.
+- Verify the preview updates immediately.
+- Undo/Redo an adjustment and verify it uses the normal project history path.
+- Reset Color adjustments and verify the preview returns to neutral.
+- Select an image clip and verify the same controls affect its preview.
+- Verify render graph generation includes the corresponding FFmpeg eq stage.
+- Verify existing transform/crop/transition/audio behavior remains intact.
 
-Do not mark the M3.59 PR ready or merge it until the user reports local PASS.
+Do not mark the M3.60 PR ready or merge it until the user reports local PASS.
 
-### M3.58 — Persistent Waveform Cache — merged
+### M3.59 — Project File Persistence Hardening — merged
 
-PR #72:
-https://github.com/fakedevbagus/FrameFlow/pull/72
+PR #73:
+https://github.com/fakedevbagus/FrameFlow/pull/73
 
 Branch:
-`feat/m3-58-persistent-waveform-cache`
+`feat/m3-59-project-persistence-hardening`
 
 Merge SHA:
-`50f90252546fd65a83f31260b123ca185646a816`
+`b693df59a4a879b7a4bf53067ad20bbba258f181`
 
 Implemented:
-- Persistent waveform cache in browser local storage.
-- Native audio source fingerprint from file size and modification timestamp.
-- Cache identity includes source path, peak count, and fingerprint.
-- Changed media invalidates the previous waveform cache automatically.
-- Cache is capped at 32 entries.
-- Malformed or unavailable persistent storage falls back to normal native waveform generation.
-- In-flight waveform requests remain deduplicated.
-- M3.57 click-seek and drag region-selection behavior remains intact.
-- No project schema/history changes.
-
-User validation:
-- PASS reported before merge.
-- Pre-merge CI exposed stale test assumptions; those tests were corrected before merge.
-- No fresh post-correction CI result is claimed.
+- Native project paths are restricted to absolute .frameflow.json files.
+- Failed atomic finalization removes the temporary project artifact.
+- Added native validation coverage.
+- User reported corrected local validation PASS.
+- CI run #40 passed.
 
 ### Historical M3.56 — Audio Waveform Scrubbing
 
