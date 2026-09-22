@@ -8,6 +8,7 @@
 - Existing temp-file-then-rename save behavior remains unchanged for successful saves.
 - No project schema or history semantics change in this milestone.
 - Added native regression coverage for valid/invalid project paths.
+- CI build exposed a TypeScript narrowing issue in the persisted waveform-store reader; the cache parser now uses an explicit type guard before passing data to typed helpers.
 - Required validation: `git fetch origin --prune`; checkout/pull the feature branch; `npm ci`; `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
 - Keep M3.59 Draft until the user reports clean local validation.
 
