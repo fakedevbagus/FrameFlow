@@ -10,6 +10,7 @@ import {
   getAudioEq,
   getAudioCompressor,
   getVisualEffects,
+  getTextOverlay,
   getAudioFadeDurations,
 } from "./domain";
 
@@ -140,6 +141,39 @@ describe("project domain", () => {
       brightness: 1,
       contrast: -1,
       saturation: 0.24,
+    });
+  });
+
+  it("defaults and normalizes text overlay settings", () => {
+    const clip = {
+      id: "text-overlay-clip",
+      assetId: "video",
+      timelineStartMs: 0,
+      sourceStartMs: 0,
+      sourceEndMs: 5000,
+    };
+
+    expect(getTextOverlay(clip)).toBeUndefined();
+
+    expect(
+      getTextOverlay({
+        ...clip,
+        textOverlay: {
+          text: "  Hello FrameFlow  ",
+          x: 2,
+          y: -1,
+          fontSize: 999,
+          color: "not-a-color",
+          alignment: "invalid",
+        },
+      }),
+    ).toEqual({
+      text: "Hello FrameFlow",
+      x: 1,
+      y: 0,
+      fontSize: 240,
+      color: "#ffffff",
+      alignment: "center",
     });
   });
 
