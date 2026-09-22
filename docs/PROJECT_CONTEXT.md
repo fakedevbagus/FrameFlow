@@ -9,17 +9,17 @@ Merge status: not merged; keep Draft until the user reports PASS.
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
 - M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
 - The export slice reuses the existing optional per-clip text overlay model and keeps rendering deterministic without introducing a new project schema version.
-- Font selection uses the explicit renderer-owned `DejaVu Sans` policy rather than arbitrary platform font defaults.
-- Preview and export keep the same normalized X/Y, font size, color, and left/center/right alignment semantics.
-- The Linux/Tauri Text Overlay Inspector live-edit path is now backed by a synchronous external React edit-session store using `useSyncExternalStore`.
-- The transient edit session is intentionally decoupled from `project.updatedAt`; unrelated committed project changes no longer invalidate an in-progress text edit.
-- Inspector live edits update the external session through normal `input`/`change` handlers. The implementation no longer depends on native DOM polling, periodic timers, or `flushSync` for live Preview rendering.
-- Commit handlers read the current edit session at execution time, avoiding stale React render closures at the commit boundary.
-- The existing 400 ms idle autosave remains in place, while blur and direct text-overlay actions still commit immediately through the project history engine.
-- Added regression coverage for synchronous live Text/X/Y/Size Preview updates, the absence of a history entry during live editing, one-entry commit + Undo/Redo behavior, Reset, and the external edit-session store.
-- A previous jsdom-only test that mutated `.value` without dispatching a browser input event was removed because it did not represent a meaningful real interaction path.
-- The current branch still requires local Linux/Tauri validation; GitHub CI is informative but is not a substitute for user-reported PASS.
-- Known M3.62 export limitation remains the existing single-video/image-export architecture; do not broaden it as part of the live-edit fix.
+- Font selection uses the explicit renderer-owned `DejaVu Sans` policy.
+- Preview and export keep normalized X/Y, font size, color, and left/center/right alignment semantics aligned.
+- Live Inspector state is stored outside committed project/history state in a synchronous external React edit-session store using `useSyncExternalStore`.
+- The Linux/Tauri WebView live-input path also has a direct DOM-value fallback: the selected visual clip's Text/X/Y/Size controls are read every 50 ms and compared against the current edit session, without relying on `document.activeElement` or delivery of `input`/`change`/keyboard events.
+- Normal `input`/`change` handlers remain the immediate path when the WebView delivers them; DOM polling is the fallback for environments where native control values change without an observable React/browser input event.
+- The edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes no longer discard an in-progress Text Overlay edit.
+- Commit handlers read the current external session at commit time. Blur/direct Text Overlay actions commit through the existing project history engine; the existing 400 ms idle autosave remains.
+- Added regression coverage for synchronous live Text/X/Y/Size updates, no per-keystroke history entry, one-entry commit + Undo/Redo, Reset, external-store behavior, and direct DOM-value changes without dispatched input events.
+- The direct DOM polling regression intentionally mirrors the observed Linux/Tauri failure mode and must remain green.
+- Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
+- Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
 ## M3.61 — Text Overlay Foundation — merged — 2026-09-22
 
