@@ -70,6 +70,39 @@ describe("single video render graph", () => {
     expect(graph.videoMap).toBe("[vout]");
   });
 
+  it("compiles visual effects into the segment filter chain", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                visualEffects: {
+                  brightness: 0.25,
+                  contrast: -0.5,
+                  saturation: 0.4,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+    const graph = compileSingleVideoTrackGraph(plan);
+
+    expect(graph.filterComplex).toContain(
+      "eq=brightness=0.25:contrast=0.5:saturation=1.4",
+    );
+  });
+
   it("inserts black video for timeline gaps", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");

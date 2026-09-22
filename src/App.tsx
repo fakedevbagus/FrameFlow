@@ -10,10 +10,15 @@ import {
   getAudioVolumeAtTime,
   getAudioVolumeKeyframeAtTime,
 } from "./features/audio/automation";
-import { getAudioCompressor, getAudioEq } from "./features/project/domain";
+import {
+  getAudioCompressor,
+  getAudioEq,
+  getVisualEffects,
+} from "./features/project/domain";
 import type {
   AudioCompressor,
   AudioEq,
+  VisualEffects,
   Clip,
   ClipCrop,
   ClipTransform,
@@ -40,6 +45,7 @@ import {
   updateAudioClipFades,
   updateAudioClipEq,
   updateAudioClipCompressor,
+  updateClipVisualEffects,
   updateAudioClipVolumeAtTime,
   removeAudioClipVolumeKeyframe,
   moveAudioClipVolumeKeyframe,
@@ -213,6 +219,9 @@ function App() {
       )
     : null;
   const selectedKeyframeCount = selectedClipContext?.clip.transformKeyframes?.length ?? 0;
+  const selectedVisualEffects = selectedClipContext
+    ? getVisualEffects(selectedClipContext.clip)
+    : null;
   const selectedAudioVolume = selectedClipContext
     ? getAudioVolumeAtTime(selectedClipContext.clip, selectedClipLocalTimeMs)
     : 1;
@@ -418,6 +427,10 @@ function App() {
     setProjectNotice(null);
   }
 
+  function handleFocusColorAdjustments() {
+    colorAdjustmentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function handleAddAssetToTrack(
     assetId: string,
     trackId: string,
@@ -444,6 +457,7 @@ function App() {
     );
   }
 
+  const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
@@ -684,6 +698,43 @@ function App() {
     };
 
     handleUpdateAudioClipEq(selectedClipContext.clip.id, nextEq);
+  }
+
+  function handleUpdateVisualEffects(
+    clipId: string,
+    effects: VisualEffects,
+  ) {
+    const clipContext = findClipContext(project, clipId);
+
+    if (
+      !clipContext ||
+      clipContext.track.type !== "video" ||
+      (clipContext.asset?.mediaType !== "video" &&
+        clipContext.asset?.mediaType !== "image")
+    ) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        updateClipVisualEffects(currentProject, clipId, effects),
+      "Visual adjustments updated.",
+    );
+  }
+
+  function handleUpdateSelectedVisualEffects(
+    changes: Partial<VisualEffects>,
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    const nextEffects = {
+      ...getVisualEffects(selectedClipContext.clip),
+      ...changes,
+    };
+
+    handleUpdateVisualEffects(selectedClipContext.clip.id, nextEffects);
   }
 
   function handleUpdateAudioClipCompressor(
@@ -1922,6 +1973,18 @@ function App() {
               <p className="eyebrow">Properties</p>
               <h2>Inspector</h2>
             </div>
+            {selectedClipContext &&
+            (selectedClipContext.asset?.mediaType === "video" ||
+              selectedClipContext.asset?.mediaType === "image") ? (
+              <button
+                aria-label="Show color adjustments"
+                className="inspector-quick-button"
+                onClick={handleFocusColorAdjustments}
+                type="button"
+              >
+                Color adjustments
+              </button>
+            ) : null}
           </div>
 
           {selectedClipContext ? (
@@ -1931,19 +1994,110 @@ function App() {
                 <strong>{selectedClipContext.asset?.name ?? "Missing media"}</strong>
               </div>
 
-              <div className="inspector-fields">
-                <span>Track</span>
-                <strong>{selectedClipContext.track.name}</strong>
-                <span>Start</span>
-                <strong>{formatDuration(selectedClipContext.clip.timelineStartMs)}</strong>
-                <span>Duration</span>
-                <strong>{formatDuration(getClipDurationMs(selectedClipContext.clip))}</strong>
-                <span>Source</span>
-                <strong>
-                  {formatDuration(selectedClipContext.clip.sourceStartMs)} –{" "}
-                  {formatDuration(selectedClipContext.clip.sourceEndMs)}
-                </strong>
-              </div>
+                  <div
+                    data-testid="color-adjustments"
+                    ref={colorAdjustmentsRef}
+                    className={
+                      "inspector-section inspector-color-adjustments" +
+                      (selectedVisualEffects &&
+                      (selectedVisualEffects.brightness !== 0 ||
+                        selectedVisualEffects.contrast !== 0 ||
+                        selectedVisualEffects.saturation !== 0)
+                        ? " inspector-color-adjustments-active"
+                        : "")
+                    }
+                  >
+                    <div className="inspector-section-header">
+                      <span className="inspector-section-title">Color adjustments</span>
+                      <button
+                        aria-label="Reset color adjustments"
+                        className="inspector-inline-button"
+                        onClick={() =>
+                          handleUpdateSelectedVisualEffects({
+                            brightness: 0,
+                            contrast: 0,
+                            saturation: 0,
+                          })
+                        }
+                        type="button"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <p className="inspector-help">
+                      Non-destructive per-clip brightness, contrast, and saturation.
+                    </p>
+                    <div
+                      className="inspector-transform-input-grid"
+                      key={
+                        selectedVisualEffects
+                          ? [
+                              selectedVisualEffects.brightness,
+                              selectedVisualEffects.contrast,
+                              selectedVisualEffects.saturation,
+                            ].join("|")
+                          : "none"
+                      }
+                    >
+                      {([
+                        ["brightness", "Brightness"],
+                        ["contrast", "Contrast"],
+                        ["saturation", "Saturation"],
+                      ] as Array<[keyof VisualEffects, string]>).map(
+                        ([field, label]) => (
+                          <label className="inspector-transform-field" key={field}>
+                            <span>{label}</span>
+                            <div className="inspector-transform-input-wrap">
+                              <input
+                                aria-label={label}
+                                className="inspector-transform-input"
+                                max="100"
+                                min="-100"
+                                step="1"
+                                type="number"
+                                defaultValue={Math.round(
+                                  (selectedVisualEffects?.[field] ?? 0) * 100,
+                                )}
+                                onBlur={(event) => {
+                                  const rawValue = event.currentTarget.value.trim();
+                                  const fallback = Math.round(
+                                    (selectedVisualEffects?.[field] ?? 0) * 100,
+                                  );
+
+                                  if (!rawValue) {
+                                    event.currentTarget.value = String(fallback);
+                                    return;
+                                  }
+
+                                  const parsedValue = Number(rawValue);
+
+                                  if (
+                                    !Number.isFinite(parsedValue) ||
+                                    parsedValue < -100 ||
+                                    parsedValue > 100
+                                  ) {
+                                    event.currentTarget.value = String(fallback);
+                                    setProjectNotice(
+                                      label + " must be between -100% and 100%.",
+                                    );
+                                    return;
+                                  }
+
+                                  handleUpdateSelectedVisualEffects({
+                                    [field]: parsedValue / 100,
+                                  });
+                                }}
+                                onKeyDown={handleTransformInputKeyDown}
+                              />
+                              <span>%</span>
+                            </div>
+                          </label>
+                        ),
+                      )}
+                    </div>
+                  </div>
+
+
 
               {(selectedClipContext.asset?.mediaType === "video" ||
                 selectedClipContext.asset?.mediaType === "image") ? (
@@ -2225,6 +2379,22 @@ function App() {
                       </button>
                     </div>
                   </div>
+
+
+
+              <div className="inspector-fields">
+                <span>Track</span>
+                <strong>{selectedClipContext.track.name}</strong>
+                <span>Start</span>
+                <strong>{formatDuration(selectedClipContext.clip.timelineStartMs)}</strong>
+                <span>Duration</span>
+                <strong>{formatDuration(getClipDurationMs(selectedClipContext.clip))}</strong>
+                <span>Source</span>
+                <strong>
+                  {formatDuration(selectedClipContext.clip.sourceStartMs)} –{" "}
+                  {formatDuration(selectedClipContext.clip.sourceEndMs)}
+                </strong>
+              </div>
 
                   <div className="inspector-keyframe-status">
                     <span>

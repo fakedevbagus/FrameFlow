@@ -131,6 +131,43 @@ describe("render plan", () => {
   });
 
 
+  it("propagates visual effects for visual clips", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                visualEffects: {
+                  brightness: 0.25,
+                  contrast: -0.5,
+                  saturation: 0.4,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(
+      plan.segments.find((segment) => segment.assetId === "video-a")
+        ?.visualEffects,
+    ).toEqual({
+      brightness: 0.25,
+      contrast: -0.5,
+      saturation: 0.4,
+    });
+  });
+
   it("compiles timeline clips with source and timeline timing", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");

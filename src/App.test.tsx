@@ -673,6 +673,87 @@ describe("App", () => {
     });
   });
 
+  it("edits visual color adjustments and resets them", async () => {
+    let project = createProject({ id: "visual-effects-ui" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-visual-effects",
+          name: "effects-ui.mp4",
+          mediaType: "video",
+          sourcePath: "/media/effects-ui.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-visual-effects");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(screen.getByTitle("effects-ui.mp4 · 00:05")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select effects-ui.mp4 clip" }),
+    );
+
+    expect(screen.getByTestId("color-adjustments")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Show color adjustments" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "Brightness" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Contrast" })).toHaveValue(0);
+    expect(screen.getByRole("spinbutton", { name: "Saturation" })).toHaveValue(0);
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Brightness" }), {
+      target: { value: "25" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Brightness" }));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Contrast" }), {
+      target: { value: "-50" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Contrast" }));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Saturation" }), {
+      target: { value: "40" },
+    });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Saturation" }));
+
+    expect(
+      screen.getByRole("spinbutton", { name: "Brightness" }),
+    ).toHaveValue(25);
+    expect(
+      screen.getByRole("spinbutton", { name: "Contrast" }),
+    ).toHaveValue(-50);
+    expect(
+      screen.getByRole("spinbutton", { name: "Saturation" }),
+    ).toHaveValue(40);
+    expect(screen.getByTestId("preview-video")).toHaveStyle({
+      filter: "brightness(125%) contrast(50%) saturate(140%)",
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset color adjustments" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Brightness" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Contrast" })).toHaveValue(0);
+      expect(screen.getByRole("spinbutton", { name: "Saturation" })).toHaveValue(0);
+    });
+
+    expect(screen.getByTestId("preview-video")).toHaveStyle({ filter: "" });
+  });
+
   it("edits transform values precisely from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {

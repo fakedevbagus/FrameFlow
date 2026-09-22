@@ -176,6 +176,41 @@ button:focus-visible {
   justify-content: space-between;
 }
 
+.inspector-quick-button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #403b63;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #d8d3ff;
+  background: #282441;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.inspector-quick-button:hover {
+  border-color: #655c99;
+  background: #322d50;
+}
+
+.inspector-quick-button:focus-visible {
+  outline: 2px solid #b9b0ff;
+  outline-offset: 2px;
+}
+
+.inspector-color-adjustments {
+  scroll-margin-top: 16px;
+  padding: 10px;
+  border: 1px solid #2c333f;
+  border-radius: 8px;
+  background: #191d24;
+}
+
+.inspector-color-adjustments-active {
+  border-color: #554e80;
+  box-shadow: inset 0 0 0 1px rgb(139 124 255 / 12%);
+}
+
 .panel-heading h1,
 .panel-heading h2,
 .editor-toolbar h2 {

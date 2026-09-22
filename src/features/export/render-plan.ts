@@ -3,11 +3,13 @@ import {
   getAudioEq,
   getAudioCompressor,
   getAudioFadeDurations,
+  getVisualEffects,
   getTrackPan,
   getTrackVolume,
   type AudioCompressor,
   type AudioEq,
   type AudioVolumeKeyframe,
+  type VisualEffects,
   type Clip,
   type ClipCrop,
   type ClipTransform,
@@ -44,6 +46,7 @@ export interface RenderSegment {
   audioEq?: AudioEq;
   audioCompressor?: AudioCompressor;
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
+  visualEffects?: VisualEffects;
   transform?: ClipTransform;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
@@ -155,6 +158,11 @@ export function createRenderPlan(
                   : undefined,
               };
             })()
+          : {}),
+        ...(track.type === "video"
+          ? {
+              visualEffects: getVisualEffects(clip),
+            }
           : {}),
         transform: clip.transform,
         crop: clip.crop,

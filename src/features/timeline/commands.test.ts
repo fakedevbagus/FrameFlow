@@ -16,6 +16,7 @@ import {
   updateAudioClipFades,
   updateAudioClipEq,
   updateAudioClipCompressor,
+  updateClipVisualEffects,
   updateAudioClipVolumeAtTime,
   removeAudioClipVolumeKeyframe,
   moveAudioClipVolumeKeyframe,
@@ -194,6 +195,95 @@ describe("track management", () => {
     expect(() =>
       addAssetToTrack(populated, "video", "video-1", 2000),
     ).toThrow("Media cannot overlap another clip on the same track.");
+  });
+});
+
+describe("visual effects", () => {
+  it("updates visual effects only for editable visual clips", () => {
+    let project = createProject({ id: "visual-effects-command" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video",
+          name: "clip.mp4",
+          mediaType: "video",
+          sourcePath: "/clip.mp4",
+          durationMs: 4000,
+        },
+        {
+          id: "audio",
+          name: "music.mp3",
+          mediaType: "audio",
+          sourcePath: "/music.mp3",
+          durationMs: 4000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    const updated = updateClipVisualEffects(
+      project,
+      clipId,
+      {
+        brightness: 0.25,
+        contrast: -0.5,
+        saturation: 0.4,
+      },
+      new Date("2026-09-22T08:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].visualEffects).toEqual({
+      brightness: 0.25,
+      contrast: -0.5,
+      saturation: 0.4,
+    });
+    expect(updated.updatedAt).toBe("2026-09-22T08:00:00.000Z");
+
+    expect(() =>
+      updateClipVisualEffects(
+        project,
+        clipId,
+        { brightness: 1.1, contrast: 0, saturation: 0 },
+      ),
+    ).toThrow("Visual effect values must be between -1 and 1.");
+
+    const audioClipProject = addAssetToTrack(project, "audio", "audio-1", 0);
+    const audioClipId = audioClipProject.tracks[1].clips[0].id;
+    expect(() =>
+      updateClipVisualEffects(
+        audioClipProject,
+        audioClipId,
+        { brightness: 0.1, contrast: 0, saturation: 0 },
+      ),
+    ).toThrow("Visual effects are only available for visual clips.");
+  });
+
+  it("clears visual effects when all adjustments return to neutral", () => {
+    let project = createProject({ id: "visual-effects-reset" });
+    project.assets = [{
+      id: "video",
+      name: "clip.mp4",
+      mediaType: "video",
+      sourcePath: "/clip.mp4",
+      durationMs: 4000,
+    }];
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+    project = updateClipVisualEffects(project, clipId, {
+      brightness: 0.3,
+      contrast: 0.1,
+      saturation: -0.2,
+    });
+
+    const reset = updateClipVisualEffects(project, clipId, {
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+    });
+
+    expect(reset.tracks[0].clips[0].visualEffects).toBeUndefined();
   });
 });
 

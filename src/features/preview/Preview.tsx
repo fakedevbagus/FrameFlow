@@ -9,6 +9,7 @@ import { getAudioVolumeAtTime } from "../audio/automation";
 import {
   getAudioCompressor,
   getAudioEq,
+  getVisualEffects,
   getTrackPan,
   getTrackVolume,
   type 
@@ -38,6 +39,7 @@ import {
   type ContentBounds,
   type CropEdge,
 } from "./canvasManipulation";
+import { buildVisualEffectsCssFilter } from "../effects/visual-effects";
 import {
   getActiveAudioPreviewClips,
   getActiveVisualPreviewClips,
@@ -325,6 +327,9 @@ function PreviewVisualLayer({
     height: `${visibleHeight * 100}%`,
     overflow: "hidden" as const,
   };
+  const visualEffectsFilter = buildVisualEffectsCssFilter(
+    getVisualEffects(layer.clip),
+  );
   const cropMediaStyle = {
     position: "absolute" as const,
     left: `${50 - (cropPosition.x / visibleWidth) * 100}%`,
@@ -1185,6 +1190,7 @@ function PreviewVisualLayer({
               onLoad={handleImageLoad}
               style={{
                 ...cropMediaStyle,
+                filter: visualEffectsFilter,
                 zIndex,
               }}
             />
@@ -1250,6 +1256,7 @@ function PreviewVisualLayer({
             src={videoSourceUrl ?? undefined}
             style={{
               ...cropMediaStyle,
+              filter: visualEffectsFilter,
               zIndex,
             }}
             onLoadedMetadata={handleLoadedMetadata}

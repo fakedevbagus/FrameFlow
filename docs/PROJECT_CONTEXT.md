@@ -1,3 +1,26 @@
+## M3.60 — Visual Effects Foundation — in progress — 2026-09-22
+
+- M3.59 Project File Persistence Hardening was completed and squash-merged into main at `b693df59a4a879b7a4bf53067ad20bbba258f181`.
+- Repository inspection shows the next roadmap capability not yet represented in the product surface is visual effects/filters.
+- M3.60 adds a backward-compatible per-visual-clip Color Adjustments model with Brightness, Contrast, and Saturation controls normalized to `-1..1`.
+- The adjustments are optional clip state; neutral values are omitted so legacy projects remain unchanged.
+- Preview applies equivalent CSS filters to image and video media without changing transform/crop geometry.
+- RenderPlan carries normalized visual effects metadata, and the existing single-video FFmpeg graph compiles it to one `eq` filter stage.
+- All visual-effect mutations use the existing Timeline -> history project mutation path.
+- No project schema version bump is required because the new clip field is optional and backward compatible.
+- Added helper, project-domain, command, render-plan, render-graph, and App workflow regression coverage.
+- Required validation: `git fetch origin --prune`; checkout/pull the feature branch; `npm ci`; `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep M3.60 Draft until the user reports clean local validation.
+
+## M3.59 — Project File Persistence Hardening — merged — 2026-09-22
+
+- M3.58 Persistent Waveform Cache was completed and squash-merged into main at `50f90252546fd65a83f31260b123ca185646a816`.
+- M3.59 hardened the native project file boundary to require absolute `.frameflow.json` paths and cleaned failed temporary save artifacts after rename errors.
+- The filename extension check is case-insensitive and the existing atomic temp-file-then-rename behavior remains intact.
+- Added native regression coverage for valid and invalid project paths.
+- CI exposed a TypeScript narrowing issue in the persisted waveform cache reader; an explicit type guard corrected that pre-merge build error.
+- User reported the corrected M3.59 validation as PASS; PR #73 was marked ready and squash-merged at `b693df59a4a879b7a4bf53067ad20bbba258f181`.
+
 ## M3.59 — Project File Persistence Hardening — in progress — 2026-09-22
 
 - M3.58 Persistent Waveform Cache was completed and squash-merged into main at `50f90252546fd65a83f31260b123ca185646a816`.
