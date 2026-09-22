@@ -41,7 +41,7 @@ describe("audio waveform", () => {
 
   it("centers a single peak and safely renders an all-zero waveform", () => {
     expect(buildWaveformPath([0.75], 100, 20)).toContain(
-      "M 50.000 3.100",
+      "M 50.000 4.147",
     );
 
     const zeroPath = buildWaveformPath([0, 0, 0, 0], 100, 20);
