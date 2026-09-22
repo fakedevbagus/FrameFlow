@@ -1,9 +1,11 @@
 import {
   getAudioEq,
   getAudioFadeDurations,
+  getVisualEffects,
   getAudioCompressor,
   type AudioCompressor,
   type AudioEq,
+  type VisualEffects,
   type TransformAnchor,
   type ClipCrop,
   type CropPosition,
@@ -537,6 +539,71 @@ export function updateTrackPan(
   return { ...project, tracks, updatedAt: now.toISOString() };
 }
 
+
+export function updateClipVisualEffects(
+  project: Project,
+  clipId: string,
+  effects: VisualEffects,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (
+    location.track.type !== "video" ||
+    (asset?.mediaType !== "video" && asset?.mediaType !== "image")
+  ) {
+    throw new Error("Visual effects are only available for visual clips.");
+  }
+
+  if (
+    !Number.isFinite(effects.brightness) ||
+    effects.brightness < -1 ||
+    effects.brightness > 1 ||
+    !Number.isFinite(effects.contrast) ||
+    effects.contrast < -1 ||
+    effects.contrast > 1 ||
+    !Number.isFinite(effects.saturation) ||
+    effects.saturation < -1 ||
+    effects.saturation > 1
+  ) {
+    throw new Error("Visual effect values must be between -1 and 1.");
+  }
+
+  const normalized: VisualEffects = {
+    brightness: Math.round(effects.brightness * 100) / 100,
+    contrast: Math.round(effects.contrast * 100) / 100,
+    saturation: Math.round(effects.saturation * 100) / 100,
+  };
+  const current = getVisualEffects(location.clip);
+
+  if (
+    current.brightness === normalized.brightness &&
+    current.contrast === normalized.contrast &&
+    current.saturation === normalized.saturation
+  ) {
+    return project;
+  }
+
+  const isDefault =
+    normalized.brightness === 0 &&
+    normalized.contrast === 0 &&
+    normalized.saturation === 0;
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { visualEffects: isDefault ? undefined : normalized },
+    now,
+  );
+}
 
 export function updateAudioClipFades(
   project: Project,
