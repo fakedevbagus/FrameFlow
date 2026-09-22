@@ -857,6 +857,79 @@ describe("App", () => {
     });
   });
 
+  it("autosaves text overlay edits without requiring another control", async () => {
+    let project = createProject({ id: "text-overlay-autosave-ui" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-text-autosave",
+          name: "autosave-text.mp4",
+          mediaType: "video",
+          sourcePath: "/media/autosave-text.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-text-autosave");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTitle("autosave-text.mp4 · 00:05"),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select autosave-text.mp4 clip" }),
+    );
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Text overlay content" }),
+      { target: { value: "Autosave now" } },
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveTextContent("Autosave now"),
+    );
+
+    await waitFor(
+      () => {
+        const saved = JSON.parse(
+          localStorage.getItem("frameflow.workspace-project") ?? "{}",
+        );
+        expect(saved.tracks?.[0]?.clips?.[0]?.textOverlay?.text).toBe(
+          "Autosave now",
+        );
+      },
+      { timeout: 1500 },
+    );
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
+      { target: { value: "20" } },
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ left: "20%" }),
+    );
+  });
+
   it("edits transform values precisely from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
