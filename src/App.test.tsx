@@ -2095,6 +2095,43 @@ describe("App", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("still surfaces a genuine playback failure", async () => {
+    const playMock = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockRejectedValue(new Error("codec failure"));
+
+    let project = createProject({ id: "playback-failure" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-failure",
+          name: "failure.mp4",
+          mediaType: "video",
+          sourcePath: "/media/failure.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-failure");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await screen.findByTestId("preview-video");
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+    await waitFor(() => {
+      expect(playMock).toHaveBeenCalled();
+      expect(screen.getByText("codec failure")).toBeInTheDocument();
+    });
+  });
+
   it("updates audio fade controls from the timeline handle", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
