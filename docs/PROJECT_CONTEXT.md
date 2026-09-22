@@ -7,6 +7,7 @@
 - Preserve the existing single-video FFmpeg graph architecture and keep transform/crop/transition interactions explicitly validated.
 - Text overlay Inspector edits now use native DOM input listeners plus a keyboard fallback for live Preview updates in the Tauri WebView, with a 400 ms autosave debounce; blur/direct actions still commit immediately.
 - Live Text overlay Inspector updates now include a 50 ms focus-scoped DOM-value polling fallback for the Linux/Tauri WebView, covering environments where native control values change before React receives an input/change event.
+- Text overlay Inspector edits now force an immediate React flush from the Linux/Tauri WebView input path, while retaining a 400 ms autosave debounce; blur/direct actions still commit immediately.
 - Local validation remains required before the M3.62 PR is marked ready.
 
 ## M3.61 — Text Overlay Foundation — merged — 2026-09-22
