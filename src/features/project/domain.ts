@@ -16,6 +16,9 @@ export const DEFAULT_AUDIO_COMPRESSOR_RATIO = 4;
 export const DEFAULT_AUDIO_COMPRESSOR_ATTACK_MS = 20;
 export const DEFAULT_AUDIO_COMPRESSOR_RELEASE_MS = 250;
 export const DEFAULT_AUDIO_CLIP_VOLUME = 1;
+export const DEFAULT_VISUAL_EFFECT_BRIGHTNESS = 0;
+export const DEFAULT_VISUAL_EFFECT_CONTRAST = 0;
+export const DEFAULT_VISUAL_EFFECT_SATURATION = 0;
 
 export interface CanvasSettings {
   width: number;
@@ -83,6 +86,12 @@ export interface AudioCompressor {
   releaseMs: number;
 }
 
+export interface VisualEffects {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+}
+
 export interface AudioVolumeKeyframe {
   timeMs: number;
   volume: number;
@@ -115,6 +124,7 @@ export interface Clip {
   audioFadeOutMs?: number;
   audioEq?: AudioEq;
   audioCompressor?: AudioCompressor;
+  visualEffects?: VisualEffects;
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
   transformKeyframes?: TransformKeyframe[];
 }
@@ -286,6 +296,33 @@ export function getTrackPan(track: Track): number {
   }
 
   return Math.min(1, Math.max(-1, pan));
+}
+
+export function getVisualEffects(clip: Clip): VisualEffects {
+  const value = clip.visualEffects;
+
+  return {
+    brightness: normalizeVisualEffectValue(
+      value?.brightness,
+      DEFAULT_VISUAL_EFFECT_BRIGHTNESS,
+    ),
+    contrast: normalizeVisualEffectValue(
+      value?.contrast,
+      DEFAULT_VISUAL_EFFECT_CONTRAST,
+    ),
+    saturation: normalizeVisualEffectValue(
+      value?.saturation,
+      DEFAULT_VISUAL_EFFECT_SATURATION,
+    ),
+  };
+}
+
+function normalizeVisualEffectValue(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(1, Math.max(-1, Math.round(value * 100) / 100));
 }
 
 export function getAudioEq(clip: Clip): AudioEq {
