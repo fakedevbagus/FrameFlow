@@ -539,7 +539,10 @@ export function updateTrackPan(
     pan,
   };
 
-  return { ...project, trexport function updateClipTextOverlay(
+  return { ...project, tracks, updatedAt: now.toISOString() };
+}
+
+export function updateClipTextOverlay(
   project: Project,
   clipId: string,
   overlay: TextOverlay | undefined,
@@ -590,10 +593,6 @@ function areTextOverlaysEqual(
     left?.alignment === right?.alignment
   );
 }
-
-acks, updatedAt: now.toISOString() };
-}
-
 
 export function updateClipVisualEffects(
   project: Project,
