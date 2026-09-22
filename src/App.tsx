@@ -129,6 +129,15 @@ const canvasAspectRatioPresets = [
   { id: "4-3", label: "4:3", width: 1440, height: 1080 },
 ] as const;
 
+function isAbortError(error: unknown): boolean {
+  return (
+    (typeof DOMException !== "undefined" &&
+      error instanceof DOMException &&
+      error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
+}
+
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
   const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
@@ -141,6 +150,7 @@ function App() {
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const playbackTimeRef = useRef(0);
   const playbackUiLastPublishedTimestampRef = useRef<number | null>(null);
+  const playbackRequestIdRef = useRef(0);
   const timelineDurationRef = useRef(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -321,6 +331,7 @@ function App() {
   }, [isPlaying, setPlaybackTime, timelineDurationMs]);
 
   function handleCurrentTimeChange(timeMs: number) {
+    playbackRequestIdRef.current += 1;
     setIsPlaying(false);
     setPlaybackTime(timeMs);
   }
@@ -481,12 +492,15 @@ function App() {
     const mediaElements = getPreviewMediaElements();
 
     if (isPlaying) {
+      playbackRequestIdRef.current += 1;
       for (const media of mediaElements) {
         media.pause();
       }
       setIsPlaying(false);
       return;
     }
+
+    const playbackRequestId = ++playbackRequestIdRef.current;
 
     const targetTimeMs =
       playbackTimeRef.current >= timelineDurationRef.current
@@ -531,7 +545,22 @@ function App() {
     setIsPlaying(true);
 
     void Promise.all(playPromises).catch((error) => {
-      const name = error instanceof DOMException ? error.name : "";
+      if (playbackRequestIdRef.current !== playbackRequestId) {
+        return;
+      }
+
+      if (isAbortError(error)) {
+        setIsPlaying(false);
+        return;
+      }
+
+      const name =
+        typeof DOMException !== "undefined" &&
+        error instanceof DOMException
+          ? error.name
+          : error instanceof Error
+            ? error.name
+            : "";
       const message =
         name === "NotSupportedError"
           ? "Preview media format is not supported by the Linux WebView."
