@@ -5,7 +5,6 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { flushSync } from "react-dom";
 import { MediaBin } from "./features/media/MediaBin";
 import {
   getAudioVolumeAtTime,
@@ -102,6 +101,12 @@ import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
 import { TransitionInspector } from "./features/transition/TransitionInspector";
+import {
+  clearTextOverlayEditSession,
+  getTextOverlayEditSession,
+  setTextOverlayEditSession,
+  useTextOverlayEditSession,
+} from "./features/effects/text-overlay-edit-session";
 import { ExportPanel } from "./features/export/ExportPanel";
 import {
   getClipTransition,
@@ -174,10 +179,7 @@ function App() {
     createHistoryState(loadWorkspaceProject()),
   );
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
-  const [textOverlayDraft, setTextOverlayDraft] = useState<{
-    clipId: string;
-    overlay: TextOverlay;
-  } | null>(null);
+  const textOverlayDraft = useTextOverlayEditSession();
   const textOverlayAutoCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -204,8 +206,8 @@ function App() {
       textOverlayAutoCommitTimerRef.current = null;
     }
 
-    setTextOverlayDraft(null);
-  }, [selectedClipId, project.updatedAt]);
+    clearTextOverlayEditSession();
+  }, [selectedClipId]);
 
   useEffect(() => {
     if (!textOverlayDraft) {
@@ -216,15 +218,25 @@ function App() {
       clearTimeout(textOverlayAutoCommitTimerRef.current);
     }
 
+    const scheduledSession = textOverlayDraft;
     textOverlayAutoCommitTimerRef.current = setTimeout(() => {
       textOverlayAutoCommitTimerRef.current = null;
+
+      const latestSession = getTextOverlayEditSession();
+
+      if (
+        latestSession === null ||
+        latestSession.clipId !== scheduledSession.clipId
+      ) {
+        return;
+      }
 
       setHistory((currentHistory) => {
         try {
           const nextProject = updateClipTextOverlay(
             currentHistory.present,
-            textOverlayDraft.clipId,
-            textOverlayDraft.overlay,
+            latestSession.clipId,
+            latestSession.overlay,
           );
 
           setProjectNotice("Text overlay updated.");
@@ -239,7 +251,7 @@ function App() {
         }
       });
 
-      setTextOverlayDraft(null);
+      clearTextOverlayEditSession();
     }, TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS);
 
     return () => {
@@ -499,6 +511,12 @@ function App() {
   }
 
   function handleSelectClip(clipId: string) {
+    if (textOverlayAutoCommitTimerRef.current !== null) {
+      clearTimeout(textOverlayAutoCommitTimerRef.current);
+      textOverlayAutoCommitTimerRef.current = null;
+    }
+
+    clearTextOverlayEditSession();
     setSelectedClipId(clipId);
     setProjectNotice(null);
   }
@@ -819,8 +837,10 @@ function App() {
   }
 
   function getSelectedTextOverlayValue(): TextOverlay {
-    if (textOverlayDraft?.clipId === selectedClipContext?.clip.id) {
-      return textOverlayDraft.overlay;
+    const currentSession = getTextOverlayEditSession();
+
+    if (currentSession?.clipId === selectedClipContext?.clip.id) {
+      return currentSession.overlay;
     }
 
     return (
@@ -849,96 +869,17 @@ function App() {
       color: DEFAULT_TEXT_OVERLAY_COLOR,
       alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
     };
+    const currentSession = getTextOverlayEditSession();
+    const currentOverlay =
+      currentSession?.clipId === clipId
+        ? currentSession.overlay
+        : selectedTextOverlay ?? fallback;
+    const nextOverlay = { ...currentOverlay, ...changes };
 
-    flushSync(() => {
-      setTextOverlayDraft((currentDraft) => {
-        const currentOverlay =
-          currentDraft?.clipId === clipId
-            ? currentDraft.overlay
-            : selectedTextOverlay ?? fallback;
-        const nextOverlay = { ...currentOverlay, ...changes };
-
-        if (
-          currentOverlay.text === nextOverlay.text &&
-          currentOverlay.x === nextOverlay.x &&
-          currentOverlay.y === nextOverlay.y &&
-          currentOverlay.fontSize === nextOverlay.fontSize &&
-          currentOverlay.color === nextOverlay.color &&
-          currentOverlay.alignment === nextOverlay.alignment
-        ) {
-          return currentDraft;
-        }
-
-        return {
-          clipId,
-          overlay: nextOverlay,
-        };
-      });
+    setTextOverlayEditSession({
+      clipId,
+      overlay: nextOverlay,
     });
-  }
-
-  function handleTextOverlayTextInput(value: string) {
-    handleUpdateTextOverlayDraft({ text: value });
-  }
-
-  function handleTextOverlayPositionInput(
-    axis: "x" | "y",
-    value: string,
-  ) {
-    const parsed = Number(value.trim());
-
-    if (
-      !value.trim() ||
-      !Number.isFinite(parsed) ||
-      parsed < 0 ||
-      parsed > 100
-    ) {
-      return;
-    }
-
-    handleUpdateTextOverlayDraft({ [axis]: parsed / 100 });
-  }
-
-  function handleTextOverlayFontSizeInput(value: string) {
-    const parsed = Number(value.trim());
-
-    if (
-      !value.trim() ||
-      !Number.isFinite(parsed) ||
-      parsed < 12 ||
-      parsed > 240
-    ) {
-      return;
-    }
-
-    handleUpdateTextOverlayDraft({ fontSize: Math.round(parsed) });
-  }
-
-  function handleTextOverlayKeyUp(
-    event: ReactKeyboardEvent<
-      HTMLTextAreaElement | HTMLInputElement
-    >,
-  ) {
-    const target = event.currentTarget;
-
-    if (target instanceof HTMLTextAreaElement) {
-      handleTextOverlayTextInput(target.value);
-      return;
-    }
-
-    if (target.getAttribute("aria-label") === "Text overlay X position") {
-      handleTextOverlayPositionInput("x", target.value);
-      return;
-    }
-
-    if (target.getAttribute("aria-label") === "Text overlay Y position") {
-      handleTextOverlayPositionInput("y", target.value);
-      return;
-    }
-
-    if (target.getAttribute("aria-label") === "Text overlay font size") {
-      handleTextOverlayFontSizeInput(target.value);
-    }
   }
 
   function clearTextOverlayAutoCommitTimer() {
@@ -949,9 +890,11 @@ function App() {
   }
 
   function handleCommitSelectedTextOverlayDraft() {
+    const editSession = getTextOverlayEditSession();
+
     if (
       !selectedClipContext ||
-      textOverlayDraft?.clipId !== selectedClipContext.clip.id
+      editSession?.clipId !== selectedClipContext.clip.id
     ) {
       return;
     }
@@ -963,11 +906,11 @@ function App() {
         updateClipTextOverlay(
           currentProject,
           selectedClipContext.clip.id,
-          textOverlayDraft.overlay,
+          editSession.overlay,
         ),
       "Text overlay updated.",
     );
-    setTextOverlayDraft(null);
+    clearTextOverlayEditSession();
   }
 
   function handleCommitSelectedTextOverlayChange(
@@ -979,19 +922,21 @@ function App() {
 
     clearTextOverlayAutoCommitTimer();
 
+    const currentOverlay = getSelectedTextOverlayValue();
+
     applyProjectChange(
       (currentProject) =>
         updateClipTextOverlay(
           currentProject,
           selectedClipContext.clip.id,
           {
-            ...getSelectedTextOverlayValue(),
+            ...currentOverlay,
             ...changes,
           },
         ),
       "Text overlay updated.",
     );
-    setTextOverlayDraft(null);
+    clearTextOverlayEditSession();
   }
 
   function handleResetSelectedTextOverlay() {
@@ -1006,7 +951,7 @@ function App() {
         updateClipTextOverlay(currentProject, selectedClipContext.clip.id, undefined),
       "Text overlay reset.",
     );
-    setTextOverlayDraft(null);
+    clearTextOverlayEditSession();
   }
 
   function handleUpdateAudioClipCompressor(
@@ -2719,17 +2664,12 @@ function App() {
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
-                      onInputCapture={(event) =>
+                      onInput={(event) =>
                         handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
                         })
                       }
-                      onChangeCapture={(event) =>
-                        handleUpdateTextOverlayDraft({
-                          text: event.currentTarget.value,
-                        })
-                      }
-                      onKeyUpCapture={(event) =>
+                      onChange={(event) =>
                         handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
                         })
@@ -2756,19 +2696,13 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
-                            onInputCapture={(event) => {
+                            onInput={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
                                 handleUpdateTextOverlayDraft({ x: value / 100 });
                               }
                             }}
-                            onChangeCapture={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ x: value / 100 });
-                              }
-                            }}
-                            onKeyUpCapture={(event) => {
+                            onChange={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
                                 handleUpdateTextOverlayDraft({ x: value / 100 });
@@ -2810,19 +2744,13 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
-                            onInputCapture={(event) => {
+                            onInput={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
                                 handleUpdateTextOverlayDraft({ y: value / 100 });
                               }
                             }}
-                            onChangeCapture={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ y: value / 100 });
-                              }
-                            }}
-                            onKeyUpCapture={(event) => {
+                            onChange={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
                                 handleUpdateTextOverlayDraft({ y: value / 100 });
@@ -2866,7 +2794,7 @@ function App() {
                             min="12"
                             step="1"
                             type="number"
-                            onInputCapture={(event) => {
+                            onInput={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 12 && value <= 240) {
                                 handleUpdateTextOverlayDraft({
@@ -2874,15 +2802,7 @@ function App() {
                                 });
                               }
                             }}
-                            onChangeCapture={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
-                                handleUpdateTextOverlayDraft({
-                                  fontSize: Math.round(value),
-                                });
-                              }
-                            }}
-                            onKeyUpCapture={(event) => {
+                            onChange={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 12 && value <= 240) {
                                 handleUpdateTextOverlayDraft({
