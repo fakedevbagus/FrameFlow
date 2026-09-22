@@ -5,7 +5,7 @@
 - The export slice will reuse the existing optional per-clip text overlay model and keep rendering deterministic without introducing a new project schema version.
 - Font selection will use a small explicit renderer-owned font family policy rather than relying on arbitrary platform defaults.
 - Preserve the existing single-video FFmpeg graph architecture and keep transform/crop/transition interactions explicitly validated.
-- Text overlay Inspector edits preview immediately and autosave after 400 ms of inactivity; blur/direct actions still commit immediately, so changing another control is no longer required to finalize text, position, or size edits.
+- Text overlay Inspector edits now use native input events for live Preview updates in the Tauri WebView, with a 400 ms autosave debounce; blur/direct actions still commit immediately.
 - Local validation remains required before the M3.62 PR is marked ready.
 
 ## M3.61 — Text Overlay Foundation — merged — 2026-09-22
