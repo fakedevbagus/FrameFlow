@@ -3,15 +3,22 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn((command: string) =>
-    command === "generate_audio_waveform"
-      ? Promise.resolve({
-          durationMs: 5000,
-          sampleRate: 1024,
-          peaks: [0.2, 0.5, 0.8, 0.35],
-        })
-      : Promise.resolve(undefined),
-  ),
+  invoke: vi.fn((command: string) => {
+    if (command === "get_audio_waveform_source_fingerprint") {
+      return Promise.resolve({ sourceFingerprint: "5000:timeline-test" });
+    }
+
+    if (command === "generate_audio_waveform") {
+      return Promise.resolve({
+        durationMs: 5000,
+        sampleRate: 1024,
+        peaks: [0.2, 0.5, 0.8, 0.35],
+        sourceFingerprint: "5000:timeline-test",
+      });
+    }
+
+    return Promise.resolve(undefined);
+  }),
 }));
 import { createProject } from "../project/domain";
 import {
