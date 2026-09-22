@@ -2620,7 +2620,7 @@ function App() {
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
-                      onChange={(event) =>
+                      onInput={(event) =>
                         handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
                         })
@@ -2641,7 +2641,7 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
-                            onChange={(event) => {
+                            onInput={(event) => {
                               const rawValue = event.currentTarget.value.trim();
                               const value = Number(rawValue);
                               if (
@@ -2684,7 +2684,7 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
-                            onChange={(event) => {
+                            onInput={(event) => {
                               const rawValue = event.currentTarget.value.trim();
                               const value = Number(rawValue);
                               if (
@@ -2728,7 +2728,7 @@ function App() {
                             min="12"
                             step="1"
                             type="number"
-                            onChange={(event) => {
+                            onInput={(event) => {
                               const rawValue = event.currentTarget.value.trim();
                               const value = Number(rawValue);
                               if (
