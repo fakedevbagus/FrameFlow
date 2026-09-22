@@ -1352,6 +1352,15 @@ button:disabled {
   fill: #8ea9ff;
 }
 
+.timeline-audio-waveform-selection {
+  fill: #d7d0ff;
+  fill-opacity: 0.18;
+  stroke: #bfb5ff;
+  stroke-opacity: 0.48;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
 .timeline-audio-waveform-placeholder {
   border-radius: 3px;
   background: repeating-linear-gradient(

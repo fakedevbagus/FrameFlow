@@ -94,6 +94,41 @@ export function getWaveformLocalTimeMs(
   return Math.round(progress * durationMs);
 }
 
+export interface WaveformSelectionRange {
+  startMs: number;
+  endMs: number;
+}
+
+export function getWaveformSelectionRangeMs(
+  startClientX: number,
+  endClientX: number,
+  left: number,
+  width: number,
+  durationMs: number,
+): WaveformSelectionRange | null {
+  const startMs = getWaveformLocalTimeMs(
+    startClientX,
+    left,
+    width,
+    durationMs,
+  );
+  const endMs = getWaveformLocalTimeMs(
+    endClientX,
+    left,
+    width,
+    durationMs,
+  );
+
+  if (startMs === endMs) {
+    return null;
+  }
+
+  return {
+    startMs: Math.min(startMs, endMs),
+    endMs: Math.max(startMs, endMs),
+  };
+}
+
 export function buildWaveformPath(
   peaks: number[],
   width = 128,

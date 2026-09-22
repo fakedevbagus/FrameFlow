@@ -142,7 +142,7 @@ The latest supplied local validation log established:
 
 A later renderer refinement temporarily exposed one stale waveform geometry assertion; that assertion has been corrected. The current branch must still be locally revalidated after the latest change.
 
-### M3.56 final gate
+### M3.57 final gate
 
 Before marking PR #70 ready:
 1. Run the required pull/fetch sequence.
@@ -181,9 +181,7 @@ The complete milestone history is in `docs/PROJECT_CONTEXT.md`.
 
 ## Next-milestone rule
 
-There is currently no authoritative M3.57 branch/spec in this repository. Do not invent an M3.57 feature.
-
-After M3.56 is locally validated and merged:
+After M3.57 is locally validated and merged:
 1. Re-inspect the updated `main`.
 2. Inspect open PRs/branches/issues and the current project context.
 3. Determine the next focused milestone from repository evidence.

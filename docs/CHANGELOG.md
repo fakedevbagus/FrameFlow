@@ -1,3 +1,24 @@
+## 2026-09-22 — M3.57 Audio Waveform Region Selection — in progress
+
+Branch: feat/m3-57-audio-waveform-region-selection
+
+Base:
+- M3.56 squash merge SHA: 593de1d6858577c4856ecc329eea544885b59bac
+
+Scope:
+- Preserve waveform click-to-seek.
+- Add drag-to-select ordered local audio time ranges.
+- Keep selection as ephemeral UI state with no project schema/history changes.
+- Add Escape clearing and midpoint seek for keyboard activation when a region is selected.
+
+Tests:
+- Added waveform selection-range helper coverage.
+- Added Timeline regression coverage for reverse-direction drag selection and click-seek compatibility.
+
+Validation:
+- Local validation is required before marking M3.57 ready.
+- CI validation is also running for lint, frontend tests, production build, and Rust tests.
+
 ## 2026-09-22 — M3.56 stabilization — validation pending
 
 Branch: feat/m3-56-audio-waveform-scrubbing
