@@ -2041,6 +2041,18 @@ function App() {
                 Color adjustments
               </button>
             ) : null}
+            {selectedClipContext &&
+            (selectedClipContext.asset?.mediaType === "video" ||
+              selectedClipContext.asset?.mediaType === "image") ? (
+              <button
+                aria-label="Show text overlay"
+                className="inspector-quick-button"
+                onClick={handleFocusTextOverlay}
+                type="button"
+              >
+                Text
+              </button>
+            ) : null}
           </div>
 
           {selectedClipContext ? (
@@ -2451,6 +2463,179 @@ function App() {
                   {formatDuration(selectedClipContext.clip.sourceEndMs)}
                 </strong>
               </div>
+
+                  <div
+                    data-testid="text-overlay"
+                    ref={textOverlayRef}
+                    className="inspector-section inspector-text-overlay"
+                  >
+                    <div className="inspector-section-header">
+                      <span className="inspector-section-title">Text overlay</span>
+                      <button
+                        aria-label="Reset text overlay"
+                        className="inspector-inline-button"
+                        onClick={handleResetSelectedTextOverlay}
+                        type="button"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <textarea
+                      aria-label="Text overlay content"
+                      className="inspector-textarea"
+                      defaultValue={selectedTextOverlay?.text ?? ""}
+                      maxLength={500}
+                      placeholder="Type text…"
+                      rows={3}
+                      key={selectedTextOverlay?.text ?? "empty"}
+                      onBlur={(event) =>
+                        handleUpdateSelectedTextOverlay({
+                          text: event.currentTarget.value,
+                        })
+                      }
+                    />
+                    <div className="inspector-transform-input-grid">
+                      <label className="inspector-transform-field">
+                        <span>X</span>
+                        <div className="inspector-transform-input-wrap">
+                          <input
+                            aria-label="Text overlay X position"
+                            className="inspector-transform-input"
+                            defaultValue={Math.round(
+                              (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
+                            )}
+                            max="100"
+                            min="0"
+                            step="1"
+                            type="number"
+                            key={"x-" + (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)}
+                            onBlur={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (!Number.isFinite(value) || value < 0 || value > 100) {
+                                event.currentTarget.value = String(
+                                  Math.round(
+                                    (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
+                                  ),
+                                );
+                                return;
+                              }
+                              handleUpdateSelectedTextOverlay({ x: value / 100 });
+                            }}
+                            onKeyDown={handleTransformInputKeyDown}
+                          />
+                          <span>%</span>
+                        </div>
+                      </label>
+                      <label className="inspector-transform-field">
+                        <span>Y</span>
+                        <div className="inspector-transform-input-wrap">
+                          <input
+                            aria-label="Text overlay Y position"
+                            className="inspector-transform-input"
+                            defaultValue={Math.round(
+                              (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
+                            )}
+                            max="100"
+                            min="0"
+                            step="1"
+                            type="number"
+                            key={"y-" + (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)}
+                            onBlur={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (!Number.isFinite(value) || value < 0 || value > 100) {
+                                event.currentTarget.value = String(
+                                  Math.round(
+                                    (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
+                                  ),
+                                );
+                                return;
+                              }
+                              handleUpdateSelectedTextOverlay({ y: value / 100 });
+                            }}
+                            onKeyDown={handleTransformInputKeyDown}
+                          />
+                          <span>%</span>
+                        </div>
+                      </label>
+                      <label className="inspector-transform-field">
+                        <span>Size</span>
+                        <div className="inspector-transform-input-wrap">
+                          <input
+                            aria-label="Text overlay font size"
+                            className="inspector-transform-input"
+                            defaultValue={
+                              selectedTextOverlay?.fontSize ??
+                              DEFAULT_TEXT_OVERLAY_FONT_SIZE
+                            }
+                            max="240"
+                            min="12"
+                            step="1"
+                            type="number"
+                            key={"size-" + (selectedTextOverlay?.fontSize ?? DEFAULT_TEXT_OVERLAY_FONT_SIZE)}
+                            onBlur={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (!Number.isFinite(value) || value < 12 || value > 240) {
+                                event.currentTarget.value = String(
+                                  selectedTextOverlay?.fontSize ??
+                                    DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+                                );
+                                return;
+                              }
+                              handleUpdateSelectedTextOverlay({
+                                fontSize: Math.round(value),
+                              });
+                            }}
+                            onKeyDown={handleTransformInputKeyDown}
+                          />
+                          <span>px</span>
+                        </div>
+                      </label>
+                      <label className="inspector-transform-field">
+                        <span>Color</span>
+                        <div className="inspector-color-input-wrap">
+                          <input
+                            aria-label="Text overlay color"
+                            defaultValue={
+                              selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR
+                            }
+                            key={"color-" + (selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR)}
+                            type="color"
+                            onChange={(event) =>
+                              handleUpdateSelectedTextOverlay({
+                                color: event.currentTarget.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </label>
+                    </div>
+                    <div
+                      className="inspector-text-alignment"
+                      role="group"
+                      aria-label="Text overlay alignment"
+                    >
+                      {(["left", "center", "right"] as const).map((alignment) => {
+                        const active =
+                          (selectedTextOverlay?.alignment ??
+                            DEFAULT_TEXT_OVERLAY_ALIGNMENT) === alignment;
+
+                        return (
+                          <button
+                            aria-label={"Align text " + alignment}
+                            aria-pressed={active}
+                            className="inspector-inline-button"
+                            key={alignment}
+                            onClick={() =>
+                              handleUpdateSelectedTextOverlay({ alignment })
+                            }
+                            type="button"
+                          >
+                            {alignment}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <div className="inspector-keyframe-status">
                     <span>
