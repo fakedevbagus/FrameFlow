@@ -30,8 +30,11 @@ export function getAudioWaveform(
     if (
       !waveform ||
       !Number.isFinite(waveform.durationMs) ||
+      waveform.durationMs <= 0 ||
       !Number.isFinite(waveform.sampleRate) ||
-      !Array.isArray(waveform.peaks)
+      waveform.sampleRate <= 0 ||
+      !Array.isArray(waveform.peaks) ||
+      waveform.peaks.length === 0
     ) {
       throw new Error("Native waveform data is invalid.");
     }
@@ -39,9 +42,7 @@ export function getAudioWaveform(
     return {
       durationMs: Math.max(0, Math.round(waveform.durationMs)),
       sampleRate: Math.max(1, Math.round(waveform.sampleRate)),
-      peaks: waveform.peaks
-        .filter((peak) => Number.isFinite(peak))
-        .map((peak) => Math.min(1, Math.max(0, peak))),
+      peaks: waveform.peaks.map(normalizeWaveformPeak),
     };
   });
 
@@ -58,6 +59,14 @@ export function getAudioWaveform(
 
 export function clearAudioWaveformCache(): void {
   waveformCache.clear();
+}
+
+function normalizeWaveformPeak(peak: number): number {
+  if (!Number.isFinite(peak)) {
+    return 0;
+  }
+
+  return Math.min(1, Math.max(0, peak));
 }
 
 export function getWaveformLocalTimeMs(
@@ -94,9 +103,7 @@ export function buildWaveformPath(
     return "";
   }
 
-  const normalizedPeaks = peaks.map((peak) =>
-    Math.min(1, Math.max(0, peak)),
-  );
+  const normalizedPeaks = peaks.map(normalizeWaveformPeak);
   const sortedPeaks = [...normalizedPeaks].sort((a, b) => a - b);
   const lowerIndex = Math.floor((sortedPeaks.length - 1) * 0.1);
   const upperIndex = Math.floor((sortedPeaks.length - 1) * 0.95);
