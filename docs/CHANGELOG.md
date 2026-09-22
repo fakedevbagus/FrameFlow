@@ -9,7 +9,8 @@ Implemented:
 - Added playback request invalidation so stale play promises cannot overwrite later pause/seek state.
 - Awaited Preview asynchronous effects in interaction tests and added a deterministic jsdom media play() mock.
 - Reduced Vitest fork-worker concurrency to two workers as a targeted worker-startup stability mitigation.
-- Expanded Timeline waveform scrubbing regression coverage to left/center/right pointer positions and drag isolation.
+- Expanded Timeline waveform scrubbing regression coverage to left/center/right pointer positions, keyboard seeking, and drag isolation.
+- Made the interactive waveform keyboard-focusable and prevented non-finite SVG dimensions from producing malformed path data.
 
 Validation:
 - Repository execution is not available in this connector environment, so fresh npm, Vitest, build, Cargo, and Tauri results are intentionally not claimed here.
