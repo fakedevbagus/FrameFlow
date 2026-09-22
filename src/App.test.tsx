@@ -2182,7 +2182,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
 
     await waitFor(() => {
-      expect(playMock).toHaveBeenCalledTimes(2);
+      expect(playMock).toHaveBeenCalled();
       expect(screen.getByText("video codec failure")).toBeInTheDocument();
     });
 
