@@ -760,6 +760,12 @@ describe("Timeline", () => {
     expect(onCurrentTimeChange).toHaveBeenNthCalledWith(2, 2500);
     expect(onCurrentTimeChange).toHaveBeenNthCalledWith(3, 5000);
     expect(onMoveClip).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(waveform, { key: "Enter" });
+
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(4, 2500);
+    expect(waveform).toHaveAttribute("role", "button");
+    expect(waveform).toHaveAttribute("tabindex", "0");
   });
 
   it("shows an audio track volume slider and reports changes", () => {
