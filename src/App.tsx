@@ -1893,6 +1893,110 @@ function App() {
                 }}
               >
                 <Preview
+
+
+                  <div
+                    ref={colorAdjustmentsRef}
+                    className={
+                      "inspector-section inspector-color-adjustments" +
+                      (selectedVisualEffects &&
+                      (selectedVisualEffects.brightness !== 0 ||
+                        selectedVisualEffects.contrast !== 0 ||
+                        selectedVisualEffects.saturation !== 0)
+                        ? " inspector-color-adjustments-active"
+                        : "")
+                    }
+                  >
+                    <div className="inspector-section-header">
+                      <span className="inspector-section-title">Color adjustments</span>
+                      <button
+                        aria-label="Reset color adjustments"
+                        className="inspector-inline-button"
+                        onClick={() =>
+                          handleUpdateSelectedVisualEffects({
+                            brightness: 0,
+                            contrast: 0,
+                            saturation: 0,
+                          })
+                        }
+                        type="button"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <p className="inspector-help">
+                      Non-destructive per-clip brightness, contrast, and saturation.
+                    </p>
+                    <div
+                      className="inspector-transform-input-grid"
+                      key={
+                        selectedVisualEffects
+                          ? [
+                              selectedVisualEffects.brightness,
+                              selectedVisualEffects.contrast,
+                              selectedVisualEffects.saturation,
+                            ].join("|")
+                          : "none"
+                      }
+                    >
+                      {([
+                        ["brightness", "Brightness"],
+                        ["contrast", "Contrast"],
+                        ["saturation", "Saturation"],
+                      ] as Array<[keyof VisualEffects, string]>).map(
+                        ([field, label]) => (
+                          <label className="inspector-transform-field" key={field}>
+                            <span>{label}</span>
+                            <div className="inspector-transform-input-wrap">
+                              <input
+                                aria-label={label}
+                                className="inspector-transform-input"
+                                max="100"
+                                min="-100"
+                                step="1"
+                                type="number"
+                                defaultValue={Math.round(
+                                  (selectedVisualEffects?.[field] ?? 0) * 100,
+                                )}
+                                onBlur={(event) => {
+                                  const rawValue = event.currentTarget.value.trim();
+                                  const fallback = Math.round(
+                                    (selectedVisualEffects?.[field] ?? 0) * 100,
+                                  );
+
+                                  if (!rawValue) {
+                                    event.currentTarget.value = String(fallback);
+                                    return;
+                                  }
+
+                                  const parsedValue = Number(rawValue);
+
+                                  if (
+                                    !Number.isFinite(parsedValue) ||
+                                    parsedValue < -100 ||
+                                    parsedValue > 100
+                                  ) {
+                                    event.currentTarget.value = String(fallback);
+                                    setProjectNotice(
+                                      label + " must be between -100% and 100%.",
+                                    );
+                                    return;
+                                  }
+
+                                  handleUpdateSelectedVisualEffects({
+                                    [field]: parsedValue / 100,
+                                  });
+                                }}
+                                onKeyDown={handleTransformInputKeyDown}
+                              />
+                              <span>%</span>
+                            </div>
+                          </label>
+                        ),
+                      )}
+                    </div>
+                  </div>
+
                 project={project}
                 currentTimeMs={displayedCurrentTimeMs}
                 isPlaying={isPlaying}
@@ -1982,7 +2086,7 @@ function App() {
                 onClick={handleFocusColorAdjustments}
                 type="button"
               >
-                Color
+                Color adjustments
               </button>
             ) : null}
           </div>
@@ -2286,108 +2390,6 @@ function App() {
                       >
                         Center content
                       </button>
-                    </div>
-                  </div>
-
-                  <div
-                    ref={colorAdjustmentsRef}
-                    className={
-                      "inspector-section inspector-color-adjustments" +
-                      (selectedVisualEffects &&
-                      (selectedVisualEffects.brightness !== 0 ||
-                        selectedVisualEffects.contrast !== 0 ||
-                        selectedVisualEffects.saturation !== 0)
-                        ? " inspector-color-adjustments-active"
-                        : "")
-                    }
-                  >
-                    <div className="inspector-section-header">
-                      <span className="inspector-section-title">Color adjustments</span>
-                      <button
-                        aria-label="Reset color adjustments"
-                        className="inspector-inline-button"
-                        onClick={() =>
-                          handleUpdateSelectedVisualEffects({
-                            brightness: 0,
-                            contrast: 0,
-                            saturation: 0,
-                          })
-                        }
-                        type="button"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                    <p className="inspector-help">
-                      Non-destructive per-clip brightness, contrast, and saturation.
-                    </p>
-                    <div
-                      className="inspector-transform-input-grid"
-                      key={
-                        selectedVisualEffects
-                          ? [
-                              selectedVisualEffects.brightness,
-                              selectedVisualEffects.contrast,
-                              selectedVisualEffects.saturation,
-                            ].join("|")
-                          : "none"
-                      }
-                    >
-                      {([
-                        ["brightness", "Brightness"],
-                        ["contrast", "Contrast"],
-                        ["saturation", "Saturation"],
-                      ] as Array<[keyof VisualEffects, string]>).map(
-                        ([field, label]) => (
-                          <label className="inspector-transform-field" key={field}>
-                            <span>{label}</span>
-                            <div className="inspector-transform-input-wrap">
-                              <input
-                                aria-label={label}
-                                className="inspector-transform-input"
-                                max="100"
-                                min="-100"
-                                step="1"
-                                type="number"
-                                defaultValue={Math.round(
-                                  (selectedVisualEffects?.[field] ?? 0) * 100,
-                                )}
-                                onBlur={(event) => {
-                                  const rawValue = event.currentTarget.value.trim();
-                                  const fallback = Math.round(
-                                    (selectedVisualEffects?.[field] ?? 0) * 100,
-                                  );
-
-                                  if (!rawValue) {
-                                    event.currentTarget.value = String(fallback);
-                                    return;
-                                  }
-
-                                  const parsedValue = Number(rawValue);
-
-                                  if (
-                                    !Number.isFinite(parsedValue) ||
-                                    parsedValue < -100 ||
-                                    parsedValue > 100
-                                  ) {
-                                    event.currentTarget.value = String(fallback);
-                                    setProjectNotice(
-                                      label + " must be between -100% and 100%.",
-                                    );
-                                    return;
-                                  }
-
-                                  handleUpdateSelectedVisualEffects({
-                                    [field]: parsedValue / 100,
-                                  });
-                                }}
-                                onKeyDown={handleTransformInputKeyDown}
-                              />
-                              <span>%</span>
-                            </div>
-                          </label>
-                        ),
-                      )}
                     </div>
                   </div>
 
