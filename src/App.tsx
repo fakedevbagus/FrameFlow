@@ -10,10 +10,15 @@ import {
   getAudioVolumeAtTime,
   getAudioVolumeKeyframeAtTime,
 } from "./features/audio/automation";
-import { getAudioCompressor, getAudioEq } from "./features/project/domain";
+import {
+  getAudioCompressor,
+  getAudioEq,
+  getVisualEffects,
+} from "./features/project/domain";
 import type {
   AudioCompressor,
   AudioEq,
+  VisualEffects,
   Clip,
   ClipCrop,
   ClipTransform,
@@ -40,6 +45,7 @@ import {
   updateAudioClipFades,
   updateAudioClipEq,
   updateAudioClipCompressor,
+  updateClipVisualEffects,
   updateAudioClipVolumeAtTime,
   removeAudioClipVolumeKeyframe,
   moveAudioClipVolumeKeyframe,
@@ -213,6 +219,9 @@ function App() {
       )
     : null;
   const selectedKeyframeCount = selectedClipContext?.clip.transformKeyframes?.length ?? 0;
+  const selectedVisualEffects = selectedClipContext
+    ? getVisualEffects(selectedClipContext.clip)
+    : null;
   const selectedAudioVolume = selectedClipContext
     ? getAudioVolumeAtTime(selectedClipContext.clip, selectedClipLocalTimeMs)
     : 1;
@@ -684,6 +693,43 @@ function App() {
     };
 
     handleUpdateAudioClipEq(selectedClipContext.clip.id, nextEq);
+  }
+
+  function handleUpdateVisualEffects(
+    clipId: string,
+    effects: VisualEffects,
+  ) {
+    const clipContext = findClipContext(project, clipId);
+
+    if (
+      !clipContext ||
+      clipContext.track.type !== "video" ||
+      (clipContext.asset?.mediaType !== "video" &&
+        clipContext.asset?.mediaType !== "image")
+    ) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        updateClipVisualEffects(currentProject, clipId, effects),
+      "Visual adjustments updated.",
+    );
+  }
+
+  function handleUpdateSelectedVisualEffects(
+    changes: Partial<VisualEffects>,
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    const nextEffects = {
+      ...getVisualEffects(selectedClipContext.clip),
+      ...changes,
+    };
+
+    handleUpdateVisualEffects(selectedClipContext.clip.id, nextEffects);
   }
 
   function handleUpdateAudioClipCompressor(
