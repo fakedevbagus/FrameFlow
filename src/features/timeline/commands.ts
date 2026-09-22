@@ -559,6 +559,7 @@ export function updateClipTextOverlay(
   );
 
   if (
+    location.track.type !== "video" ||
     !asset ||
     (asset.mediaType !== "video" && asset.mediaType !== "image")
   ) {
