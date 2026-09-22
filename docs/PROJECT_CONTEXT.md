@@ -9,6 +9,7 @@
 - Timeline waveform regression coverage now checks left/center/right seeking and verifies waveform pointer interaction does not invoke clip movement.
 - Waveform interaction is keyboard-accessible as a button; Enter/Space seeks to the clip midpoint.
 - SVG waveform path construction now rejects non-finite dimensions as well as invalid peak data.
+- Waveform rendering was visually hardened after manual desktop inspection: reduced vertical amplitude, nonlinear peak compression, and an explicit SVG path fill prevent an overfilled/black-looking waveform.
 - Required local validation remains pending in this environment because repository execution is unavailable here: npm run lint; targeted Vitest tests; npm run test; npm run build; cd src-tauri && cargo test; cd ..; npm run tauri dev.
 
 ## M3.56 — Audio Waveform Scrubbing — in progress — 2026-09-22
