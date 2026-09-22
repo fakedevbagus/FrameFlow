@@ -103,8 +103,7 @@ PR:
 #76
 https://github.com/fakedevbagus/FrameFlow/pull/76
 
-Current head:
-`5b6894c988678931e1c7e3093b044629a93b2be8`
+Always inspect the current branch head before merging; do not trust a stored commit SHA from an older handoff.
 
 Base:
 `main` (repository head may advance independently; inspect before any merge)
