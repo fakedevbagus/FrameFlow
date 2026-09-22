@@ -2674,6 +2674,11 @@ function App() {
                       placeholder="Type text…"
                       rows={3}
                       ref={textOverlayTextInputRef}
+                      onKeyUp={(event) =>
+                        handleUpdateTextOverlayDraft({
+                          text: event.currentTarget.value,
+                        })
+                      }
                       onBlur={handleCommitSelectedTextOverlayDraft}
                     />
                     <div className="inspector-transform-input-grid">
@@ -2691,6 +2696,12 @@ function App() {
                             step="1"
                             type="number"
                             ref={textOverlayXInputRef}
+                            onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ x: value / 100 });
+                              }
+                            }}
                             key={"x-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
@@ -2723,6 +2734,12 @@ function App() {
                             step="1"
                             type="number"
                             ref={textOverlayYInputRef}
+                            onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ y: value / 100 });
+                              }
+                            }}
                             key={"y-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
@@ -2756,6 +2773,12 @@ function App() {
                             step="1"
                             type="number"
                             ref={textOverlaySizeInputRef}
+                            onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
+                                handleUpdateTextOverlayDraft({ fontSize: Math.round(value) });
+                              }
+                            }}
                             key={"size-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.fontSize ?? DEFAULT_TEXT_OVERLAY_FONT_SIZE)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
