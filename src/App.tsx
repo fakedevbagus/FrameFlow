@@ -175,6 +175,9 @@ function App() {
     clipId: string;
     overlay: TextOverlay;
   } | null>(null);
+  const textOverlayAutoCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
@@ -193,8 +196,56 @@ function App() {
   >({});
   const project = history.present;
   useEffect(() => {
+    if (textOverlayAutoCommitTimerRef.current !== null) {
+      clearTimeout(textOverlayAutoCommitTimerRef.current);
+      textOverlayAutoCommitTimerRef.current = null;
+    }
+
     setTextOverlayDraft(null);
   }, [selectedClipId, project.updatedAt]);
+
+  useEffect(() => {
+    if (!textOverlayDraft) {
+      return;
+    }
+
+    if (textOverlayAutoCommitTimerRef.current !== null) {
+      clearTimeout(textOverlayAutoCommitTimerRef.current);
+    }
+
+    textOverlayAutoCommitTimerRef.current = setTimeout(() => {
+      textOverlayAutoCommitTimerRef.current = null;
+
+      setHistory((currentHistory) => {
+        try {
+          const nextProject = updateClipTextOverlay(
+            currentHistory.present,
+            textOverlayDraft.clipId,
+            textOverlayDraft.overlay,
+          );
+
+          setProjectNotice("Text overlay autosaved.");
+          return commitHistory(currentHistory, nextProject);
+        } catch (error) {
+          setProjectNotice(
+            error instanceof Error
+              ? error.message
+              : "Text overlay could not be autosaved.",
+          );
+          return currentHistory;
+        }
+      });
+
+      setTextOverlayDraft(null);
+    }, 400);
+
+    return () => {
+      if (textOverlayAutoCommitTimerRef.current !== null) {
+        clearTimeout(textOverlayAutoCommitTimerRef.current);
+        textOverlayAutoCommitTimerRef.current = null;
+      }
+    };
+  }, [textOverlayDraft]);
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
   const assets = project.assets;
@@ -795,6 +846,13 @@ function App() {
     });
   }
 
+  function clearTextOverlayAutoCommitTimer() {
+    if (textOverlayAutoCommitTimerRef.current !== null) {
+      clearTimeout(textOverlayAutoCommitTimerRef.current);
+      textOverlayAutoCommitTimerRef.current = null;
+    }
+  }
+
   function handleCommitSelectedTextOverlayDraft() {
     if (
       !selectedClipContext ||
@@ -802,6 +860,8 @@ function App() {
     ) {
       return;
     }
+
+    clearTextOverlayAutoCommitTimer();
 
     applyProjectChange(
       (currentProject) =>
@@ -822,6 +882,8 @@ function App() {
       return;
     }
 
+    clearTextOverlayAutoCommitTimer();
+
     applyProjectChange(
       (currentProject) =>
         updateClipTextOverlay(
@@ -841,6 +903,8 @@ function App() {
     if (!selectedClipContext) {
       return;
     }
+
+    clearTextOverlayAutoCommitTimer();
 
     applyProjectChange(
       (currentProject) =>
