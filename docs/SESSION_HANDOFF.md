@@ -1,10 +1,13 @@
-## M3.56 bugfix — Audio waveform visual saturation — 2026-09-22
+## M3.56 stabilization — handoff — 2026-09-22
 
-- M3.56 manual validation exposed a presentation defect: the Audio timeline waveform could appear as a large solid block on long/loud clips.
-- The display now requests 512 waveform buckets and contrast-stretches the already-normalized peaks for visual readability.
-- The underlying native waveform data, cache key model, project schema, scrubbing math, and audio edit/export semantics remain unchanged.
-- The SVG path fill is explicitly set to the intended waveform display color.
-- Revalidate the full npm/Cargo/Tauri suite and manually confirm waveform readability, click-to-seek behavior, clip move/trim isolation, and existing audio automation/fade controls.
+- PR #70 remains open and Draft on feat/m3-56-audio-waveform-scrubbing, based on main 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b.
+- Waveform data handling was hardened so invalid native peak values cannot produce malformed SVG geometry and empty native peak arrays fail as controlled waveform-data errors instead of silently becoming a blank waveform.
+- App.handleTogglePlayback() now distinguishes expected AbortError playback interruption from real playback failures and invalidates stale play promises after pause/seek operations, preventing raw The operation was aborted. text from leaking into the project status.
+- Preview test rendering now awaits asynchronous preparation effects; jsdom HTMLMediaElement.play() has a deterministic default mock.
+- Vitest worker concurrency is capped at two forks as a targeted response to the previously observed worker-start timeout pattern; fresh full-suite verification is still required.
+- Timeline waveform scrubbing coverage now validates the left, center, and right bounds and verifies the waveform does not start clip movement.
+- Do not advance to M3.57 until local automated and desktop validation closes the remaining gate.
+
 
 ## M3.56 kickoff — Audio Waveform Scrubbing — 2026-09-22
 
