@@ -130,11 +130,23 @@ const canvasAspectRatioPresets = [
 ] as const;
 
 function isAbortError(error: unknown): boolean {
+  if (
+    typeof DOMException !== "undefined" &&
+    error instanceof DOMException &&
+    error.name === "AbortError"
+  ) {
+    return true;
+  }
+
+  if (error instanceof Error && error.name === "AbortError") {
+    return true;
+  }
+
   return (
-    (typeof DOMException !== "undefined" &&
-      error instanceof DOMException &&
-      error.name === "AbortError") ||
-    (error instanceof Error && error.name === "AbortError")
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
   );
 }
 
@@ -545,10 +557,21 @@ function App() {
 
     setIsPlaying(true);
 
-    void Promise.all(playPromises).catch((error) => {
+    void Promise.allSettled(playPromises).then((results) => {
       if (playbackRequestIdRef.current !== playbackRequestId) {
         return;
       }
+
+      const rejected = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+
+      if (!rejected) {
+        return;
+      }
+
+      const error = rejected.reason;
 
       if (isAbortError(error)) {
         setIsPlaying(false);
@@ -561,7 +584,11 @@ function App() {
           ? error.name
           : error instanceof Error
             ? error.name
-            : "";
+            : typeof error === "object" &&
+                error !== null &&
+                "name" in error
+              ? String((error as { name?: unknown }).name ?? "")
+              : "";
       const message =
         name === "NotSupportedError"
           ? "Preview media format is not supported by the Linux WebView."
