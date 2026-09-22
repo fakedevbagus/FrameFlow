@@ -577,27 +577,6 @@ export function updateTrackPan(
   );
 }
 
-function normalizeTextOverlay(value: TextOverlay | undefined): TextOverlay | undefined {
-  if (!value || !value.text.trim()) {
-    return undefined;
-  }
-
-  return {
-    ...value,
-    text: value.text.trim().slice(0, 500),
-    x: Math.min(1, Math.max(0, value.x)),
-    y: Math.min(1, Math.max(0, value.y)),
-    fontSize: Math.min(240, Math.max(12, Math.round(value.fontSize))),
-    color: /^#[0-9a-fA-F]{6}$/.test(value.color) ? value.color.toLowerCase() : "#ffffff",
-    alignment:
-      value.alignment === "left" ||
-      value.alignment === "right" ||
-      value.alignment === "center"
-        ? value.alignment
-        : "center",
-  };
-}
-
 function areTextOverlaysEqual(
   left: TextOverlay | undefined,
   right: TextOverlay | undefined,
