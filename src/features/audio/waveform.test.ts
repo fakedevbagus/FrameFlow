@@ -34,6 +34,11 @@ describe("audio waveform", () => {
     expect(path.endsWith(" Z")).toBe(true);
   });
 
+  it("returns an empty path for non-finite SVG dimensions", () => {
+    expect(buildWaveformPath([0.5, 1], Number.NaN, 20)).toBe("");
+    expect(buildWaveformPath([0.5, 1], 100, Number.POSITIVE_INFINITY)).toBe("");
+  });
+
   it("centers a single peak and safely renders an all-zero waveform", () => {
     expect(buildWaveformPath([0.75], 100, 20)).toContain(
       "M 50.000 3.100",
