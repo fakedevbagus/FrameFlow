@@ -11,14 +11,21 @@ import {
   getAudioVolumeKeyframeAtTime,
 } from "./features/audio/automation";
 import {
+  DEFAULT_TEXT_OVERLAY_ALIGNMENT,
+  DEFAULT_TEXT_OVERLAY_COLOR,
+  DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+  DEFAULT_TEXT_OVERLAY_X,
+  DEFAULT_TEXT_OVERLAY_Y,
   getAudioCompressor,
   getAudioEq,
+  getTextOverlay,
   getVisualEffects,
 } from "./features/project/domain";
 import type {
   AudioCompressor,
   AudioEq,
   VisualEffects,
+  TextOverlay,
   Clip,
   ClipCrop,
   ClipTransform,
@@ -46,6 +53,7 @@ import {
   updateAudioClipEq,
   updateAudioClipCompressor,
   updateClipVisualEffects,
+  updateClipTextOverlay,
   updateAudioClipVolumeAtTime,
   removeAudioClipVolumeKeyframe,
   moveAudioClipVolumeKeyframe,
@@ -221,6 +229,9 @@ function App() {
   const selectedKeyframeCount = selectedClipContext?.clip.transformKeyframes?.length ?? 0;
   const selectedVisualEffects = selectedClipContext
     ? getVisualEffects(selectedClipContext.clip)
+    : null;
+  const selectedTextOverlay = selectedClipContext
+    ? getTextOverlay(selectedClipContext.clip)
     : null;
   const selectedAudioVolume = selectedClipContext
     ? getAudioVolumeAtTime(selectedClipContext.clip, selectedClipLocalTimeMs)
@@ -431,6 +442,10 @@ function App() {
     colorAdjustmentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function handleFocusTextOverlay() {
+    textOverlayRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function handleAddAssetToTrack(
     assetId: string,
     trackId: string,
@@ -458,6 +473,7 @@ function App() {
   }
 
   const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
+  const textOverlayRef = useRef<HTMLDivElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
@@ -735,6 +751,46 @@ function App() {
     };
 
     handleUpdateVisualEffects(selectedClipContext.clip.id, nextEffects);
+  }
+
+  function handleUpdateSelectedTextOverlay(changes: Partial<TextOverlay>) {
+    if (
+      !selectedClipContext ||
+      (selectedClipContext.asset?.mediaType !== "video" &&
+        selectedClipContext.asset?.mediaType !== "image")
+    ) {
+      return;
+    }
+
+    const current: TextOverlay = selectedTextOverlay ?? {
+      text: "",
+      x: DEFAULT_TEXT_OVERLAY_X,
+      y: DEFAULT_TEXT_OVERLAY_Y,
+      fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+      color: DEFAULT_TEXT_OVERLAY_COLOR,
+      alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
+    };
+
+    applyProjectChange(
+      (currentProject) =>
+        updateClipTextOverlay(currentProject, selectedClipContext.clip.id, {
+          ...current,
+          ...changes,
+        }),
+      "Text overlay updated.",
+    );
+  }
+
+  function handleResetSelectedTextOverlay() {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    applyProjectChange(
+      (currentProject) =>
+        updateClipTextOverlay(currentProject, selectedClipContext.clip.id, undefined),
+      "Text overlay reset.",
+    );
   }
 
   function handleUpdateAudioClipCompressor(
