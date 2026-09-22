@@ -1,5 +1,6 @@
 export const M3_38_DIRECT_GRAPH_MARKER = "m3.38-direct-graph-v2";
 
+import { buildVisualEffectsFfmpegFilters } from "../effects/visual-effects";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
@@ -145,6 +146,10 @@ function buildSegmentFilter(
       ":h=" +
       plan.height +
       ":x=(ow-iw)/2:y=(oh-ih)/2",
+    ...(segment.visualEffects &&
+    buildVisualEffectsFfmpegFilters(segment.visualEffects)
+      ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
+      : []),
     ...(includeOutputNormalization
       ? [
           "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
