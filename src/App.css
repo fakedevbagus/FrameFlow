@@ -418,7 +418,7 @@ button:focus-visible {
   align-items: stretch;
 }
 
-.preview-stage-region > .preview-text-overlay {
+.preview-text-overlay {
   position: absolute;
   z-index: 30;
   max-width: 90%;
@@ -435,7 +435,7 @@ button:focus-visible {
   user-select: none;
 }
 
-.preview-canvas {
+.preview-stage-region > .preview-canvas {
   justify-self: center;
   align-self: center;
 }
