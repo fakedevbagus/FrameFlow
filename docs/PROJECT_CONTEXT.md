@@ -1,4 +1,19 @@
-## M3.57 — Audio Waveform Region Selection — in progress — 2026-09-22
+## M3.58 — Persistent Waveform Cache — in progress — 2026-09-22
+
+- M3.57 Audio Waveform Region Selection was squash-merged into main at `c8b89684665f61d5f03e78ccbcc66cc52beb28af`.
+- M3.58 adds a best-effort persistent waveform cache backed by browser local storage while keeping waveform selection state ephemeral.
+- Native Tauri exposes a lightweight audio source fingerprint derived from file size and modification timestamp.
+- The frontend uses the fingerprint plus source path and peak count as the persistent cache identity, so changed media regenerates its waveform instead of reusing stale peaks.
+- Persistent cache entries are capped at 32 most-recently-used entries to avoid unbounded local storage growth.
+- Invalid or unavailable persistent storage is treated as a cache miss; waveform generation remains the source of truth.
+- In-flight waveform requests remain deduplicated, while completed requests are eligible for persistent-cache reuse across editor sessions.
+- No project schema or history state is changed.
+- Existing waveform selection, click-to-seek, audio fades, automation, pan, EQ, compressor, mute, multi-track mixing, RenderPlan, and export paths remain unchanged.
+- Added regression coverage for cache reuse, fingerprint invalidation, malformed persisted data, storage failures, and existing waveform normalization behavior.
+- Required validation: `git fetch origin --prune`; checkout/pull the feature branch; `npm ci`; `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep M3.58 Draft until the user reports clean local validation and manual cache behavior.
+
+## M3.57 — Audio Waveform Region Selection — merged — 2026-09-22
 
 - M3.56 was completed and squash-merged into main at `593de1d6858577c4856ecc329eea544885b59bac`.
 - M3.57 uses the explicitly deferred waveform region-selection capability as the next focused audio slice.
@@ -10,7 +25,8 @@
 - Existing clip move/trim, audio fades, volume automation, pan, EQ, compressor, mute, multi-track mixing, RenderPlan, and export paths remain unchanged.
 - Added pure range-mapping coverage plus Timeline regression coverage for reverse-direction drag selection and click-to-seek preservation.
 - Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
-- Keep M3.57 as Draft until the user reports clean local validation and manual waveform selection behavior.
+- PR #71 was marked ready after user validation and squash-merged at `c8b89684665f61d5f03e78ccbcc66cc52beb28af`.
+
 
 ## M3.56 stabilization — Audio waveform, playback aborts, and test reliability — 2026-09-22
 
