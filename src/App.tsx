@@ -2701,6 +2701,21 @@ function App() {
                           text: event.currentTarget.value,
                         })
                       }
+                      onInputCapture={(event) =>
+                        handleUpdateTextOverlayDraft({
+                          text: event.currentTarget.value,
+                        })
+                      }
+                      onChangeCapture={(event) =>
+                        handleUpdateTextOverlayDraft({
+                          text: event.currentTarget.value,
+                        })
+                      }
+                      onKeyUpCapture={(event) =>
+                        handleUpdateTextOverlayDraft({
+                          text: event.currentTarget.value,
+                        })
+                      }
                       onBlur={handleCommitSelectedTextOverlayDraft}
                     />
                     <div className="inspector-transform-input-grid">
@@ -2732,6 +2747,24 @@ function App() {
                               }
                             }}
                             onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ x: value / 100 });
+                              }
+                            }}
+                            onInputCapture={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ x: value / 100 });
+                              }
+                            }}
+                            onChangeCapture={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ x: value / 100 });
+                              }
+                            }}
+                            onKeyUpCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
                                 handleUpdateTextOverlayDraft({ x: value / 100 });
@@ -2787,6 +2820,24 @@ function App() {
                                 handleUpdateTextOverlayDraft({ y: value / 100 });
                               }
                             }}
+                            onInputCapture={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ y: value / 100 });
+                              }
+                            }}
+                            onChangeCapture={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ y: value / 100 });
+                              }
+                            }}
+                            onKeyUpCapture={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ y: value / 100 });
+                              }
+                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
@@ -2835,6 +2886,30 @@ function App() {
                               }
                             }}
                             onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
+                                handleUpdateTextOverlayDraft({
+                                  fontSize: Math.round(value),
+                                });
+                              }
+                            }}
+                            onInputCapture={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
+                                handleUpdateTextOverlayDraft({
+                                  fontSize: Math.round(value),
+                                });
+                              }
+                            }}
+                            onChangeCapture={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
+                                handleUpdateTextOverlayDraft({
+                                  fontSize: Math.round(value),
+                                });
+                              }
+                            }}
+                            onKeyUpCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 12 && value <= 240) {
                                 handleUpdateTextOverlayDraft({
