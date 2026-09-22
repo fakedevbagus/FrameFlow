@@ -14,6 +14,7 @@ Scope:
 - Keep text overlay mutations inside the existing project/history path so they persist with project files.
 - Clear the optional overlay when the text is empty.
 - Keep text export/render-graph compilation deferred until a dedicated text-rendering milestone so font selection remains deterministic and platform-safe.
+- Text overlay command validation is limited to editable visual clips on video tracks.
 
 Tests:
 - Added project-domain normalization coverage.
