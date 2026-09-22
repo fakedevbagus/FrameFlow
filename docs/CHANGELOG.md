@@ -1,4 +1,30 @@
-## 2026-09-22 — M3.61 Text Overlay Foundation — in progress
+## 2026-09-22 — M3.62 Text Overlay Export Rendering — in progress
+
+Branch: feat/m3-62-text-overlay-export-rendering
+
+Base:
+- M3.61 squash merge SHA: 947f3c33fcf61b1e07d1d75e275d721755568ae8
+
+Scope:
+- Extend the existing text overlay model into native video export/render-plan compilation.
+- Preserve the Preview/export semantic contract for text content, position, size, color, and alignment.
+- Keep the implementation deterministic with an explicit font policy and no project schema change.
+- Preserve existing single-video FFmpeg graph behavior and regression coverage.
+
+Validation:
+- Local validation pending implementation.
+- Keep PR Draft until user reports PASS.
+
+## 2026-09-22 — M3.61 Text Overlay Foundation — merged
+
+Merge SHA:
+- 947f3c33fcf61b1e07d1d75e275d721755568ae8
+
+Validation:
+- User reported local validation as PASS.
+- GitHub CI run #61 passed for the final validated head.
+- PR #75 was marked ready and squash-merged.
+
 
 Validation fix:
 - Corrected the domain normalization fixture so its intentionally invalid alignment value is accepted by the test compiler while still exercising the runtime fallback to center.
