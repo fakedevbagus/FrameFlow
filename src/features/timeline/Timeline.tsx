@@ -2341,7 +2341,7 @@ function AudioWaveformPreview({
       viewBox={"0 0 " + AUDIO_WAVEFORM_PEAK_COUNT + " 20"}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d={waveformPath} />
+      <path d={waveformPath} fill="#9f91ff" fillOpacity="0.78" />
     </svg>
   );
 }
