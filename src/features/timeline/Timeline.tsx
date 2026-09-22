@@ -22,6 +22,7 @@ import {
   buildWaveformPath,
   getAudioWaveform,
   getWaveformLocalTimeMs,
+  getWaveformSelectionRangeMs,
 } from "../audio/waveform";
 import {
   DEFAULT_TIMELINE_ZOOM,
@@ -2256,6 +2257,13 @@ function AudioWaveformPreview({
     path: "",
     isLoading: true,
   }));
+  const [selection, setSelection] = useState<{
+    startMs: number;
+    endMs: number;
+  } | null>(null);
+  const selectionStartClientXRef = useRef<number | null>(null);
+  const selectionPointerIdRef = useRef<number | null>(null);
+  const selectionMovedRef = useRef(false);
 
   const isCurrentSource = waveformState.sourcePath === sourcePath;
   const waveformPath = isCurrentSource ? waveformState.path : "";
@@ -2263,6 +2271,7 @@ function AudioWaveformPreview({
 
   useEffect(() => {
     let cancelled = false;
+    setSelection(null);
 
     void getAudioWaveform(sourcePath, AUDIO_WAVEFORM_PEAK_COUNT)
       .then((waveform) => {
@@ -2292,6 +2301,9 @@ function AudioWaveformPreview({
 
     return () => {
       cancelled = true;
+      selectionStartClientXRef.current = null;
+      selectionPointerIdRef.current = null;
+      selectionMovedRef.current = false;
     };
   }, [sourcePath]);
 
@@ -2308,39 +2320,165 @@ function AudioWaveformPreview({
     return null;
   }
 
+  const selectionStartX = selection
+    ? selection.startMs / durationMs * AUDIO_WAVEFORM_PEAK_COUNT
+    : 0;
+  const selectionWidth = selection
+    ? (selection.endMs - selection.startMs) /
+      durationMs *
+      AUDIO_WAVEFORM_PEAK_COUNT
+    : 0;
+  const selectionLabel = selection
+    ? "Selected audio region from " +
+      selection.startMs +
+      " ms to " +
+      selection.endMs +
+      " ms"
+    : "Seek audio waveform; drag to select an audio region";
+
+  function releaseSelectionPointer(target: SVGSVGElement) {
+    const pointerId = selectionPointerIdRef.current;
+    if (
+      pointerId !== null &&
+      "hasPointerCapture" in target &&
+      target.hasPointerCapture(pointerId)
+    ) {
+      target.releasePointerCapture(pointerId);
+    }
+  }
+
+  function finishSelection(event: PointerEvent<SVGSVGElement>) {
+    const startClientX = selectionStartClientXRef.current;
+    if (startClientX === null) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const nextSelection = getWaveformSelectionRangeMs(
+      startClientX,
+      event.clientX,
+      bounds.left,
+      bounds.width,
+      durationMs,
+    );
+
+    if (selectionMovedRef.current && nextSelection) {
+      setSelection(nextSelection);
+    } else if (!selectionMovedRef.current) {
+      setSelection(null);
+      onSeek(
+        getWaveformLocalTimeMs(
+          event.clientX,
+          bounds.left,
+          bounds.width,
+          durationMs,
+        ),
+      );
+    } else {
+      setSelection(null);
+    }
+
+    releaseSelectionPointer(event.currentTarget);
+    selectionStartClientXRef.current = null;
+    selectionPointerIdRef.current = null;
+    selectionMovedRef.current = false;
+  }
+
   return (
     <svg
-      aria-label="Seek audio waveform"
+      aria-label={selectionLabel}
       className="timeline-audio-waveform"
+      data-selection-end-ms={selection?.endMs ?? ""}
+      data-selection-start-ms={selection?.startMs ?? ""}
+      data-testid="timeline-audio-waveform"
       onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          setSelection(null);
+          return;
+        }
+
         if (event.key !== "Enter" && event.key !== " ") {
           return;
         }
 
         event.preventDefault();
         event.stopPropagation();
-        onSeek(Math.round(durationMs / 2));
+
+        const targetTime = selection
+          ? Math.round((selection.startMs + selection.endMs) / 2)
+          : Math.round(durationMs / 2);
+        onSeek(targetTime);
       }}
-      onPointerDown={(event) => {
+      onPointerCancel={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        const bounds = event.currentTarget.getBoundingClientRect();
-        onSeek(
-          getWaveformLocalTimeMs(
-            event.clientX,
-            bounds.left,
-            bounds.width,
-            durationMs,
-          ),
-        );
+        releaseSelectionPointer(event.currentTarget);
+        selectionStartClientXRef.current = null;
+        selectionPointerIdRef.current = null;
+        selectionMovedRef.current = false;
+        setSelection(null);
       }}
-      data-testid="timeline-audio-waveform"
+      onPointerDown={(event) => {
+        if (event.button !== 0) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        selectionStartClientXRef.current = event.clientX;
+        selectionPointerIdRef.current = event.pointerId;
+        selectionMovedRef.current = false;
+
+        if ("setPointerCapture" in event.currentTarget) {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }
+      }}
+      onPointerMove={(event) => {
+        const startClientX = selectionStartClientXRef.current;
+        if (startClientX === null) {
+          return;
+        }
+
+        const distance = Math.abs(event.clientX - startClientX);
+        if (distance < 4) {
+          return;
+        }
+
+        const bounds = event.currentTarget.getBoundingClientRect();
+        const nextSelection = getWaveformSelectionRangeMs(
+          startClientX,
+          event.clientX,
+          bounds.left,
+          bounds.width,
+          durationMs,
+        );
+        selectionMovedRef.current = true;
+        if (nextSelection) {
+          setSelection(nextSelection);
+        }
+      }}
+      onPointerUp={finishSelection}
       preserveAspectRatio="none"
       role="button"
       tabIndex={0}
       viewBox={"0 0 " + AUDIO_WAVEFORM_PEAK_COUNT + " 20"}
       xmlns="http://www.w3.org/2000/svg"
     >
+      {selection ? (
+        <rect
+          className="timeline-audio-waveform-selection"
+          height="18"
+          rx="2"
+          width={selectionWidth}
+          x={selectionStartX}
+          y="1"
+        />
+      ) : null}
       <path d={waveformPath} fill="#9f91ff" fillOpacity="0.78" />
     </svg>
   );
