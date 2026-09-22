@@ -1,5 +1,10 @@
 ## M3.62 — Text Overlay Export Rendering — in progress — 2026-09-22
 
+Active branch: `feat/m3-62-text-overlay-export-rendering`
+PR: #76 — Draft
+Base: `main`
+Validation status: pending user validation
+
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
 - M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
 - The export slice reuses the existing optional per-clip text overlay model and keeps rendering deterministic without introducing a new project schema version.
@@ -12,7 +17,7 @@
 - The existing 400 ms idle autosave remains in place, while blur and direct text-overlay actions still commit immediately through the project history engine.
 - Added regression coverage for synchronous live Text/X/Y/Size Preview updates, the absence of a history entry during live editing, one-entry commit + Undo/Redo behavior, Reset, and the external edit-session store.
 - A previous jsdom-only test that mutated `.value` without dispatching a browser input event was removed because it did not represent a meaningful real interaction path.
-- Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS.
+- The current branch still requires local Linux/Tauri validation; GitHub CI is informative but is not a substitute for user-reported PASS.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture; do not broaden it as part of the live-edit fix.
 
 ## M3.61 — Text Overlay Foundation — merged — 2026-09-22
