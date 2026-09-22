@@ -293,6 +293,10 @@ function App() {
   const selectedTextOverlay = selectedClipContext
     ? getTextOverlay(selectedClipContext.clip)
     : null;
+  const selectedClipContextRef = useRef(selectedClipContext);
+  selectedClipContextRef.current = selectedClipContext;
+  const selectedTextOverlayRef = useRef(selectedTextOverlay);
+  selectedTextOverlayRef.current = selectedTextOverlay;
   const activeTextOverlay =
     textOverlayDraft?.clipId === selectedClipId
       ? textOverlayDraft.overlay
@@ -542,6 +546,10 @@ function App() {
   const textOverlayXInputRef = useRef<HTMLInputElement | null>(null);
   const textOverlayYInputRef = useRef<HTMLInputElement | null>(null);
   const textOverlaySizeInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlayTextInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const textOverlayXInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlayYInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlaySizeInputRef = useRef<HTMLInputElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
@@ -550,16 +558,24 @@ function App() {
   });
 
   useEffect(() => {
+    const selectedContext = selectedClipContextRef.current;
+
     if (
-      !selectedClipContext ||
-      selectedClipContext.track.type !== "video" ||
-      (selectedClipContext.asset?.mediaType !== "video" &&
-        selectedClipContext.asset?.mediaType !== "image")
+      !selectedContext ||
+      selectedContext.track.type !== "video" ||
+      (selectedContext.asset?.mediaType !== "video" &&
+        selectedContext.asset?.mediaType !== "image")
     ) {
       return;
     }
 
     const intervalId = window.setInterval(() => {
+      const context = selectedClipContextRef.current;
+
+      if (!context) {
+        return;
+      }
+
       const activeElement = document.activeElement;
       let changes: Partial<TextOverlay> | null = null;
 
@@ -586,7 +602,7 @@ function App() {
         return;
       }
 
-      const clipId = selectedClipContext.clip.id;
+      const clipId = context.clip.id;
       const fallback: TextOverlay = {
         text: "",
         x: DEFAULT_TEXT_OVERLAY_X,
@@ -600,7 +616,7 @@ function App() {
         const currentOverlay =
           currentDraft?.clipId === clipId
             ? currentDraft.overlay
-            : selectedTextOverlay ?? fallback;
+            : selectedTextOverlayRef.current ?? fallback;
         const nextOverlay = { ...currentOverlay, ...changes };
 
         if (
