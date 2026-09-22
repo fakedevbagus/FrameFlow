@@ -111,6 +111,7 @@ Implemented:
 - Inspector controls with Reset and a Text quick-access action.
 - Preview rendering for video and image clips.
 - Existing project/history mutation path and automatic project persistence.
+- Text overlay command validation is restricted to editable visual clips on video tracks.
 - Empty text clears the optional overlay.
 - Export/render-graph text compilation is intentionally deferred to a dedicated text-rendering milestone.
 - Regression coverage across domain, commands, and App Inspector/Preview workflow.
