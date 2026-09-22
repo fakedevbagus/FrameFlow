@@ -164,7 +164,7 @@ describe("project domain", () => {
           y: -1,
           fontSize: 999,
           color: "not-a-color",
-          alignment: "invalid",
+          alignment: "invalid" as never,
         },
       }),
     ).toEqual({
