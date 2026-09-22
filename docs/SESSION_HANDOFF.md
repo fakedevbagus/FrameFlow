@@ -5,7 +5,8 @@
 - App.handleTogglePlayback() now distinguishes expected AbortError playback interruption from real playback failures and invalidates stale play promises after pause/seek operations, preventing raw The operation was aborted. text from leaking into the project status.
 - Preview test rendering now awaits asynchronous preparation effects; jsdom HTMLMediaElement.play() has a deterministic default mock.
 - Vitest worker concurrency is capped at two forks as a targeted response to the previously observed worker-start timeout pattern; fresh full-suite verification is still required.
-- Timeline waveform scrubbing coverage now validates the left, center, and right bounds and verifies the waveform does not start clip movement.
+- Timeline waveform scrubbing coverage now validates the left, center, and right bounds, keyboard seeking, and verifies the waveform does not start clip movement.
+- SVG waveform generation also rejects non-finite width/height inputs.
 - Do not advance to M3.57 until local automated and desktop validation closes the remaining gate.
 
 
