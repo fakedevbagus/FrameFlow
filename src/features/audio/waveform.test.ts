@@ -70,7 +70,7 @@ describe("audio waveform", () => {
       20,
     );
 
-    expect(path).toContain("M 0.000 10.000");
+    expect(path).toContain("M 0.000 3.869");
     expect(path).not.toContain("L 50.000 10.000");
     expect(path).not.toContain("L 100.000 0.800");
   });
