@@ -10,6 +10,7 @@ import {
   getAudioCompressor,
   getAudioEq,
   getVisualEffects,
+  getTextOverlay,
   getTrackPan,
   getTrackVolume,
   type 
@@ -330,6 +331,7 @@ function PreviewVisualLayer({
   const visualEffectsFilter = buildVisualEffectsCssFilter(
     getVisualEffects(layer.clip),
   );
+  const textOverlay = getTextOverlay(layer.clip);
   const cropMediaStyle = {
     position: "absolute" as const,
     left: `${50 - (cropPosition.x / visibleWidth) * 100}%`,
@@ -1075,6 +1077,28 @@ function PreviewVisualLayer({
     );
   }
 
+  function renderTextOverlay() {
+    if (!textOverlay) {
+      return null;
+    }
+
+    return (
+      <div
+        className="preview-text-overlay"
+        data-testid={"preview-text-overlay-" + layer.clip.id}
+        style={{
+          left: textOverlay.x * 100 + "%",
+          top: textOverlay.y * 100 + "%",
+          color: textOverlay.color,
+          fontSize: textOverlay.fontSize + "px",
+          textAlign: textOverlay.alignment,
+        }}
+      >
+        {textOverlay.text}
+      </div>
+    );
+  }
+
   function renderManipulationControls() {
     if (!isSelected || isPlaying) {
       return null;
@@ -1195,6 +1219,7 @@ function PreviewVisualLayer({
               }}
             />
           </div>
+          {renderTextOverlay()}
           {renderManipulationControls()}
         </div>
       </div>
@@ -1268,6 +1293,7 @@ function PreviewVisualLayer({
             Preparing compatible preview…
           </div>
         ) : null}
+        {renderTextOverlay()}
         {renderManipulationControls()}
       </div>
     </div>
