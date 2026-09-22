@@ -148,12 +148,14 @@ describe("audio waveform", () => {
   });
 
   it("preserves waveform bucket positions when native peaks contain invalid values", async () => {
-    vi.mocked(invoke).mockResolvedValue({
-      durationMs: 1000,
-      sampleRate: 1024,
-      peaks: [0.25, Number.NaN, 0.75],
-      sourceFingerprint: "1000:200",
-    });
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "1000:200" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.25, Number.NaN, 0.75],
+        sourceFingerprint: "1000:200",
+      });
 
     await expect(getAudioWaveform("/invalid-peaks.mp3")).resolves.toEqual({
       durationMs: 1000,
@@ -230,7 +232,8 @@ describe("audio waveform", () => {
       "get_audio_waveform_source_fingerprint",
       { path: "/persisted.mp3" },
     );
-    expect(invoke).not.toHaveBeenCalledWith(
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
       "generate_audio_waveform",
       {
         path: "/persisted.mp3",
