@@ -427,6 +427,10 @@ function App() {
     setProjectNotice(null);
   }
 
+  function handleFocusColorAdjustments() {
+    colorAdjustmentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function handleAddAssetToTrack(
     assetId: string,
     trackId: string,
@@ -453,6 +457,7 @@ function App() {
     );
   }
 
+  const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
@@ -1968,6 +1973,18 @@ function App() {
               <p className="eyebrow">Properties</p>
               <h2>Inspector</h2>
             </div>
+            {selectedClipContext &&
+            (selectedClipContext.asset?.mediaType === "video" ||
+              selectedClipContext.asset?.mediaType === "image") ? (
+              <button
+                aria-label="Show color adjustments"
+                className="inspector-quick-button"
+                onClick={handleFocusColorAdjustments}
+                type="button"
+              >
+                Color
+              </button>
+            ) : null}
           </div>
 
           {selectedClipContext ? (
@@ -2272,7 +2289,18 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="inspector-section">
+                  <div
+                    ref={colorAdjustmentsRef}
+                    className={
+                      "inspector-section inspector-color-adjustments" +
+                      (selectedVisualEffects &&
+                      (selectedVisualEffects.brightness !== 0 ||
+                        selectedVisualEffects.contrast !== 0 ||
+                        selectedVisualEffects.saturation !== 0)
+                        ? " inspector-color-adjustments-active"
+                        : "")
+                    }
+                  >
                     <div className="inspector-section-header">
                       <span className="inspector-section-title">Color adjustments</span>
                       <button
