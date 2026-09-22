@@ -894,8 +894,20 @@ describe("App", () => {
     const textInput = screen.getByRole("textbox", {
       name: "Text overlay content",
     });
-    fireEvent.input(textInput, { target: { value: "Autosave now" } });
-    fireEvent.keyUp(textInput, { key: "w" });
+    textInput.value = "Keyboard live";
+    fireEvent.keyUp(textInput, { key: "e" });
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveTextContent("Keyboard live"),
+    );
+
+    fireEvent.input(textInput, {
+      target: { value: "Autosave now" },
+    });
 
     await waitFor(() =>
       expect(
