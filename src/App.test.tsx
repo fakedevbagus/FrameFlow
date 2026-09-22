@@ -754,6 +754,96 @@ describe("App", () => {
     expect(screen.getByTestId("preview-video")).toHaveStyle({ filter: "" });
   });
 
+  it("edits and resets a text overlay from the inspector", async () => {
+    let project = createProject({ id: "text-overlay-ui" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-text-overlay",
+          name: "text-ui.mp4",
+          mediaType: "video",
+          sourcePath: "/media/text-ui.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-text-overlay");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(screen.getByTitle("text-ui.mp4 · 00:05")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select text-ui.mp4 clip" }),
+    );
+
+    expect(screen.getByTestId("text-overlay")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Show text overlay" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Text overlay content" }),
+      { target: { value: "Hello FrameFlow" } },
+    );
+    fireEvent.blur(
+      screen.getByRole("textbox", { name: "Text overlay content" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("preview-text-overlay-" + project.tracks[0].clips[0].id)).toHaveTextContent(
+        "Hello FrameFlow",
+      ),
+    );
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
+      { target: { value: "20" } },
+    );
+    fireEvent.blur(
+      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
+    );
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
+      { target: { value: "72" } },
+    );
+    fireEvent.blur(
+      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Align text left" }),
+    );
+
+    expect(
+      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
+    ).toHaveValue(20);
+    expect(
+      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
+    ).toHaveValue(72);
+    expect(
+      screen.getByRole("button", { name: "Align text left" }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset text overlay" }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId("preview-text-overlay-" + project.tracks[0].clips[0].id),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it("edits transform values precisely from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
