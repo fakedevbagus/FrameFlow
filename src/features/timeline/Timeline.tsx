@@ -2310,8 +2310,17 @@ function AudioWaveformPreview({
 
   return (
     <svg
-      aria-hidden="true"
+      aria-label="Seek audio waveform"
       className="timeline-audio-waveform"
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        onSeek(Math.round(durationMs / 2));
+      }}
       onPointerDown={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -2327,6 +2336,8 @@ function AudioWaveformPreview({
       }}
       data-testid="timeline-audio-waveform"
       preserveAspectRatio="none"
+      role="button"
+      tabIndex={0}
       viewBox={"0 0 " + AUDIO_WAVEFORM_PEAK_COUNT + " 20"}
       xmlns="http://www.w3.org/2000/svg"
     >
