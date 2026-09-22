@@ -839,12 +839,38 @@ function App() {
       return;
     }
 
-    setTextOverlayDraft({
-      clipId: selectedClipContext.clip.id,
-      overlay: {
-        ...getSelectedTextOverlayValue(),
-        ...changes,
-      },
+    const clipId = selectedClipContext.clip.id;
+    const fallback: TextOverlay = {
+      text: "",
+      x: DEFAULT_TEXT_OVERLAY_X,
+      y: DEFAULT_TEXT_OVERLAY_Y,
+      fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+      color: DEFAULT_TEXT_OVERLAY_COLOR,
+      alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
+    };
+
+    setTextOverlayDraft((currentDraft) => {
+      const currentOverlay =
+        currentDraft?.clipId === clipId
+          ? currentDraft.overlay
+          : selectedTextOverlay ?? fallback;
+      const nextOverlay = { ...currentOverlay, ...changes };
+
+      if (
+        currentOverlay.text === nextOverlay.text &&
+        currentOverlay.x === nextOverlay.x &&
+        currentOverlay.y === nextOverlay.y &&
+        currentOverlay.fontSize === nextOverlay.fontSize &&
+        currentOverlay.color === nextOverlay.color &&
+        currentOverlay.alignment === nextOverlay.alignment
+      ) {
+        return currentDraft;
+      }
+
+      return {
+        clipId,
+        overlay: nextOverlay,
+      };
     });
   }
 
@@ -2691,16 +2717,6 @@ function App() {
                           text: event.currentTarget.value,
                         })
                       }
-                      onChange={(event) =>
-                        handleUpdateTextOverlayDraft({
-                          text: event.currentTarget.value,
-                        })
-                      }
-                      onKeyUp={(event) =>
-                        handleUpdateTextOverlayDraft({
-                          text: event.currentTarget.value,
-                        })
-                      }
                       onInputCapture={(event) =>
                         handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
@@ -2746,13 +2762,7 @@ function App() {
                                 handleUpdateTextOverlayDraft({ x: value / 100 });
                               }
                             }}
-                            onKeyUp={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ x: value / 100 });
-                              }
-                            }}
-                            onInputCapture={(event) => {
+onInputCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
                                 handleUpdateTextOverlayDraft({ x: value / 100 });
