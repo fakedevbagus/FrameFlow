@@ -171,6 +171,10 @@ function App() {
     createHistoryState(loadWorkspaceProject()),
   );
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [textOverlayDraft, setTextOverlayDraft] = useState<{
+    clipId: string;
+    overlay: TextOverlay;
+  } | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
@@ -188,6 +192,9 @@ function App() {
     Record<string, { width: number; height: number }>
   >({});
   const project = history.present;
+  useEffect(() => {
+    setTextOverlayDraft(null);
+  }, [selectedClipId, project.updatedAt]);
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
   const assets = project.assets;
@@ -233,6 +240,10 @@ function App() {
   const selectedTextOverlay = selectedClipContext
     ? getTextOverlay(selectedClipContext.clip)
     : null;
+  const activeTextOverlay =
+    textOverlayDraft?.clipId === selectedClipId
+      ? textOverlayDraft.overlay
+      : selectedTextOverlay;
   const selectedAudioVolume = selectedClipContext
     ? getAudioVolumeAtTime(selectedClipContext.clip, selectedClipLocalTimeMs)
     : 1;
@@ -753,32 +764,77 @@ function App() {
     handleUpdateVisualEffects(selectedClipContext.clip.id, nextEffects);
   }
 
-  function handleUpdateSelectedTextOverlay(changes: Partial<TextOverlay>) {
+  function getSelectedTextOverlayValue(): TextOverlay {
+    if (textOverlayDraft?.clipId === selectedClipContext?.clip.id) {
+      return textOverlayDraft.overlay;
+    }
+
+    return (
+      selectedTextOverlay ?? {
+        text: "",
+        x: DEFAULT_TEXT_OVERLAY_X,
+        y: DEFAULT_TEXT_OVERLAY_Y,
+        fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+        color: DEFAULT_TEXT_OVERLAY_COLOR,
+        alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
+      }
+    );
+  }
+
+  function handleUpdateTextOverlayDraft(changes: Partial<TextOverlay>) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    setTextOverlayDraft({
+      clipId: selectedClipContext.clip.id,
+      overlay: {
+        ...getSelectedTextOverlayValue(),
+        ...changes,
+      },
+    });
+  }
+
+  function handleCommitSelectedTextOverlayDraft() {
     if (
       !selectedClipContext ||
-      (selectedClipContext.asset?.mediaType !== "video" &&
-        selectedClipContext.asset?.mediaType !== "image")
+      textOverlayDraft?.clipId !== selectedClipContext.clip.id
     ) {
       return;
     }
 
-    const current: TextOverlay = selectedTextOverlay ?? {
-      text: "",
-      x: DEFAULT_TEXT_OVERLAY_X,
-      y: DEFAULT_TEXT_OVERLAY_Y,
-      fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
-      color: DEFAULT_TEXT_OVERLAY_COLOR,
-      alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
-    };
+    applyProjectChange(
+      (currentProject) =>
+        updateClipTextOverlay(
+          currentProject,
+          selectedClipContext.clip.id,
+          textOverlayDraft.overlay,
+        ),
+      "Text overlay updated.",
+    );
+    setTextOverlayDraft(null);
+  }
+
+  function handleCommitSelectedTextOverlayChange(
+    changes: Partial<TextOverlay>,
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
 
     applyProjectChange(
       (currentProject) =>
-        updateClipTextOverlay(currentProject, selectedClipContext.clip.id, {
-          ...current,
-          ...changes,
-        }),
+        updateClipTextOverlay(
+          currentProject,
+          selectedClipContext.clip.id,
+          {
+            ...getSelectedTextOverlayValue(),
+            ...changes,
+          },
+        ),
       "Text overlay updated.",
     );
+    setTextOverlayDraft(null);
   }
 
   function handleResetSelectedTextOverlay() {
@@ -791,6 +847,7 @@ function App() {
         updateClipTextOverlay(currentProject, selectedClipContext.clip.id, undefined),
       "Text overlay reset.",
     );
+    setTextOverlayDraft(null);
   }
 
   function handleUpdateAudioClipCompressor(
@@ -1963,6 +2020,16 @@ function App() {
                 }
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
+                textOverlayOverride={
+                  textOverlayDraft
+                    ? {
+                        clipId: textOverlayDraft.clipId,
+                        overlay: textOverlayDraft.overlay.text.trim()
+                          ? textOverlayDraft.overlay
+                          : undefined,
+                      }
+                    : null
+                }
                 />
               </div>
             </div>
@@ -2126,7 +2193,7 @@ function App() {
                                 defaultValue={Math.round(
                                   (selectedVisualEffects?.[field] ?? 0) * 100,
                                 )}
-                                onBlur={(event) => {
+                            onBlur={(event) => {
                                   const rawValue = event.currentTarget.value.trim();
                                   const fallback = Math.round(
                                     (selectedVisualEffects?.[field] ?? 0) * 100,
@@ -2483,16 +2550,16 @@ function App() {
                     <textarea
                       aria-label="Text overlay content"
                       className="inspector-textarea"
-                      defaultValue={selectedTextOverlay?.text ?? ""}
+                      value={activeTextOverlay?.text ?? ""}
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
-                      key={selectedTextOverlay?.text ?? "empty"}
-                      onBlur={(event) =>
-                        handleUpdateSelectedTextOverlay({
+                      onChange={(event) =>
+                        handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
                         })
                       }
+                      onBlur={handleCommitSelectedTextOverlayDraft}
                     />
                     <div className="inspector-transform-input-grid">
                       <label className="inspector-transform-field">
@@ -2501,25 +2568,37 @@ function App() {
                           <input
                             aria-label="Text overlay X position"
                             className="inspector-transform-input"
-                            defaultValue={Math.round(
-                              (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
+                            value={Math.round(
+                              (activeTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
                             )}
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            key={"x-" + (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)}
+                            onChange={(event) => {
+                              const rawValue = event.currentTarget.value.trim();
+                              const value = Number(rawValue);
+                              if (
+                                !rawValue ||
+                                !Number.isFinite(value) ||
+                                value < 0 ||
+                                value > 100
+                              ) {
+                                return;
+                              }
+                              handleUpdateTextOverlayDraft({ x: value / 100 });
+                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
                                 event.currentTarget.value = String(
                                   Math.round(
-                                    (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
+                                    (activeTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
                                   ),
                                 );
                                 return;
                               }
-                              handleUpdateSelectedTextOverlay({ x: value / 100 });
+                              handleCommitSelectedTextOverlayDraft();
                             }}
                             onKeyDown={handleTransformInputKeyDown}
                           />
@@ -2532,25 +2611,37 @@ function App() {
                           <input
                             aria-label="Text overlay Y position"
                             className="inspector-transform-input"
-                            defaultValue={Math.round(
-                              (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
+                            value={Math.round(
+                              (activeTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
                             )}
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            key={"y-" + (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)}
+                            onChange={(event) => {
+                              const rawValue = event.currentTarget.value.trim();
+                              const value = Number(rawValue);
+                              if (
+                                !rawValue ||
+                                !Number.isFinite(value) ||
+                                value < 0 ||
+                                value > 100
+                              ) {
+                                return;
+                              }
+                              handleUpdateTextOverlayDraft({ y: value / 100 });
+                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
                                 event.currentTarget.value = String(
                                   Math.round(
-                                    (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
+                                    (activeTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
                                   ),
                                 );
                                 return;
                               }
-                              handleUpdateSelectedTextOverlay({ y: value / 100 });
+                              handleCommitSelectedTextOverlayDraft();
                             }}
                             onKeyDown={handleTransformInputKeyDown}
                           />
@@ -2563,27 +2654,39 @@ function App() {
                           <input
                             aria-label="Text overlay font size"
                             className="inspector-transform-input"
-                            defaultValue={
-                              selectedTextOverlay?.fontSize ??
+                            value={
+                              activeTextOverlay?.fontSize ??
                               DEFAULT_TEXT_OVERLAY_FONT_SIZE
                             }
                             max="240"
                             min="12"
                             step="1"
                             type="number"
-                            key={"size-" + (selectedTextOverlay?.fontSize ?? DEFAULT_TEXT_OVERLAY_FONT_SIZE)}
+                            onChange={(event) => {
+                              const rawValue = event.currentTarget.value.trim();
+                              const value = Number(rawValue);
+                              if (
+                                !rawValue ||
+                                !Number.isFinite(value) ||
+                                value < 12 ||
+                                value > 240
+                              ) {
+                                return;
+                              }
+                              handleUpdateTextOverlayDraft({
+                                fontSize: Math.round(value),
+                              });
+                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 12 || value > 240) {
                                 event.currentTarget.value = String(
-                                  selectedTextOverlay?.fontSize ??
+                                  activeTextOverlay?.fontSize ??
                                     DEFAULT_TEXT_OVERLAY_FONT_SIZE,
                                 );
                                 return;
                               }
-                              handleUpdateSelectedTextOverlay({
-                                fontSize: Math.round(value),
-                              });
+                              handleCommitSelectedTextOverlayDraft();
                             }}
                             onKeyDown={handleTransformInputKeyDown}
                           />
@@ -2601,7 +2704,7 @@ function App() {
                             key={"color-" + (selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR)}
                             type="color"
                             onChange={(event) =>
-                              handleUpdateSelectedTextOverlay({
+                              handleCommitSelectedTextOverlayChange({
                                 color: event.currentTarget.value,
                               })
                             }
@@ -2616,7 +2719,7 @@ function App() {
                     >
                       {(["left", "center", "right"] as const).map((alignment) => {
                         const active =
-                          (selectedTextOverlay?.alignment ??
+                          (activeTextOverlay?.alignment ??
                             DEFAULT_TEXT_OVERLAY_ALIGNMENT) === alignment;
 
                         return (
@@ -2626,7 +2729,7 @@ function App() {
                             className="inspector-inline-button"
                             key={alignment}
                             onClick={() =>
-                              handleUpdateSelectedTextOverlay({ alignment })
+                              handleCommitSelectedTextOverlayChange({ alignment })
                             }
                             type="button"
                           >
