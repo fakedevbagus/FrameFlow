@@ -2293,7 +2293,18 @@ function App() {
                     <p className="inspector-help">
                       Non-destructive per-clip brightness, contrast, and saturation.
                     </p>
-                    <div className="inspector-transform-input-grid">
+                    <div
+                      className="inspector-transform-input-grid"
+                      key={
+                        selectedVisualEffects
+                          ? [
+                              selectedVisualEffects.brightness,
+                              selectedVisualEffects.contrast,
+                              selectedVisualEffects.saturation,
+                            ].join("|")
+                          : "none"
+                      }
+                    >
                       {([
                         ["brightness", "Brightness"],
                         ["contrast", "Contrast"],
