@@ -1,3 +1,48 @@
+## 2026-09-22 — M3.59 Project File Persistence Hardening — in progress
+
+Branch: feat/m3-59-project-persistence-hardening
+
+Base:
+- M3.58 squash merge SHA: 50f90252546fd65a83f31260b123ca185646a816
+
+Scope:
+- Require native project open/save paths to be absolute file paths.
+- Require the `.frameflow.json` project suffix, case-insensitively.
+- Preserve the existing temp-file-then-rename atomic-save path for successful writes.
+- Remove the temporary `.tmp` project artifact when final rename fails.
+- Keep project schema/history semantics unchanged.
+
+Tests:
+- Added native project-path validation coverage for valid absolute project files and invalid relative, wrong-extension, empty, and directory paths.
+
+Validation:
+- Local validation is pending user verification.
+- Keep the PR Draft until the user reports PASS.
+
+## 2026-09-22 — M3.58 Persistent Waveform Cache — merged
+
+Branch: feat/m3-58-persistent-waveform-cache
+
+Base:
+- M3.57 squash merge SHA: c8b89684665f61d5f03e78ccbcc66cc52beb28af
+
+Scope:
+- Persist generated audio waveform data in browser local storage.
+- Use the native source fingerprint plus source path and peak count as the cache identity.
+- Invalidate cached waveform data when the source file size or modification timestamp changes.
+- Cap persistent entries at 32 most-recently-used waveforms.
+- Treat malformed/unavailable storage as a cache miss and preserve in-flight request deduplication.
+- Preserve M3.57 waveform click seek and drag selection behavior.
+
+Tests:
+- Added coverage for persistence reuse, fingerprint invalidation, malformed cache data, storage failures, and waveform normalization.
+- Corrected Timeline and waveform test mocks/assertions after the pre-merge CI run exposed assumptions that predated the fingerprint command.
+
+Validation:
+- User reported local validation as PASS.
+- PR #72 was marked ready and squash-merged at `50f90252546fd65a83f31260b123ca185646a816`.
+- No fresh post-correction CI result is claimed.
+
 ## 2026-09-22 — M3.57 Audio Waveform Region Selection — merged
 
 Branch: feat/m3-57-audio-waveform-region-selection
