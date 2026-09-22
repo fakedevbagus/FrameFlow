@@ -2707,16 +2707,15 @@ function App() {
                       aria-label="Text overlay content"
                       className="inspector-textarea"
                       defaultValue={activeTextOverlay?.text ?? ""}
-                      key={"text-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.text ?? "")}
+                      key={
+                        "text-" +
+                        selectedClipContext.clip.id +
+                        "-" +
+                        (selectedTextOverlay?.text ?? "")
+                      }
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
-                      ref={textOverlayTextInputRef}
-                      onKeyUp={(event) =>
-                        handleUpdateTextOverlayDraft({
-                          text: event.currentTarget.value,
-                        })
-                      }
                       onInputCapture={(event) =>
                         handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
@@ -2744,25 +2743,17 @@ function App() {
                             defaultValue={Math.round(
                               (activeTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
                             )}
+                            key={
+                              "x-" +
+                              selectedClipContext.clip.id +
+                              "-" +
+                              (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)
+                            }
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            ref={textOverlayXInputRef}
-                            onKeyUp={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ x: value / 100 });
-                              }
-                            }}
-                            key={"x-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)}
-                            onChange={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ x: value / 100 });
-                              }
-                            }}
-onInputCapture={(event) => {
+                            onInputCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
                                 handleUpdateTextOverlayDraft({ x: value / 100 });
@@ -2806,30 +2797,16 @@ onInputCapture={(event) => {
                             defaultValue={Math.round(
                               (activeTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
                             )}
+                            key={
+                              "y-" +
+                              selectedClipContext.clip.id +
+                              "-" +
+                              (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)
+                            }
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            ref={textOverlayYInputRef}
-                            onKeyUp={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ y: value / 100 });
-                              }
-                            }}
-                            key={"y-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)}
-                            onChange={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ y: value / 100 });
-                              }
-                            }}
-                            onKeyUp={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ y: value / 100 });
-                              }
-                            }}
                             onInputCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
@@ -2875,34 +2852,17 @@ onInputCapture={(event) => {
                               activeTextOverlay?.fontSize ??
                               DEFAULT_TEXT_OVERLAY_FONT_SIZE
                             }
+                            key={
+                              "size-" +
+                              selectedClipContext.clip.id +
+                              "-" +
+                              (selectedTextOverlay?.fontSize ??
+                                DEFAULT_TEXT_OVERLAY_FONT_SIZE)
+                            }
                             max="240"
                             min="12"
                             step="1"
                             type="number"
-                            ref={textOverlaySizeInputRef}
-                            onKeyUp={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
-                                handleUpdateTextOverlayDraft({ fontSize: Math.round(value) });
-                              }
-                            }}
-                            key={"size-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.fontSize ?? DEFAULT_TEXT_OVERLAY_FONT_SIZE)}
-                            onChange={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
-                                handleUpdateTextOverlayDraft({
-                                  fontSize: Math.round(value),
-                                });
-                              }
-                            }}
-                            onKeyUp={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
-                                handleUpdateTextOverlayDraft({
-                                  fontSize: Math.round(value),
-                                });
-                              }
-                            }}
                             onInputCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 12 && value <= 240) {
@@ -2951,7 +2911,10 @@ onInputCapture={(event) => {
                             defaultValue={
                               selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR
                             }
-                            key={"color-" + (selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR)}
+                            key={
+                              "color-" +
+                              (selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR)
+                            }
                             type="color"
                             onChange={(event) =>
                               handleCommitSelectedTextOverlayChange({
