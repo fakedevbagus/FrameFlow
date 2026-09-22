@@ -19,6 +19,12 @@ export const DEFAULT_AUDIO_CLIP_VOLUME = 1;
 export const DEFAULT_VISUAL_EFFECT_BRIGHTNESS = 0;
 export const DEFAULT_VISUAL_EFFECT_CONTRAST = 0;
 export const DEFAULT_VISUAL_EFFECT_SATURATION = 0;
+export const DEFAULT_TEXT_OVERLAY_X = 0.5;
+export const DEFAULT_TEXT_OVERLAY_Y = 0.5;
+export const DEFAULT_TEXT_OVERLAY_FONT_SIZE = 56;
+export const DEFAULT_TEXT_OVERLAY_COLOR = "#ffffff";
+export const DEFAULT_TEXT_OVERLAY_ALIGNMENT = "center" as const;
+export const MAX_TEXT_OVERLAY_LENGTH = 500;
 
 export interface CanvasSettings {
   width: number;
@@ -92,6 +98,17 @@ export interface VisualEffects {
   saturation: number;
 }
 
+export type TextOverlayAlignment = "left" | "center" | "right";
+
+export interface TextOverlay {
+  text: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  color: string;
+  alignment: TextOverlayAlignment;
+}
+
 export interface AudioVolumeKeyframe {
   timeMs: number;
   volume: number;
@@ -125,6 +142,7 @@ export interface Clip {
   audioEq?: AudioEq;
   audioCompressor?: AudioCompressor;
   visualEffects?: VisualEffects;
+  textOverlay?: TextOverlay;
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
   transformKeyframes?: TransformKeyframe[];
 }
@@ -323,6 +341,65 @@ function normalizeVisualEffectValue(value: unknown, fallback: number): number {
   }
 
   return Math.min(1, Math.max(-1, Math.round(value * 100) / 100));
+}
+
+export function getTextOverlay(clip: Clip): TextOverlay | undefined {
+  return normalizeTextOverlay(clip.textOverlay);
+}
+
+export function normalizeTextOverlay(value: unknown): TextOverlay | undefined {
+  if (!isRecord(value) || typeof value.text !== "string") {
+    return undefined;
+  }
+
+  const text = value.text.trim().slice(0, MAX_TEXT_OVERLAY_LENGTH);
+
+  if (!text) {
+    return undefined;
+  }
+
+  const alignment: TextOverlayAlignment =
+    value.alignment === "left" ||
+    value.alignment === "right" ||
+    value.alignment === "center"
+      ? value.alignment
+      : DEFAULT_TEXT_OVERLAY_ALIGNMENT;
+
+  return {
+    text,
+    x: normalizeTextOverlayPosition(value.x, DEFAULT_TEXT_OVERLAY_X),
+    y: normalizeTextOverlayPosition(value.y, DEFAULT_TEXT_OVERLAY_Y),
+    fontSize: normalizeTextOverlayFontSize(
+      value.fontSize,
+      DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+    ),
+    color: normalizeTextOverlayColor(value.color),
+    alignment,
+  };
+}
+
+function normalizeTextOverlayPosition(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(1, Math.max(0, Math.round(value * 1000) / 1000));
+}
+
+function normalizeTextOverlayFontSize(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.min(240, Math.max(12, Math.round(value)));
+}
+
+function normalizeTextOverlayColor(value: unknown): string {
+  if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) {
+    return DEFAULT_TEXT_OVERLAY_COLOR;
+  }
+
+  return value.toLowerCase();
 }
 
 export function getAudioEq(clip: Clip): AudioEq {
