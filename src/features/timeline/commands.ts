@@ -2,10 +2,13 @@ import {
   getAudioEq,
   getAudioFadeDurations,
   getVisualEffects,
+  getTextOverlay,
   getAudioCompressor,
+  normalizeTextOverlay,
   type AudioCompressor,
   type AudioEq,
   type VisualEffects,
+  type TextOverlay,
   type TransformAnchor,
   type ClipCrop,
   type CropPosition,
@@ -539,6 +542,58 @@ export function updateTrackPan(
   return { ...project, tracks, updatedAt: now.toISOString() };
 }
 
+export function updateClipTextOverlay(
+  project: Project,
+  clipId: string,
+  overlay: TextOverlay | undefined,
+  now: Date = new Date(),
+): Project {
+  const location = findClipLocation(project, clipId);
+
+  if (location.track.isLocked) {
+    throw new Error("Track is locked.");
+  }
+
+  const asset = project.assets.find(
+    (candidate) => candidate.id === location.clip.assetId,
+  );
+
+  if (
+    location.track.type !== "video" ||
+    !asset ||
+    (asset.mediaType !== "video" && asset.mediaType !== "image")
+  ) {
+    throw new Error("Text overlays are only available for visual clips.");
+  }
+
+  const normalized = normalizeTextOverlay(overlay);
+  const current = getTextOverlay(location.clip);
+
+  if (areTextOverlaysEqual(current, normalized)) {
+    return project;
+  }
+
+  return updateClipAtLocation(
+    project,
+    location,
+    { textOverlay: normalized },
+    now,
+  );
+}
+
+function areTextOverlaysEqual(
+  left: TextOverlay | undefined,
+  right: TextOverlay | undefined,
+): boolean {
+  return (
+    left?.text === right?.text &&
+    left?.x === right?.x &&
+    left?.y === right?.y &&
+    left?.fontSize === right?.fontSize &&
+    left?.color === right?.color &&
+    left?.alignment === right?.alignment
+  );
+}
 
 export function updateClipVisualEffects(
   project: Project,

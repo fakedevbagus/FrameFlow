@@ -1,29 +1,50 @@
-## 2026-09-22 — M3.60 Visual Effects Foundation — in progress
+## 2026-09-22 — M3.61 Text Overlay Foundation — in progress
 
-Branch: feat/m3-60-visual-effects-foundation
+Validation fix:
+- Corrected the domain normalization fixture so its intentionally invalid alignment value is accepted by the test compiler while still exercising the runtime fallback to center.
+
+Branch: feat/m3-61-text-overlay-foundation
+PR: #75 — draft
 
 Base:
-- M3.59 squash merge SHA: b693df59a4a879b7a4bf53067ad20bbba258f181
+- M3.60 squash merge SHA: bb5ea26ea3598f33dda7f07837eebaf093a4dfce
 
 Scope:
-- Add backward-compatible per-visual-clip brightness, contrast, and saturation state.
-- Expose the adjustments in the existing visual-clip Inspector.
-- Apply equivalent CSS filters in Preview for image and video clips.
-- Propagate normalized visual effects through RenderPlan.
-- Compile the adjustments into FFmpeg eq filters in the existing single-video render graph.
-- Keep neutral/default effects omitted from persisted clip data.
-- Preserve transform, crop, transition, timeline, history, and audio behavior.
+- Add backward-compatible optional per-visual-clip text overlays.
+- Support text content, X/Y position, font size, color, and left/center/right alignment.
+- Expose the controls in the visual-clip Inspector with a Text quick-access action and Reset.
+- Render text overlays in Preview for video and image clips.
+- Keep text overlay mutations inside the existing project/history path so they persist with project files.
+- Clear the optional overlay when the text is empty.
+- Keep text export/render-graph compilation deferred until a dedicated text-rendering milestone so font selection remains deterministic and platform-safe.
+- Text overlay command validation is limited to editable visual clips on video tracks.
 
 Tests:
-- Added visual-effects helper coverage.
 - Added project-domain normalization coverage.
-- Added command validation/reset coverage.
-- Added RenderPlan and FFmpeg graph propagation coverage.
+- Added text-overlay timeline-command coverage.
 - Added App Inspector/Preview workflow coverage.
 
 Validation:
 - Local validation is pending user verification.
-- Keep the PR Draft until the user reports PASS.
+- Keep PR Draft until the user reports PASS.
+
+## 2026-09-22 — M3.60 Visual Effects Foundation — merged
+
+Branch: feat/m3-60-visual-effects-foundation
+
+Merge SHA:
+- bb5ea26ea3598f33dda7f07837eebaf093a4dfce
+
+Implemented:
+- Backward-compatible per-visual-clip Brightness, Contrast, and Saturation adjustments.
+- Inspector controls and discoverability improvements for Color adjustments.
+- CSS preview filters and FFmpeg eq propagation.
+- Regression coverage across domain, commands, RenderPlan, render graph, and App workflow.
+
+Validation:
+- User reported the corrected local validation as PASS.
+- GitHub CI run #48 passed on the final head.
+- PR #74 was marked ready and squash-merged.
 
 ## 2026-09-22 — M3.59 Project File Persistence Hardening — merged
 

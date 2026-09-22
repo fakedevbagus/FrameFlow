@@ -94,30 +94,34 @@ cd ..
 
 ## Current repository state
 
-### M3.60 — Visual Effects Foundation — active draft PR
+### M3.61 — Text Overlay Foundation — active draft PR
+
+PR #75:
+https://github.com/fakedevbagus/FrameFlow/pull/75
 
 Branch:
-`feat/m3-60-visual-effects-foundation`
+`feat/m3-61-text-overlay-foundation`
 
 Base:
-`main @ b693df59a4a879b7a4bf53067ad20bbba258f181`
+`main @ bb5ea26ea3598f33dda7f07837eebaf093a4dfce`
 
 Implemented:
-- Backward-compatible per-visual-clip brightness, contrast, and saturation state.
-- Neutral adjustments are omitted from clip data.
-- Color Adjustments controls are available in the visual-clip Inspector.
-- Preview applies CSS brightness/contrast/saturate filters to image/video media.
-- RenderPlan carries normalized visual effects metadata.
-- Single-video FFmpeg graph compiles the adjustments to an eq filter.
-- Existing transform/crop/transition/audio/history behavior remains unchanged.
-- Regression coverage added across helpers, domain, commands, RenderPlan, render graph, and App workflow.
+- Backward-compatible optional per-visual-clip text overlay state.
+- Text content, normalized X/Y position, font size, color, and left/center/right alignment.
+- Inspector controls with Reset and a Text quick-access action.
+- Preview rendering for video and image clips.
+- Existing project/history mutation path and automatic project persistence.
+- Text overlay command validation is restricted to editable visual clips on video tracks.
+- Empty text clears the optional overlay.
+- Export/render-graph text compilation is intentionally deferred to a dedicated text-rendering milestone.
+- Regression coverage across domain, commands, and App Inspector/Preview workflow.
 
 Required local validation:
 
 ```bash
 git fetch origin --prune
-git checkout feat/m3-60-visual-effects-foundation
-git pull --ff-only origin feat/m3-60-visual-effects-foundation
+git checkout feat/m3-61-text-overlay-foundation
+git pull --ff-only origin feat/m3-61-text-overlay-foundation
 git status
 git log -1 --oneline
 
@@ -133,17 +137,35 @@ cd ..
 npm run tauri dev
 ```
 
-Manual M3.60 checks:
-- Select a video clip and open Color adjustments.
-- Change Brightness, Contrast, and Saturation.
-- Verify the preview updates immediately.
-- Undo/Redo an adjustment and verify it uses the normal project history path.
-- Reset Color adjustments and verify the preview returns to neutral.
-- Select an image clip and verify the same controls affect its preview.
-- Verify render graph generation includes the corresponding FFmpeg eq stage.
-- Verify existing transform/crop/transition/audio behavior remains intact.
+Manual M3.61 checks:
+- Select a video clip and verify Text overlay is visible in the Inspector.
+- Enter multiline text and verify it appears over the preview.
+- Change X/Y, font size, color, and alignment and verify the preview updates.
+- Reset the text overlay and verify the preview text disappears.
+- Select an image clip and verify the same text controls work.
+- Undo/Redo a text edit through the normal project history.
+- Save and reopen a project and verify text overlay state persists.
+- Confirm existing Transform, Crop, Color adjustments, Transition, Audio, Split, and Delete behavior remains intact.
 
-Do not mark the M3.60 PR ready or merge it until the user reports local PASS.
+Do not mark the M3.61 PR ready or merge it until the user reports local PASS.
+
+### M3.60 — Visual Effects Foundation — merged
+
+PR #74:
+https://github.com/fakedevbagus/FrameFlow/pull/74
+
+Branch:
+`feat/m3-60-visual-effects-foundation`
+
+Merge SHA:
+`bb5ea26ea3598f33dda7f07837eebaf093a4dfce`
+
+Implemented:
+- Backward-compatible per-visual-clip brightness, contrast, and saturation state.
+- Inspector Color adjustments controls and discoverability improvements.
+- CSS preview filters and FFmpeg eq propagation.
+- Regression coverage across helpers, domain, commands, RenderPlan, render graph, and App workflow.
+- User reported local validation PASS; GitHub CI run #48 passed.
 
 ### M3.59 — Project File Persistence Hardening — merged
 

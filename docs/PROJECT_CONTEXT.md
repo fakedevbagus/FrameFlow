@@ -1,16 +1,31 @@
-## M3.60 — Visual Effects Foundation — in progress — 2026-09-22
+## M3.61 — Text Overlay Foundation — in progress — 2026-09-22
 
-- M3.59 Project File Persistence Hardening was completed and squash-merged into main at `b693df59a4a879b7a4bf53067ad20bbba258f181`.
-- Repository inspection shows the next roadmap capability not yet represented in the product surface is visual effects/filters.
-- M3.60 adds a backward-compatible per-visual-clip Color Adjustments model with Brightness, Contrast, and Saturation controls normalized to `-1..1`.
-- The adjustments are optional clip state; neutral values are omitted so legacy projects remain unchanged.
-- Preview applies equivalent CSS filters to image and video media without changing transform/crop geometry.
-- RenderPlan carries normalized visual effects metadata, and the existing single-video FFmpeg graph compiles it to one `eq` filter stage.
-- All visual-effect mutations use the existing Timeline -> history project mutation path.
-- No project schema version bump is required because the new clip field is optional and backward compatible.
-- Added helper, project-domain, command, render-plan, render-graph, and App workflow regression coverage.
+- Follow-up test correction: the invalid-alignment normalization fixture now intentionally bypasses the static union type so the runtime fallback path remains covered without changing production typing.
+- PR #75: https://github.com/fakedevbagus/FrameFlow/pull/75
+- M3.60 Visual Effects Foundation was completed, user-validated, and squash-merged into main at `bb5ea26ea3598f33dda7f07837eebaf093a4dfce`.
+- Repository inspection after M3.60 shows text/captions are the next major editor capability not represented in the product surface.
+- M3.61 adds a backward-compatible optional per-visual-clip text overlay model with text content, normalized X/Y position, font size, color, and left/center/right alignment.
+- Text overlays are edited through the existing project history mutation path and therefore persist automatically with project files.
+- The text-overlay command only accepts clips on video tracks with video/image assets, matching the existing visual-editing safety boundary.
+- Preview renders the text overlay above the visual clip for both video and image media and keeps it coupled to the clip transform/opacity.
+- The Inspector exposes the text content, position, font size, color, alignment, reset, and quick-access controls.
+- Empty text clears the optional overlay state; existing projects remain compatible without a schema version bump.
+- Export/render-graph compilation of text is intentionally deferred to a dedicated text-rendering milestone so this foundation does not introduce platform-dependent font assumptions.
+- Added domain, timeline-command, and App Inspector/Preview regression coverage.
 - Required validation: `git fetch origin --prune`; checkout/pull the feature branch; `npm ci`; `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
-- Keep M3.60 Draft until the user reports clean local validation.
+- Keep M3.61 Draft until the user reports clean local validation.
+
+## M3.60 — Visual Effects Foundation — merged — 2026-09-22
+
+- M3.60 adds backward-compatible per-visual-clip Brightness, Contrast, and Saturation adjustments normalized to `-1..1`.
+- Neutral adjustments are omitted from persisted clip state, preserving legacy project compatibility without a schema version bump.
+- Preview applies equivalent CSS brightness/contrast/saturate filters to image and video media.
+- RenderPlan carries normalized visual effects metadata and the existing single-video FFmpeg graph compiles it to an `eq` filter stage.
+- Visual-effect mutations use the existing Timeline -> history project mutation path.
+- Added helper, project-domain, command, RenderPlan, render-graph, and App workflow regression coverage.
+- User reported clean local validation as PASS after the final Inspector discoverability and regression-test corrections.
+- GitHub CI run #48 passed on the final branch head.
+- PR #74 was marked ready and squash-merged at `bb5ea26ea3598f33dda7f07837eebaf093a4dfce`.
 
 ## M3.59 — Project File Persistence Hardening — merged — 2026-09-22
 
