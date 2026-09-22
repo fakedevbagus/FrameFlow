@@ -709,12 +709,14 @@ describe("Timeline", () => {
     const populated = addAssetToTimeline(project, "audio-waveform-seek");
     const onCurrentTimeChange = vi.fn();
     const onSelectClip = vi.fn();
+    const onMoveClip = vi.fn();
 
     render(
       <Timeline
         project={populated}
         onCurrentTimeChange={onCurrentTimeChange}
         onSelectClip={onSelectClip}
+        onMoveClip={onMoveClip}
       />,
     );
 
@@ -734,14 +736,30 @@ describe("Timeline", () => {
 
     fireEvent.pointerDown(waveform, {
       button: 0,
-      clientX: 110,
+      clientX: 10,
       pointerId: 71,
     });
 
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 110,
+      pointerId: 72,
+    });
+
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 210,
+      pointerId: 73,
+    });
+
+    expect(onSelectClip).toHaveBeenCalledTimes(3);
     expect(onSelectClip).toHaveBeenCalledWith(
       populated.tracks[1].clips[0].id,
     );
-    expect(onCurrentTimeChange).toHaveBeenCalledWith(2500);
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(1, 0);
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(2, 2500);
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(3, 5000);
+    expect(onMoveClip).not.toHaveBeenCalled();
   });
 
   it("shows an audio track volume slider and reports changes", () => {
