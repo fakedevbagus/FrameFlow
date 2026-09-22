@@ -1,3 +1,17 @@
+## M3.57 — Audio Waveform Region Selection — in progress — 2026-09-22
+
+- M3.56 was completed and squash-merged into main at `593de1d6858577c4856ecc329eea544885b59bac`.
+- M3.57 uses the explicitly deferred waveform region-selection capability as the next focused audio slice.
+- Waveform click remains a seek interaction; a drag of at least four CSS pixels becomes a local audio time-range selection.
+- Selected ranges are ordered by start/end time regardless of drag direction and remain local to the waveform clip.
+- Selection is display/UI state only in this slice; no project schema or history mutation is introduced.
+- Escape clears the current waveform selection.
+- Enter/Space seeks to the selection midpoint when a region is selected; without a selection they retain midpoint-seek behavior.
+- Existing clip move/trim, audio fades, volume automation, pan, EQ, compressor, mute, multi-track mixing, RenderPlan, and export paths remain unchanged.
+- Added pure range-mapping coverage plus Timeline regression coverage for reverse-direction drag selection and click-to-seek preservation.
+- Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep M3.57 as Draft until the user reports clean local validation and manual waveform selection behavior.
+
 ## M3.56 stabilization — Audio waveform, playback aborts, and test reliability — 2026-09-22
 
 - Current repository inspection confirms M3.56 remains PR #70 (feat/m3-56-audio-waveform-scrubbing) based on main at 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b; the PR is still open and Draft.
