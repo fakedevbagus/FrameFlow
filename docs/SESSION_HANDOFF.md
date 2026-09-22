@@ -2,7 +2,7 @@
 
 - PR #70 remains open and Draft on feat/m3-56-audio-waveform-scrubbing, based on main 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b.
 - Waveform data handling was hardened so invalid native peak values cannot produce malformed SVG geometry and empty native peak arrays fail as controlled waveform-data errors instead of silently becoming a blank waveform.
-- App.handleTogglePlayback() now distinguishes expected AbortError playback interruption from real playback failures and invalidates stale play promises after pause/seek operations, preventing raw The operation was aborted. text from leaking into the project status.
+- App.handleTogglePlayback() now distinguishes expected AbortError playback interruption from real playback failures, invalidates stale play promises after pause/seek operations, and aggregates multiple media play() results so one rejected media does not hide another failure.
 - Preview test rendering now awaits asynchronous preparation effects; jsdom HTMLMediaElement.play() has a deterministic default mock.
 - Vitest worker concurrency is capped at two forks as a targeted response to the previously observed worker-start timeout pattern; fresh full-suite verification is still required.
 - Timeline waveform scrubbing coverage now validates the left, center, and right bounds, keyboard seeking, and verifies the waveform does not start clip movement.
