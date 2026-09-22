@@ -337,21 +337,6 @@ describe("text overlays", () => {
     });
     expect(updated.updatedAt).toBe("2026-09-22T09:00:00.000Z");
 
-    expect(() =>
-      updateClipTextOverlay(
-        project,
-        clipId,
-        {
-          text: "Title",
-          x: 0.5,
-          y: 0.5,
-          fontSize: 56,
-          color: "#ffffff",
-          alignment: "center",
-        },
-      ),
-    ).toBeDefined;
-
     const audioProject = addAssetToTrack(project, "audio", "audio-1", 0);
     const audioClipId = audioProject.tracks[1].clips[0].id;
 
