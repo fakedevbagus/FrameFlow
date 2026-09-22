@@ -99,47 +99,50 @@ cd ..
 Branch:
 `feat/m3-62-text-overlay-export-rendering`
 
+PR:
+#76
+https://github.com/fakedevbagus/FrameFlow/pull/76
+
+Current head:
+`5b6894c988678931e1c7e3093b044629a93b2be8`
+
 Base:
-`main @ 191455b79880b13166cd3b4967b3db61bea7aa52`
+`main` (repository head may advance independently; inspect before any merge)
 
-Implemented:
-- M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
-- M3.62 extends text overlays into native export/render-plan compilation.
-- Preserve text content, normalized X/Y position, font size, color, and alignment semantics between Preview and export.
-- Use an explicit renderer-owned font policy to avoid arbitrary platform font assumptions.
-- Preserve the existing single-video FFmpeg graph and validate interactions with existing visual metadata.
+Status:
+- Open
+- Draft
+- Not merged
+- Local validation pending
 
-Required local validation:
+Current live-edit bug fix:
+- The transient Text Overlay edit session is now stored outside App project/history state using a synchronous external React store via `useSyncExternalStore`.
+- `project.updatedAt` no longer resets the live edit session, so unrelated committed project changes cannot silently discard the transient Preview value.
+- Text, X, Y, and font-size controls update the edit session through normal `input`/`change` handlers.
+- Preview receives the same live session snapshot before the edit is committed to project history.
+- The previous native DOM listener, 50 ms polling, keyboard fallback, and `flushSync` workaround chain has been removed.
+- Commit handlers read the current store snapshot at commit time.
+- Blur/direct actions commit through the existing history path; the existing 400 ms idle autosave remains.
+- App cleanup and clip selection changes clear the live edit session.
+- Regression coverage now proves live Text/X/Y/Size updates, no per-keystroke history entry, single-entry commit with Undo/Redo, Reset, and store behavior.
+- The former jsdom-only direct-`.value`-without-event test was removed because it did not model a real browser interaction path.
 
-```bash
-git fetch origin --prune
-git checkout feat/m3-62-text-overlay-export-rendering
-git pull --ff-only origin feat/m3-62-text-overlay-export-rendering
-git status
-git log -1 --oneline
+M3.62 export work already implemented:
+- TextOverlay metadata propagates into RenderPlan.
+- FFmpeg `drawtext` compilation exists.
+- Explicit DejaVu Sans render font policy.
+- Drawtext escaping and multiline support.
+- Left/center/right alignment semantics synchronized between Preview and export.
+- Render graph and Preview regression coverage exist.
 
-npm ci
-npm run lint
-npm run test
-npm run build
+Required next validation:
+- Run the normal fetch/checkout/pull sequence.
+- Run npm ci, lint, tests, build, Rust tests, and Tauri dev.
+- Manually verify Text/X/Y/Size update Preview immediately with no unrelated click.
+- Verify leaving the field produces one history entry and Undo/Redo remains correct.
+- Then verify M3.62 export manually, including actual output-file text rendering.
 
-cd src-tauri
-cargo test
-cd ..
-
-npm run tauri dev
-```
-
-Manual M3.62 checks:
-- Create a text overlay on a video clip and verify it appears in Preview.
-- Export a minimal single-clip project with text and verify the exported file contains the text overlay.
-- Verify text position, size, color, and alignment are reflected in export.
-- Verify multiline text remains readable in export.
-- Verify an image clip with text remains compatible with the existing export limitations.
-- Verify existing Color adjustments continue to render with text.
-- Verify existing Transform/Crop/Transition behavior is not regressed where supported by the current export graph.
-
-Do not mark the M3.62 PR ready or merge it until the user reports local PASS.
+Do not mark PR #76 ready or merge until the user reports local PASS.
 
 ### M3.61 — Text Overlay Foundation — merged
 
