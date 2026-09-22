@@ -9,6 +9,7 @@ import {
   clearAudioWaveformCache,
   getAudioWaveform,
   getWaveformLocalTimeMs,
+  getWaveformSelectionRangeMs,
 } from "./waveform";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -23,6 +24,18 @@ describe("audio waveform", () => {
     expect(getWaveformLocalTimeMs(-50, 0, 200, 5000)).toBe(0);
     expect(getWaveformLocalTimeMs(250, 0, 200, 5000)).toBe(5000);
     expect(getWaveformLocalTimeMs(100, 0, 0, 5000)).toBe(0);
+  });
+
+  it("maps waveform drag coordinates to an ordered local selection range", () => {
+    expect(getWaveformSelectionRangeMs(150, 50, 10, 200, 5000)).toEqual({
+      startMs: 1000,
+      endMs: 3500,
+    });
+    expect(getWaveformSelectionRangeMs(50, 50, 10, 200, 5000)).toBeNull();
+    expect(getWaveformSelectionRangeMs(10, 210, 10, 200, 5000)).toEqual({
+      startMs: 0,
+      endMs: 5000,
+    });
   });
 
   it("builds a closed SVG waveform path", () => {
