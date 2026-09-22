@@ -29,8 +29,8 @@ describe("audio waveform", () => {
     const path = buildWaveformPath([0, 0.5, 1], 100, 20);
 
     expect(path).toContain("M 0.000 10.000");
-    expect(path).toContain("L 100.000 0.800");
-    expect(path).toContain("L 100.000 19.200");
+    expect(path).toContain("L 100.000 2.800");
+    expect(path).toContain("L 100.000 17.200");
     expect(path.endsWith(" Z")).toBe(true);
   });
 
@@ -71,8 +71,8 @@ describe("audio waveform", () => {
     );
 
     expect(path).toContain("M 0.000 10.000");
-    expect(path).toContain("L 100.000 0.800");
     expect(path).not.toContain("L 50.000 10.000");
+    expect(path).not.toContain("L 100.000 0.800");
   });
 
   it("returns an empty path for empty or invalid dimensions", () => {
