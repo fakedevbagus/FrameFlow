@@ -8,11 +8,20 @@ Base:
 Scope:
 - Extend the existing text overlay model into native video export/render-plan compilation.
 - Preserve the Preview/export semantic contract for text content, position, size, color, and alignment.
-- Keep the implementation deterministic with an explicit font policy and no project schema change.
+- Keep the implementation deterministic with an explicit DejaVu Sans font policy and no project schema change.
 - Preserve existing single-video FFmpeg graph behavior and regression coverage.
 
+Implemented:
+- RenderPlan now carries normalized TextOverlay metadata for visual segments.
+- FFmpeg graph compiles text overlays with drawtext.
+- Drawtext text escaping covers filter delimiters and multiline content with expression expansion disabled.
+- Preview left/center/right alignment now changes the horizontal anchor semantics.
+- Added renderer-helper, RenderPlan, render-graph, and Preview regression coverage.
+- Existing image export limitation remains unchanged.
+
 Validation:
-- Local validation pending implementation.
+- Local validation previously reached 364/365 passing tests; the only failure was a renderer test expectation for escaping syntax. The renderer output itself was already deterministic; the test expectation was corrected.
+- Local validation must be rerun on the corrected head before merge.
 - Keep PR Draft until user reports PASS.
 
 ## 2026-09-22 — M3.61 Text Overlay Foundation — merged
