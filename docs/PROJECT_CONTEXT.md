@@ -2,13 +2,18 @@
 
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
 - M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
-- The export slice will reuse the existing optional per-clip text overlay model and keep rendering deterministic without introducing a new project schema version.
-- Font selection will use a small explicit renderer-owned font family policy rather than relying on arbitrary platform defaults.
-- Preserve the existing single-video FFmpeg graph architecture and keep transform/crop/transition interactions explicitly validated.
-- Text overlay Inspector edits now use native DOM input listeners plus a keyboard fallback for live Preview updates in the Tauri WebView, with a 400 ms autosave debounce; blur/direct actions still commit immediately.
-- Live Text overlay Inspector updates now include a 50 ms focus-scoped DOM-value polling fallback for the Linux/Tauri WebView, covering environments where native control values change before React receives an input/change event.
-- Text overlay Inspector edits now force an immediate React flush from the Linux/Tauri WebView input path, while retaining a 400 ms autosave debounce; blur/direct actions still commit immediately.
-- Local validation remains required before the M3.62 PR is marked ready.
+- The export slice reuses the existing optional per-clip text overlay model and keeps rendering deterministic without introducing a new project schema version.
+- Font selection uses the explicit renderer-owned `DejaVu Sans` policy rather than arbitrary platform font defaults.
+- Preview and export keep the same normalized X/Y, font size, color, and left/center/right alignment semantics.
+- The Linux/Tauri Text Overlay Inspector live-edit path is now backed by a synchronous external React edit-session store using `useSyncExternalStore`.
+- The transient edit session is intentionally decoupled from `project.updatedAt`; unrelated committed project changes no longer invalidate an in-progress text edit.
+- Inspector live edits update the external session through normal `input`/`change` handlers. The implementation no longer depends on native DOM polling, periodic timers, or `flushSync` for live Preview rendering.
+- Commit handlers read the current edit session at execution time, avoiding stale React render closures at the commit boundary.
+- The existing 400 ms idle autosave remains in place, while blur and direct text-overlay actions still commit immediately through the project history engine.
+- Added regression coverage for synchronous live Text/X/Y/Size Preview updates, the absence of a history entry during live editing, one-entry commit + Undo/Redo behavior, Reset, and the external edit-session store.
+- A previous jsdom-only test that mutated `.value` without dispatching a browser input event was removed because it did not represent a meaningful real interaction path.
+- Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS.
+- Known M3.62 export limitation remains the existing single-video/image-export architecture; do not broaden it as part of the live-edit fix.
 
 ## M3.61 — Text Overlay Foundation — merged — 2026-09-22
 
