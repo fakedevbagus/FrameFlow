@@ -4,9 +4,27 @@ export interface AudioWaveform {
   durationMs: number;
   sampleRate: number;
   peaks: number[];
+  sourceFingerprint: string;
 }
 
-const waveformCache = new Map<string, Promise<AudioWaveform>>();
+interface AudioWaveformSourceFingerprint {
+  sourceFingerprint: string;
+}
+
+interface PersistentWaveformEntry {
+  cacheKey: string;
+  waveform: AudioWaveform;
+  lastUsedAt: number;
+}
+
+interface PersistentWaveformStore {
+  version: 1;
+  entries: PersistentWaveformEntry[];
+}
+
+const PERSISTENT_WAVEFORM_STORAGE_KEY = "frameflow.audio-waveform-cache.v1";
+const MAX_PERSISTENT_WAVEFORM_ENTRIES = 32;
+const waveformRequestCache = new Map<string, Promise<AudioWaveform>>();
 
 export function getAudioWaveform(
   sourcePath: string,
@@ -16,49 +34,207 @@ export function getAudioWaveform(
     2048,
     Math.max(32, Math.round(peakCount)),
   );
-  const cacheKey = sourcePath + "::" + normalizedPeakCount;
-  const cached = waveformCache.get(cacheKey);
+  const requestKey = sourcePath + "::" + normalizedPeakCount;
+  const cachedRequest = waveformRequestCache.get(requestKey);
 
-  if (cached) {
-    return cached;
+  if (cachedRequest) {
+    return cachedRequest;
   }
 
-  const request = invoke<AudioWaveform>("generate_audio_waveform", {
-    path: sourcePath,
-    peakCount: normalizedPeakCount,
-  }).then((waveform) => {
-    if (
-      !waveform ||
-      !Number.isFinite(waveform.durationMs) ||
-      waveform.durationMs <= 0 ||
-      !Number.isFinite(waveform.sampleRate) ||
-      waveform.sampleRate <= 0 ||
-      !Array.isArray(waveform.peaks) ||
-      waveform.peaks.length === 0
-    ) {
-      throw new Error("Native waveform data is invalid.");
-    }
+  const request = invoke<AudioWaveformSourceFingerprint>(
+    "get_audio_waveform_source_fingerprint",
+    { path: sourcePath },
+  )
+    .then((fingerprint) => {
+      if (
+        !fingerprint ||
+        typeof fingerprint.sourceFingerprint !== "string" ||
+        fingerprint.sourceFingerprint.length === 0
+      ) {
+        throw new Error("Native waveform source fingerprint is invalid.");
+      }
 
-    return {
-      durationMs: Math.max(0, Math.round(waveform.durationMs)),
-      sampleRate: Math.max(1, Math.round(waveform.sampleRate)),
-      peaks: waveform.peaks.map(normalizeWaveformPeak),
-    };
-  });
+      return fingerprint.sourceFingerprint;
+    })
+    .then((fingerprint) => {
+      const cacheKey =
+        sourcePath + "::" + normalizedPeakCount + "::" + fingerprint;
+      const persistent = readPersistentWaveform(cacheKey);
 
-  waveformCache.set(cacheKey, request);
+      if (persistent) {
+        return persistent;
+      }
 
-  void request.catch(() => {
-    if (waveformCache.get(cacheKey) === request) {
-      waveformCache.delete(cacheKey);
-    }
-  });
+      return invoke<AudioWaveform>("generate_audio_waveform", {
+        path: sourcePath,
+        peakCount: normalizedPeakCount,
+      }).then((waveform) => {
+        if (
+          !waveform ||
+          !Number.isFinite(waveform.durationMs) ||
+          waveform.durationMs <= 0 ||
+          !Number.isFinite(waveform.sampleRate) ||
+          waveform.sampleRate <= 0 ||
+          !Array.isArray(waveform.peaks) ||
+          waveform.peaks.length === 0 ||
+          typeof waveform.sourceFingerprint !== "string" ||
+          waveform.sourceFingerprint.length === 0
+        ) {
+          throw new Error("Native waveform data is invalid.");
+        }
+
+        const normalizedWaveform = {
+          durationMs: Math.max(0, Math.round(waveform.durationMs)),
+          sampleRate: Math.max(1, Math.round(waveform.sampleRate)),
+          peaks: waveform.peaks.map(normalizeWaveformPeak),
+          sourceFingerprint: waveform.sourceFingerprint,
+        };
+
+        writePersistentWaveform(
+          sourcePath +
+            "::" +
+            normalizedPeakCount +
+            "::" +
+            normalizedWaveform.sourceFingerprint,
+          normalizedWaveform,
+        );
+
+        return normalizedWaveform;
+      });
+    });
+
+  waveformRequestCache.set(requestKey, request);
+
+  void request.then(
+    () => {
+      if (waveformRequestCache.get(requestKey) === request) {
+        waveformRequestCache.delete(requestKey);
+      }
+    },
+    () => {
+      if (waveformRequestCache.get(requestKey) === request) {
+        waveformRequestCache.delete(requestKey);
+      }
+    },
+  );
 
   return request;
 }
 
 export function clearAudioWaveformCache(): void {
-  waveformCache.clear();
+  waveformRequestCache.clear();
+
+  try {
+    globalThis.localStorage?.removeItem(PERSISTENT_WAVEFORM_STORAGE_KEY);
+  } catch {
+    // Persistent waveform caching is best-effort.
+  }
+}
+
+function readPersistentWaveform(cacheKey: string): AudioWaveform | null {
+  try {
+    const raw = globalThis.localStorage?.getItem(
+      PERSISTENT_WAVEFORM_STORAGE_KEY,
+    );
+    if (!raw) {
+      return null;
+    }
+
+    const store = JSON.parse(raw) as Partial<PersistentWaveformStore>;
+    if (store.version !== 1 || !Array.isArray(store.entries)) {
+      return null;
+    }
+
+    const entry = store.entries.find((candidate) => candidate.cacheKey === cacheKey);
+    if (!entry || !isValidAudioWaveform(entry.waveform)) {
+      return null;
+    }
+
+    touchPersistentWaveform(store.entries, entry);
+    persistWaveformStore(store);
+
+    return {
+      ...entry.waveform,
+      peaks: entry.waveform.peaks.map(normalizeWaveformPeak),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writePersistentWaveform(
+  cacheKey: string,
+  waveform: AudioWaveform,
+): void {
+  try {
+    const raw = globalThis.localStorage?.getItem(
+      PERSISTENT_WAVEFORM_STORAGE_KEY,
+    );
+    const parsed = raw
+      ? (JSON.parse(raw) as Partial<PersistentWaveformStore>)
+      : null;
+    const entries =
+      parsed?.version === 1 && Array.isArray(parsed.entries)
+        ? parsed.entries.filter((entry) => entry.cacheKey !== cacheKey)
+        : [];
+
+    entries.push({
+      cacheKey,
+      waveform,
+      lastUsedAt: Date.now(),
+    });
+
+    entries.sort((left, right) => right.lastUsedAt - left.lastUsedAt);
+    entries.splice(MAX_PERSISTENT_WAVEFORM_ENTRIES);
+
+    persistWaveformStore({
+      version: 1,
+      entries,
+    });
+  } catch {
+    // Persistent waveform caching is best-effort.
+  }
+}
+
+function persistWaveformStore(store: PersistentWaveformStore): void {
+  try {
+    globalThis.localStorage?.setItem(
+      PERSISTENT_WAVEFORM_STORAGE_KEY,
+      JSON.stringify(store),
+    );
+  } catch {
+    // Persistent waveform caching is best-effort.
+  }
+}
+
+function touchPersistentWaveform(
+  entries: PersistentWaveformEntry[],
+  entry: PersistentWaveformEntry,
+): void {
+  entry.lastUsedAt = Date.now();
+  entries.sort((left, right) => right.lastUsedAt - left.lastUsedAt);
+}
+
+function isValidAudioWaveform(
+  waveform: unknown,
+): waveform is AudioWaveform {
+  if (!waveform || typeof waveform !== "object") {
+    return false;
+  }
+
+  const candidate = waveform as Partial<AudioWaveform>;
+  return (
+    candidate.durationMs !== undefined &&
+    Number.isFinite(candidate.durationMs) &&
+    candidate.durationMs > 0 &&
+    candidate.sampleRate !== undefined &&
+    Number.isFinite(candidate.sampleRate) &&
+    candidate.sampleRate > 0 &&
+    Array.isArray(candidate.peaks) &&
+    candidate.peaks.length > 0 &&
+    typeof candidate.sourceFingerprint === "string" &&
+    candidate.sourceFingerprint.length > 0
+  );
 }
 
 function normalizeWaveformPeak(peak: number): number {

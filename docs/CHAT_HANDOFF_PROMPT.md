@@ -94,6 +94,60 @@ cd ..
 
 ## Current repository state
 
+### M3.58 — Persistent Waveform Cache — active draft PR
+
+PR #72:
+https://github.com/fakedevbagus/FrameFlow/pull/72
+
+Branch:
+`feat/m3-58-persistent-waveform-cache`
+
+Base:
+`main @ c8b89684665f61d5f03e78ccbcc66cc52beb28af`
+
+Implemented:
+- Persistent waveform cache in browser local storage.
+- Native audio source fingerprint from file size and modification timestamp.
+- Cache identity includes source path, peak count, and fingerprint.
+- Changed media invalidates the previous waveform cache automatically.
+- Cache is capped at 32 entries.
+- Malformed or unavailable persistent storage falls back to normal native waveform generation.
+- In-flight waveform requests remain deduplicated.
+- Existing M3.57 click-seek and drag region-selection behavior remains intact.
+- No project schema/history changes.
+
+### Required local validation
+
+```bash
+git fetch origin --prune
+git checkout feat/m3-58-persistent-waveform-cache
+git pull --ff-only origin feat/m3-58-persistent-waveform-cache
+git status
+git log -1 --oneline
+
+npm ci
+npm run lint
+npm run test
+npm run build
+
+cd src-tauri
+cargo test
+cd ..
+
+npm run tauri dev
+```
+
+Manual M3.58 checks:
+- Open an audio project and confirm the waveform renders normally.
+- Restart the app and confirm a previously generated waveform does not invoke FFmpeg regeneration unnecessarily.
+- Modify/replace the source audio file and confirm the changed fingerprint causes regeneration.
+- Verify malformed/local-storage failure does not prevent waveform rendering.
+- Confirm M3.57 click seek and drag selection still work.
+- Confirm clip move/trim, playback, and existing audio effects remain intact.
+
+Do not mark PR #72 ready or merge it until the user reports local PASS.
+
+
 ### M3.56 — Audio Waveform Scrubbing — active draft PR
 
 PR #70:

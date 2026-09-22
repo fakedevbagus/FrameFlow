@@ -1,4 +1,4 @@
-## 2026-09-22 — M3.57 Audio Waveform Region Selection — in progress
+## 2026-09-22 — M3.57 Audio Waveform Region Selection — merged
 
 Branch: feat/m3-57-audio-waveform-region-selection
 
@@ -16,7 +16,7 @@ Tests:
 - Added Timeline regression coverage for reverse-direction drag selection and click-seek compatibility.
 
 Validation:
-- Local validation is required before marking M3.57 ready.
+- User reported local validation as PASS; PR #71 was squash-merged at `c8b89684665f61d5f03e78ccbcc66cc52beb28af`.
 - CI validation is also running for lint, frontend tests, production build, and Rust tests.
 
 ## 2026-09-22 — M3.56 stabilization — validation pending

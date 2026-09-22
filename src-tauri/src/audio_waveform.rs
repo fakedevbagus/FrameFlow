@@ -1,7 +1,9 @@
 use std::{
+  fs,
   io::Read,
   path::Path,
   process::{Command, Stdio},
+  time::UNIX_EPOCH,
 };
 
 use serde::Serialize;
@@ -18,6 +20,25 @@ pub struct AudioWaveform {
   pub duration_ms: u64,
   pub sample_rate: u32,
   pub peaks: Vec<f32>,
+  pub source_fingerprint: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioWaveformSourceFingerprint {
+  pub source_fingerprint: String,
+}
+
+#[tauri::command]
+pub fn get_audio_waveform_source_fingerprint(
+  path: String,
+) -> Result<AudioWaveformSourceFingerprint, String> {
+  let source_path = super::media_path(&path)?;
+  validate_audio_source(&source_path)?;
+
+  Ok(AudioWaveformSourceFingerprint {
+    source_fingerprint: source_fingerprint(&source_path)?,
+  })
 }
 
 #[tauri::command]
@@ -27,9 +48,7 @@ pub fn generate_audio_waveform(
 ) -> Result<AudioWaveform, String> {
   let source_path = super::media_path(&path)?;
 
-  if super::media_type(&source_path)? != "audio" {
-    return Err("Audio waveform generation requires an audio source.".to_string());
-  }
+  validate_audio_source(&source_path)?;
 
   if !super::probe_has_audio(&source_path)? {
     return Err("Selected audio source does not contain an audio stream.".to_string());
@@ -53,7 +72,29 @@ pub fn generate_audio_waveform(
     duration_ms,
     sample_rate,
     peaks,
+    source_fingerprint: source_fingerprint(&source_path)?,
   })
+}
+
+fn validate_audio_source(source_path: &Path) -> Result<(), String> {
+  if super::media_type(source_path)? != "audio" {
+    return Err("Audio waveform generation requires an audio source.".to_string());
+  }
+
+  Ok(())
+}
+
+fn source_fingerprint(source_path: &Path) -> Result<String, String> {
+  let metadata = fs::metadata(source_path)
+    .map_err(|error| format!("Could not inspect audio source metadata: {error}"))?;
+  let modified_nanos = metadata
+    .modified()
+    .ok()
+    .and_then(|value| value.duration_since(UNIX_EPOCH).ok())
+    .map(|value| value.as_nanos())
+    .unwrap_or_default();
+
+  Ok(format!("{}:{modified_nanos}", metadata.len()))
 }
 
 fn waveform_sample_rate(peak_count: usize) -> u32 {
