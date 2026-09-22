@@ -734,23 +734,22 @@ describe("Timeline", () => {
       toJSON: () => ({}),
     });
 
-    fireEvent.pointerDown(waveform, {
-      button: 0,
-      clientX: 10,
-      pointerId: 71,
-    });
-
-    fireEvent.pointerDown(waveform, {
-      button: 0,
-      clientX: 110,
-      pointerId: 72,
-    });
-
-    fireEvent.pointerDown(waveform, {
-      button: 0,
-      clientX: 210,
-      pointerId: 73,
-    });
+    for (const [clientX, pointerId] of [
+      [10, 71],
+      [110, 72],
+      [210, 73],
+    ] as const) {
+      fireEvent.pointerDown(waveform, {
+        button: 0,
+        clientX,
+        pointerId,
+      });
+      fireEvent.pointerUp(waveform, {
+        button: 0,
+        clientX,
+        pointerId,
+      });
+    }
 
     expect(onSelectClip).toHaveBeenCalledTimes(3);
     expect(onSelectClip).toHaveBeenCalledWith(
@@ -766,6 +765,69 @@ describe("Timeline", () => {
     expect(onCurrentTimeChange).toHaveBeenNthCalledWith(4, 2500);
     expect(waveform).toHaveAttribute("role", "button");
     expect(waveform).toHaveAttribute("tabindex", "0");
+  });
+
+  it("selects an audio waveform region by dragging without seeking", async () => {
+    const project = createVideoProject();
+    project.assets.push({
+      id: "audio-waveform-selection",
+      name: "waveform-selection.mp3",
+      mediaType: "audio",
+      sourcePath: "/waveform-selection.mp3",
+      durationMs: 5000,
+    });
+
+    const populated = addAssetToTimeline(project, "audio-waveform-selection");
+    const onCurrentTimeChange = vi.fn();
+
+    render(
+      <Timeline
+        project={populated}
+        onCurrentTimeChange={onCurrentTimeChange}
+      />,
+    );
+
+    const waveform = await screen.findByTestId("timeline-audio-waveform");
+
+    vi.spyOn(waveform, "getBoundingClientRect").mockReturnValue({
+      left: 10,
+      top: 0,
+      right: 210,
+      bottom: 20,
+      width: 200,
+      height: 20,
+      x: 10,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 150,
+      pointerId: 81,
+    });
+    fireEvent.pointerMove(waveform, {
+      button: 0,
+      clientX: 50,
+      pointerId: 81,
+    });
+    fireEvent.pointerUp(waveform, {
+      button: 0,
+      clientX: 50,
+      pointerId: 81,
+    });
+
+    expect(onCurrentTimeChange).not.toHaveBeenCalled();
+    expect(waveform).toHaveAttribute("data-selection-start-ms", "1000");
+    expect(waveform).toHaveAttribute("data-selection-end-ms", "3500");
+    expect(waveform.querySelector(".timeline-audio-waveform-selection")).toHaveAttribute(
+      "x",
+      "102.4",
+    );
+    expect(waveform).toHaveAttribute(
+      "aria-label",
+      "Selected audio region from 1000 ms to 3500 ms",
+    );
   });
 
   it("shows an audio track volume slider and reports changes", () => {
