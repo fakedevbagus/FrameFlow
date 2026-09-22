@@ -73,6 +73,8 @@ import { Timeline } from "./features/timeline/Timeline";
 import { Preview } from "./features/preview/Preview";
 import { getContainedContentPercentageBounds } from "./features/preview/canvasManipulation";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
+
+const TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS = 400;
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
   CROP_ASPECT_RATIO_PRESETS,
@@ -224,7 +226,7 @@ function App() {
             textOverlayDraft.overlay,
           );
 
-          setProjectNotice("Text overlay autosaved.");
+          setProjectNotice("Text overlay updated.");
           return commitHistory(currentHistory, nextProject);
         } catch (error) {
           setProjectNotice(
@@ -237,7 +239,7 @@ function App() {
       });
 
       setTextOverlayDraft(null);
-    }, 400);
+    }, TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS);
 
     return () => {
       if (textOverlayAutoCommitTimerRef.current !== null) {
