@@ -99,7 +99,13 @@ export function buildWaveformPath(
   width = 128,
   height = 1,
 ): string {
-  if (!peaks.length || width <= 0 || height <= 0) {
+  if (
+    !peaks.length ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
     return "";
   }
 
