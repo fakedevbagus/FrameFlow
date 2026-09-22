@@ -73,8 +73,6 @@ import { Timeline } from "./features/timeline/Timeline";
 import { Preview } from "./features/preview/Preview";
 import { getContainedContentPercentageBounds } from "./features/preview/canvasManipulation";
 import { DEFAULT_TIMELINE_ZOOM } from "./features/timeline/constants";
-
-const TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS = 400;
 import { getTimelineDurationMs } from "./features/timeline/metrics";
 import {
   CROP_ASPECT_RATIO_PRESETS,
@@ -165,6 +163,8 @@ function isAbortError(error: unknown): boolean {
     (error as { name?: unknown }).name === "AbortError"
   );
 }
+
+const TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS = 400;
 
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
