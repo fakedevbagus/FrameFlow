@@ -1,3 +1,26 @@
+## M3.56 stabilization — handoff — 2026-09-22
+
+- PR #70 remains open and Draft on feat/m3-56-audio-waveform-scrubbing, based on main 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b.
+- Waveform data handling was hardened so invalid native peak values cannot produce malformed SVG geometry and empty native peak arrays fail as controlled waveform-data errors instead of silently becoming a blank waveform.
+- App.handleTogglePlayback() now distinguishes expected AbortError playback interruption from real playback failures, invalidates stale play promises after pause/seek operations, and aggregates multiple media play() results so one rejected media does not hide another failure.
+- Preview test rendering now awaits asynchronous preparation effects; jsdom HTMLMediaElement.play() has a deterministic default mock.
+- Vitest worker concurrency is capped at two forks as a targeted response to the previously observed worker-start timeout pattern; fresh full-suite verification is still required.
+- Timeline waveform scrubbing coverage now validates the left, center, and right bounds, keyboard seeking, and verifies the waveform does not start clip movement.
+- SVG waveform generation also rejects non-finite width/height inputs.
+- Manual desktop inspection found the waveform visually overfilled; the renderer now uses reduced amplitude, nonlinear peak compression, and an explicit SVG fill to keep the waveform readable against the audio clip background.
+- Do not advance to M3.57 until local automated and desktop validation closes the remaining gate.
+
+
+## M3.56 kickoff — Audio Waveform Scrubbing — 2026-09-22
+
+- M3.55 Audio Waveform Foundation was squash-merged as PR #69 at `8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`.
+- M3.56 scope: make the existing Audio timeline waveform directly scrub the owning clip's playhead position.
+- The waveform maps pointer X to local clip time with clamping and integer-millisecond normalization.
+- Scrubbing selects the owning audio clip and uses the existing Timeline current-time callback; waveform pointer events are isolated from clip dragging.
+- No project schema changes are introduced, and waveform generation remains read-only.
+- Required validation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR draft until the full validation suite and focused waveform scrubbing checks are clean.
+
 ## M3.55 kickoff — Audio Waveform Foundation — 2026-09-21
 
 - M3.54 Audio Volume Automation Timeline UX was squash-merged as PR #68 at `21a1d601bed8215ea52c6ec4eb8ddcb2c4e769d2`.

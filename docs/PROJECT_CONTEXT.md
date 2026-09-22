@@ -1,3 +1,28 @@
+## M3.56 stabilization — Audio waveform, playback aborts, and test reliability — 2026-09-22
+
+- Current repository inspection confirms M3.56 remains PR #70 (feat/m3-56-audio-waveform-scrubbing) based on main at 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b; the PR is still open and Draft.
+- Waveform static tracing found two frontend robustness gaps: native peak arrays could be reduced to an empty result after filtering invalid values, and SVG path construction could receive non-finite peaks.
+- Waveform peak normalization now preserves bucket positions, converts non-finite peaks to zero, rejects empty native peak arrays, and keeps the existing native FFmpeg generation architecture unchanged.
+- Playback static tracing found App.handleTogglePlayback() surfaced the raw rejection message from HTMLMediaElement.play() through projectNotice. Expected AbortError rejections are now treated as playback interruption rather than a user-facing error, and a request id invalidates stale play promises after pause/seek.
+- Vitest's default fork pool uses available parallelism. The latest supplied run showed simultaneous fork worker startup timeouts. The test configuration now caps the forks pool at two workers; this requires fresh local validation before the failure can be considered fully resolved.
+- Preview tests now await asynchronous preview effects through a shared test render helper, and the jsdom media play() method has a deterministic resolved default so tests can focus on application behavior.
+- Timeline waveform regression coverage now checks left/center/right seeking and verifies waveform pointer interaction does not invoke clip movement.
+- Waveform interaction is keyboard-accessible as a button; Enter/Space seeks to the clip midpoint.
+- SVG waveform path construction now rejects non-finite dimensions as well as invalid peak data.
+- Waveform rendering was visually hardened after manual desktop inspection: reduced vertical amplitude, nonlinear peak compression, and an explicit SVG path fill prevent an overfilled/black-looking waveform.
+- Required local validation remains pending in this environment because repository execution is unavailable here: npm run lint; targeted Vitest tests; npm run test; npm run build; cd src-tauri && cargo test; cd ..; npm run tauri dev.
+
+## M3.56 — Audio Waveform Scrubbing — in progress — 2026-09-22
+
+- M3.55 Audio Waveform Foundation is complete and PR #69 was squash-merged at `8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`.
+- M3.56 adds direct playhead seeking from the rendered Audio waveform without changing project schema or waveform storage.
+- Pointer scrubbing maps the waveform's horizontal position to local clip time, clamps to the clip duration, selects the owning audio clip, and seeks the timeline playhead.
+- Waveform interaction stops propagation so normal clip move/trim gestures are not triggered by a waveform seek.
+- Existing audio automation markers, fades, track volume/pan, EQ, compressor, mute, multi-track mixing, RenderPlan, export, and history semantics remain unchanged.
+- Waveform generation and in-memory caching remain display infrastructure; waveform editing and region selection remain deferred.
+- Required validation after implementation: `npm run lint`; `npm run test`; `npm run build`; `cd src-tauri && cargo test`; `cd ..`; `npm run tauri dev`.
+- Keep PR draft until the full local validation suite and focused waveform scrubbing checks are reported clean.
+
 ## M3.55 — Audio Waveform Foundation — in progress — 2026-09-21
 
 - M3.54 Audio Volume Automation Timeline UX is complete and PR #68 was squash-merged at `21a1d601bed8215ea52c6ec4eb8ddcb2c4e769d2`.

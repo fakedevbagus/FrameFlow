@@ -21,6 +21,7 @@ import {
 import {
   buildWaveformPath,
   getAudioWaveform,
+  getWaveformLocalTimeMs,
 } from "../audio/waveform";
 import {
   DEFAULT_TIMELINE_ZOOM,
@@ -43,6 +44,7 @@ import {
 
 const basePixelsPerSecond = 40;
 const rulerStepMs = 5_000;
+const AUDIO_WAVEFORM_PEAK_COUNT = 512;
 
 interface TimelineProps {
   project: Project;
@@ -1660,7 +1662,22 @@ function TimelineTrack({
                 </span>
                 <small>{formatTimecode(durationMs)}</small>
                 {isAudioClip && asset ? (
-                  <AudioWaveformPreview sourcePath={asset.sourcePath} />
+                  <AudioWaveformPreview
+                    sourcePath={asset.sourcePath}
+                    durationMs={durationMs}
+                    onSeek={(localTimeMs) => {
+                      onSelectClip?.(clip.id);
+                      onCurrentTimeChange?.(
+                        Math.min(
+                          Math.max(
+                            clip.timelineStartMs + localTimeMs,
+                            0,
+                          ),
+                          timelineDurationMs,
+                        ),
+                      );
+                    }}
+                  />
                 ) : null}
                 {isAudioClip ? (
                   <>
@@ -2223,8 +2240,12 @@ function TimelineTrack({
 
 function AudioWaveformPreview({
   sourcePath,
+  durationMs,
+  onSeek,
 }: {
   sourcePath: string;
+  durationMs: number;
+  onSeek: (localTimeMs: number) => void;
 }) {
   const [waveformState, setWaveformState] = useState<{
     sourcePath: string;
@@ -2243,7 +2264,7 @@ function AudioWaveformPreview({
   useEffect(() => {
     let cancelled = false;
 
-    void getAudioWaveform(sourcePath, 128)
+    void getAudioWaveform(sourcePath, AUDIO_WAVEFORM_PEAK_COUNT)
       .then((waveform) => {
         if (cancelled) {
           return;
@@ -2251,7 +2272,11 @@ function AudioWaveformPreview({
 
         setWaveformState({
           sourcePath,
-          path: buildWaveformPath(waveform.peaks, 128, 20),
+          path: buildWaveformPath(
+            waveform.peaks,
+            AUDIO_WAVEFORM_PEAK_COUNT,
+            20,
+          ),
           isLoading: false,
         });
       })
@@ -2285,14 +2310,38 @@ function AudioWaveformPreview({
 
   return (
     <svg
-      aria-hidden="true"
+      aria-label="Seek audio waveform"
       className="timeline-audio-waveform"
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        onSeek(Math.round(durationMs / 2));
+      }}
+      onPointerDown={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const bounds = event.currentTarget.getBoundingClientRect();
+        onSeek(
+          getWaveformLocalTimeMs(
+            event.clientX,
+            bounds.left,
+            bounds.width,
+            durationMs,
+          ),
+        );
+      }}
       data-testid="timeline-audio-waveform"
       preserveAspectRatio="none"
-      viewBox="0 0 128 20"
+      role="button"
+      tabIndex={0}
+      viewBox={"0 0 " + AUDIO_WAVEFORM_PEAK_COUNT + " 20"}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d={waveformPath} />
+      <path d={waveformPath} fill="#9f91ff" fillOpacity="0.78" />
     </svg>
   );
 }

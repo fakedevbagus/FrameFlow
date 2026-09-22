@@ -1,3 +1,23 @@
+## 2026-09-22 — M3.56 stabilization — validation pending
+
+Branch: feat/m3-56-audio-waveform-scrubbing
+
+Implemented:
+- Hardened waveform peak normalization and SVG path generation against empty and non-finite peak data.
+- Rejected empty native waveform results at the frontend boundary.
+- Prevented expected HTMLMediaElement.play() AbortError interruptions from surfacing raw abort text in the project status.
+- Added playback request invalidation so stale play promises cannot overwrite later pause/seek state.
+- Awaited Preview asynchronous effects in interaction tests and added a deterministic jsdom media play() mock.
+- Reduced Vitest fork-worker concurrency to two workers as a targeted worker-startup stability mitigation.
+- Expanded Timeline waveform scrubbing regression coverage to left/center/right pointer positions, keyboard seeking, and drag isolation.
+- Made the interactive waveform keyboard-focusable and prevented non-finite SVG dimensions from producing malformed path data.
+- Refined waveform presentation after desktop inspection so the audio clip no longer renders as an overfilled/black-looking block: waveform amplitude is reduced, peak dynamics are compressed, and the SVG path fill is explicit.
+
+Validation:
+- Repository execution is not available in this connector environment, so fresh npm, Vitest, build, Cargo, and Tauri results are intentionally not claimed here.
+- Before marking PR #70 ready, run the required local validation gate and the manual waveform/playback checks from the M3.56 handoff.
+
+
 ## 2026-09-21 — M3.55 Audio Waveform Foundation — in progress
 
 Branch: `feat/m3-55-audio-waveform-foundation`

@@ -30,8 +30,11 @@ export function getAudioWaveform(
     if (
       !waveform ||
       !Number.isFinite(waveform.durationMs) ||
+      waveform.durationMs <= 0 ||
       !Number.isFinite(waveform.sampleRate) ||
-      !Array.isArray(waveform.peaks)
+      waveform.sampleRate <= 0 ||
+      !Array.isArray(waveform.peaks) ||
+      waveform.peaks.length === 0
     ) {
       throw new Error("Native waveform data is invalid.");
     }
@@ -39,9 +42,7 @@ export function getAudioWaveform(
     return {
       durationMs: Math.max(0, Math.round(waveform.durationMs)),
       sampleRate: Math.max(1, Math.round(waveform.sampleRate)),
-      peaks: waveform.peaks
-        .filter((peak) => Number.isFinite(peak))
-        .map((peak) => Math.min(1, Math.max(0, peak))),
+      peaks: waveform.peaks.map(normalizeWaveformPeak),
     };
   });
 
@@ -60,25 +61,66 @@ export function clearAudioWaveformCache(): void {
   waveformCache.clear();
 }
 
+function normalizeWaveformPeak(peak: number): number {
+  if (!Number.isFinite(peak)) {
+    return 0;
+  }
+
+  return Math.min(1, Math.max(0, peak));
+}
+
+export function getWaveformLocalTimeMs(
+  clientX: number,
+  left: number,
+  width: number,
+  durationMs: number,
+): number {
+  if (
+    !Number.isFinite(clientX) ||
+    !Number.isFinite(left) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(durationMs) ||
+    width <= 0 ||
+    durationMs <= 0
+  ) {
+    return 0;
+  }
+
+  const progress = Math.min(
+    1,
+    Math.max(0, (clientX - left) / width),
+  );
+
+  return Math.round(progress * durationMs);
+}
+
 export function buildWaveformPath(
   peaks: number[],
   width = 128,
   height = 1,
 ): string {
-  if (!peaks.length || width <= 0 || height <= 0) {
+  if (
+    !peaks.length ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
     return "";
   }
 
+  const normalizedPeaks = peaks.map(normalizeWaveformPeak);
   const center = height / 2;
-  const amplitude = height * 0.46;
-  const points = peaks.map((peak, index) => {
+  const amplitude = height * 0.36;
+  const points = normalizedPeaks.map((peak, index) => {
+
     const x =
-      peaks.length === 1
+      normalizedPeaks.length === 1
         ? width / 2
-        : index / (peaks.length - 1) * width;
-    const normalizedPeak = Math.min(1, Math.max(0, peak));
-    const yTop = center - normalizedPeak * amplitude;
-    const yBottom = center + normalizedPeak * amplitude;
+        : index / (normalizedPeaks.length - 1) * width;
+    const visualPeak = Math.pow(peak, 0.72);
+    const yTop = center - visualPeak * amplitude;
+    const yBottom = center + visualPeak * amplitude;
 
     return { x, yTop, yBottom };
   });

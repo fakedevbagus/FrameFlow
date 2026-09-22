@@ -688,7 +688,84 @@ describe("Timeline", () => {
     const waveform = await screen.findByTestId("timeline-audio-waveform");
 
     expect(waveform).toBeInTheDocument();
+    expect(waveform).toHaveAttribute("viewBox", "0 0 512 20");
     expect(waveform.querySelector("path")).toHaveAttribute("d");
+    expect(waveform.querySelector("path")).toHaveAttribute(
+      "d",
+      expect.stringContaining("M 0.000"),
+    );
+  });
+
+  it("seeks the playhead from the audio waveform", async () => {
+    const project = createVideoProject();
+    project.assets.push({
+      id: "audio-waveform-seek",
+      name: "waveform-seek.mp3",
+      mediaType: "audio",
+      sourcePath: "/waveform-seek.mp3",
+      durationMs: 5000,
+    });
+
+    const populated = addAssetToTimeline(project, "audio-waveform-seek");
+    const onCurrentTimeChange = vi.fn();
+    const onSelectClip = vi.fn();
+    const onMoveClip = vi.fn();
+
+    render(
+      <Timeline
+        project={populated}
+        onCurrentTimeChange={onCurrentTimeChange}
+        onSelectClip={onSelectClip}
+        onMoveClip={onMoveClip}
+      />,
+    );
+
+    const waveform = await screen.findByTestId("timeline-audio-waveform");
+
+    vi.spyOn(waveform, "getBoundingClientRect").mockReturnValue({
+      left: 10,
+      top: 0,
+      right: 210,
+      bottom: 20,
+      width: 200,
+      height: 20,
+      x: 10,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 10,
+      pointerId: 71,
+    });
+
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 110,
+      pointerId: 72,
+    });
+
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 210,
+      pointerId: 73,
+    });
+
+    expect(onSelectClip).toHaveBeenCalledTimes(3);
+    expect(onSelectClip).toHaveBeenCalledWith(
+      populated.tracks[1].clips[0].id,
+    );
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(1, 0);
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(2, 2500);
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(3, 5000);
+    expect(onMoveClip).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(waveform, { key: "Enter" });
+
+    expect(onCurrentTimeChange).toHaveBeenNthCalledWith(4, 2500);
+    expect(waveform).toHaveAttribute("role", "button");
+    expect(waveform).toHaveAttribute("tabindex", "0");
   });
 
   it("shows an audio track volume slider and reports changes", () => {

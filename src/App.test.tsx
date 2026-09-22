@@ -2049,6 +2049,146 @@ describe("App", () => {
     });
   });
 
+  it("does not surface expected playback AbortError as a project error", async () => {
+    const playMock = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockRejectedValue(
+        new DOMException("The operation was aborted.", "AbortError"),
+      );
+
+    let project = createProject({ id: "playback-abort" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-abort",
+          name: "abort.mp4",
+          mediaType: "video",
+          sourcePath: "/media/abort.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-abort");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await screen.findByTestId("preview-video");
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+    await waitFor(() => {
+      expect(playMock).toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByText("The operation was aborted."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Preview playback could not start."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("still surfaces a genuine playback failure", async () => {
+    const playMock = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockRejectedValue(new Error("codec failure"));
+
+    let project = createProject({ id: "playback-failure" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-failure",
+          name: "failure.mp4",
+          mediaType: "video",
+          sourcePath: "/media/failure.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-failure");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await screen.findByTestId("preview-video");
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+    await waitFor(() => {
+      expect(playMock).toHaveBeenCalled();
+      expect(screen.getByText("codec failure")).toBeInTheDocument();
+    });
+  });
+
+  it("does not let a playback AbortError hide another media failure", async () => {
+    const playMock = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockImplementation(function (this: HTMLMediaElement) {
+        return this instanceof HTMLVideoElement
+          ? Promise.reject(new Error("video codec failure"))
+          : Promise.reject(
+              new DOMException("The operation was aborted.", "AbortError"),
+            );
+      });
+
+    let project = createProject({ id: "mixed-playback-failure" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-failure",
+          name: "failure.mp4",
+          mediaType: "video",
+          sourcePath: "/media/failure.mp4",
+          durationMs: 5000,
+        },
+        {
+          id: "audio-abort",
+          name: "abort.mp3",
+          mediaType: "audio",
+          sourcePath: "/media/abort.mp3",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "video-failure");
+    project = addAssetToTimeline(project, "audio-abort");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await screen.findByTestId("preview-video");
+    await waitFor(() => {
+      expect(screen.getByTestId("preview-audio")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+    await waitFor(() => {
+      expect(playMock).toHaveBeenCalled();
+      expect(screen.getByText("video codec failure")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("The operation was aborted.")).not.toBeInTheDocument();
+  });
+
   it("updates audio fade controls from the timeline handle", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {

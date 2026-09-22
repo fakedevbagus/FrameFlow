@@ -129,6 +129,27 @@ const canvasAspectRatioPresets = [
   { id: "4-3", label: "4:3", width: 1440, height: 1080 },
 ] as const;
 
+function isAbortError(error: unknown): boolean {
+  if (
+    typeof DOMException !== "undefined" &&
+    error instanceof DOMException &&
+    error.name === "AbortError"
+  ) {
+    return true;
+  }
+
+  if (error instanceof Error && error.name === "AbortError") {
+    return true;
+  }
+
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
+
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
   const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
@@ -141,6 +162,7 @@ function App() {
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const playbackTimeRef = useRef(0);
   const playbackUiLastPublishedTimestampRef = useRef<number | null>(null);
+  const playbackRequestIdRef = useRef(0);
   const timelineDurationRef = useRef(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -261,6 +283,7 @@ function App() {
   }, [timelineDurationMs]);
 
   const handleStepFrame = useCallback((direction: -1 | 1) => {
+    playbackRequestIdRef.current += 1;
     setIsPlaying(false);
     setPlaybackTime(
       stepFrame(
@@ -321,6 +344,7 @@ function App() {
   }, [isPlaying, setPlaybackTime, timelineDurationMs]);
 
   function handleCurrentTimeChange(timeMs: number) {
+    playbackRequestIdRef.current += 1;
     setIsPlaying(false);
     setPlaybackTime(timeMs);
   }
@@ -481,12 +505,15 @@ function App() {
     const mediaElements = getPreviewMediaElements();
 
     if (isPlaying) {
+      playbackRequestIdRef.current += 1;
       for (const media of mediaElements) {
         media.pause();
       }
       setIsPlaying(false);
       return;
     }
+
+    const playbackRequestId = ++playbackRequestIdRef.current;
 
     const targetTimeMs =
       playbackTimeRef.current >= timelineDurationRef.current
@@ -530,8 +557,38 @@ function App() {
 
     setIsPlaying(true);
 
-    void Promise.all(playPromises).catch((error) => {
-      const name = error instanceof DOMException ? error.name : "";
+    void Promise.allSettled(playPromises).then((results) => {
+      if (playbackRequestIdRef.current !== playbackRequestId) {
+        return;
+      }
+
+      const rejected = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+
+      if (!rejected) {
+        return;
+      }
+
+      const error = rejected.reason;
+
+      if (isAbortError(error)) {
+        setIsPlaying(false);
+        return;
+      }
+
+      const name =
+        typeof DOMException !== "undefined" &&
+        error instanceof DOMException
+          ? error.name
+          : error instanceof Error
+            ? error.name
+            : typeof error === "object" &&
+                error !== null &&
+                "name" in error
+              ? String((error as { name?: unknown }).name ?? "")
+              : "";
       const message =
         name === "NotSupportedError"
           ? "Preview media format is not supported by the Linux WebView."

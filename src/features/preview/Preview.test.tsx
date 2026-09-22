@@ -28,6 +28,12 @@ async function flushPreviewEffects() {
   });
 }
 
+async function renderPreview(ui: Parameters<typeof render>[0]) {
+  const result = render(ui);
+  await flushPreviewEffects();
+  return result;
+}
+
 beforeEach(() => {
   vi.restoreAllMocks();
   invokeMock.mockReset();
@@ -67,7 +73,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "video-1");
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -112,7 +118,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "video-fallback");
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -177,7 +183,7 @@ describe("Preview", () => {
       ),
     };
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={3500}
@@ -251,7 +257,7 @@ describe("Preview", () => {
       ),
     };
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -298,7 +304,7 @@ describe("Preview", () => {
       })),
     };
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -355,7 +361,7 @@ describe("Preview", () => {
       })),
     };
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -420,7 +426,7 @@ describe("Preview", () => {
       })),
     };
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -459,7 +465,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "image-1");
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -492,7 +498,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "audio-1");
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -529,7 +535,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "audio-1");
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -568,7 +574,7 @@ describe("Preview", () => {
       ],
     };
 
-    const { rerender } = render(
+    const { rerender } = await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -619,7 +625,7 @@ describe("Preview", () => {
     project = addAssetToTimeline(project, "video-1");
     project = addAssetToTimeline(project, "audio-1");
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -654,7 +660,7 @@ describe("Preview", () => {
     const onSelectClip = vi.fn();
     const onTransformCommit = vi.fn();
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -733,7 +739,7 @@ describe("Preview", () => {
     const onSelectClip = vi.fn();
     const onTransformAnchorCommit = vi.fn();
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -818,7 +824,7 @@ describe("Preview", () => {
     const clipId = project.tracks[0].clips[0].id;
     const onTransformCommit = vi.fn();
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -888,7 +894,7 @@ describe("Preview", () => {
     const clipId = project.tracks[0].clips[0].id;
     const onTransformAnchorCommit = vi.fn();
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -982,7 +988,7 @@ describe("Preview", () => {
     const onCropCommit = vi.fn();
     const onCropPositionCommit = vi.fn();
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -1062,7 +1068,7 @@ describe("Preview", () => {
     expect(onCropPositionCommit).not.toHaveBeenCalled();
   });
 
-  it("shows direct manipulation handles for the selected visual", () => {
+  it("shows direct manipulation handles for the selected visual", async () => {
     let project = createProject({ id: "canvas-handles-preview" });
 
     project = {
@@ -1081,7 +1087,7 @@ describe("Preview", () => {
     project = addAssetToTimeline(project, "video-1");
     const clipId = project.tracks[0].clips[0].id;
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -1118,7 +1124,7 @@ describe("Preview", () => {
     const clipId = project.tracks[0].clips[0].id;
     const onCropCommit = vi.fn();
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -1219,7 +1225,7 @@ describe("Preview", () => {
 
     const onCropPositionCommit = vi.fn();
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={1000}
@@ -1297,7 +1303,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "video-replay");
 
-    const { rerender } = render(
+    const { rerender } = await renderPreview(
       <Preview
         project={project}
         currentTimeMs={0}
@@ -1345,7 +1351,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "video-1");
 
-    const { rerender } = render(
+    const { rerender } = await renderPreview(
       <Preview
         project={project}
         currentTimeMs={0}
@@ -1410,7 +1416,7 @@ describe("Preview", () => {
 
     project = addAssetToTimeline(project, "video-1");
 
-    render(
+    await renderPreview(
       <Preview
         project={project}
         currentTimeMs={500}

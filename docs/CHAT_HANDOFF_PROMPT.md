@@ -49,7 +49,7 @@ Before changing anything:
 
 Use this lifecycle:
 1. Inspect current `main`.
-2. Create a focused feature branch.
+2. Create a focused feature branch from the updated `main).
 3. Implement.
 4. Add/update tests.
 5. Update documentation.
@@ -57,128 +57,138 @@ Use this lifecycle:
 7. Give me exact local validation commands.
 8. Wait for my validation.
 9. Only after I confirm success, mark PR ready and squash-merge.
-10. Record the merge SHA in both documentation files.
+10. Record the merge SHA in `docs/PROJECT_CONTEXT.md` and `docs/CHANGELOG.md`.
 11. Create the next branch from the updated `main`.
 
-Normal validation:
+### Required pull/fetch sequence
+
+For an existing working feature branch:
 
 ```bash
-git fetch origin
+git fetch origin --prune
 git checkout <feature-branch>
 git pull --ff-only origin <feature-branch>
+git status
+git log -1 --oneline
+```
 
+Do not skip the fetch/pull sequence when handing work back to the local environment.
+
+### Normal validation
+
+```bash
+npm ci
 npm run lint
 npm run test
 npm run build
 npm run tauri dev
 ```
 
-## Current project state
+For Rust-specific validation:
 
-Latest merged milestone:
+```bash
+cd src-tauri
+cargo test
+cd ..
+```
 
-### M3.12 — Keyframe keyboard nudging
-PR #21
-Merge SHA:
-`9c745f798b73b34fdbf70ca04837de0eaa085036`
+## Current repository state
 
-Implemented:
-- ArrowLeft/ArrowRight moves focused transform keyframes by one frame.
-- Shift+Arrow moves by 500 ms.
-- Keyframes stay inside clip bounds and cannot cross adjacent keyframes.
-- Playhead follows moved keyframes.
-- Click, drag, Delete/Backspace remain supported.
+### M3.56 — Audio Waveform Scrubbing — active draft PR
 
-### M3.11 — Keyframe selection controls
-PR #20
-Merge SHA:
-`6470a740818b9f3988d19f66f79fc39387981934`
+PR #70:
+https://github.com/fakedevbagus/FrameFlow/pull/70
 
-Implemented:
-- Keyframe markers receive keyboard focus.
-- Delete/Backspace removes only the keyframe, not the clip.
-- Timeline/App regression coverage added.
+Branch:
+`feat/m3-56-audio-waveform-scrubbing`
 
-Previous keyframe milestones:
-- M3.10 easing: `c4eef9e65bac87c7b3f31e3623ccf85caf714596`
-- M3.9 draggable keyframes: `fb9f6fe5fc2186df9351d2abee1246d67b9ef661`
-- M3.8 timeline UI: `031033c1a6036d55a6c22ecc3ad184b376b76175`
-- M3.7 keyframe foundation: `6bb225f35638f37d89a1031aae7371b5c95c01d6`
+Current HEAD:
+`a8b3673c4850524abef93abee947d7cd48355727`
 
-The complete history is in `docs/PROJECT_CONTEXT.md`.
+Base:
+`main @ 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`
 
-## Current issue / current branch
+PR state:
+- Open
+- Draft
+- Mergeable
+- Do not merge until the user reports successful local validation.
 
-During Linux manual playback testing I reported:
-- Clicking Play can have a noticeable startup delay or apparent freeze.
-- Playback may become normal after the delay.
-- Replay can start from a stale end position or unexpectedly jump back to the beginning.
+Implemented in M3.56:
+- Direct waveform click-to-seek maps pointer X to local audio clip time and clamps to the clip duration.
+- Waveform pointer interaction is isolated from normal clip move/trim gestures.
+- Waveform remains display-only and does not change project schema.
+- Native FFmpeg waveform generation and in-memory request caching remain unchanged.
+- Waveform rendering is hardened against invalid native peaks, empty peak arrays, and non-finite SVG dimensions.
+- Waveform interaction is keyboard-accessible through Enter/Space.
+- Playback `AbortError` is treated as an expected interruption rather than a user-facing preview error.
+- Stale playback promises are invalidated after pause/seek operations.
+- Multiple media `play()` failures are aggregated so one rejected media element does not hide another genuine failure.
+- Vitest worker concurrency is constrained to reduce worker-startup timeout instability.
+- Preview async effects are awaited by the relevant tests.
+- jsdom media `play()` has a deterministic resolved default in test setup.
+- Waveform visual amplitude was refined after Linux desktop inspection so the waveform is less overfilled, uses nonlinear peak compression, and has an explicit SVG fill.
 
-A concrete race was identified:
-1. `App.tsx` waited for `media.play()` to resolve before setting `isPlaying`.
-2. Starting from timeline end scheduled `setPlaybackTime(0)`, then immediately called `play()` before the media element was necessarily reset.
-3. `Preview.tsx` did not explicitly re-align media to the current transport position when playback began.
-4. The Linux preview path uses a localhost HTTP media server because older local WebView media delivery approaches were unreliable.
+### Current M3.56 validation evidence
 
-A fix is now implemented on:
-`feat/m3-13-playback-stability`
+The latest supplied local validation log established:
+- `npm ci`: completed with 0 vulnerabilities.
+- `npm run lint`: passed.
+- `src/App.test.tsx`: 39/39 passed after the playback-test correction.
+- Production build: passed.
+- `cargo test`: 37/37 passed.
+- `npm run tauri dev`: Vite started on `http://localhost:1420/` and the Tauri binary launched.
+- Known React `act(...)` warnings remain test-environment warnings and are not current test failures.
 
-Fix contents:
-- `App.tsx`: starts playback immediately without awaiting all `play()` promises.
-- `App.tsx`: determines a transport target time and resets to 0 when playback is at timeline end.
-- `App.tsx`: aligns active media to clip-local/source-local time before calling `play()`.
-- `Preview.tsx`: video elements expose `data-clip-id`.
-- `Preview.tsx`: playback-start effect re-aligns video to the current clip-local time.
-- `Preview.test.tsx`: regression test covers replay alignment from a near-end media position.
-- Documentation files were added/updated as the long-lived context source.
+A later renderer refinement temporarily exposed one stale waveform geometry assertion; that assertion has been corrected. The current branch must still be locally revalidated after the latest change.
 
-Important: **M3.13 is not yet validated locally by me.**
+### M3.56 final gate
 
-Do not mark it complete or merge it until I report the local result.
+Before marking PR #70 ready:
+1. Run the required pull/fetch sequence.
+2. Run:
+   - `npm ci`
+   - `npm run lint`
+   - `npm run test`
+   - `npm run build`
+   - `cd src-tauri && cargo test && cd ..`
+   - `npm run tauri dev`
+3. Manually inspect:
+   - Audio waveform is visually readable and not an overfilled black block.
+   - Clicking left/middle/right positions moves the playhead to the expected local time.
+   - Enter/Space on the focused waveform seeks to the clip midpoint.
+   - Waveform interaction does not move/trim the clip.
+   - Playback can be paused/resumed without stale-position regressions.
+   - Existing audio fades, volume automation, pan, EQ, compressor, mute, multi-track mix, and export remain intact.
+4. Keep PR #70 Draft until the user reports the result.
+5. After user approval, mark the PR ready and squash-merge.
+6. Record the merge SHA in both context documents.
 
-## M3.13 manual validation
+## Previous merged audio milestones
 
-1. Import a real local MP4.
-2. Start Play from 00:00; verify no noticeable transport-start delay.
-3. Verify video and playhead advance together.
-4. Pause in the middle and resume from the same position.
-5. Move playhead to the exact timeline end and press Play; verify clean restart from 00:00, without replaying the stale end frame first.
-6. Repeat with a trimmed clip where `sourceStartMs` is not zero.
-7. Test multiple active media layers and verify each aligns to its own clip-local position.
-8. Verify playback does not create Undo/Redo history entries.
-9. Verify M3.11/M3.12 keyframe click, drag, Delete/Backspace, Arrow nudging, and Shift+Arrow still work.
+- M3.55 Audio Waveform Foundation — PR #69 — merge SHA:
+  `8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`
+- M3.54 Audio Volume Automation Timeline UX — PR #68 — merge SHA:
+  `21a1d601bed8215ea52c6ec4eb8ddcb2c4e769d2`
+- M3.53 Audio Clip Volume Automation — PR #67 — merge SHA:
+  `fafe6e183ba4eb350db0f1b9873861d9c5543689`
+- M3.52 Audio Clip Dynamics Compressor — PR #66 — merge SHA:
+  `da0b5dc957be094738ac4e657007523f8684fdd8`
+- M3.51 Audio Clip 3-Band EQ — PR #65 — merge SHA:
+  `52844a8c5f1a1f0605e6c9508d87c52c90ead7de`
 
-## Media preview architecture
+The complete milestone history is in `docs/PROJECT_CONTEXT.md`.
 
-Video preview currently follows:
-1. Native `prepare_media_preview` creates/returns a compatible H.264 MP4 preview.
-2. Native localhost HTTP media server serves the prepared media.
-3. React calls `get_media_http_url` and assigns the URL to `<video>`.
-4. Transport state and media elements are synchronized.
-5. Timeline time is mapped to clip-local/source-local time.
+## Next-milestone rule
 
-Do not replace this architecture without first auditing the reasons for it. A large part of M3.7 solved Linux WebView media compatibility, range requests, preview caching, and localhost serving.
+There is currently no authoritative M3.57 branch/spec in this repository. Do not invent an M3.57 feature.
 
-## Existing transform/keyframe system
-
-Visual clips support:
-- X/Y position
-- Scale
-- Rotation
-- Opacity
-- Transform keyframes
-- Linear / Ease in / Ease out / Ease in-out interpolation
-
-Current keyframe UX:
-- Add/update/remove
-- Timeline diamond markers
-- Click-to-seek
-- Drag-to-move
-- Delete/Backspace
-- ArrowLeft/ArrowRight one-frame nudge
-- Shift+Arrow 500 ms nudge
-- Clip/neighbor constraints
-- Undo/Redo
+After M3.56 is locally validated and merged:
+1. Re-inspect the updated `main`.
+2. Inspect open PRs/branches/issues and the current project context.
+3. Determine the next focused milestone from repository evidence.
+4. Create the next feature branch from the updated `main`.
+5. Do not regress into older milestones described by stale historical prompts.
 
 ## Documentation contract
 
@@ -194,19 +204,8 @@ For each milestone or meaningful bug fix, record:
 - implementation summary
 - architecture decisions
 - tests added/updated
-- manual validation actually reported by me
+- manual validation actually reported by the user
 - known limitations
 - next step
 
 Never document unverified validation as completed.
-
-## Immediate continuation
-
-Start by reading:
-- `docs/PROJECT_CONTEXT.md`
-- `docs/CHANGELOG.md`
-- `src/App.tsx`
-- `src/features/preview/Preview.tsx`
-- `src/features/preview/Preview.test.tsx`
-
-Then inspect `feat/m3-13-playback-stability`, review the playback fix, and prepare/maintain its draft PR. After I validate it locally, continue to the next milestone using the same workflow.
