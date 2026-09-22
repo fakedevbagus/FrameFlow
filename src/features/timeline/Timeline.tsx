@@ -2464,7 +2464,10 @@ function AudioWaveformPreview({
         );
         selectionMovedRef.current = true;
         if (nextSelection) {
-          setSelection(nextSelection);
+          setSelectionState({
+            sourcePath,
+            ...nextSelection,
+          });
         }
       }}
       onPointerUp={finishSelection}
