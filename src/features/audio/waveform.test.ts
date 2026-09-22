@@ -109,11 +109,14 @@ describe("audio waveform", () => {
   it("clamps waveform request size and caches identical requests", async () => {
     clearAudioWaveformCache();
 
-    vi.mocked(invoke).mockResolvedValue({
-      durationMs: 5000,
-      sampleRate: 1024,
-      peaks: [-1, 0.25, 0.75, 2],
-    });
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "5000:100" })
+      .mockResolvedValueOnce({
+        durationMs: 5000,
+        sampleRate: 1024,
+        peaks: [-1, 0.25, 0.75, 2],
+        sourceFingerprint: "5000:100",
+      });
 
     const first = getAudioWaveform("/music.mp3", 10);
     const second = getAudioWaveform("/music.mp3", 10);
@@ -122,15 +125,25 @@ describe("audio waveform", () => {
 
     const waveform = await first;
 
-    expect(invoke).toHaveBeenCalledTimes(1);
-    expect(invoke).toHaveBeenCalledWith("generate_audio_waveform", {
-      path: "/music.mp3",
-      peakCount: 32,
-    });
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke).toHaveBeenNthCalledWith(
+      1,
+      "get_audio_waveform_source_fingerprint",
+      { path: "/music.mp3" },
+    );
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      "generate_audio_waveform",
+      {
+        path: "/music.mp3",
+        peakCount: 32,
+      },
+    );
     expect(waveform).toEqual({
       durationMs: 5000,
       sampleRate: 1024,
       peaks: [0, 0.25, 0.75, 1],
+      sourceFingerprint: "5000:100",
     });
   });
 
@@ -139,21 +152,26 @@ describe("audio waveform", () => {
       durationMs: 1000,
       sampleRate: 1024,
       peaks: [0.25, Number.NaN, 0.75],
+      sourceFingerprint: "1000:200",
     });
 
     await expect(getAudioWaveform("/invalid-peaks.mp3")).resolves.toEqual({
       durationMs: 1000,
       sampleRate: 1024,
       peaks: [0.25, 0, 0.75],
+      sourceFingerprint: "1000:200",
     });
   });
 
   it("rejects an empty native peak array", async () => {
-    vi.mocked(invoke).mockResolvedValue({
-      durationMs: 1000,
-      sampleRate: 1024,
-      peaks: [],
-    });
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "1000:300" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [],
+        sourceFingerprint: "1000:300",
+      });
 
     await expect(getAudioWaveform("/empty-peaks.mp3")).rejects.toThrow(
       "Native waveform data is invalid.",
@@ -164,11 +182,14 @@ describe("audio waveform", () => {
     clearAudioWaveformCache();
 
     vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "1000:400" })
       .mockRejectedValueOnce(new Error("generation failed"))
+      .mockResolvedValueOnce({ sourceFingerprint: "1000:400" })
       .mockResolvedValueOnce({
         durationMs: 1000,
         sampleRate: 1000,
         peaks: [0.5],
+        sourceFingerprint: "1000:400",
       });
 
     await expect(getAudioWaveform("/broken.mp3")).rejects.toThrow(
@@ -179,8 +200,134 @@ describe("audio waveform", () => {
       durationMs: 1000,
       sampleRate: 1000,
       peaks: [0.5],
+      sourceFingerprint: "1000:400",
+    });
+
+    expect(invoke).toHaveBeenCalledTimes(4);
+  });
+
+  it("reuses a persisted waveform without regenerating FFmpeg data", async () => {
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "2048:500" })
+      .mockResolvedValueOnce({
+        durationMs: 2048,
+        sampleRate: 2048,
+        peaks: [0.25, 0.75],
+        sourceFingerprint: "2048:500",
+      })
+      .mockResolvedValueOnce({ sourceFingerprint: "2048:500" });
+
+    const first = await getAudioWaveform("/persisted.mp3", 128);
+
+    expect(first.peaks).toEqual([0.25, 0.75]);
+
+    const second = await getAudioWaveform("/persisted.mp3", 128);
+
+    expect(second).toEqual(first);
+    expect(invoke).toHaveBeenCalledTimes(3);
+    expect(invoke).toHaveBeenNthCalledWith(
+      3,
+      "get_audio_waveform_source_fingerprint",
+      { path: "/persisted.mp3" },
+    );
+    expect(invoke).not.toHaveBeenCalledWith(
+      "generate_audio_waveform",
+      {
+        path: "/persisted.mp3",
+        peakCount: 128,
+      },
+    );
+  });
+
+  it("regenerates when the source fingerprint changes", async () => {
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "2048:600" })
+      .mockResolvedValueOnce({
+        durationMs: 2048,
+        sampleRate: 2048,
+        peaks: [0.25],
+        sourceFingerprint: "2048:600",
+      })
+      .mockResolvedValueOnce({ sourceFingerprint: "2048:601" })
+      .mockResolvedValueOnce({
+        durationMs: 2048,
+        sampleRate: 2048,
+        peaks: [0.9],
+        sourceFingerprint: "2048:601",
+      });
+
+    await expect(getAudioWaveform("/changed.mp3")).resolves.toMatchObject({
+      peaks: [0.25],
+      sourceFingerprint: "2048:600",
+    });
+
+    await expect(getAudioWaveform("/changed.mp3")).resolves.toMatchObject({
+      peaks: [0.9],
+      sourceFingerprint: "2048:601",
+    });
+
+    expect(invoke).toHaveBeenCalledTimes(4);
+  });
+
+  it("treats malformed persisted waveform data as a cache miss", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/broken-cache.mp3::512::bad",
+            waveform: {
+              durationMs: -1,
+              sampleRate: 0,
+              peaks: [],
+              sourceFingerprint: "bad",
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "1000:700" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1000,
+        peaks: [0.5],
+        sourceFingerprint: "1000:700",
+      });
+
+    await expect(getAudioWaveform("/broken-cache.mp3", 512)).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1000,
+      peaks: [0.5],
+      sourceFingerprint: "1000:700",
     });
 
     expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back to waveform generation when persistent storage throws", async () => {
+    const originalGetItem = Storage.prototype.getItem;
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("storage unavailable");
+    });
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "1000:800" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1000,
+        peaks: [0.5],
+        sourceFingerprint: "1000:800",
+      });
+
+    await expect(getAudioWaveform("/storage-error.mp3")).resolves.toMatchObject({
+      sourceFingerprint: "1000:800",
+    });
+
+    expect(invoke).toHaveBeenCalledTimes(2);
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(originalGetItem);
   });
 });
