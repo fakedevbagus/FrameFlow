@@ -857,6 +857,71 @@ describe("App", () => {
     });
   });
 
+  it("updates the preview from native control values without an input event", async () => {
+    let project = createProject({ id: "text-overlay-native-value" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-text-native",
+          name: "native-text.mp4",
+          mediaType: "video",
+          sourcePath: "/media/native-text.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-text-native");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTitle("native-text.mp4 · 00:05"),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select native-text.mp4 clip" }),
+    );
+
+    const textInput = screen.getByRole("textbox", {
+      name: "Text overlay content",
+    });
+
+    fireEvent.focus(textInput);
+    (textInput as HTMLTextAreaElement).value = "Native live text";
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveTextContent("Native live text"),
+    );
+
+    const xInput = screen.getByRole("spinbutton", {
+      name: "Text overlay X position",
+    });
+
+    fireEvent.focus(xInput);
+    (xInput as HTMLInputElement).value = "25";
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ left: "25%" }),
+    );
+  });
+
   it("autosaves text overlay edits without requiring another control", async () => {
     let project = createProject({ id: "text-overlay-autosave-ui" });
 
