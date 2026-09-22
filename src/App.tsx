@@ -207,6 +207,15 @@ function App() {
     }
 
     clearTextOverlayEditSession();
+
+    return () => {
+      if (textOverlayAutoCommitTimerRef.current !== null) {
+        clearTimeout(textOverlayAutoCommitTimerRef.current);
+        textOverlayAutoCommitTimerRef.current = null;
+      }
+
+      clearTextOverlayEditSession();
+    };
   }, [selectedClipId]);
 
   useEffect(() => {
