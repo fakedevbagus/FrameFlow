@@ -4,6 +4,7 @@ Active branch: `feat/m3-62-text-overlay-export-rendering`
 PR: #76 — Draft
 Base: `main`
 Validation status: pending user validation
+Merge status: not merged; keep Draft until the user reports PASS.
 
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
 - M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
