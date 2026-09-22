@@ -94,34 +94,27 @@ cd ..
 
 ## Current repository state
 
-### M3.61 — Text Overlay Foundation — active draft PR
-
-PR #75:
-https://github.com/fakedevbagus/FrameFlow/pull/75
+### M3.62 — Text Overlay Export Rendering — active draft PR
 
 Branch:
-`feat/m3-61-text-overlay-foundation`
+`feat/m3-62-text-overlay-export-rendering`
 
 Base:
-`main @ bb5ea26ea3598f33dda7f07837eebaf093a4dfce`
+`main @ 191455b79880b13166cd3b4967b3db61bea7aa52`
 
 Implemented:
-- Backward-compatible optional per-visual-clip text overlay state.
-- Text content, normalized X/Y position, font size, color, and left/center/right alignment.
-- Inspector controls with Reset and a Text quick-access action.
-- Preview rendering for video and image clips.
-- Existing project/history mutation path and automatic project persistence.
-- Text overlay command validation is restricted to editable visual clips on video tracks.
-- Empty text clears the optional overlay.
-- Export/render-graph text compilation is intentionally deferred to a dedicated text-rendering milestone.
-- Regression coverage across domain, commands, and App Inspector/Preview workflow.
+- M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
+- M3.62 extends text overlays into native export/render-plan compilation.
+- Preserve text content, normalized X/Y position, font size, color, and alignment semantics between Preview and export.
+- Use an explicit renderer-owned font policy to avoid arbitrary platform font assumptions.
+- Preserve the existing single-video FFmpeg graph and validate interactions with existing visual metadata.
 
 Required local validation:
 
 ```bash
 git fetch origin --prune
-git checkout feat/m3-61-text-overlay-foundation
-git pull --ff-only origin feat/m3-61-text-overlay-foundation
+git checkout feat/m3-62-text-overlay-export-rendering
+git pull --ff-only origin feat/m3-62-text-overlay-export-rendering
 git status
 git log -1 --oneline
 
@@ -137,17 +130,35 @@ cd ..
 npm run tauri dev
 ```
 
-Manual M3.61 checks:
-- Select a video clip and verify Text overlay is visible in the Inspector.
-- Enter multiline text and verify it appears over the preview.
-- Change X/Y, font size, color, and alignment and verify the preview updates.
-- Reset the text overlay and verify the preview text disappears.
-- Select an image clip and verify the same text controls work.
-- Undo/Redo a text edit through the normal project history.
-- Save and reopen a project and verify text overlay state persists.
-- Confirm existing Transform, Crop, Color adjustments, Transition, Audio, Split, and Delete behavior remains intact.
+Manual M3.62 checks:
+- Create a text overlay on a video clip and verify it appears in Preview.
+- Export a minimal single-clip project with text and verify the exported file contains the text overlay.
+- Verify text position, size, color, and alignment are reflected in export.
+- Verify multiline text remains readable in export.
+- Verify an image clip with text remains compatible with the existing export limitations.
+- Verify existing Color adjustments continue to render with text.
+- Verify existing Transform/Crop/Transition behavior is not regressed where supported by the current export graph.
 
-Do not mark the M3.61 PR ready or merge it until the user reports local PASS.
+Do not mark the M3.62 PR ready or merge it until the user reports local PASS.
+
+### M3.61 — Text Overlay Foundation — merged
+
+PR #75:
+https://github.com/fakedevbagus/FrameFlow/pull/75
+
+Branch:
+`feat/m3-61-text-overlay-foundation`
+
+Merge SHA:
+`947f3c33fcf61b1e07d1d75e275d721755568ae8`
+
+Implemented:
+- Backward-compatible optional per-visual-clip text overlay state.
+- Text content, normalized X/Y position, font size, color, and left/center/right alignment.
+- Inspector controls with Reset and Text quick access.
+- Preview rendering for video and image clips.
+- History/persistence integration.
+- User reported local validation PASS; GitHub CI run #61 passed.
 
 ### M3.60 — Visual Effects Foundation — merged
 
