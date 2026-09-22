@@ -2691,6 +2691,16 @@ function App() {
                           text: event.currentTarget.value,
                         })
                       }
+                      onChange={(event) =>
+                        handleUpdateTextOverlayDraft({
+                          text: event.currentTarget.value,
+                        })
+                      }
+                      onKeyUp={(event) =>
+                        handleUpdateTextOverlayDraft({
+                          text: event.currentTarget.value,
+                        })
+                      }
                       onBlur={handleCommitSelectedTextOverlayDraft}
                     />
                     <div className="inspector-transform-input-grid">
@@ -2715,6 +2725,18 @@ function App() {
                               }
                             }}
                             key={"x-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)}
+                            onChange={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ x: value / 100 });
+                              }
+                            }}
+                            onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ x: value / 100 });
+                              }
+                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
@@ -2753,6 +2775,18 @@ function App() {
                               }
                             }}
                             key={"y-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)}
+                            onChange={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ y: value / 100 });
+                              }
+                            }}
+                            onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
+                                handleUpdateTextOverlayDraft({ y: value / 100 });
+                              }
+                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
@@ -2792,6 +2826,22 @@ function App() {
                               }
                             }}
                             key={"size-" + selectedClipContext.clip.id + "-" + (selectedTextOverlay?.fontSize ?? DEFAULT_TEXT_OVERLAY_FONT_SIZE)}
+                            onChange={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
+                                handleUpdateTextOverlayDraft({
+                                  fontSize: Math.round(value),
+                                });
+                              }
+                            }}
+                            onKeyUp={(event) => {
+                              const value = Number(event.currentTarget.value);
+                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
+                                handleUpdateTextOverlayDraft({
+                                  fontSize: Math.round(value),
+                                });
+                              }
+                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 12 || value > 240) {
