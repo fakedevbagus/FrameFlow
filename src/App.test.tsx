@@ -705,7 +705,7 @@ describe("App", () => {
       screen.getByRole("button", { name: "Select effects-ui.mp4 clip" }),
     );
 
-    expect(screen.getByText("Color adjustments")).toBeInTheDocument();
+    expect(screen.getByTestId("color-adjustments")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Show color adjustments" }),
     ).toBeInTheDocument();
