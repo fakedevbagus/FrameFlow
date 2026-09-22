@@ -1,5 +1,6 @@
 ## M3.61 — Text Overlay Foundation — in progress — 2026-09-22
 
+- PR #75: https://github.com/fakedevbagus/FrameFlow/pull/75
 - M3.60 Visual Effects Foundation was completed, user-validated, and squash-merged into main at `bb5ea26ea3598f33dda7f07837eebaf093a4dfce`.
 - Repository inspection after M3.60 shows text/captions are the next major editor capability not represented in the product surface.
 - M3.61 adds a backward-compatible optional per-visual-clip text overlay model with text content, normalized X/Y position, font size, color, and left/center/right alignment.
