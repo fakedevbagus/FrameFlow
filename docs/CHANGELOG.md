@@ -21,26 +21,27 @@ Branch: feat/m3-62-text-overlay-export-rendering
 PR: #76
 
 Problem:
-- On the Linux/Tauri WebView, Text Overlay Inspector edits to text content, X, Y, and font size could appear in the Inspector while Preview stayed stale until a later control interaction.
-- The previous implementation coupled the transient draft to App `useState` and reset that draft when `project.updatedAt` changed. It also accumulated native DOM listeners, polling, keyboard fallbacks, and `flushSync` attempts.
+- On the Linux/Tauri WebView, Text Overlay Inspector values could change visually inside the native control while Preview remained stale until blur/outside click.
+- The underlying issue is an input-delivery path where the DOM value can change without React receiving the expected input/change/keyboard event.
 
 Fix:
-- Replaced the App-local transient draft with a synchronous external React edit-session store exposed through `useSyncExternalStore`.
-- Live Preview now consumes the same edit-session snapshot that the Inspector updates, while committed project/history state remains separate.
-- Removed the polling/native-listener/flushSync workaround path.
-- Commit handlers read the latest external session at commit time, reducing stale-closure risk.
-- The session is cleared on selection changes and App cleanup, but is no longer cleared merely because another committed project update changes `project.updatedAt`.
+- Keep the transient Text Overlay edit session outside committed project/history state through a synchronous `useSyncExternalStore` store.
+- Retain normal `input`/`change` handlers as the fast path.
+- Add a direct 50 ms DOM-value polling fallback for Text/X/Y/Size while a visual clip is selected.
+- The fallback reads the actual Inspector DOM elements directly and does not depend on `document.activeElement`.
+- Polling merges only real DOM-value changes into the external edit session, so it does not create history entries per poll.
+- Removed the previous requirement for native listener registration, active-field detection, keyboard-only fallback, and `flushSync`.
 
 Regression coverage:
-- App-level live text/X/Y/size updates before blur.
-- No Undo history entry while edits remain live.
-- Single commit followed by Undo/Redo.
-- Reset behavior.
-- External edit-session publish/replace/clear behavior.
+- Live Text/X/Y/Size Preview updates before blur.
+- Direct DOM value mutation without a dispatched input/change/keyup event.
+- No Undo history entry while an edit remains uncommitted.
+- Single history entry on commit with Undo/Redo and Reset.
+- External edit-session publish/deduplication/replacement/clear behavior.
 
 Validation:
-- Local lint/test/build/Tauri validation pending user verification.
-- GitHub CI must be rechecked on the updated branch head.
+- Local Linux/Tauri validation pending user verification.
+- GitHub CI must be rechecked on the latest branch head.
 - Merge status: not merged; PR #76 remains Draft until the user reports PASS.
 
 ## 2026-09-22 — M3.61 Text Overlay Foundation — merged
