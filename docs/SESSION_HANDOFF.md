@@ -7,6 +7,7 @@
 - Vitest worker concurrency is capped at two forks as a targeted response to the previously observed worker-start timeout pattern; fresh full-suite verification is still required.
 - Timeline waveform scrubbing coverage now validates the left, center, and right bounds, keyboard seeking, and verifies the waveform does not start clip movement.
 - SVG waveform generation also rejects non-finite width/height inputs.
+- Manual desktop inspection found the waveform visually overfilled; the renderer now uses reduced amplitude, nonlinear peak compression, and an explicit SVG fill to keep the waveform readable against the audio clip background.
 - Do not advance to M3.57 until local automated and desktop validation closes the remaining gate.
 
 
