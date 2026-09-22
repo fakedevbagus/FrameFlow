@@ -538,12 +538,91 @@ function App() {
 
   const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
   const textOverlayRef = useRef<HTMLDivElement | null>(null);
+  const textOverlayTextInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const textOverlayXInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlayYInputRef = useRef<HTMLInputElement | null>(null);
+  const textOverlaySizeInputRef = useRef<HTMLInputElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
   const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
   const [previewCanvasSize, setPreviewCanvasSize] = useState({
     width: 0,
     height: 0,
   });
+
+  useEffect(() => {
+    if (
+      !selectedClipContext ||
+      selectedClipContext.track.type !== "video" ||
+      (selectedClipContext.asset?.mediaType !== "video" &&
+        selectedClipContext.asset?.mediaType !== "image")
+    ) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      const activeElement = document.activeElement;
+      let changes: Partial<TextOverlay> | null = null;
+
+      if (activeElement === textOverlayTextInputRef.current) {
+        changes = { text: textOverlayTextInputRef.current?.value ?? "" };
+      } else if (activeElement === textOverlayXInputRef.current) {
+        const value = Number(textOverlayXInputRef.current?.value ?? "");
+        if (Number.isFinite(value) && value >= 0 && value <= 100) {
+          changes = { x: value / 100 };
+        }
+      } else if (activeElement === textOverlayYInputRef.current) {
+        const value = Number(textOverlayYInputRef.current?.value ?? "");
+        if (Number.isFinite(value) && value >= 0 && value <= 100) {
+          changes = { y: value / 100 };
+        }
+      } else if (activeElement === textOverlaySizeInputRef.current) {
+        const value = Number(textOverlaySizeInputRef.current?.value ?? "");
+        if (Number.isFinite(value) && value >= 12 && value <= 240) {
+          changes = { fontSize: Math.round(value) };
+        }
+      }
+
+      if (!changes) {
+        return;
+      }
+
+      const clipId = selectedClipContext.clip.id;
+      const fallback: TextOverlay = {
+        text: "",
+        x: DEFAULT_TEXT_OVERLAY_X,
+        y: DEFAULT_TEXT_OVERLAY_Y,
+        fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+        color: DEFAULT_TEXT_OVERLAY_COLOR,
+        alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
+      };
+
+      setTextOverlayDraft((currentDraft) => {
+        const currentOverlay =
+          currentDraft?.clipId === clipId
+            ? currentDraft.overlay
+            : selectedTextOverlay ?? fallback;
+        const nextOverlay = { ...currentOverlay, ...changes };
+
+        if (
+          currentOverlay.text === nextOverlay.text &&
+          currentOverlay.x === nextOverlay.x &&
+          currentOverlay.y === nextOverlay.y &&
+          currentOverlay.fontSize === nextOverlay.fontSize &&
+          currentOverlay.color === nextOverlay.color &&
+          currentOverlay.alignment === nextOverlay.alignment
+        ) {
+          return currentDraft;
+        }
+
+        return {
+          clipId,
+          overlay: nextOverlay,
+        };
+      });
+    }, 50);
+
+    return () => window.clearInterval(intervalId);
+  }, [project.updatedAt, selectedClipId]);
 
   useEffect(() => {
     const stageRegion = previewStageRegionRef.current;
@@ -2716,6 +2795,7 @@ function App() {
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
+                      ref={textOverlayTextInputRef}
                       onInputCapture={(event) =>
                         handleUpdateTextOverlayDraft({
                           text: event.currentTarget.value,
@@ -2753,6 +2833,7 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
+                            ref={textOverlayXInputRef}
                             onInputCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
@@ -2807,6 +2888,7 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
+                            ref={textOverlayYInputRef}
                             onInputCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 0 && value <= 100) {
@@ -2863,6 +2945,7 @@ function App() {
                             min="12"
                             step="1"
                             type="number"
+                            ref={textOverlaySizeInputRef}
                             onInputCapture={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (Number.isFinite(value) && value >= 12 && value <= 240) {
