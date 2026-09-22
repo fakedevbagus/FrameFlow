@@ -876,6 +876,90 @@ describe("App", () => {
     );
   });
 
+  it("updates the preview when the WebView changes a DOM value without dispatching an input event", async () => {
+    let project = createProject({ id: "text-overlay-webview-dom-polling" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-text-webview-poll",
+          name: "webview-poll.mp4",
+          mediaType: "video",
+          sourcePath: "/media/webview-poll.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-text-webview-poll");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTitle("webview-poll.mp4 · 00:05"),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select webview-poll.mp4 clip",
+      }),
+    );
+
+    const overlay = () =>
+      screen.getByTestId(
+        "preview-text-overlay-" + project.tracks[0].clips[0].id,
+      );
+
+    const textInput = screen.getByRole("textbox", {
+      name: "Text overlay content",
+    });
+    (textInput as HTMLTextAreaElement).value = "WebView live text";
+
+    await waitFor(
+      () => expect(overlay()).toHaveTextContent("WebView live text"),
+      { timeout: 1000 },
+    );
+
+    const xInput = screen.getByRole("spinbutton", {
+      name: "Text overlay X position",
+    });
+    (xInput as HTMLInputElement).value = "25";
+
+    await waitFor(
+      () => expect(overlay()).toHaveStyle({ left: "25%" }),
+      { timeout: 1000 },
+    );
+
+    const yInput = screen.getByRole("spinbutton", {
+      name: "Text overlay Y position",
+    });
+    (yInput as HTMLInputElement).value = "75";
+
+    await waitFor(
+      () => expect(overlay()).toHaveStyle({ top: "75%" }),
+      { timeout: 1000 },
+    );
+
+    const sizeInput = screen.getByRole("spinbutton", {
+      name: "Text overlay font size",
+    });
+    (sizeInput as HTMLInputElement).value = "72";
+
+    await waitFor(
+      () => expect(overlay()).toHaveStyle({ fontSize: "72px" }),
+      { timeout: 1000 },
+    );
+
+    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+  });
+
   it("autosaves text overlay edits without requiring another control", async () => {
     let project = createProject({ id: "text-overlay-autosave-ui" });
 
