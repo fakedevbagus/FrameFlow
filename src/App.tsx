@@ -271,6 +271,7 @@ function App() {
   }, [timelineDurationMs]);
 
   const handleStepFrame = useCallback((direction: -1 | 1) => {
+    playbackRequestIdRef.current += 1;
     setIsPlaying(false);
     setPlaybackTime(
       stepFrame(
