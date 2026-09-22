@@ -41,6 +41,7 @@ Regression coverage:
 Validation:
 - Local lint/test/build/Tauri validation pending user verification.
 - GitHub CI must be rechecked on the updated branch head.
+- Merge status: not merged; PR #76 remains Draft until the user reports PASS.
 
 ## 2026-09-22 — M3.61 Text Overlay Foundation — merged
 
