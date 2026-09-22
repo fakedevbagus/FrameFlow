@@ -418,7 +418,24 @@ button:focus-visible {
   align-items: stretch;
 }
 
-.preview-stage-region > .preview-canvas {
+.preview-stage-region > .preview-text-overlay {
+  position: absolute;
+  z-index: 30;
+  max-width: 90%;
+  padding: 4px 8px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 2px 8px rgb(0 0 0 / 60%);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  line-height: 1.15;
+  user-select: none;
+}
+
+.preview-canvas {
   justify-self: center;
   align-self: center;
 }
