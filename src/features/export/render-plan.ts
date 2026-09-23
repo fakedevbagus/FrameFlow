@@ -11,6 +11,7 @@ import {
   type AudioEq,
   type AudioVolumeKeyframe,
   type VisualEffects,
+  type TextOverlay,
   type Clip,
   type ClipCrop,
   type ClipTransform,
@@ -54,7 +55,7 @@ export interface RenderSegment {
   audioCompressor?: AudioCompressor;
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
   visualEffects?: VisualEffects;
-  textOverlay?: import("../project/domain").TextOverlay;
+  textOverlay?: TextOverlay;
   transform?: ClipTransform;
   transformAnchor?: TransformAnchor;
   crop?: ClipCrop;
