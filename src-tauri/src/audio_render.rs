@@ -39,6 +39,8 @@ pub struct NativeSourceAudioSegment {
   pub source_start_ms: u64,
   pub timeline_start_ms: u64,
   pub duration_ms: u64,
+  pub track_volume: f64,
+  pub track_pan: f64,
 }
 
 struct ResolvedSourceAudioSegment {
@@ -46,6 +48,8 @@ struct ResolvedSourceAudioSegment {
   source_start_ms: u64,
   timeline_start_ms: u64,
   duration_ms: u64,
+  track_volume: f64,
+  track_pan: f64,
   has_audio: bool,
 }
 
