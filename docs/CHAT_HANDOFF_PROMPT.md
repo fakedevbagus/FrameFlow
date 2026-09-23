@@ -1,3 +1,13 @@
+- M3.71 is the active milestone on `feat/m3-71-unified-av-export`: Unified AV Export Foundation.
+- M3.70 is complete and merged in PR #84 at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
+- M3.71 routes projects with explicit Audio track clips through one native FFmpeg invocation containing the existing visual graph and audio graph.
+- Visual inputs are rebased to contiguous native indexes before the audio graph is offset, preventing mixed RenderPlan input indexes from pointing at the wrong FFmpeg input.
+- Keep the existing video-only fast paths unchanged.
+- The previous `render_video_with_audio_graph_to_mp4` command remains as compatibility code but is no longer called by the active frontend export pipeline.
+- No project schema change.
+- Regression coverage exists for unified routing, index rebasing, image input handling, native validation, and argument construction.
+- PR for M3.71 remains Draft until clean local validation and user PASS.
+
 - M3.70 validation update: the latest user run had 392/393 frontend tests passing, with the sole failure in the new text-overlay crop/effects/transform ordering assertion.
 - Root cause was a stale test expectation: the fixture uses left/right crop values of 0.1 each, so visible width is 0.8; top/bottom crop values leave 0.9 visible height.
 - The assertion is corrected on `feat/m3-70-text-overlay-export` in commit `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.
