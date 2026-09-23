@@ -1,3 +1,22 @@
+## 2026-09-23 — M3.70 export coverage and resolution scaling
+
+Branch: `feat/m3-70-text-overlay-export`
+PR: #84 — Draft
+
+Updated:
+- Scaled rendered Text Overlay `fontSize` with the export canvas so lower export qualities preserve project-space visual scale.
+- Added 720p RenderPlan regression coverage for text scaling.
+- Strengthened drawtext escaping coverage with a real newline plus apostrophe, comma, colon, semicolon, backslash, and long-text limits.
+- Added graph coverage for text on image clips.
+- Added graph ordering coverage for effects → crop → text → transforms, including animated and anchor-aware transform paths.
+- Added transition coverage for text across dissolve and fade-through-black.
+- Corrected a crop assertion typo in the new ordering test.
+
+Validation:
+- These latest changes have not yet received a fresh user local PASS.
+- Existing CI run #212 passed the earlier M3.70 head; a fresh CI run for the latest commits is required before treating the branch as cleanly validated.
+- PR #84 remains Draft.
+
 ## 2026-09-23 — M3.70 validation correction
 
 - The supplied local validation found one failing multi-track text-overlay regression assertion: the test expected `track_2_sequence`, while the generated graph correctly uses `track_1_sequence` for the second video track.
