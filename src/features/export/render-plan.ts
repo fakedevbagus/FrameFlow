@@ -156,11 +156,7 @@ export function createRenderPlan(
         durationMs: clipDurationMs,
         isMuted: track.isMuted,
         trackVolume: getTrackVolume(track),
-        ...(track.type === "audio"
-          ? {
-              trackPan: getTrackPan(track),
-            }
-          : {}),
+        trackPan: getTrackPan(track),
         ...(track.type === "audio" && asset.mediaType === "audio"
           ? (() => {
               const fades = getAudioFadeDurations(clip);
