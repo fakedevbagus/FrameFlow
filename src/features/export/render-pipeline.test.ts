@@ -579,6 +579,14 @@ describe("render video pipeline", () => {
       videoInputs: ["/media/a.mp4"],
       videoInputMediaTypes: ["video"],
       audioInputs: ["/media/music.mp3"],
+      sourceAudioSegments: [
+        {
+          inputIndex: 0,
+          sourceStartMs: 0,
+          timelineStartMs: 0,
+          durationMs: 5000,
+        },
+      ],
       videoFilterComplex: expect.stringContaining("[0:v:0]"),
       videoMap: "[vout]",
       audioFilterComplex: expect.stringContaining(
