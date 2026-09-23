@@ -10,7 +10,10 @@
 - No project schema change is introduced.
 - Animated transforms, non-centered transform anchors, transitions, multi-track compositing, and audio mixing remain deferred.
 - Added regression coverage for image RenderGraph compilation, pipeline routing, and native media-type request metadata.
-- Supplied local validation reached the frontend suite with 367/368 tests passing; the single failure was an image render-graph assertion expecting 5 seconds while the fixture's default image duration is 3 seconds. The same run then exposed a corrupted `src-tauri/src/lib.rs` beginning with an unexpected `}`. fileciteturn601file0L243-L261 fileciteturn601file0L277-L307
+- Supplied local validation reached the frontend suite with 366/368 tests passing; the two failures were stale trim-duration assertions in `render-graph.test.ts`: the video fixture expected 3 seconds instead of its 5-second duration, while the image fixture expected 5 seconds instead of its 3-second default duration. fileciteturn621file0L234-L261
+- The same validation reported a successful production build, 39/39 Rust tests passing, and a successful Tauri dev startup; the frontend suite is the remaining automated failure. fileciteturn621file0L273-L285 fileciteturn621file0L288-L329 fileciteturn621file0L344-L360
+- Commit `f85e56a19e622005ab501707cf12ce90369384e0` corrects those two test expectations: video 5 seconds, image 3 seconds.
+- Fresh `npm run test` and final CI are still required. Keep PR #79 Draft until the user reports PASS.
 - `src-tauri/src/lib.rs` was restored from `main` and the M3.65 native graph media-type/image-loop changes were reapplied in full.
 - The stale image assertion was corrected from 5 seconds to the fixture's 3-second default duration.
 - A fresh validation run is required after these corrections. Keep PR #79 Draft until the user reports PASS.
