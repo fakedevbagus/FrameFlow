@@ -266,6 +266,102 @@ describe("single video render graph", () => {
     );
   });
 
+  it("compiles static crop and crop position into the FFmpeg graph", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                crop: {
+                  top: 0.1,
+                  right: 0.2,
+                  bottom: 0.15,
+                  left: 0.05,
+                },
+                cropPosition: {
+                  x: 0.65,
+                  y: 0.4,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain("format=rgba");
+    expect(graph.filterComplex).toContain(
+      "crop=w=trunc(iw*0.75):h=trunc(ih*0.75)",
+    );
+    expect(graph.filterComplex).toContain(
+      "x=trunc(iw*(0.65-0.375)):y=trunc(ih*(0.4-0.375))",
+    );
+    expect(graph.filterComplex).toContain(
+      "pad=w=iw/0.75:h=ih/0.75:x=(iw/0.75)*0.05:y=(ih/0.75)*0.1:color=black@0",
+    );
+    expect(graph.filterComplex).toContain(
+      "scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
+    );
+    expect(graph.filterComplex).toContain("[vout]");
+  });
+
+  it("combines static crop with static transforms", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                crop: {
+                  top: 0.05,
+                  right: 0.05,
+                  bottom: 0.1,
+                  left: 0.1,
+                },
+                cropPosition: {
+                  x: 0.6,
+                  y: 0.55,
+                },
+                transform: {
+                  x: 8,
+                  y: -4,
+                  scale: 1.2,
+                  rotation: 12,
+                  opacity: 0.8,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain("crop=w=trunc(iw*0.85):h=trunc(ih*0.85)");
+    expect(graph.filterComplex).toContain("scale=w=iw*1.2:h=ih*1.2");
+    expect(graph.filterComplex).toContain(
+      "rotate=0.20944:c=none:ow=rotw(0.20944):oh=roth(0.20944)",
+    );
+    expect(graph.filterComplex).toContain("colorchannelmixer=aa=0.8");
+    expect(graph.filterComplex).toContain(
+      "overlay=x=(W-w)/2+86.4:y=(H-h)/2+-76.8:shortest=1",
+    );
+  });
+
   it("rejects transform keyframes until animated export is implemented", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
@@ -312,34 +408,5 @@ describe("single video render graph", () => {
     );
   });
 
-  it("rejects crop graph support independently of static transforms", () => {
-    let project = createVideoProject();
-    project = addAssetToTimeline(project, "video-a");
-    project = {
-      ...project,
-      tracks: project.tracks.map((track) =>
-        track.id === "video-1"
-          ? {
-              ...track,
-              clips: track.clips.map((clip) => ({
-                ...clip,
-                crop: {
-                  top: 0,
-                  right: 0.1,
-                  bottom: 0,
-                  left: 0,
-                },
-              })),
-            }
-          : track,
-      ),
-    };
-
-    const plan = createRenderPlan(project, createDefaultExportSettings(project));
-
-    expect(() => compileSingleVideoTrackGraph(plan)).toThrow(
-      "crop graph support is deferred",
-    );
-  });
 
 });
