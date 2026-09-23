@@ -367,8 +367,20 @@ function buildSegmentFilter(
 ): string {
   const transform = getClipTransform(segment.transform);
   const transformKeyframes = normalizeTransformKeyframes(segment.transformKeyframes);
+  const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
 
   if (transformKeyframes.length > 0) {
+    if (hasAnchorSensitiveAnimatedTransform(transformKeyframes, anchor)) {
+      return buildAnchorAwareCompositedSegmentFilter(
+        segment,
+        plan,
+        label,
+        includeOutputNormalization,
+        transform,
+        transformKeyframes,
+      );
+    }
+
     return buildAnimatedCompositedSegmentFilter(
       segment,
       plan,
@@ -384,6 +396,16 @@ function buildSegmentFilter(
   const staticCropRequired = !isDefaultCrop(crop);
 
   if (staticTransformRequired || staticCropRequired) {
+    if (hasAnchorSensitiveStaticTransform(transform, anchor)) {
+      return buildAnchorAwareCompositedSegmentFilter(
+        segment,
+        plan,
+        label,
+        includeOutputNormalization,
+        transform,
+      );
+    }
+
     return buildCompositedSegmentFilter(
       segment,
       plan,
@@ -432,14 +454,6 @@ function buildAnimatedCompositedSegmentFilter(
   includeOutputNormalization: boolean,
   keyframes: ReturnType<typeof normalizeTransformKeyframes>,
 ): string {
-  const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
-
-  if (anchor.x !== 0.5 || anchor.y !== 0.5) {
-    throw new Error(
-      "M3.63 does not compile non-centered transform anchors yet; anchor export is deferred.",
-    );
-  }
-
   const crop = getClipCrop(segment.crop);
   const cropPosition = getClipCropPosition(crop, segment.cropPosition);
   const visibleWidth = Math.max(
@@ -754,14 +768,6 @@ function buildCompositedSegmentFilter(
   crop: ReturnType<typeof getClipCrop>,
   cropPosition: ReturnType<typeof getClipCropPosition>,
 ): string {
-  const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
-
-  if (anchor.x !== 0.5 || anchor.y !== 0.5) {
-    throw new Error(
-      "M3.63 does not compile non-centered transform anchors yet; anchor export is deferred.",
-    );
-  }
-
   const foregroundLabel = "transform_fg_" + segment.inputIndex;
   const backgroundLabel = "transform_bg_" + segment.inputIndex;
   const translationX = formatNumber((transform.x / 100) * plan.width);
@@ -898,6 +904,349 @@ function buildCompositedSegmentFilter(
     label +
     "]"
   );
+}
+
+function hasAnchorSensitiveStaticTransform(
+  transform: ClipTransform,
+  anchor: { x: number; y: number },
+): boolean {
+  return (
+    (anchor.x !== 0.5 || anchor.y !== 0.5) &&
+    (transform.scale !== 1 || transform.rotation !== 0)
+  );
+}
+
+function hasAnchorSensitiveAnimatedTransform(
+  keyframes: ReturnType<typeof normalizeTransformKeyframes>,
+  anchor: { x: number; y: number },
+): boolean {
+  return (
+    (anchor.x !== 0.5 || anchor.y !== 0.5) &&
+    keyframes.some(
+      (keyframe) =>
+        keyframe.transform.scale !== 1 ||
+        keyframe.transform.rotation !== 0,
+    )
+  );
+}
+
+function buildAnchorAwareCompositedSegmentFilter(
+  segment: RenderSegment,
+  plan: RenderPlan,
+  label: string,
+  includeOutputNormalization: boolean,
+  transform: ClipTransform,
+  keyframes: ReturnType<typeof normalizeTransformKeyframes> = [],
+): string {
+  const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
+  const isAnimated = keyframes.length > 0;
+  const effectiveKeyframes = isAnimated
+    ? keyframes
+    : [
+        {
+          timeMs: 0,
+          transform,
+          easing: "linear" as const,
+        },
+      ];
+
+  const crop = getClipCrop(segment.crop);
+  const cropPosition = getClipCropPosition(crop, segment.cropPosition);
+  const visibleWidth = Math.max(0.001, 1 - crop.left - crop.right);
+  const visibleHeight = Math.max(0.001, 1 - crop.top - crop.bottom);
+
+  const cropFilters = isDefaultCrop(crop)
+    ? []
+    : [
+        "format=rgba",
+        "crop=w=trunc(iw*" +
+          formatNumber(visibleWidth) +
+          "):h=trunc(ih*" +
+          formatNumber(visibleHeight) +
+          "):x=trunc(iw*(" +
+          formatNumber(cropPosition.x) +
+          "-" +
+          formatNumber(visibleWidth / 2) +
+          ")):y=trunc(ih*(" +
+          formatNumber(cropPosition.y) +
+          "-" +
+          formatNumber(visibleHeight / 2) +
+          "))",
+        "pad=w=iw/" +
+          formatNumber(visibleWidth) +
+          ":h=ih/" +
+          formatNumber(visibleHeight) +
+          ":x=(iw/" +
+          formatNumber(visibleWidth) +
+          ")*" +
+          formatNumber(crop.left) +
+          ":y=(ih/" +
+          formatNumber(visibleHeight) +
+          ")*" +
+          formatNumber(crop.top) +
+          ":color=black@0",
+      ];
+
+  const scaleExpression = isAnimated
+    ? buildTransformKeyframeExpression(
+        effectiveKeyframes,
+        (current) => current.scale,
+        "t",
+      )
+    : formatNumber(transform.scale);
+  const rotationExpression = isAnimated
+    ? buildTransformKeyframeExpression(
+        effectiveKeyframes,
+        (current) => current.rotation,
+        "t",
+        (from, to) => shortestRotationDeltaDegrees(from, to),
+      )
+    : formatNumber(transform.rotation);
+  const xExpression = isAnimated
+    ? buildTransformKeyframeExpression(
+        effectiveKeyframes,
+        (current) => current.x,
+        "t",
+      )
+    : formatNumber(transform.x);
+  const yExpression = isAnimated
+    ? buildTransformKeyframeExpression(
+        effectiveKeyframes,
+        (current) => current.y,
+        "t",
+      )
+    : formatNumber(transform.y);
+  const opacityExpression = isAnimated
+    ? buildTransformKeyframeExpression(
+        effectiveKeyframes,
+        (current) => current.opacity,
+        "N/" + formatNumber(plan.frameRate),
+      )
+    : formatNumber(transform.opacity);
+
+  const scales = effectiveKeyframes.map((keyframe) => keyframe.transform.scale);
+  const rotations = effectiveKeyframes.map(
+    (keyframe) => keyframe.transform.rotation,
+  );
+  const opacities = effectiveKeyframes.map(
+    (keyframe) => keyframe.transform.opacity,
+  );
+  const maxScale = Math.max(...scales, 1);
+  const maxAnchorX = Math.max(anchor.x, 1 - anchor.x);
+  const maxAnchorY = Math.max(anchor.y, 1 - anchor.y);
+  const pivotOffsetRadius = Math.hypot(
+    plan.width * Math.abs(anchor.x - 0.5),
+    plan.height * Math.abs(anchor.y - 0.5),
+  );
+  const transformedContentRadius = Math.hypot(
+    plan.width * maxScale * maxAnchorX,
+    plan.height * maxScale * maxAnchorY,
+  );
+  const surfaceExtent =
+    Math.max(
+      2,
+      Math.ceil(
+        (2 * (pivotOffsetRadius + transformedContentRadius)) / 2,
+      ) * 2,
+    );
+  const hasDynamicScale = isAnimated;
+  const hasDynamicRotation = isAnimated || rotations[0] !== 0;
+  const hasDynamicOpacity = isAnimated;
+
+  const foregroundFilters = [
+    "[" +
+      segment.inputIndex +
+      ":v:0]trim=start=" +
+      formatSeconds(segment.sourceStartMs) +
+      ":end=" +
+      formatSeconds(segment.sourceEndMs),
+    "setpts=PTS-STARTPTS",
+    ...(isAnimated
+      ? ["fps=fps=" + formatNumber(plan.frameRate) + ":round=near"]
+      : []),
+    "scale=w=" +
+      plan.width +
+      ":h=" +
+      plan.height +
+      ":force_original_aspect_ratio=decrease",
+    ...(segment.visualEffects &&
+    buildVisualEffectsFfmpegFilters(segment.visualEffects)
+      ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
+      : []),
+    ...cropFilters,
+    ...(hasDynamicScale || transform.scale !== 1
+      ? [
+          "scale=w='iw*" +
+            scaleExpression +
+            "':h='ih*" +
+            scaleExpression +
+            "':eval=frame",
+        ]
+      : []),
+    "format=rgba[" +
+      "anchor_scaled_" +
+      segment.inputIndex +
+      "]",
+  ];
+
+  const anchorBackgroundLabel = "anchor_bg_" + segment.inputIndex;
+  const anchorScaledLabel = "anchor_scaled_" + segment.inputIndex;
+  const anchorPivotLabel = "anchor_pivot_" + segment.inputIndex;
+  const anchorRotatedLabel = "anchor_rotated_" + segment.inputIndex;
+  const translationX = "(" + xExpression + ")*" + formatNumber(plan.width / 100);
+  const translationY = "(" + yExpression + ")*" + formatNumber(plan.height / 100);
+  const angleExpression = radiansExpression(rotationExpression);
+  const pivotX =
+    "(w/" +
+    scaleExpression +
+    ")*" +
+    formatNumber(anchor.x - 0.5);
+  const pivotY =
+    "(h/" +
+    scaleExpression +
+    ")*" +
+    formatNumber(anchor.y - 0.5);
+  const inverseRotationX =
+    "cos(" +
+    angleExpression +
+    ")*(" +
+    pivotX +
+    ")+sin(" +
+    angleExpression +
+    ")*(" +
+    pivotY +
+    ")";
+  const inverseRotationY =
+    "-sin(" +
+    angleExpression +
+    ")*(" +
+    pivotX +
+    ")+cos(" +
+    angleExpression +
+    ")*(" +
+    pivotY +
+    ")";
+  const pivotOverlayX =
+    "'(W/2)+" +
+    inverseRotationX +
+    "-(" +
+    formatNumber(anchor.x) +
+    ")*w'";
+  const pivotOverlayY =
+    "'(H/2)+" +
+    inverseRotationY +
+    "-(" +
+    formatNumber(anchor.y) +
+    ")*h'";
+
+  const pivotBackground =
+    "color=c=black@0.0:s=" +
+    surfaceExtent +
+    "x" +
+    surfaceExtent +
+    ":r=" +
+    formatNumber(plan.frameRate) +
+    ":d=" +
+    formatSeconds(segment.durationMs) +
+    ",format=rgba[" +
+    anchorBackgroundLabel +
+    "]";
+
+  const pivotComposite =
+    "[" +
+    anchorBackgroundLabel +
+    "][" +
+    anchorScaledLabel +
+    "]overlay=x=" +
+    pivotOverlayX +
+    ":y=" +
+    pivotOverlayY +
+    ":shortest=1,format=rgba[" +
+    anchorPivotLabel +
+    "]";
+
+  const rotatedFilters = hasDynamicRotation
+    ? "[" +
+      anchorPivotLabel +
+      "]rotate='" +
+      angleExpression +
+      "':c=none:ow=" +
+      surfaceExtent +
+      ":oh=" +
+      surfaceExtent +
+      ",format=rgba[" +
+      anchorRotatedLabel +
+      "]"
+    : "[" +
+      anchorPivotLabel +
+      "]format=rgba[" +
+      anchorRotatedLabel +
+      "]";
+
+  const visualLabel = anchorRotatedLabel;
+  const foregroundOpacity =
+    isAnimated || transform.opacity !== 1
+      ? isAnimated
+        ? "[" +
+          visualLabel +
+          "]geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*" +
+          opacityExpression +
+          "'[" +
+          label +
+          "]"
+        : "[" +
+          visualLabel +
+          "]colorchannelmixer=aa=" +
+          formatNumber(transform.opacity) +
+          "[" +
+          label +
+          "]"
+      : "[" +
+        visualLabel +
+        "]copy[" +
+        label +
+        "]";
+
+  const backgroundLabel = "anchor_output_bg_" + segment.inputIndex;
+  const backgroundFilter =
+    "color=c=black@0.0:s=" +
+    plan.width +
+    "x" +
+    plan.height +
+    ":r=" +
+    formatNumber(plan.frameRate) +
+    ":d=" +
+    formatSeconds(segment.durationMs) +
+    ",format=rgba[" +
+    backgroundLabel +
+    "]";
+
+  const overlayFilter =
+    "[" +
+    backgroundLabel +
+    "][" +
+    label +
+    "]overlay=x='(W-w)/2+" +
+    translationX +
+    "':y='(H-h)/2+" +
+    translationY +
+    "':shortest=1";
+
+  const normalization = includeOutputNormalization
+    ? ",format=yuv420p,fps=fps=" +
+      formatNumber(plan.frameRate) +
+      ":round=near,setsar=1"
+    : ",format=yuv420p";
+
+  return [
+    foregroundFilters.slice(0, -1).join(",") + "[" + anchorScaledLabel + "];",
+    pivotBackground + ";",
+    pivotComposite + ";",
+    rotatedFilters + ";",
+    foregroundOpacity + ";",
+    backgroundFilter + ";",
+    overlayFilter + normalization,
+  ].join("");
 }
 
 function isDefaultTransform(transform: ClipTransform): boolean {
