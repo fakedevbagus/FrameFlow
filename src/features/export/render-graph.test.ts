@@ -801,7 +801,7 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain(
       "drawtext=font='DejaVu Sans':text='Upper track':fontsize=48:fontcolor=#00ff00:x=w*0.5:y=(h-text_h)*0.2:line_spacing=4:expansion=none",
     );
-    expect(graph.filterComplex).toContain("track_2_sequence");
+    expect(graph.filterComplex).toContain("track_1_sequence");
   });
 
   it("composites multiple video tracks in project track order", () => {
