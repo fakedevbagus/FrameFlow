@@ -1535,7 +1535,6 @@ function TimelineTrack({
               </div>
             </div>
           </div>
-        </div>
         <div className="track-label-actions">
           <button
             aria-label={track.isMuted ? "Unmute " + track.name : "Mute " + track.name}
