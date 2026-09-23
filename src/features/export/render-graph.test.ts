@@ -70,6 +70,39 @@ describe("single video render graph", () => {
     expect(graph.videoMap).toBe("[vout]");
   });
 
+  it("compiles an image clip into a looped visual input", () => {
+    let project = createVideoProject();
+    project.assets = [
+      ...project.assets,
+      {
+        id: "image-a",
+        name: "cover.png",
+        mediaType: "image",
+        sourcePath: "/media/cover.png",
+        durationMs: null,
+      },
+    ];
+    project = addAssetToTimeline(project, "image-a");
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.inputs).toEqual([
+      {
+        inputIndex: 0,
+        sourcePath: "/media/cover.png",
+      },
+    ]);
+    expect(graph.filterComplex).toContain(
+      "[0:v:0]trim=start=0:end=5,setpts=PTS-STARTPTS",
+    );
+    expect(graph.filterComplex).toContain(
+      "scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
+    );
+    expect(graph.videoMap).toBe("[vout]");
+  });
+
   it("compiles visual effects into the segment filter chain", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
