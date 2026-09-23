@@ -16,6 +16,11 @@
 - Local and CI validation are pending for M3.68; PR will remain Draft until user PASS.
 - PR #82 is open as Draft; Text Overlay Export remains parked in PR #76; multi-track compositing and audio mixing remain deferred.
 
+- Manual validation on 2026-09-23 also exposed a workspace-layout issue: at the current desktop width the Inspector contents were visibly clipped horizontally, especially the quick-action buttons and two-column form fields.
+- Hardened the workspace grid with flexible side-panel bounds and a wider Inspector budget while preserving a minimum editor canvas width.
+- Added min-width constraints and intrinsic-width-safe two-column grid tracks for Inspector content so controls shrink within the panel instead of painting past its right edge.
+- Kept the PR Draft because this is a UI validation correction and fresh lint/test/build/Tauri validation is still required.
+
 ## M3.67 — Animated Transform Export — merged — 2026-09-23
 
 - PR #81 was user-validated and squash-merged into `main` at `783885376209ec56013612147b217a13c8bf1ef7`.
