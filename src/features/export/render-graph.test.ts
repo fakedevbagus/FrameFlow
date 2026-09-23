@@ -881,7 +881,7 @@ describe("single video render graph", () => {
     ).filterComplex;
 
     const effectsIndex = filter.indexOf("eq=brightness=0.1:contrast=1.2:saturation=0.9");
-    const cropIndex = filter.indexOf("crop=w=trunc(iw*0.85):h=trunc(ih*0.9)");
+    const cropIndex = filter.indexOf("crop=w=trunc(iw*0.8):h=trunc(ih*0.9)");
     const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
     const transformIndex = filter.indexOf("scale=w=iw*1.2:h=ih*1.2");
 
