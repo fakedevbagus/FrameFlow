@@ -94,52 +94,57 @@ cd ..
 
 ## Current repository state
 
-### M3.62 — Text Overlay Export Rendering — active draft PR
+### M3.63 — Static Visual Transform Export — active draft PR
+
+Branch:
+`feat/m3-63-static-transform-export`
+
+PR:
+#77
+
+Status:
+- Open
+- Draft
+- Not merged
+- Local validation pending
+
+M3.63 implementation:
+- Static visual X/Y, Scale, Rotation, and Opacity are now compiled into the single-video FFmpeg graph.
+- Default transform values preserve the existing minimal direct graph.
+- Transform anchors are propagated into RenderPlan.
+- Non-centered transform anchors are explicitly rejected until anchor-aware export is implemented.
+- Transform keyframes, crop/crop position, transitions, images, multi-track compositing, and audio mixing remain deferred.
+- Regression coverage was added for RenderPlan anchor propagation and static transform graph compilation/guards.
+
+### M3.62 — Text Overlay Export Rendering — parked Draft
+
+PR:
+#76
+https://github.com/fakedevbagus/FrameFlow/pull/76
 
 Branch:
 `feat/m3-62-text-overlay-export-rendering`
 
-Base:
-`main @ 191455b79880b13166cd3b4967b3db61bea7aa52`
+Status:
+- Open
+- Draft
+- Not merged
+- Parked intentionally
 
-Implemented:
-- M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
-- M3.62 extends text overlays into native export/render-plan compilation.
-- Preserve text content, normalized X/Y position, font size, color, and alignment semantics between Preview and export.
-- Use an explicit renderer-owned font policy to avoid arbitrary platform font assumptions.
-- Preserve the existing single-video FFmpeg graph and validate interactions with existing visual metadata.
+Known limitation:
+- Text Overlay edits work functionally, but on the user's Linux/Tauri runtime the Preview visual update can lag until a subsequent interaction.
+- Several frontend live-update architectures and a Linux GTK repaint mitigation were attempted.
+- The problem is deferred to a later dedicated WebKitGTK/runtime investigation so it does not block unrelated editor/export milestones.
+- Do not close or merge PR #76 as part of M3.63.
 
-Required local validation:
-
-```bash
-git fetch origin --prune
-git checkout feat/m3-62-text-overlay-export-rendering
-git pull --ff-only origin feat/m3-62-text-overlay-export-rendering
-git status
-git log -1 --oneline
-
-npm ci
-npm run lint
-npm run test
-npm run build
-
-cd src-tauri
-cargo test
-cd ..
-
-npm run tauri dev
-```
-
-Manual M3.62 checks:
-- Create a text overlay on a video clip and verify it appears in Preview.
-- Export a minimal single-clip project with text and verify the exported file contains the text overlay.
-- Verify text position, size, color, and alignment are reflected in export.
-- Verify multiline text remains readable in export.
-- Verify an image clip with text remains compatible with the existing export limitations.
-- Verify existing Color adjustments continue to render with text.
-- Verify existing Transform/Crop/Transition behavior is not regressed where supported by the current export graph.
-
-Do not mark the M3.62 PR ready or merge it until the user reports local PASS.
+Required next validation for M3.63:
+- Run the normal fetch/checkout/pull sequence.
+- Run npm ci, lint, tests, build, Rust tests, and Tauri dev.
+- Export a project containing static X/Y, Scale, Rotation, and Opacity changes and compare the exported frame against Preview.
+- Verify default transforms preserve the existing graph.
+- Verify non-centered anchor and transform-keyframe projects fail with controlled messages.
+- Verify existing visual effects still apply.
+- Then mark PR #77 ready only after the user's local PASS.
 
 ### M3.61 — Text Overlay Foundation — merged
 
