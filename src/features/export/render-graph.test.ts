@@ -534,6 +534,14 @@ describe("single video render graph", () => {
                 clip.assetId === "video-a"
                   ? {
                       ...clip,
+                      textOverlay: {
+                        text: "Dissolve",
+                        x: 0.5,
+                        y: 0.25,
+                        fontSize: 40,
+                        color: "#ffffff",
+                        alignment: "center" as const,
+                      },
                       transitionOut: {
                         type: "dissolve" as const,
                         durationMs: 500,
@@ -565,6 +573,9 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain(
       "[transition_0_prefix][transition_0_dissolve][full1]concat=n=3:v=1:a=0",
     );
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Dissolve':fontsize=40",
+    );
     expect(graph.filterComplex).not.toContain("xfade=");
   });
 
@@ -582,6 +593,14 @@ describe("single video render graph", () => {
                 clip.assetId === "video-a"
                   ? {
                       ...clip,
+                      textOverlay: {
+                        text: "Fade through black",
+                        x: 0.5,
+                        y: 0.75,
+                        fontSize: 40,
+                        color: "#ffffff",
+                        alignment: "center" as const,
+                      },
                       transitionOut: {
                         type: "fade-through-black" as const,
                         durationMs: 1000,
@@ -602,6 +621,9 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain("fade=t=in:st=0:d=0.5");
     expect(graph.filterComplex).toContain(
       "[transition_0_prefix][transition_0_fade_out][transition_0_fade_in][full1]concat=n=4:v=1:a=0",
+    );
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Fade through black':fontsize=40",
     );
   });
 
@@ -859,7 +881,7 @@ describe("single video render graph", () => {
     ).filterComplex;
 
     const effectsIndex = filter.indexOf("eq=brightness=0.1:contrast=1.2:saturation=0.9");
-    const cropIndex = filter.indexOf("crop=w=trunc(iw*0.85):h=trunc(iw*0.85)");
+    const cropIndex = filter.indexOf("crop=w=trunc(iw*0.85):h=trunc(ih*0.85)");
     const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
     const transformIndex = filter.indexOf("scale=w=iw*1.2:h=ih*1.2");
 
