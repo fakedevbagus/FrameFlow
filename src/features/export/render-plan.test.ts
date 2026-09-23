@@ -203,6 +203,50 @@ describe("render plan", () => {
     });
   });
 
+  it("normalizes and propagates static crop metadata", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                crop: {
+                  top: 0.1,
+                  right: 0.2,
+                  bottom: 0.15,
+                  left: 0.05,
+                },
+                cropPosition: {
+                  x: 0.65,
+                  y: 0.4,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const segment = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    ).segments.find((item) => item.assetId === "video-a");
+
+    expect(segment?.crop).toEqual({
+      top: 0.1,
+      right: 0.2,
+      bottom: 0.15,
+      left: 0.05,
+    });
+    expect(segment?.cropPosition).toEqual({
+      x: 0.65,
+      y: 0.4,
+    });
+  });
+
   it("compiles timeline clips with source and timeline timing", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");
