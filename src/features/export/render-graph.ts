@@ -46,16 +46,6 @@ export function compileVideoTracksGraph(plan: RenderPlan): VideoRenderGraph {
   }
 
   if (
-    plan.segments.some(
-      (segment) => segment.trackType === "audio" && segment.durationMs > 0,
-    )
-  ) {
-    throw new Error(
-      "Video render graph compilation does not include audio mixing yet.",
-    );
-  }
-
-  if (
     videoSegments.some(
       (segment) =>
         segment.mediaType !== "video" && segment.mediaType !== "image",
@@ -181,16 +171,6 @@ export function compileSingleVideoTrackGraph(
   ) {
     throw new Error(
       "Video render graph supports video and image visual assets only.",
-    );
-  }
-
-  if (
-    plan.segments.some(
-      (segment) => segment.trackType === "audio" && segment.durationMs > 0,
-    )
-  ) {
-    throw new Error(
-      "M3.36 video graph compilation does not include audio mixing yet.",
     );
   }
 
