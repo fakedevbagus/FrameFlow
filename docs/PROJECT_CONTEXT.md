@@ -1,21 +1,24 @@
-## M3.67 — Animated Transform Export — in progress — 2026-09-23
+## M3.68 — Non-Centered Transform Anchor Export — next
 
-- M3.66 Transition Export was completed, user-validated, CI-validated, and squash-merged into `main` at `a3bf59055b76de1c485c8d410e2adb13862925d6`.
-- PR #76 remains parked for the unresolved Linux/Tauri/WebKitGTK Text Overlay Export Preview timing issue.
-- M3.67 targets the next concrete export gap already represented in the editor: transform keyframes are fully modeled, edited, and previewed, but the export graph still rejects them.
-- The existing RenderPlan already carries normalized transform keyframes and interpolation data; the task is to compile supported keyframed motion into deterministic FFmpeg filters without changing the project schema.
-- The focused first slice should preserve the existing centered-anchor boundary and static crop/visual-effects/image-video compatibility where technically composable.
-- Non-centered anchors, multi-track compositing, audio mixing, and Text Overlay Export remain outside this slice.
-- M3.67 implements keyframed X/Y, Scale, Rotation, and Opacity as per-frame FFmpeg expressions using the existing keyframe easing rules.
-- Video inputs are normalized to the project frame rate before animated transform evaluation so frame-based opacity expressions stay aligned with the export timeline.
-- Animated transforms are rendered on a project-sized transparent composition surface; crop and visual effects remain before the animated transform stage.
-- The pipeline routes animated transform clips through the graph renderer instead of the direct single-source or legacy segment renderers.
-- Validation follow-up on 2026-09-23 found stale pre-M3.67 assertions plus one routing gap: animated clips could still enter the direct/legacy native render paths, the crop fixture expected the wrong normalized width, and the FFmpeg expression helper was not actually emitting escaped commas.
-- Corrected the pipeline so any segment with transform keyframes is forced through the compiled graph, corrected the graph-expression escaping, removed the obsolete deferred-keyframe assertions, and updated crop expectations.
-- The latest local rerun reached 373/374 frontend tests: only one render-graph assertion still expected the ease-in-out term without the fixture actually using ease-in-out.
-- Corrected the animated transform test fixture to use ease-in-out for the final keyframe, turning that assertion into real easing coverage rather than removing it.
-- Build, Rust tests (39/39), and Tauri development startup were successful in the same rerun; React act(...) messages remain warnings only.
-- No user PASS is recorded yet; rerun the frontend test suite after this final fixture correction before PR #81 can be marked ready.
+- M3.67 Animated Transform Export was user-validated and CI-validated, then squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
+- The current export graph supports centered transform anchors only and explicitly rejects non-centered anchors.
+- The editor already models normalized transform anchors and uses anchor-aware transform-origin semantics in Preview; changing the anchor compensates translation so the visual position remains stable.
+- M3.68 will extend the existing static and animated transform export paths to honor non-centered anchors without changing the project schema.
+- The implementation must preserve the existing anchor compensation semantics, crop/effects ordering, keyframe easing, image/video support, and transparent composition strategy.
+- Anchor behavior must be validated for both static transforms and animated transform keyframes, including rotation and scale around the selected pivot.
+- Multi-track compositing, audio mixing, and Text Overlay Export remain separate deferred work; PR #76 stays parked.
+- Add domain-level/graph-level regression coverage and at least one pipeline coverage case for anchored animated export.
+
+## M3.67 — Animated Transform Export — merged — 2026-09-23
+
+- PR #81 was user-validated and squash-merged into `main` at `783885376209ec56013612147b217a13c8bf1ef7`.
+- Added deterministic FFmpeg graph compilation for transform keyframes across X, Y, Scale, Rotation, and Opacity using the existing easing model.
+- Video inputs are normalized to the project frame rate before animated evaluation; opacity uses the normalized frame index.
+- Animated visual content is composited onto a project-sized transparent surface, with crop and visual effects applied before animation.
+- Animated clips are explicitly routed through the graph renderer rather than direct-source or legacy sequential renderers.
+- Centered anchors remain supported; non-centered anchors remain the next focused export gap.
+- No project schema change.
+- Local validation passed from the user's Linux/Tauri environment; GitHub CI run #181 passed all frontend/Rust validation steps.
 
 
 ## M3.66 — Transition Export — merged — 2026-09-23
