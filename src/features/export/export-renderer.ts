@@ -54,6 +54,8 @@ export interface NativeSourceAudioSegment {
   sourceStartMs: number;
   timelineStartMs: number;
   durationMs: number;
+  trackVolume: number;
+  trackPan: number;
 }
 
 export interface NativeVideoAudioGraphRenderRequest {
