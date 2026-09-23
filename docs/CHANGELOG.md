@@ -1,3 +1,12 @@
+## 2026-09-23 — M3.68 Inspector layout validation correction
+
+- The supplied Linux/Tauri screenshot showed the right-side Inspector content clipped at the panel edge, with form controls and quick-action UI extending beyond the visible width.
+- Adjusted the workspace columns to give the Inspector a flexible 270–300px budget while retaining a 420px minimum central editor area.
+- Hardened Inspector grid tracks and section containers with zeroable minimum widths so controls can shrink without horizontal overflow.
+- Kept action buttons non-shrinking and summary/readout values allowed to wrap where necessary.
+- No project schema, export graph, or editing behavior was changed.
+- Fresh local validation remains required; PR #82 stays Draft until the user reports PASS.
+
 ## 2026-09-23 — M3.68 validation correction
 
 - User validation found two unused locals in `render-graph.ts` and a stale pipeline test that still expected non-centered animated anchors to be rejected. fileciteturn920file0L24-L35 fileciteturn920file0L129-L140 fileciteturn920file0L263-L280
