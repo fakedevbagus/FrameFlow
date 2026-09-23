@@ -1515,6 +1515,7 @@ mod tests {
         Path::new("/media/First Video.mp4").to_path_buf(),
         Path::new("/media/Second; Video.mp4").to_path_buf(),
       ],
+      &["video".to_string(), "video".to_string()],
       "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
       "[vout]",
       30.0,
@@ -1694,6 +1695,31 @@ mod tests {
     assert!(super::project_path("/tmp/first-edit.json").is_err());
     assert!(super::project_path("/tmp/first-edit.mp4").is_err());
     assert!(super::project_path("/tmp").is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_video_graph_arguments_with_looped_image_inputs() {
+    let args = super::build_ffmpeg_video_graph_args(
+      &[
+        Path::new("/media/title.png").to_path_buf(),
+        Path::new("/media/video.mp4").to_path_buf(),
+      ],
+      &["image".to_string(), "video".to_string()],
+      "[0:v:0]trim=start=0:end=2[clip0];[1:v:0]trim=start=0:end=3[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
+      "[vout]",
+      30.0,
+      Path::new("/tmp/image-export.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-loop".to_string(), "1".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-framerate".to_string(), "30".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/title.png".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/video.mp4".to_string()]));
   }
 
   #[test]
