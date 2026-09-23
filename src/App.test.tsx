@@ -920,6 +920,21 @@ describe("App", () => {
     const textInput = screen.getByRole("textbox", {
       name: "Text overlay content",
     });
+
+    textInput.dispatchEvent(
+      new InputEvent("beforeinput", {
+        bubbles: true,
+        inputType: "insertText",
+        data: "h",
+      }),
+    );
+
+    expect(
+      screen.getByTestId(
+        "preview-text-overlay-" + project.tracks[0].clips[0].id,
+      ),
+    ).toHaveTextContent("h");
+
     (textInput as HTMLTextAreaElement).value = "WebView live text";
 
     await waitFor(
