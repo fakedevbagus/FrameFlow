@@ -1,3 +1,10 @@
+## 2026-09-23 — M3.66 transition guard correction
+
+- CI frontend tests initially failed because the pre-M3.66 transition guard still rejected every transitionOut before the new graph compiler could run.
+- Removed that stale guard in commit ea660dd9bc608e0a1de0858cd611e63cb0c94ea7.
+- The failed run showed 368 existing tests passing plus the 4 new transition tests failing only at that stale guard; TypeScript and Rust compilation were not reached in that run.
+- A fresh CI run is pending after the correction.
+
 ## 2026-09-23 — M3.66 Transition Export — implementation
 
 Branch: `feat/m3-66-transition-export`
