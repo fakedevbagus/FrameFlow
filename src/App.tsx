@@ -105,7 +105,7 @@ import {
   clearTextOverlayEditSession,
   getTextOverlayEditSession,
   setTextOverlayEditSession,
-  useTextOverlayEditSession,
+  subscribeToTextOverlayEditSession,
 } from "./features/effects/text-overlay-edit-session";
 import { ExportPanel } from "./features/export/ExportPanel";
 import {
@@ -179,7 +179,6 @@ function App() {
     createHistoryState(loadWorkspaceProject()),
   );
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
-  const textOverlayDraft = useTextOverlayEditSession();
   const textOverlayAutoCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -219,57 +218,67 @@ function App() {
   }, [selectedClipId]);
 
   useEffect(() => {
-    if (!textOverlayDraft) {
-      return;
-    }
+    const scheduleTextOverlayAutosave = () => {
+      const session = getTextOverlayEditSession();
 
-    if (textOverlayAutoCommitTimerRef.current !== null) {
-      clearTimeout(textOverlayAutoCommitTimerRef.current);
-    }
-
-    const scheduledSession = textOverlayDraft;
-    textOverlayAutoCommitTimerRef.current = setTimeout(() => {
-      textOverlayAutoCommitTimerRef.current = null;
-
-      const latestSession = getTextOverlayEditSession();
-
-      if (
-        latestSession === null ||
-        latestSession.clipId !== scheduledSession.clipId
-      ) {
+      if (session === null) {
         return;
       }
 
-      setHistory((currentHistory) => {
-        try {
-          const nextProject = updateClipTextOverlay(
-            currentHistory.present,
-            latestSession.clipId,
-            latestSession.overlay,
-          );
+      if (textOverlayAutoCommitTimerRef.current !== null) {
+        clearTimeout(textOverlayAutoCommitTimerRef.current);
+      }
 
-          setProjectNotice("Text overlay updated.");
-          return commitHistory(currentHistory, nextProject);
-        } catch (error) {
-          setProjectNotice(
-            error instanceof Error
-              ? error.message
-              : "Text overlay could not be autosaved.",
-          );
-          return currentHistory;
+      const scheduledClipId = session.clipId;
+      textOverlayAutoCommitTimerRef.current = setTimeout(() => {
+        textOverlayAutoCommitTimerRef.current = null;
+
+        const latestSession = getTextOverlayEditSession();
+
+        if (
+          latestSession === null ||
+          latestSession.clipId !== scheduledClipId
+        ) {
+          return;
         }
-      });
 
-      clearTextOverlayEditSession();
-    }, TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS);
+        setHistory((currentHistory) => {
+          try {
+            const nextProject = updateClipTextOverlay(
+              currentHistory.present,
+              latestSession.clipId,
+              latestSession.overlay,
+            );
+
+            setProjectNotice("Text overlay updated.");
+            return commitHistory(currentHistory, nextProject);
+          } catch (error) {
+            setProjectNotice(
+              error instanceof Error
+                ? error.message
+                : "Text overlay could not be autosaved.",
+            );
+            return currentHistory;
+          }
+        });
+
+        clearTextOverlayEditSession();
+      }, TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS);
+    };
+
+    const unsubscribe = subscribeToTextOverlayEditSession(
+      scheduleTextOverlayAutosave,
+    );
 
     return () => {
+      unsubscribe();
+
       if (textOverlayAutoCommitTimerRef.current !== null) {
         clearTimeout(textOverlayAutoCommitTimerRef.current);
         textOverlayAutoCommitTimerRef.current = null;
       }
     };
-  }, [textOverlayDraft]);
+  }, []);
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
   const assets = project.assets;
@@ -2128,16 +2137,6 @@ function App() {
                 }
                 onCropCommit={handleCanvasCropCommit}
                 onCropPositionCommit={handleCanvasCropPositionCommit}
-                textOverlayOverride={
-                  textOverlayDraft
-                    ? {
-                        clipId: textOverlayDraft.clipId,
-                        overlay: textOverlayDraft.overlay.text.trim()
-                          ? textOverlayDraft.overlay
-                          : undefined,
-                      }
-                    : null
-                }
                 />
               </div>
             </div>
