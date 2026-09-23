@@ -2,6 +2,8 @@ export const M3_38_DIRECT_GRAPH_MARKER = "m3.38-direct-graph-v2";
 
 import { buildVisualEffectsFfmpegFilters } from "../effects/visual-effects";
 import {
+  getClipCrop,
+  getClipCropPosition,
   getClipTransform,
   normalizeClipTransform,
 } from "../transform/transform";
@@ -135,15 +137,20 @@ function buildSegmentFilter(
   includeOutputNormalization: boolean,
 ): string {
   const transform = getClipTransform(segment.transform);
+  const crop = getClipCrop(segment.crop);
+  const cropPosition = getClipCropPosition(crop, segment.cropPosition);
   const staticTransformRequired = !isDefaultTransform(transform);
+  const staticCropRequired = !isDefaultCrop(crop);
 
-  if (staticTransformRequired) {
-    return buildTransformedSegmentFilter(
+  if (staticTransformRequired || staticCropRequired) {
+    return buildCompositedSegmentFilter(
       segment,
       plan,
       label,
       includeOutputNormalization,
       transform,
+      crop,
+      cropPosition,
     );
   }
 
@@ -177,12 +184,14 @@ function buildSegmentFilter(
   ].join(",") + "[" + label + "]";
 }
 
-function buildTransformedSegmentFilter(
+function buildCompositedSegmentFilter(
   segment: RenderSegment,
   plan: RenderPlan,
   label: string,
   includeOutputNormalization: boolean,
   transform: ClipTransform,
+  crop: ReturnType<typeof getClipCrop>,
+  cropPosition: ReturnType<typeof getClipCropPosition>,
 ): string {
   const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
 
@@ -199,10 +208,51 @@ function buildTransformedSegmentFilter(
   const rotationRadians = formatNumber(
     (transform.rotation * Math.PI) / 180,
   );
+  const visibleWidth = Math.max(
+    0.001,
+    1 - crop.left - crop.right,
+  );
+  const visibleHeight = Math.max(
+    0.001,
+    1 - crop.top - crop.bottom,
+  );
+
+  const cropFilters = isDefaultCrop(crop)
+    ? []
+    : [
+        "format=rgba",
+        "crop=w=trunc(iw*" +
+          formatNumber(visibleWidth) +
+          "):h=trunc(ih*" +
+          formatNumber(visibleHeight) +
+          "):x=trunc(iw*(" +
+          formatNumber(cropPosition.x) +
+          "-" +
+          formatNumber(visibleWidth / 2) +
+          ")):y=trunc(ih*(" +
+          formatNumber(cropPosition.y) +
+          "-" +
+          formatNumber(visibleHeight / 2) +
+          "))",
+        "pad=w=iw/" +
+          formatNumber(visibleWidth) +
+          ":h=ih/" +
+          formatNumber(visibleHeight) +
+          ":x=(iw/" +
+          formatNumber(visibleWidth) +
+          ")*" +
+          formatNumber(crop.left) +
+          ":y=(ih/" +
+          formatNumber(visibleHeight) +
+          ")*" +
+          formatNumber(crop.top) +
+          ":color=black@0",
+      ];
 
   const foregroundFilters = [
-    "[" + segment.inputIndex + ":v:0]" +
-      "trim=start=" +
+    "[" +
+      segment.inputIndex +
+      ":v:0]trim=start=" +
       formatSeconds(segment.sourceStartMs) +
       ":end=" +
       formatSeconds(segment.sourceEndMs),
@@ -216,22 +266,25 @@ function buildTransformedSegmentFilter(
     buildVisualEffectsFfmpegFilters(segment.visualEffects)
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
       : []),
+    ...cropFilters,
     transform.scale !== 1
       ? "scale=w=iw*" +
         formatNumber(transform.scale) +
         ":h=ih*" +
         formatNumber(transform.scale)
       : null,
-    transform.rotation !== 0 ? [
-      "format=rgba",
-      "rotate=" +
-        rotationRadians +
-        ":c=none:ow=rotw(" +
-        rotationRadians +
-        "):oh=roth(" +
-        rotationRadians +
-        ")",
-    ] : null,
+    transform.rotation !== 0
+      ? [
+          "format=rgba",
+          "rotate=" +
+            rotationRadians +
+            ":c=none:ow=rotw(" +
+            rotationRadians +
+            "):oh=roth(" +
+            rotationRadians +
+            ")",
+        ]
+      : null,
     transform.opacity !== 1 ? "format=rgba" : null,
     transform.opacity !== 1
       ? "colorchannelmixer=aa=" + formatNumber(transform.opacity)
@@ -298,34 +351,22 @@ function isDefaultTransform(transform: ClipTransform): boolean {
   );
 }
 
+function isDefaultCrop(
+  crop: ReturnType<typeof getClipCrop>,
+): boolean {
+  return (
+    crop.top === 0 &&
+    crop.right === 0 &&
+    crop.bottom === 0 &&
+    crop.left === 0
+  );
+}
+
 function assertSupportedVisualMetadata(segment: RenderSegment): void {
   if (segment.transformKeyframes && segment.transformKeyframes.length > 0) {
     throw new Error(
       "M3.63 does not compile transform keyframes yet; animated transform export is deferred.",
     );
-  }
-
-  if (
-    segment.crop &&
-    (segment.crop.top !== 0 ||
-      segment.crop.right !== 0 ||
-      segment.crop.bottom !== 0 ||
-      segment.crop.left !== 0)
-  ) {
-    throw new Error(
-      "M3.36 does not compile crop settings yet; crop graph support is deferred.",
-    );
-  }
-
-  if (segment.cropPosition) {
-    const centered =
-      segment.cropPosition.x === 0.5 && segment.cropPosition.y === 0.5;
-
-    if (!centered) {
-      throw new Error(
-        "M3.36 does not compile crop position yet; crop graph support is deferred.",
-      );
-    }
   }
 
   if (segment.transformKeyframes && segment.transformKeyframes.length > 0) {
