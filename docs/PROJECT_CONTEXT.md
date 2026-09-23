@@ -1,4 +1,14 @@
-## M3.68 — Non-Centered Transform Anchor Export — in progress — 2026-09-23
+## M3.69 — Multi-Track Video Compositing Foundation — next
+
+- M3.68 Non-Centered Transform Anchor Export was completed and squash-merged in PR #82 at `ba34a0aed73f56b85217f0c4c9584299f4544ff8`.
+- The final M3.68 UI correction added right-side breathing room to the Inspector after the user's Linux screenshot confirmed clipping was resolved but the content was visually too close to the application edge.
+- M3.69 starts from the updated `main` and targets the remaining single-video-track export limitation.
+- Extend the existing FFmpeg visual graph to compose multiple video tracks in project track order without changing the project schema.
+- Preserve existing per-clip fit, crop/effects, static/animated transforms, non-centered anchors, transitions within each owning track, and track mute state.
+- Audio mixing stays on the existing audio graph path and is not part of this visual compositing slice.
+- Cross-track transitions and broader transition placement remain deferred.
+
+## M3.68 — Non-Centered Transform Anchor Export — merged — 2026-09-23
 
 - M3.67 Animated Transform Export was user-validated and squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
 - M3.68 addresses the remaining export limitation for non-centered transform anchors already supported by the editor/Preview.
