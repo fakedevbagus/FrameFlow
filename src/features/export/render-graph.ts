@@ -8,6 +8,12 @@ import {
   normalizeClipTransform,
 } from "../transform/transform";
 import type { ClipTransform } from "../transform/transform";
+import {
+  DISSOLVE_TRANSITION_TYPE,
+  FADE_THROUGH_BLACK_TRANSITION_TYPE,
+  MIN_DISSOLVE_DURATION_MS,
+  getClipTransition,
+} from "../transition/transition";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
@@ -75,48 +81,134 @@ export function compileSingleVideoTrackGraph(
 
   const graphParts: string[] = [];
   const concatInputs: string[] = [];
-  let previousEndMs = 0;
-  let gapIndex = 0;
+  const hasTransitions = ordered.some((segment) => Boolean(segment.transitionOut));
 
-  for (let index = 0; index < ordered.length; index += 1) {
-    const segment = ordered[index];
+  if (hasTransitions) {
+    const fullLabels = ordered.map((_, index) => "full" + index);
 
-    if (segment.timelineStartMs > previousEndMs) {
-      const gapDurationMs = segment.timelineStartMs - previousEndMs;
-      const gapLabel = "gap" + gapIndex;
+    for (let index = 0; index < ordered.length; index += 1) {
       graphParts.push(
-        "color=c=black:s=" +
-          plan.width +
-          "x" +
-          plan.height +
-          ":r=" +
-          formatNumber(plan.frameRate) +
-          ":d=" +
-          formatSeconds(gapDurationMs) +
-          ",setsar=1[" +
-          gapLabel +
-          "]",
+        buildSegmentFilter(
+          ordered[index],
+          plan,
+          fullLabels[index],
+          true,
+        ),
       );
-      concatInputs.push("[" + gapLabel + "]");
-      gapIndex += 1;
     }
 
-    const isDirectSingleClip =
-      ordered.length === 1 && segment.timelineStartMs === 0;
-    const videoLabel = isDirectSingleClip ? "vout" : "clip" + index;
+    let previousEndMs = 0;
+    let gapIndex = 0;
 
-    graphParts.push(
-      buildSegmentFilter(segment, plan, videoLabel, !isDirectSingleClip),
-    );
+    for (let index = 0; index < ordered.length; index += 1) {
+      const segment = ordered[index];
 
-    if (!isDirectSingleClip) {
-      concatInputs.push("[" + videoLabel + "]");
+      if (segment.timelineStartMs > previousEndMs) {
+        const gapDurationMs = segment.timelineStartMs - previousEndMs;
+        const gapLabel = "gap" + gapIndex;
+        graphParts.push(
+          "color=c=black:s=" +
+            plan.width +
+            "x" +
+            plan.height +
+            ":r=" +
+            formatNumber(plan.frameRate) +
+            ":d=" +
+            formatSeconds(gapDurationMs) +
+            ",setsar=1[" +
+            gapLabel +
+            "]",
+        );
+        concatInputs.push("[" + gapLabel + "]");
+        gapIndex += 1;
+      }
+
+      const transition = getClipTransition(segment.transitionOut);
+
+      if (!transition) {
+        concatInputs.push("[" + fullLabels[index] + "]");
+        previousEndMs = segment.timelineEndMs;
+        continue;
+      }
+
+      const next = ordered[index + 1];
+
+      if (!next) {
+        throw new Error("Transition requires an adjacent incoming visual clip.");
+      }
+
+      assertSupportedTransition(segment, next, transition);
+
+      const durationMs = Math.min(
+        transition.durationMs,
+        segment.durationMs,
+        next.durationMs,
+      );
+
+      if (durationMs < MIN_DISSOLVE_DURATION_MS) {
+        throw new Error(
+          "Transition duration is shorter than the supported minimum.",
+        );
+      }
+
+      concatInputs.push(
+        ...buildTransitionGraphParts(
+          segment,
+          fullLabels[index],
+          fullLabels[index + 1],
+          transition,
+          graphParts,
+          index,
+          durationMs,
+        ),
+      );
+
+      previousEndMs = segment.timelineEndMs;
     }
-    previousEndMs = segment.timelineEndMs;
+  } else {
+    let previousEndMs = 0;
+    let gapIndex = 0;
+
+    for (let index = 0; index < ordered.length; index += 1) {
+      const segment = ordered[index];
+
+      if (segment.timelineStartMs > previousEndMs) {
+        const gapDurationMs = segment.timelineStartMs - previousEndMs;
+        const gapLabel = "gap" + gapIndex;
+        graphParts.push(
+          "color=c=black:s=" +
+            plan.width +
+            "x" +
+            plan.height +
+            ":r=" +
+            formatNumber(plan.frameRate) +
+            ":d=" +
+            formatSeconds(gapDurationMs) +
+            ",setsar=1[" +
+            gapLabel +
+            "]",
+        );
+        concatInputs.push("[" + gapLabel + "]");
+        gapIndex += 1;
+      }
+
+      const isDirectSingleClip =
+        ordered.length === 1 && segment.timelineStartMs === 0;
+      const videoLabel = isDirectSingleClip ? "vout" : "clip" + index;
+
+      graphParts.push(
+        buildSegmentFilter(segment, plan, videoLabel, !isDirectSingleClip),
+      );
+
+      if (!isDirectSingleClip) {
+        concatInputs.push("[" + videoLabel + "]");
+      }
+      previousEndMs = segment.timelineEndMs;
+    }
   }
 
   const canRenderDirectlyToOutput =
-    ordered.length === 1 && ordered[0].timelineStartMs === 0;
+    ordered.length === 1 && ordered[0].timelineStartMs === 0 && !hasTransitions;
 
   if (!canRenderDirectlyToOutput) {
     const concatCount = concatInputs.length;
@@ -133,6 +225,136 @@ export function compileSingleVideoTrackGraph(
     filterComplex: graphParts.join(";"),
     videoMap: "[vout]",
   };
+}
+
+function assertSupportedTransition(
+  outgoing: RenderSegment,
+  incoming: RenderSegment,
+  transition: NonNullable<ReturnType<typeof getClipTransition>>,
+): void {
+  if (outgoing.timelineEndMs !== incoming.timelineStartMs) {
+    throw new Error(
+      "Transitions require directly adjacent visual clips in the same video track.",
+    );
+  }
+
+  if (
+    outgoing.trackId !== incoming.trackId ||
+    outgoing.trackType !== "video" ||
+    incoming.trackType !== "video" ||
+    (outgoing.mediaType !== "video" && outgoing.mediaType !== "image") ||
+    (incoming.mediaType !== "video" && incoming.mediaType !== "image")
+  ) {
+    throw new Error(
+      "Transitions require adjacent video/image clips on the same video track.",
+    );
+  }
+
+  if (
+    transition.type !== DISSOLVE_TRANSITION_TYPE &&
+    transition.type !== FADE_THROUGH_BLACK_TRANSITION_TYPE
+  ) {
+    throw new Error("Unsupported transition type.");
+  }
+}
+
+function buildTransitionGraphParts(
+  outgoing: RenderSegment,
+  outgoingFullLabel: string,
+  incomingFullLabel: string,
+  transition: NonNullable<ReturnType<typeof getClipTransition>>,
+  graphParts: string[],
+  index: number,
+  durationMs: number,
+): string[] {
+  const duration = formatSeconds(durationMs);
+  const outgoingDuration = formatSeconds(outgoing.durationMs);
+  const transitionStart = formatSeconds(outgoing.durationMs - durationMs);
+  const prefixLabel = "transition_" + index + "_prefix";
+
+  graphParts.push(
+    "[" +
+      outgoingFullLabel +
+      "]trim=start=0:end=" +
+      transitionStart +
+      ",setpts=PTS-STARTPTS[" +
+      prefixLabel +
+      "]",
+  );
+
+  const labels = ["[" + prefixLabel + "]"];
+
+  if (transition.type === DISSOLVE_TRANSITION_TYPE) {
+    const outgoingTailLabel = "transition_" + index + "_outgoing_tail";
+    const incomingFrameLabel = "transition_" + index + "_incoming_frame";
+    const transitionLabel = "transition_" + index + "_dissolve";
+
+    graphParts.push(
+      "[" +
+        outgoingFullLabel +
+        "]trim=start=" +
+        transitionStart +
+        ":end=" +
+        outgoingDuration +
+        ",setpts=PTS-STARTPTS[" +
+        outgoingTailLabel +
+        "]",
+    );
+    graphParts.push(
+      "[" +
+        incomingFullLabel +
+        "]select=eq(n\\,0),setpts=PTS-STARTPTS,loop=loop=-1:size=1:start=0,trim=duration=" +
+        duration +
+        ",setpts=PTS-STARTPTS,format=rgba,fade=t=in:st=0:d=" +
+        duration +
+        ":alpha=1[" +
+        incomingFrameLabel +
+        "]",
+    );
+    graphParts.push(
+      "[" +
+        outgoingTailLabel +
+        "][" +
+        incomingFrameLabel +
+        "]overlay=x=0:y=0:shortest=1,format=yuv420p[" +
+        transitionLabel +
+        "]",
+    );
+    labels.push("[" + transitionLabel + "]");
+    return labels;
+  }
+
+  const halfDurationMs = durationMs / 2;
+  const halfDuration = formatSeconds(halfDurationMs);
+  const fadeOutLabel = "transition_" + index + "_fade_out";
+  const fadeInLabel = "transition_" + index + "_fade_in";
+
+  graphParts.push(
+    "[" +
+      outgoingFullLabel +
+      "]trim=start=" +
+      transitionStart +
+      ":end=" +
+      formatSeconds(outgoing.durationMs - halfDurationMs) +
+      ",setpts=PTS-STARTPTS,fade=t=out:st=0:d=" +
+      halfDuration +
+      "[" +
+      fadeOutLabel +
+      "]",
+  );
+  graphParts.push(
+    "[" +
+      incomingFullLabel +
+      "]select=eq(n\\,0),setpts=PTS-STARTPTS,loop=loop=-1:size=1:start=0,trim=duration=" +
+      halfDuration +
+      ",setpts=PTS-STARTPTS,fade=t=in:st=0:d=" +
+      halfDuration +
+      "[" +
+      fadeInLabel +
+      "]",
+  );
+  labels.push("[" + fadeOutLabel + "]", "[" + fadeInLabel + "]");
+  return labels;
 }
 
 function buildSegmentFilter(
@@ -377,12 +599,6 @@ function assertSupportedVisualMetadata(segment: RenderSegment): void {
   if (segment.transformKeyframes && segment.transformKeyframes.length > 0) {
     throw new Error(
       "M3.36 does not compile transform keyframes yet; animated filter support is deferred.",
-    );
-  }
-
-  if (segment.transitionOut) {
-    throw new Error(
-      "M3.36 does not compile transitions yet; transition graph support is deferred.",
     );
   }
 

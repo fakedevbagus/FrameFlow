@@ -442,4 +442,133 @@ describe("single video render graph", () => {
   });
 
 
+  it("compiles a dissolve transition without shortening the timeline", () => {
+    let project = createVideoProject();
+    project.assets = [
+      ...project.assets,
+      {
+        id: "image-a",
+        name: "cover.png",
+        mediaType: "image",
+        sourcePath: "/media/cover.png",
+        durationMs: null,
+      },
+    ];
+    project = addAssetToTimeline(project, "video-a");
+    project = addAssetToTrack(project, "image-a", "video-1", 5000);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) =>
+                clip.assetId === "video-a"
+                  ? {
+                      ...clip,
+                      transitionOut: {
+                        type: "dissolve" as const,
+                        durationMs: 500,
+                      },
+                    }
+                  : clip,
+              ),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "[full0]trim=start=0:end=4.5,setpts=PTS-STARTPTS[transition_0_prefix]",
+    );
+    expect(graph.filterComplex).toContain(
+      "loop=loop=-1:size=1:start=0,trim=duration=0.5",
+    );
+    expect(graph.filterComplex).toContain(
+      "fade=t=in:st=0:d=0.5:alpha=1",
+    );
+    expect(graph.filterComplex).toContain(
+      "overlay=x=0:y=0:shortest=1,format=yuv420p[transition_0_dissolve]",
+    );
+    expect(graph.filterComplex).toContain(
+      "[transition_0_prefix][transition_0_dissolve][full1]concat=n=3:v=1:a=0",
+    );
+    expect(graph.filterComplex).not.toContain("xfade=");
+  });
+
+  it("compiles fade-through-black transitions as explicit black midpoint stages", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = addAssetToTrack(project, "video-b", "video-1", 5000);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) =>
+                clip.assetId === "video-a"
+                  ? {
+                      ...clip,
+                      transitionOut: {
+                        type: "fade-through-black" as const,
+                        durationMs: 1000,
+                      },
+                    }
+                  : clip,
+              ),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain("fade=t=out:st=0:d=0.5");
+    expect(graph.filterComplex).toContain("fade=t=in:st=0:d=0.5");
+    expect(graph.filterComplex).toContain(
+      "[transition_0_prefix][transition_0_fade_out][transition_0_fade_in][full1]concat=n=4:v=1:a=0",
+    );
+  });
+
+  it("rejects transitions when the incoming visual clip is not directly adjacent", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = addAssetToTrack(project, "video-b", "video-1", 6000);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) =>
+                clip.assetId === "video-a"
+                  ? {
+                      ...clip,
+                      transitionOut: {
+                        type: "dissolve" as const,
+                        durationMs: 500,
+                      },
+                    }
+                  : clip,
+              ),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(project, createDefaultExportSettings(project));
+
+    expect(() => compileSingleVideoTrackGraph(plan)).toThrow(
+      "directly adjacent visual clips",
+    );
+  });
+
+
 });

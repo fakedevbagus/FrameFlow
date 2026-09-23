@@ -1,3 +1,28 @@
+## 2026-09-23 — M3.66 transition guard correction
+
+- CI frontend tests initially failed because the pre-M3.66 transition guard still rejected every transitionOut before the new graph compiler could run.
+- Removed that stale guard in commit ea660dd9bc608e0a1de0858cd611e63cb0c94ea7.
+- The failed run showed 368 existing tests passing plus the 4 new transition tests failing only at that stale guard; TypeScript and Rust compilation were not reached in that run.
+- A fresh CI run is pending after the correction.
+
+## 2026-09-23 — M3.66 Transition Export — implementation
+
+Branch: `feat/m3-66-transition-export`
+PR #80 — Draft
+
+Implemented:
+- Added FFmpeg graph compilation for the existing `dissolve` transition.
+- Added FFmpeg graph compilation for the existing `fade-through-black` transition.
+- Preserved timeline-duration semantics by assigning the transition window to the outgoing clip's final duration and starting the incoming clip from source time zero at its original boundary.
+- Used a looped first incoming frame during the transition so Preview and export share the same first-frame transition semantics.
+- Routed any transitioned video sequence through the native graph instead of the legacy sequential segment renderer.
+- Kept video/image inputs, static crop, static transforms, and visual effects on the same graph path.
+- Added graph and pipeline regression coverage.
+- No project schema change.
+
+Validation:
+- CI/local validation is not yet complete; PR #80 remains Draft until the user reports PASS.
+
 ## 2026-09-23 — M3.65 Static Image Clip Export — merged
 
 - PR #79 was validated locally by the user and squash-merged into `main` at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.

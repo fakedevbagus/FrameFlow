@@ -99,10 +99,15 @@ function renderVideoOnlyPlanToMp4(
 
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
 
+  const hasVisualTransitions = videoSegments.some(
+    (segment) => Boolean(segment.transitionOut),
+  );
+
   if (
     videoSegments.length > 0 &&
     videoTrackIds.size === 1 &&
-    videoSegments.every((segment) => segment.mediaType === "video")
+    videoSegments.every((segment) => segment.mediaType === "video") &&
+    !hasVisualTransitions
   ) {
     const ordered = [...videoSegments].sort(
       (left, right) => left.timelineStartMs - right.timelineStartMs,
