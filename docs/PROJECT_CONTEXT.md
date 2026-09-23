@@ -1,3 +1,31 @@
+## M3.73 — Preserve Source Audio in Unified AV Export — in progress — 2026-09-24
+
+Branch:
+`feat/m3-73-source-audio-unified-export`
+
+Scope:
+- Preserve embedded audio from non-muted video clips when explicit Audio track clips trigger the unified AV export path.
+- Keep image inputs audio-free, respect video clip/track mute state, and preserve source clip trim/timeline placement.
+- Mix preserved embedded source audio with the existing explicit Audio-track mix before the final `[aout]` mapping.
+- Keep the project schema unchanged and preserve existing video-only fast paths.
+
+Implementation:
+- Added optional `sourceAudioSegments` metadata to the unified native AV render contract.
+- The export pipeline sends rebased visual input indexes with source/timeline timing for non-muted video segments only.
+- Native export probes each referenced video input for an audio stream and skips source-audio mixing when the clip has no audio.
+- Embedded source audio is trimmed to the clip source range, delayed to its timeline start, normalized to 48 kHz stereo, and mixed with the explicit Audio-track output.
+- Added frontend and Rust regression coverage for source-audio routing, muted/non-video filtering, metadata validation, and native FFmpeg filter construction.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- This milestone covers embedded source audio only on the unified AV path when explicit Audio tracks are present.
+- Only the first audio stream (`a:0`) of a referenced video source is preserved.
+
+Next step:
+- Run local lint, frontend tests, production build, Rust tests, and Tauri development startup, then validate an actual export containing video source audio plus an explicit Audio track.
+
 ## M3.72 — Multi-Track + Audio Export Integration — completed — 2026-09-24
 
 Branch:
