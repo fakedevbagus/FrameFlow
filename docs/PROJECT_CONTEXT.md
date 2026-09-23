@@ -1,3 +1,10 @@
+## M3.73 — validation correction — 2026-09-24
+
+- User validation passed `npm run lint`, 33/33 frontend test files, 397/397 frontend tests, and the production build.
+- Rust/Tauri validation failed on the first M3.73 implementation with a duplicate `serde(rename_all)` attribute, missing `source_audio_segments` test fixture fields, one missing native builder argument, and a test-scope `ResolvedSourceAudioSegment` import issue.
+- Corrected those Rust integration/test issues without changing the intended M3.73 export design in commit `66afae8ad3307bddebcf3ca320cee51c1c936913`.
+- Fresh `cargo test` and `npm run tauri dev` validation is required.
+
 ## M3.73 — Preserve Source Audio in Unified AV Export — in progress — 2026-09-24
 
 Branch:
