@@ -586,11 +586,14 @@ function buildTransitionGraphParts(
   graphParts: string[],
   index: number,
   durationMs: number,
+  labelPrefix = "",
+  preserveAlpha = false,
 ): string[] {
   const duration = formatSeconds(durationMs);
   const outgoingDuration = formatSeconds(outgoing.durationMs);
   const transitionStart = formatSeconds(outgoing.durationMs - durationMs);
-  const prefixLabel = "transition_" + index + "_prefix";
+  const transitionPrefix = labelPrefix ? labelPrefix + "_" : "";
+  const prefixLabel = transitionPrefix + "transition_" + index + "_prefix";
 
   graphParts.push(
     "[" +
@@ -605,9 +608,12 @@ function buildTransitionGraphParts(
   const labels = ["[" + prefixLabel + "]"];
 
   if (transition.type === DISSOLVE_TRANSITION_TYPE) {
-    const outgoingTailLabel = "transition_" + index + "_outgoing_tail";
-    const incomingFrameLabel = "transition_" + index + "_incoming_frame";
-    const transitionLabel = "transition_" + index + "_dissolve";
+    const outgoingTailLabel =
+      transitionPrefix + "transition_" + index + "_outgoing_tail";
+    const incomingFrameLabel =
+      transitionPrefix + "transition_" + index + "_incoming_frame";
+    const transitionLabel =
+      transitionPrefix + "transition_" + index + "_dissolve";
 
     graphParts.push(
       "[" +
@@ -636,7 +642,9 @@ function buildTransitionGraphParts(
         outgoingTailLabel +
         "][" +
         incomingFrameLabel +
-        "]overlay=x=0:y=0:shortest=1,format=yuv420p[" +
+        "]overlay=x=0:y=0:shortest=1," +
+        (preserveAlpha ? "format=rgba" : "format=yuv420p") +
+        "[" +
         transitionLabel +
         "]",
     );
@@ -646,8 +654,10 @@ function buildTransitionGraphParts(
 
   const halfDurationMs = durationMs / 2;
   const halfDuration = formatSeconds(halfDurationMs);
-  const fadeOutLabel = "transition_" + index + "_fade_out";
-  const fadeInLabel = "transition_" + index + "_fade_in";
+  const fadeOutLabel =
+    transitionPrefix + "transition_" + index + "_fade_out";
+  const fadeInLabel =
+    transitionPrefix + "transition_" + index + "_fade_in";
 
   graphParts.push(
     "[" +
