@@ -115,6 +115,7 @@ M3.67 current scope:
 - Keep centered transform-anchor support as the boundary for this focused slice.
 - Add regression coverage for keyframe RenderPlan propagation, graph compilation, and export pipeline routing.
 - Animated transforms use time-based FFmpeg expressions, with opacity evaluated from the project frame-rate frame index.
+- Latest local validation on 2026-09-23 reached 373/374 frontend tests; the only remaining failure was a test fixture that did not exercise ease-in-out while asserting its `2*(` expression. The fixture has now been corrected. Build, Rust 39/39, and Tauri dev startup passed in that run; rerun `npm run test` before marking M3.67 ready.
 
 Explicitly deferred:
 - Text overlay export remains parked in PR #76.
