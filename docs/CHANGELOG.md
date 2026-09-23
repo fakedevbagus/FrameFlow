@@ -1,3 +1,10 @@
+## 2026-09-23 — M3.70 validation correction
+
+- The supplied local validation found one failing multi-track text-overlay regression assertion: the test expected `track_2_sequence`, while the generated graph correctly uses `track_1_sequence` for the second video track.
+- Corrected the test expectation to match the actual project track index assigned by `addTrack("video")`.
+- The failure was isolated to the test assertion; the same run showed the production build and all 39 Rust tests passing. fileciteturn1176file0L253-L271 fileciteturn1176file0L276-L287
+- PR #84 remains Draft pending a clean rerun after this correction.
+
 ## 2026-09-23 — M3.70 Text Overlay Export Rendering — implementation
 
 Branch: `feat/m3-70-text-overlay-export`
