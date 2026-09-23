@@ -235,6 +235,11 @@ describe("render video pipeline", () => {
           sourceEndMs: 5038,
           durationMs: 5038,
           isMuted: false,
+          visualEffects: {
+            brightness: 0,
+            contrast: 0,
+            saturation: 0,
+          },
         },
       ],
     };
