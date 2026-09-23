@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createProject } from "../project/domain";
-import { addAssetToTimeline, addAssetToTrack } from "../timeline/commands";
+import { addAssetToTimeline, addAssetToTrack, addTrack } from "../timeline/commands";
 import { createDefaultExportSettings } from "./export";
 import { createRenderPlan } from "./render-plan";
 import {
   compileSingleVideoTrackGraph,
+  compileVideoTracksGraph,
   M3_38_DIRECT_GRAPH_MARKER,
 } from "./render-graph";
 
@@ -727,5 +728,105 @@ describe("single video render graph", () => {
     expect(filter.indexOf("overlay=x='")).toBeGreaterThanOrEqual(0);
   });
 
+
+  it("composites multiple video tracks in project track order", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find((track) => track.id !== "video-1" && track.type === "video")?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 0);
+
+    const graph = compileVideoTracksGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    const filter = graph.filterComplex;
+    const trackZero = filter.indexOf("[track_0_sequence]");
+    const trackOne = filter.indexOf("[track_1_sequence]");
+
+    expect(graph.inputs).toEqual([
+      { inputIndex: 0, sourcePath: "/media/a.mp4" },
+      { inputIndex: 1, sourcePath: "/media/b.mp4" },
+    ]);
+    expect(filter).toContain("color=c=black@0.0:s=1080x1920");
+    expect(filter).toContain("[multitrack_bg][track_0_sequence]overlay=x=0:y=0");
+    expect(filter).toContain("[multitrack_composite_0][track_1_sequence]overlay=x=0:y=0");
+    expect(trackZero).toBeGreaterThanOrEqual(0);
+    expect(trackOne).toBeGreaterThan(trackZero);
+    expect(filter).toContain("format=yuv420p");
+    expect(filter).not.toContain("multi-track compositing is deferred");
+  });
+
+  it("keeps lower tracks visible through transparent gaps and ignores muted video tracks", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find((track) => track.id !== "video-1" && track.type === "video")?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 2000);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrackId
+          ? {
+              ...track,
+              isMuted: true,
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileVideoTracksGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain("track_0_sequence");
+    expect(graph.filterComplex).not.toContain("track_1_sequence");
+    expect(graph.filterComplex).toContain("color=c=black@0.0:s=1080x1920");
+    expect(graph.filterComplex).toContain("[multitrack_bg][track_0_sequence]overlay");
+    expect(graph.videoMap).toBe("[vout]");
+  });
+
+  it("preserves transformed visual clips while compositing multiple tracks", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find((track) => track.id !== "video-1" && track.type === "video")?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 0);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrackId
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                transform: {
+                  x: 12,
+                  y: -8,
+                  scale: 1.25,
+                  rotation: 18,
+                  opacity: 0.8,
+                },
+                transformAnchor: {
+                  x: 0.2,
+                  y: 0.8,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileVideoTracksGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain("anchor_pivot_1");
+    expect(graph.filterComplex).toContain("colorchannelmixer=aa=0.8");
+    expect(graph.filterComplex).toContain("track_1_sequence");
+  });
 
 });

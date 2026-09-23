@@ -29,6 +29,130 @@ export interface VideoRenderGraph {
   videoMap: string;
 }
 
+export function compileVideoTracksGraph(plan: RenderPlan): VideoRenderGraph {
+  const videoSegments = plan.segments.filter(
+    (segment) => segment.trackType === "video",
+  );
+
+  if (videoSegments.length === 0) {
+    throw new Error("Render plan has no video clips.");
+  }
+
+  const trackIds = new Set(videoSegments.map((segment) => segment.trackId));
+
+  if (trackIds.size === 1) {
+    return compileSingleVideoTrackGraph(plan);
+  }
+
+  if (
+    plan.segments.some(
+      (segment) => segment.trackType === "audio" && segment.durationMs > 0,
+    )
+  ) {
+    throw new Error(
+      "Video render graph compilation does not include audio mixing yet.",
+    );
+  }
+
+  if (
+    videoSegments.some(
+      (segment) =>
+        segment.mediaType !== "video" && segment.mediaType !== "image",
+    )
+  ) {
+    throw new Error(
+      "Video render graph supports video and image visual assets only.",
+    );
+  }
+
+  const inputs = [...videoSegments]
+    .sort((left, right) => left.inputIndex - right.inputIndex)
+    .map((segment) => ({
+      inputIndex: segment.inputIndex,
+      sourcePath: segment.sourcePath,
+    }));
+
+  const tracks = [...new Set(videoSegments.map((segment) => segment.trackId))]
+    .map((trackId) => {
+      const segments = videoSegments.filter(
+        (segment) => segment.trackId === trackId,
+      );
+      return {
+        trackId,
+        trackIndex: Math.min(...segments.map((segment) => segment.trackIndex)),
+        segments,
+      };
+    })
+    .sort((left, right) => left.trackIndex - right.trackIndex);
+
+  const graphParts: string[] = [];
+  const trackLabels: string[] = [];
+
+  tracks.forEach((track) => {
+    if (track.segments.every((segment) => segment.isMuted)) {
+      return;
+    }
+
+    track.segments.forEach(assertSupportedVisualMetadataForMultiTrack);
+
+    const label = "track_" + track.trackIndex + "_sequence";
+    graphParts.push(
+      buildVideoTrackSequenceGraph(
+        plan,
+        track.segments,
+        label,
+        "track_" + track.trackIndex,
+      ),
+    );
+    trackLabels.push("[" + label + "]");
+  });
+
+  const backgroundLabel = "multitrack_bg";
+  graphParts.push(
+    "color=c=black@0.0:s=" +
+      plan.width +
+      "x" +
+      plan.height +
+      ":r=" +
+      formatNumber(plan.frameRate) +
+      ":d=" +
+      formatSeconds(plan.durationMs) +
+      ",format=rgba[" +
+      backgroundLabel +
+      "]",
+  );
+
+  let compositeLabel = backgroundLabel;
+
+  trackLabels.forEach((trackLabel, index) => {
+    const nextLabel = "multitrack_composite_" + index;
+    graphParts.push(
+      "[" +
+        compositeLabel +
+        "]" +
+        trackLabel +
+        "overlay=x=0:y=0:eof_action=pass:shortest=0,format=rgba[" +
+        nextLabel +
+        "]",
+    );
+    compositeLabel = nextLabel;
+  });
+
+  graphParts.push(
+    "[" +
+      compositeLabel +
+      "]format=yuv420p,fps=fps=" +
+      formatNumber(plan.frameRate) +
+      ":round=near,setsar=1[vout]",
+  );
+
+  return {
+    inputs,
+    filterComplex: graphParts.join(";"),
+    videoMap: "[vout]",
+  };
+}
+
 export function compileSingleVideoTrackGraph(
   plan: RenderPlan,
 ): VideoRenderGraph {
@@ -229,6 +353,200 @@ export function compileSingleVideoTrackGraph(
   };
 }
 
+function buildVideoTrackSequenceGraph(
+  plan: RenderPlan,
+  segments: RenderSegment[],
+  label: string,
+  graphPrefix: string,
+): string {
+  const ordered = [...segments].sort(
+    (left, right) => left.timelineStartMs - right.timelineStartMs,
+  );
+  const graphParts: string[] = [];
+  const concatInputs: string[] = [];
+  const hasTransitions = ordered.some((segment) => Boolean(segment.transitionOut));
+
+  if (hasTransitions) {
+    const fullLabels = ordered.map(
+      (segment) => graphPrefix + "_full_" + segment.inputIndex,
+    );
+
+    ordered.forEach((segment, index) => {
+      graphParts.push(
+        buildSegmentFilter(
+          segment,
+          plan,
+          fullLabels[index],
+          true,
+          true,
+        ),
+      );
+    });
+
+    let previousEndMs = 0;
+
+    for (let index = 0; index < ordered.length; index += 1) {
+      const segment = ordered[index];
+
+      if (segment.timelineStartMs > previousEndMs) {
+        const gapLabel = graphPrefix + "_gap_" + index;
+        graphParts.push(
+          buildTransparentGapFilter(
+            plan,
+            segment.timelineStartMs - previousEndMs,
+            gapLabel,
+          ),
+        );
+        concatInputs.push("[" + gapLabel + "]");
+      }
+
+      const transition = getClipTransition(segment.transitionOut);
+
+      if (!transition) {
+        concatInputs.push("[" + fullLabels[index] + "]");
+        previousEndMs = segment.timelineEndMs;
+        continue;
+      }
+
+      const next = ordered[index + 1];
+
+      if (!next) {
+        throw new Error("Transition requires an adjacent incoming visual clip.");
+      }
+
+      assertSupportedTransition(segment, next, transition);
+
+      const durationMs = Math.min(
+        transition.durationMs,
+        segment.durationMs,
+        next.durationMs,
+      );
+
+      if (durationMs < MIN_DISSOLVE_DURATION_MS) {
+        throw new Error(
+          "Transition duration is shorter than the supported minimum.",
+        );
+      }
+
+      concatInputs.push(
+        ...buildTransitionGraphParts(
+          segment,
+          fullLabels[index],
+          fullLabels[index + 1],
+          transition,
+          graphParts,
+          index,
+          durationMs,
+          graphPrefix,
+          true,
+        ),
+      );
+
+      previousEndMs = segment.timelineEndMs;
+    }
+  } else {
+    let previousEndMs = 0;
+
+    ordered.forEach((segment, index) => {
+      if (segment.timelineStartMs > previousEndMs) {
+        const gapLabel = graphPrefix + "_gap_" + index;
+        graphParts.push(
+          buildTransparentGapFilter(
+            plan,
+            segment.timelineStartMs - previousEndMs,
+            gapLabel,
+          ),
+        );
+        concatInputs.push("[" + gapLabel + "]");
+      }
+
+      const segmentLabel = graphPrefix + "_clip_" + index;
+      graphParts.push(
+        buildSegmentFilter(
+          segment,
+          plan,
+          segmentLabel,
+          true,
+          true,
+        ),
+      );
+      concatInputs.push("[" + segmentLabel + "]");
+      previousEndMs = segment.timelineEndMs;
+    });
+  }
+
+  const lastEndMs = ordered.length
+    ? Math.max(...ordered.map((segment) => segment.timelineEndMs))
+    : 0;
+
+  if (lastEndMs < plan.durationMs) {
+    const gapLabel = graphPrefix + "_tail_gap";
+    graphParts.push(
+      buildTransparentGapFilter(
+        plan,
+        plan.durationMs - lastEndMs,
+        gapLabel,
+      ),
+    );
+    concatInputs.push("[" + gapLabel + "]");
+  }
+
+  if (concatInputs.length === 1) {
+    graphParts.push(
+      concatInputs[0] +
+        "trim=duration=" +
+        formatSeconds(plan.durationMs) +
+        ",setpts=PTS-STARTPTS,format=rgba[" +
+        label +
+        "]",
+    );
+  } else {
+    graphParts.push(
+      concatInputs.join("") +
+        "concat=n=" +
+        concatInputs.length +
+        ":v=1:a=0,format=rgba,setpts=PTS-STARTPTS[" +
+        label +
+        "]",
+    );
+  }
+
+  return graphParts.join(";");
+}
+
+function buildTransparentGapFilter(
+  plan: RenderPlan,
+  durationMs: number,
+  label: string,
+): string {
+  return (
+    "color=c=black@0.0:s=" +
+    plan.width +
+    "x" +
+    plan.height +
+    ":r=" +
+    formatNumber(plan.frameRate) +
+    ":d=" +
+    formatSeconds(durationMs) +
+    ",format=rgba[" +
+    label +
+    "]"
+  );
+}
+
+function assertSupportedVisualMetadataForMultiTrack(
+  segment: RenderSegment,
+): void {
+  if (
+    segment.mediaType !== "video" &&
+    segment.mediaType !== "image"
+  ) {
+    throw new Error(
+      "Video render graph supports video and image visual assets only.",
+    );
+  }
+}
+
 function assertSupportedTransition(
   outgoing: RenderSegment,
   incoming: RenderSegment,
@@ -268,11 +586,14 @@ function buildTransitionGraphParts(
   graphParts: string[],
   index: number,
   durationMs: number,
+  labelPrefix = "",
+  preserveAlpha = false,
 ): string[] {
   const duration = formatSeconds(durationMs);
   const outgoingDuration = formatSeconds(outgoing.durationMs);
   const transitionStart = formatSeconds(outgoing.durationMs - durationMs);
-  const prefixLabel = "transition_" + index + "_prefix";
+  const transitionPrefix = labelPrefix ? labelPrefix + "_" : "";
+  const prefixLabel = transitionPrefix + "transition_" + index + "_prefix";
 
   graphParts.push(
     "[" +
@@ -287,9 +608,12 @@ function buildTransitionGraphParts(
   const labels = ["[" + prefixLabel + "]"];
 
   if (transition.type === DISSOLVE_TRANSITION_TYPE) {
-    const outgoingTailLabel = "transition_" + index + "_outgoing_tail";
-    const incomingFrameLabel = "transition_" + index + "_incoming_frame";
-    const transitionLabel = "transition_" + index + "_dissolve";
+    const outgoingTailLabel =
+      transitionPrefix + "transition_" + index + "_outgoing_tail";
+    const incomingFrameLabel =
+      transitionPrefix + "transition_" + index + "_incoming_frame";
+    const transitionLabel =
+      transitionPrefix + "transition_" + index + "_dissolve";
 
     graphParts.push(
       "[" +
@@ -318,7 +642,9 @@ function buildTransitionGraphParts(
         outgoingTailLabel +
         "][" +
         incomingFrameLabel +
-        "]overlay=x=0:y=0:shortest=1,format=yuv420p[" +
+        "]overlay=x=0:y=0:shortest=1," +
+        (preserveAlpha ? "format=rgba" : "format=yuv420p") +
+        "[" +
         transitionLabel +
         "]",
     );
@@ -328,8 +654,10 @@ function buildTransitionGraphParts(
 
   const halfDurationMs = durationMs / 2;
   const halfDuration = formatSeconds(halfDurationMs);
-  const fadeOutLabel = "transition_" + index + "_fade_out";
-  const fadeInLabel = "transition_" + index + "_fade_in";
+  const fadeOutLabel =
+    transitionPrefix + "transition_" + index + "_fade_out";
+  const fadeInLabel =
+    transitionPrefix + "transition_" + index + "_fade_in";
 
   graphParts.push(
     "[" +
@@ -364,6 +692,7 @@ function buildSegmentFilter(
   plan: RenderPlan,
   label: string,
   includeOutputNormalization: boolean,
+  preserveAlpha = false,
 ): string {
   const transform = getClipTransform(segment.transform);
   const transformKeyframes = normalizeTransformKeyframes(segment.transformKeyframes);
@@ -378,6 +707,7 @@ function buildSegmentFilter(
         includeOutputNormalization,
         transform,
         transformKeyframes,
+        preserveAlpha,
       );
     }
 
@@ -387,6 +717,7 @@ function buildSegmentFilter(
       label,
       includeOutputNormalization,
       transformKeyframes,
+      preserveAlpha,
     );
   }
 
@@ -403,6 +734,8 @@ function buildSegmentFilter(
         label,
         includeOutputNormalization,
         transform,
+        [],
+        preserveAlpha,
       );
     }
 
@@ -414,6 +747,7 @@ function buildSegmentFilter(
       transform,
       crop,
       cropPosition,
+      preserveAlpha,
     );
   }
 
@@ -424,6 +758,7 @@ function buildSegmentFilter(
       ":end=" +
       formatSeconds(segment.sourceEndMs),
     "setpts=PTS-STARTPTS",
+    ...(preserveAlpha ? ["format=rgba"] : []),
     "scale=w=" +
       plan.width +
       ":h=" +
@@ -433,7 +768,9 @@ function buildSegmentFilter(
       plan.width +
       ":h=" +
       plan.height +
-      ":x=(ow-iw)/2:y=(oh-ih)/2",
+      ":x=(ow-iw)/2:y=(oh-ih)/2" +
+      (preserveAlpha ? ":color=black@0.0" : ""),
+    ...(preserveAlpha ? ["format=rgba"] : []),
     ...(segment.visualEffects &&
     buildVisualEffectsFfmpegFilters(segment.visualEffects)
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
@@ -453,6 +790,7 @@ function buildAnimatedCompositedSegmentFilter(
   label: string,
   includeOutputNormalization: boolean,
   keyframes: ReturnType<typeof normalizeTransformKeyframes>,
+  preserveAlpha = false,
 ): string {
   const crop = getClipCrop(segment.crop);
   const cropPosition = getClipCropPosition(crop, segment.cropPosition);
@@ -548,6 +886,7 @@ function buildAnimatedCompositedSegmentFilter(
       formatSeconds(segment.sourceEndMs),
     "setpts=PTS-STARTPTS",
     "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
+    ...(preserveAlpha ? ["format=rgba"] : []),
     "scale=w=" +
       plan.width +
       ":h=" +
@@ -557,7 +896,8 @@ function buildAnimatedCompositedSegmentFilter(
       plan.width +
       ":h=" +
       plan.height +
-      ":x=(ow-iw)/2:y=(oh-ih)/2",
+      ":x=(ow-iw)/2:y=(oh-ih)/2" +
+      (preserveAlpha ? ":color=black@0.0" : ""),
     ...(segment.visualEffects &&
     buildVisualEffectsFfmpegFilters(segment.visualEffects)
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
@@ -641,10 +981,16 @@ function buildAnimatedCompositedSegmentFilter(
     "':shortest=1";
 
   const normalization = includeOutputNormalization
-    ? ",format=yuv420p,fps=fps=" +
-      formatNumber(plan.frameRate) +
-      ":round=near,setsar=1"
-    : ",format=yuv420p";
+    ? (preserveAlpha
+        ? ",format=rgba,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1"
+        : ",format=yuv420p,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1")
+    : preserveAlpha
+      ? ",format=rgba"
+      : ",format=yuv420p";
 
   return (
     foregroundFilters.join(",") +
@@ -767,6 +1113,7 @@ function buildCompositedSegmentFilter(
   transform: ClipTransform,
   crop: ReturnType<typeof getClipCrop>,
   cropPosition: ReturnType<typeof getClipCropPosition>,
+  preserveAlpha = false,
 ): string {
   const foregroundLabel = "transform_fg_" + segment.inputIndex;
   const backgroundLabel = "transform_bg_" + segment.inputIndex;
@@ -898,7 +1245,7 @@ function buildCompositedSegmentFilter(
     backgroundFilter +
     ";" +
     overlayFilter +
-    ",format=yuv420p" +
+    (preserveAlpha ? ",format=rgba" : ",format=yuv420p") +
     normalization +
     "[" +
     label +
@@ -937,6 +1284,7 @@ function buildAnchorAwareCompositedSegmentFilter(
   includeOutputNormalization: boolean,
   transform: ClipTransform,
   keyframes: ReturnType<typeof normalizeTransformKeyframes> = [],
+  preserveAlpha = false,
 ): string {
   const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
   const isAnimated = keyframes.length > 0;
@@ -1184,10 +1532,16 @@ function buildAnchorAwareCompositedSegmentFilter(
     "':shortest=1";
 
   const normalization = includeOutputNormalization
-    ? ",format=yuv420p,fps=fps=" +
-      formatNumber(plan.frameRate) +
-      ":round=near,setsar=1"
-    : ",format=yuv420p";
+    ? (preserveAlpha
+        ? ",format=rgba,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1"
+        : ",format=yuv420p,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1")
+    : preserveAlpha
+      ? ",format=rgba"
+      : ",format=yuv420p";
 
   const filterParts = [
     foregroundFilters.slice(0, -1).join(",") + "[" + anchorScaledLabel + "]",
