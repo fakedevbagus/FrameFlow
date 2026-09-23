@@ -59,10 +59,10 @@ describe("text overlay ffmpeg renderer", () => {
     ).toContain("x=w*0.8-text_w");
   });
 
-  it("escapes drawtext delimiters and preserves multiline text", () => {
+  it("escapes drawtext delimiters and preserves real multiline text", () => {
     expect(
       buildTextOverlayFfmpegFilter({
-        text: "100%\\ready, now:\\nnext; okay",
+        text: "100%\\ready, now:it's;\nnext",
         x: 0.5,
         y: 0.5,
         fontSize: 56,
@@ -70,7 +70,21 @@ describe("text overlay ffmpeg renderer", () => {
         alignment: "center",
       }),
     ).toContain(
-      "text='100%\\\\ready\\, now\\:\\\\nnext\\; okay'",
+      "text='100%\\\\ready\\, now\\:it\\'s\\;\\nnext'",
     );
+  });
+
+  it("truncates long text using the existing project limit", () => {
+    const filter = buildTextOverlayFfmpegFilter({
+      text: "A".repeat(600),
+      x: 0.5,
+      y: 0.5,
+      fontSize: 56,
+      color: "#ffffff",
+      alignment: "center",
+    });
+
+    expect(filter).toContain("text='" + "A".repeat(500) + "'");
+    expect(filter).not.toContain("A".repeat(501));
   });
 });
