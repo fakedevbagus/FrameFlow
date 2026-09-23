@@ -1,5 +1,6 @@
 - M3.68 currently includes a UI/layout validation correction for Inspector clipping on narrower desktop widths. The workspace now gives the Inspector a flexible 270–300px column, and Inspector two-column grids use minmax(0, 1fr) so controls stay inside the panel.
 
+- M3.68 also includes a follow-up Inspector layout correction: the Inspector workspace column is now 300–320px, section headers/actions wrap when needed, and anchor headers avoid horizontal overflow.
 # FrameFlow — New Chat Continuation Prompt
 
 You are continuing development of my existing project **FrameFlow**:
