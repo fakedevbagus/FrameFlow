@@ -1,6 +1,11 @@
 export const M3_38_DIRECT_GRAPH_MARKER = "m3.38-direct-graph-v2";
 
 import { buildVisualEffectsFfmpegFilters } from "../effects/visual-effects";
+import {
+  getClipTransform,
+  normalizeClipTransform,
+} from "../transform/transform";
+import type { ClipTransform } from "../transform/transform";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
@@ -129,6 +134,19 @@ function buildSegmentFilter(
   label: string,
   includeOutputNormalization: boolean,
 ): string {
+  const transform = getClipTransform(segment.transform);
+  const staticTransformRequired = !isDefaultTransform(transform);
+
+  if (staticTransformRequired) {
+    return buildTransformedSegmentFilter(
+      segment,
+      plan,
+      label,
+      includeOutputNormalization,
+      transform,
+    );
+  }
+
   return [
     "[" + segment.inputIndex + ":v:0]" +
       "trim=start=" +
@@ -159,19 +177,128 @@ function buildSegmentFilter(
   ].join(",") + "[" + label + "]";
 }
 
-function assertSupportedVisualMetadata(segment: RenderSegment): void {
-  const transform = segment.transform;
+function buildTransformedSegmentFilter(
+  segment: RenderSegment,
+  plan: RenderPlan,
+  label: string,
+  includeOutputNormalization: boolean,
+  transform: ClipTransform,
+): string {
+  const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
 
-  if (
-    transform &&
-    (transform.x !== 0 ||
-      transform.y !== 0 ||
-      transform.scale !== 1 ||
-      transform.rotation !== 0 ||
-      transform.opacity !== 1)
-  ) {
+  if (anchor.x !== 0.5 || anchor.y !== 0.5) {
     throw new Error(
-      "M3.36 does not compile visual transforms yet; transform graph support is deferred.",
+      "M3.63 does not compile non-centered transform anchors yet; anchor export is deferred.",
+    );
+  }
+
+  const foregroundLabel = "transform_fg_" + segment.inputIndex;
+  const backgroundLabel = "transform_bg_" + segment.inputIndex;
+  const translationX = formatNumber((transform.x / 100) * plan.width);
+  const translationY = formatNumber((transform.y / 100) * plan.height);
+  const rotationRadians = formatNumber(
+    (transform.rotation * Math.PI) / 180,
+  );
+
+  const foregroundFilters = [
+    "[" + segment.inputIndex + ":v:0]" +
+      "trim=start=" +
+      formatSeconds(segment.sourceStartMs) +
+      ":end=" +
+      formatSeconds(segment.sourceEndMs),
+    "setpts=PTS-STARTPTS",
+    "scale=w=" +
+      plan.width +
+      ":h=" +
+      plan.height +
+      ":force_original_aspect_ratio=decrease",
+    ...(segment.visualEffects &&
+    buildVisualEffectsFfmpegFilters(segment.visualEffects)
+      ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
+      : []),
+    transform.scale !== 1
+      ? "scale=w=iw*" + formatNumber(transform.scale) + ":h=ih*" + formatNumber(transform.scale)
+      : null,
+    transform.rotation !== 0
+      ? "format=rgba",
+      "rotate=" +
+        rotationRadians +
+        ":c=none:ow=rotw(" +
+        rotationRadians +
+        "):oh=roth(" +
+        rotationRadians +
+        ")"
+      : null,
+    transform.opacity !== 1 ? "format=rgba" : null,
+    transform.opacity !== 1
+      ? "colorchannelmixer=aa=" + formatNumber(transform.opacity)
+      : null,
+  ].filter((value): value is string => value !== null);
+
+  const backgroundFilter =
+    "color=c=black@0.0:s=" +
+    plan.width +
+    "x" +
+    plan.height +
+    ":r=" +
+    formatNumber(plan.frameRate) +
+    ":d=" +
+    formatSeconds(segment.durationMs) +
+    ",format=rgba[" +
+    backgroundLabel +
+    "]";
+
+  const overlayFilter =
+    "[" +
+    backgroundLabel +
+    "][" +
+    foregroundLabel +
+    "]overlay=x=(W-w)/2+" +
+    translationX +
+    ":y=(H-h)/2+" +
+    translationY +
+    ":shortest=1";
+
+  const normalization = includeOutputNormalization
+    ? ",fps=fps=" +
+      formatNumber(plan.frameRate) +
+      ":round=near,setsar=1"
+    : "";
+
+  return (
+    foregroundFilters.join(",") +
+    "[" +
+    foregroundLabel +
+    "];" +
+    backgroundFilter +
+    ";" +
+    overlayFilter +
+    ",format=yuv420p" +
+    normalization +
+    "[" +
+    label +
+    "]"
+  );
+}
+
+function isDefaultTransform(transform: ClipTransform): boolean {
+  const normalized = normalizeClipTransform(transform);
+
+  return (
+    normalized.x === 0 &&
+    normalized.y === 0 &&
+    normalized.scale === 1 &&
+    normalized.rotation === 0 &&
+    normalized.opacity === 1
+  );
+}
+
+function assertSupportedVisualMetadata(segment: RenderSegment): void {
+  const transform = getClipTransform(segment.transform);
+
+  if (segment.transformKeyframes && segment.transformKeyframes.length > 0) {
+    throw new Error(
+      "M3.63 does not compile transform keyframes yet; animated transform export is deferred.",
     );
   }
 
