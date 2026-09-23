@@ -1,3 +1,11 @@
+## 2026-09-23 — M3.65 validation assertion correction
+
+- User-supplied validation showed 366/368 frontend tests passing, with two failures in `render-graph.test.ts`.
+- The failures were stale duration expectations: the video fixture has a 5-second duration but the test expected 3 seconds, while the image fixture uses the default 3-second duration but the test expected 5 seconds. fileciteturn621file0L234-L261
+- Production build passed, Rust unit tests passed 39/39, and Tauri dev started successfully in the same run. fileciteturn621file0L273-L285 fileciteturn621file0L288-L329 fileciteturn621file0L344-L360
+- Corrected both assertions in commit `f85e56a19e622005ab501707cf12ce90369384e0`.
+- Fresh frontend test execution and final CI remain required before M3.65 can be marked PASS/ready.
+
 ## 2026-09-23 — M3.65 test/native-file restoration
 
 User-supplied validation showed:
