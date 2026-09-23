@@ -1,3 +1,11 @@
+## M3.72 — validation correction — 2026-09-24
+
+- User validation reached the full frontend suite with 32/33 test files passing and 395/396 tests passing.
+- The only failure was a stale regression assertion expecting `track_1_sequence`; the generated multi-track graph correctly used `track_2_sequence` because the audio track occupies index 1 and the second video track is index 2.
+- Lint, production build, all 42 Rust tests, and Tauri development startup completed successfully in the same user run.
+- Corrected only the stale assertion in commit `230dcf7c0d09e01319602c662bb3a50d33f1d320`.
+- Fresh frontend validation is required; PR #86 remains Draft.
+
 ## M3.72 — Multi-Track + Audio Export Integration — in progress — 2026-09-24
 
 - M3.71 Unified AV Export Foundation was user-validated and squash-merged as PR #85 at `3ae70e91ad5ff0dc2a11bcde59c32a39cab3ab89`.
