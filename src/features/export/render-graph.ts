@@ -1028,31 +1028,19 @@ function buildAnchorAwareCompositedSegmentFilter(
   const rotations = effectiveKeyframes.map(
     (keyframe) => keyframe.transform.rotation,
   );
-  const opacities = effectiveKeyframes.map(
-    (keyframe) => keyframe.transform.opacity,
-  );
   const maxScale = Math.max(...scales, 1);
   const maxAnchorX = Math.max(anchor.x, 1 - anchor.x);
   const maxAnchorY = Math.max(anchor.y, 1 - anchor.y);
-  const pivotOffsetRadius = Math.hypot(
-    plan.width * Math.abs(anchor.x - 0.5),
-    plan.height * Math.abs(anchor.y - 0.5),
-  );
   const transformedContentRadius = Math.hypot(
     plan.width * maxScale * maxAnchorX,
     plan.height * maxScale * maxAnchorY,
   );
-  const surfaceExtent =
-    Math.max(
-      2,
-      Math.ceil(
-        (2 * (pivotOffsetRadius + transformedContentRadius)) / 2,
-      ) * 2,
-    );
+  const surfaceExtent = Math.max(
+    2,
+    Math.ceil(transformedContentRadius / 2) * 2,
+  );
   const hasDynamicScale = isAnimated;
   const hasDynamicRotation = isAnimated || rotations[0] !== 0;
-  const hasDynamicOpacity = isAnimated;
-
   const foregroundFilters = [
     "[" +
       segment.inputIndex +
@@ -1096,46 +1084,12 @@ function buildAnchorAwareCompositedSegmentFilter(
   const translationX = "(" + xExpression + ")*" + formatNumber(plan.width / 100);
   const translationY = "(" + yExpression + ")*" + formatNumber(plan.height / 100);
   const angleExpression = radiansExpression(rotationExpression);
-  const pivotX =
-    "(w/" +
-    scaleExpression +
-    ")*" +
-    formatNumber(anchor.x - 0.5);
-  const pivotY =
-    "(h/" +
-    scaleExpression +
-    ")*" +
-    formatNumber(anchor.y - 0.5);
-  const inverseRotationX =
-    "cos(" +
-    angleExpression +
-    ")*(" +
-    pivotX +
-    ")+sin(" +
-    angleExpression +
-    ")*(" +
-    pivotY +
-    ")";
-  const inverseRotationY =
-    "-sin(" +
-    angleExpression +
-    ")*(" +
-    pivotX +
-    ")+cos(" +
-    angleExpression +
-    ")*(" +
-    pivotY +
-    ")";
   const pivotOverlayX =
-    "'(W/2)+" +
-    inverseRotationX +
-    "-(" +
+    "'(W/2)-(" +
     formatNumber(anchor.x) +
     ")*w'";
   const pivotOverlayY =
-    "'(H/2)+" +
-    inverseRotationY +
-    "-(" +
+    "'(H/2)-(" +
     formatNumber(anchor.y) +
     ")*h'";
 
