@@ -571,4 +571,138 @@ describe("single video render graph", () => {
   });
 
 
+  it("compiles animated transform keyframes into time-based FFmpeg expressions", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                transformKeyframes: [
+                  {
+                    timeMs: 0,
+                    transform: {
+                      x: 0,
+                      y: 0,
+                      scale: 1,
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  },
+                  {
+                    timeMs: 1000,
+                    transform: {
+                      x: 20,
+                      y: -10,
+                      scale: 1.5,
+                      rotation: 30,
+                      opacity: 0.5,
+                      },
+                    easing: "ease-in",
+                  },
+                  {
+                    timeMs: 2000,
+                    transform: {
+                      x: -20,
+                      y: 10,
+                      scale: 0.75,
+                      rotation: -30,
+                      opacity: 1,
+                    },
+                    easing: "ease-out",
+                  },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain("scale=w='iw*");
+    expect(graph.filterComplex).toContain("eval=frame");
+    expect(graph.filterComplex).toContain("rotate='");
+    expect(graph.filterComplex).toContain("geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*");
+    expect(graph.filterComplex).toContain("overlay=x='(W-w)/2+(");
+    expect(graph.filterComplex).toContain("overlay=x='");
+    expect(graph.filterComplex).toContain("\\,");
+    expect(graph.filterComplex).toContain("2*(");
+    expect(graph.filterComplex).not.toContain(
+      "animated transform export is deferred",
+    );
+  });
+
+  it("preserves crop and visual effects before animated transforms", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                crop: {
+                  top: 0.05,
+                  right: 0.1,
+                  bottom: 0.05,
+                  left: 0.1,
+                },
+                cropPosition: {
+                  x: 0.6,
+                  y: 0.5,
+                },
+                visualEffects: {
+                  brightness: 0.1,
+                  contrast: 0.2,
+                  saturation: -0.1,
+                },
+                transformKeyframes: [
+                  {
+                    timeMs: 0,
+                    transform: {
+                      x: 0,
+                      y: 0,
+                      scale: 1,
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  },
+                  {
+                    timeMs: 1000,
+                    transform: {
+                      x: 10,
+                      y: 5,
+                      scale: 1.2,
+                      rotation: 10,
+                      opacity: 0.8,
+                    },
+                  },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    const filter = graph.filterComplex;
+    expect(filter.indexOf("eq=brightness=0.1:contrast=1.2:saturation=0.9")).toBeGreaterThanOrEqual(0);
+    expect(filter.indexOf("crop=w=trunc(iw*0.85):h=trunc(ih*0.9)")).toBeGreaterThanOrEqual(0);
+    expect(filter.indexOf("scale=w='iw*")).toBeGreaterThanOrEqual(0);
+    expect(filter.indexOf("overlay=x='")).toBeGreaterThanOrEqual(0);
+  });
+
+
 });
