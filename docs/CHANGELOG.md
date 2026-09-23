@@ -1,3 +1,10 @@
+## 2026-09-23 — M3.68 merged / M3.69 started
+
+- PR #82 (M3.68 Non-Centered Transform Anchor Export) was marked ready and squash-merged at `ba34a0aed73f56b85217f0c4c9584299f4544ff8`.
+- The final Inspector spacing refinement was included before merge.
+- M3.69 starts from the updated `main` and focuses on multi-track video compositing in the existing visual FFmpeg graph.
+- No project schema change is planned; audio mixing remains separate.
+
 ## 2026-09-23 — M3.68 Inspector layout validation correction
 
 - The supplied Linux/Tauri screenshot showed the right-side Inspector content clipped at the panel edge, with form controls and quick-action UI extending beyond the visible width.
