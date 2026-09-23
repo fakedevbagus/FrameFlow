@@ -13,13 +13,12 @@ import {
   getTextOverlay,
   getTrackPan,
   getTrackVolume,
-  type 
-  ClipCrop,
-  ClipTransform,
-  CropPosition,
-  Project,
-  TextOverlay,
-  TransformAnchor,
+  type ClipCrop,
+  type ClipTransform,
+  type CropPosition,
+  type Project,
+  type TextOverlay,
+  type TransformAnchor,
 } from "../project/domain";
 import {
   getClipCrop,
