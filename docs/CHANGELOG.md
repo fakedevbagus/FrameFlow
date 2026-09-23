@@ -1,3 +1,23 @@
+## 2026-09-23 — M3.70 Text Overlay Export Rendering — implementation
+
+Branch: `feat/m3-70-text-overlay-export`
+
+Implemented:
+- Carried normalized per-clip text overlays into RenderPlan.
+- Rendered text overlays through the existing FFmpeg drawtext graph using an explicit DejaVu Sans renderer font.
+- Preserved normalized X/Y placement and left/center/right alignment.
+- Escaped drawtext text delimiters and multiline content.
+- Inserted text after visual effects/crop preparation and before transform stages.
+- Routed text-bearing clips through the graph pipeline, including M3.69 multi-track visual compositing.
+- Added renderer, RenderPlan, graph, pipeline, and multi-track regression tests.
+- No project schema change.
+- Parked PR #76 remains separate and unmerged because its Linux/WebKitGTK repaint investigation is not part of this milestone.
+
+Validation:
+- Pending user local validation and CI.
+- PR remains Draft.
+
+
 ## 2026-09-23 — M3.69 merged / M3.70 started
 
 - PR #83 was user-validated and squash-merged at `5bac39d156aae38f2ab3c6a61d3851e816535128`.
