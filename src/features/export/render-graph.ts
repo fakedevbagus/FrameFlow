@@ -1037,7 +1037,7 @@ function buildAnchorAwareCompositedSegmentFilter(
   );
   const surfaceExtent = Math.max(
     2,
-    Math.ceil(transformedContentRadius / 2) * 2,
+    Math.ceil(transformedContentRadius) * 2,
   );
   const hasDynamicScale = isAnimated;
   const hasDynamicRotation = isAnimated || rotations[0] !== 0;
