@@ -94,199 +94,33 @@ cd ..
 
 ## Current repository state
 
-### M3.67 — Animated Transform Export — active draft PR
+### M3.68 — Non-Centered Transform Anchor Export — active
 
 Branch:
-`feat/m3-67-animated-transform-export`
-
-PR:
-#81
+`feat/m3-68-non-centered-transform-anchor-export`
 
 Status:
-- In progress
-- Draft
-- Not merged
-- Local validation pending
+- Implementation in progress
+- Draft PR will remain until user local validation PASS
 
-M3.67 current scope:
-- Export transform keyframes already represented in the project model and Preview.
-- Compile deterministic keyframed X/Y, Scale, Rotation, and Opacity motion through the existing single-video FFmpeg graph.
-- Preserve existing crop, visual effects, and image/video compatibility where composable.
-- Keep centered transform-anchor support as the boundary for this focused slice.
-- Add regression coverage for keyframe RenderPlan propagation, graph compilation, and export pipeline routing.
-- Animated transforms use time-based FFmpeg expressions, with opacity evaluated from the project frame-rate frame index.
-- Latest local validation on 2026-09-23 reached 373/374 frontend tests; the only remaining failure was a test fixture that did not exercise ease-in-out while asserting its `2*(` expression. The fixture has now been corrected. Build, Rust 39/39, and Tauri dev startup passed in that run; rerun `npm run test` before marking M3.67 ready.
+M3.68 current scope:
+- Extend the existing static and animated FFmpeg transform graph to honor non-centered transform anchors already supported by the editor/Preview.
+- Preserve the existing transform model and Preview semantics, including anchor-aware transform origin and translation compensation when the pivot changes.
+- Preserve crop and visual-effects ordering, image/video support, keyframe easing, and transparent composition.
+- Cover static and animated scale/rotation around off-center pivots with graph, pipeline, and regression tests.
+- Keep the project schema unchanged.
 
 Explicitly deferred:
-- Text overlay export remains parked in PR #76.
-- Non-centered transform anchors.
+- Text Overlay Export remains parked in PR #76.
 - Multi-track compositing.
 - Audio mixing.
 
-### M3.66 — Transition Export — merged
-- PR #80 was user-validated and squash-merged at `a3bf59055b76de1c485c8d410e2adb13862925d6`.
-- Dissolve and fade-through-black now export through the native video graph.
+### M3.67 — Animated Transform Export — merged
 
-### M3.65 — Static Image Clip Export — merged
-- PR #79 was user-validated and squash-merged at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
-- Image assets export through the native video graph using looped image inputs.
-- Image/video sequences, static crop, and static transforms remain supported through the existing graph architecture.
-
-### M3.64 — Static Crop Export — merged
- — Text Overlay Export Rendering — parked Draft
-
-PR:
-#76
-https://github.com/fakedevbagus/FrameFlow/pull/76
-
-Branch:
-`feat/m3-62-text-overlay-export-rendering`
-
-Status:
-- Open
-- Draft
-- Not merged
-- Parked intentionally
-
-Known limitation:
-- Text Overlay edits work functionally, but on the user's Linux/Tauri runtime the Preview visual update can lag until a subsequent interaction.
-- Several frontend live-update architectures and a Linux GTK repaint mitigation were attempted.
-- The problem is deferred to a later dedicated WebKitGTK/runtime investigation so it does not block unrelated editor/export milestones.
-- Do not close or merge PR #76 as part of M3.63.
-
-Required next validation for M3.63:
-- Run the normal fetch/checkout/pull sequence.
-- Run npm ci, lint, tests, build, Rust tests, and Tauri dev.
-- Export a project containing static X/Y, Scale, Rotation, and Opacity changes and compare the exported frame against Preview.
-- Verify default transforms preserve the existing graph.
-- Verify non-centered anchor and transform-keyframe projects fail with controlled messages.
-- Verify existing visual effects still apply.
-- Then mark PR #77 ready only after the user's local PASS.
-
-### M3.61 — Text Overlay Foundation — merged
-
-PR #75:
-https://github.com/fakedevbagus/FrameFlow/pull/75
-
-Branch:
-`feat/m3-61-text-overlay-foundation`
-
-Merge SHA:
-`947f3c33fcf61b1e07d1d75e275d721755568ae8`
-
-Implemented:
-- Backward-compatible optional per-visual-clip text overlay state.
-- Text content, normalized X/Y position, font size, color, and left/center/right alignment.
-- Inspector controls with Reset and Text quick access.
-- Preview rendering for video and image clips.
-- History/persistence integration.
-- User reported local validation PASS; GitHub CI run #61 passed.
-
-### M3.60 — Visual Effects Foundation — merged
-
-PR #74:
-https://github.com/fakedevbagus/FrameFlow/pull/74
-
-Branch:
-`feat/m3-60-visual-effects-foundation`
-
-Merge SHA:
-`bb5ea26ea3598f33dda7f07837eebaf093a4dfce`
-
-Implemented:
-- Backward-compatible per-visual-clip brightness, contrast, and saturation state.
-- Inspector Color adjustments controls and discoverability improvements.
-- CSS preview filters and FFmpeg eq propagation.
-- Regression coverage across helpers, domain, commands, RenderPlan, render graph, and App workflow.
-- User reported local validation PASS; GitHub CI run #48 passed.
-
-### M3.59 — Project File Persistence Hardening — merged
-
-PR #73:
-https://github.com/fakedevbagus/FrameFlow/pull/73
-
-Branch:
-`feat/m3-59-project-persistence-hardening`
-
-Merge SHA:
-`b693df59a4a879b7a4bf53067ad20bbba258f181`
-
-Implemented:
-- Native project paths are restricted to absolute .frameflow.json files.
-- Failed atomic finalization removes the temporary project artifact.
-- Added native validation coverage.
-- User reported corrected local validation PASS.
-- CI run #40 passed.
-
-### Historical M3.56 — Audio Waveform Scrubbing
-
-PR #70:
-https://github.com/fakedevbagus/FrameFlow/pull/70
-
-Branch:
-`feat/m3-56-audio-waveform-scrubbing`
-
-Current HEAD:
-`a8b3673c4850524abef93abee947d7cd48355727`
-
-Base:
-`main @ 8efdd97843fe63a02e9104ee52b369bf3bf3dd7b`
-
-PR state:
-- Open
-- Draft
-- Mergeable
-- Do not merge until the user reports successful local validation.
-
-Implemented in M3.56:
-- Direct waveform click-to-seek maps pointer X to local audio clip time and clamps to the clip duration.
-- Waveform pointer interaction is isolated from normal clip move/trim gestures.
-- Waveform remains display-only and does not change project schema.
-- Native FFmpeg waveform generation and in-memory request caching remain unchanged.
-- Waveform rendering is hardened against invalid native peaks, empty peak arrays, and non-finite SVG dimensions.
-- Waveform interaction is keyboard-accessible through Enter/Space.
-- Playback `AbortError` is treated as an expected interruption rather than a user-facing preview error.
-- Stale playback promises are invalidated after pause/seek operations.
-- Multiple media `play()` failures are aggregated so one rejected media element does not hide another genuine failure.
-- Vitest worker concurrency is constrained to reduce worker-startup timeout instability.
-- Preview async effects are awaited by the relevant tests.
-- jsdom media `play()` has a deterministic resolved default in test setup.
-- Waveform visual amplitude was refined after Linux desktop inspection so the waveform is less overfilled, uses nonlinear peak compression, and has an explicit SVG fill.
-
-### Current M3.56 validation evidence
-
-The latest supplied local validation log established:
-- `npm ci`: completed with 0 vulnerabilities.
-- `npm run lint`: passed.
-- `src/App.test.tsx`: 39/39 passed after the playback-test correction.
-- Production build: passed.
-- `cargo test`: 37/37 passed.
-- `npm run tauri dev`: Vite started on `http://localhost:1420/` and the Tauri binary launched.
-- Known React `act(...)` warnings remain test-environment warnings and are not current test failures.
-
-A later renderer refinement temporarily exposed one stale waveform geometry assertion; that assertion has been corrected. The current branch must still be locally revalidated after the latest change.
-
-### M3.57 final gate
-
-Before marking PR #70 ready:
-1. Run the required pull/fetch sequence.
-2. Run:
-   - `npm ci`
-   - `npm run lint`
-   - `npm run test`
-   - `npm run build`
-   - `cd src-tauri && cargo test && cd ..`
-   - `npm run tauri dev`
-3. Manually inspect:
-   - Audio waveform is visually readable and not an overfilled black block.
-   - Clicking left/middle/right positions moves the playhead to the expected local time.
-   - Enter/Space on the focused waveform seeks to the clip midpoint.
-   - Waveform interaction does not move/trim the clip.
-   - Playback can be paused/resumed without stale-position regressions.
-   - Existing audio fades, volume automation, pan, EQ, compressor, mute, multi-track mix, and export remain intact.
-4. Keep PR #70 Draft until the user reports the result.
-5. After user approval, mark the PR ready and squash-merge.
-6. Record the merge SHA in both context documents.
+- PR #81 was user-validated and squash-merged at `783885376209ec56013612147b217a13c8bf1ef7`.
+- GitHub CI run #181 passed.
+- Animated X/Y, Scale, Rotation, and Opacity export now uses the existing keyframe/easing model through the single-video FFmpeg graph.
+- Centered transform anchors remain supported; non-centered anchors are the M3.68 focus.
 
 ## Previous merged audio milestones
 
