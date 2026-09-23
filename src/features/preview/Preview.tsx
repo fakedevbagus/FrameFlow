@@ -43,6 +43,10 @@ import {
 } from "./canvasManipulation";
 import { buildVisualEffectsCssFilter } from "../effects/visual-effects";
 import {
+  getTextOverlayEditSession,
+  setTextOverlayEditSession,
+} from "../effects/text-overlay-edit-session";
+import {
   getActiveAudioPreviewClips,
   getActiveVisualPreviewClips,
   getAudioFadeGain,
@@ -245,6 +249,7 @@ function PreviewVisualLayer({
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
+  const textOverlayDomRef = useRef<HTMLDivElement | null>(null);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
@@ -350,6 +355,142 @@ function PreviewVisualLayer({
     objectFit: "fill" as const,
   };
 
+  useEffect(() => {
+    if (!isSelected) {
+      return;
+    }
+
+    let animationFrameId = 0;
+    let disposed = false;
+
+    const getInspectorValue = (control: "text" | "x" | "y" | "size") =>
+      document.querySelector<HTMLElement>(
+        '[data-text-overlay-control="' + control + '"]',
+      );
+
+    const getCommittedOverlay = (): TextOverlay => ({
+      text: textOverlay?.text ?? "",
+      x: textOverlay?.x ?? 0.5,
+      y: textOverlay?.y ?? 0.5,
+      fontSize: textOverlay?.fontSize ?? 56,
+      color: textOverlay?.color ?? "#ffffff",
+      alignment: textOverlay?.alignment ?? "center",
+    });
+
+    const applyOverlayToDom = (overlay: TextOverlay) => {
+      const element = textOverlayDomRef.current;
+
+      if (!element) {
+        return;
+      }
+
+      const horizontalTransform =
+        overlay.alignment === "left"
+          ? "translate(0, -50%)"
+          : overlay.alignment === "right"
+            ? "translate(-100%, -50%)"
+            : "translate(-50%, -50%)";
+
+      element.textContent = overlay.text;
+      element.style.left = overlay.x * 100 + "%";
+      element.style.top = overlay.y * 100 + "%";
+      element.style.color = overlay.color;
+      element.style.fontSize = overlay.fontSize + "px";
+      element.style.textAlign = overlay.alignment;
+      element.style.transform = horizontalTransform;
+      element.style.visibility = overlay.text.trim() ? "visible" : "hidden";
+    };
+
+    const syncInspectorToPreview = () => {
+      if (disposed) {
+        return;
+      }
+
+      const textInput = getInspectorValue("text") as HTMLTextAreaElement | null;
+      const xInput = getInspectorValue("x") as HTMLInputElement | null;
+      const yInput = getInspectorValue("y") as HTMLInputElement | null;
+      const sizeInput = getInspectorValue("size") as HTMLInputElement | null;
+
+      const currentSession = getTextOverlayEditSession();
+      const currentOverlay =
+        currentSession?.clipId === layer.clip.id
+          ? currentSession.overlay
+          : getCommittedOverlay();
+
+      if (!textInput || !xInput || !yInput || !sizeInput) {
+        animationFrameId = window.requestAnimationFrame(syncInspectorToPreview);
+        return;
+      }
+
+      const nextOverlay = { ...currentOverlay };
+      let changed = false;
+
+      if (textInput.value !== currentOverlay.text) {
+        nextOverlay.text = textInput.value;
+        changed = true;
+      }
+
+      const xValue = Number(xInput.value);
+      if (
+        Number.isFinite(xValue) &&
+        xValue >= 0 &&
+        xValue <= 100 &&
+        xValue / 100 !== currentOverlay.x
+      ) {
+        nextOverlay.x = xValue / 100;
+        changed = true;
+      }
+
+      const yValue = Number(yInput.value);
+      if (
+        Number.isFinite(yValue) &&
+        yValue >= 0 &&
+        yValue <= 100 &&
+        yValue / 100 !== currentOverlay.y
+      ) {
+        nextOverlay.y = yValue / 100;
+        changed = true;
+      }
+
+      const sizeValue = Number(sizeInput.value);
+      if (
+        Number.isFinite(sizeValue) &&
+        sizeValue >= 12 &&
+        sizeValue <= 240 &&
+        Math.round(sizeValue) !== currentOverlay.fontSize
+      ) {
+        nextOverlay.fontSize = Math.round(sizeValue);
+        changed = true;
+      }
+
+      if (changed) {
+        setTextOverlayEditSession({
+          clipId: layer.clip.id,
+          overlay: nextOverlay,
+        });
+        applyOverlayToDom(nextOverlay);
+      } else if (
+        textOverlayDomRef.current &&
+        textOverlayDomRef.current.style.visibility === "hidden" &&
+        currentOverlay.text.trim()
+      ) {
+        applyOverlayToDom(currentOverlay);
+      }
+
+      animationFrameId = window.requestAnimationFrame(syncInspectorToPreview);
+    };
+
+    applyOverlayToDom(currentSession?.clipId === layer.clip.id
+      ? currentSession.overlay
+      : getCommittedOverlay());
+
+    animationFrameId = window.requestAnimationFrame(syncInspectorToPreview);
+
+    return () => {
+      disposed = true;
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [isSelected, layer.clip.id, textOverlay]);
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
@@ -1110,6 +1251,7 @@ function PreviewVisualLayer({
         id={"preview-text-overlay-" + layer.clip.id}
         data-testid={"preview-text-overlay-" + layer.clip.id}
         data-clip-id={layer.clip.id}
+        ref={textOverlayDomRef}
         style={{
           left: activeX * 100 + "%",
           top: activeY * 100 + "%",
