@@ -376,6 +376,81 @@ describe("render video pipeline", () => {
   });
 
 
+  it("routes animated transform clips through the native graph renderer", async () => {
+    const plan: RenderPlan = {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      durationMs: 2000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 2000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
+          durationMs: 2000,
+          isMuted: false,
+          transformKeyframes: [
+            {
+              timeMs: 0,
+              transform: {
+                x: 0,
+                y: 0,
+                scale: 1,
+                rotation: 0,
+                opacity: 1,
+              },
+            },
+            {
+              timeMs: 1000,
+              transform: {
+                x: 20,
+                y: 10,
+                scale: 1.25,
+                rotation: 15,
+                opacity: 0.75,
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/animated-transform-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(
+        plan,
+        "/tmp/animated-transform-export.mp4",
+      ),
+    ).resolves.toEqual({
+      outputPath: "/tmp/animated-transform-export.mp4",
+    });
+
+    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
+      inputs: ["/media/a.mp4"],
+      inputMediaTypes: ["video"],
+      outputPath: "/tmp/animated-transform-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      filterComplex: expect.stringContaining("eval=frame"),
+      videoMap: "[vout]",
+    });
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+  });
+
+
   it("renders the base video before mixing an explicit audio track", async () => {
     const plan: RenderPlan = {
       width: 406,
