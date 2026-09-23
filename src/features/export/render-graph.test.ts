@@ -104,6 +104,50 @@ describe("single video render graph", () => {
     expect(graph.videoMap).toBe("[vout]");
   });
 
+  it("compiles a text overlay on an image clip", () => {
+    let project = createVideoProject();
+    project.assets = [
+      ...project.assets,
+      {
+        id: "image-a",
+        name: "cover.png",
+        mediaType: "image",
+        sourcePath: "/media/cover.png",
+        durationMs: null,
+      },
+    ];
+    project = addAssetToTimeline(project, "image-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Image",
+                  x: 0.5,
+                  y: 0.5,
+                  fontSize: 48,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Image':fontsize=48",
+    );
+  });
+
   it("compiles visual effects into the segment filter chain", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
