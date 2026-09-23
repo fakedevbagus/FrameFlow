@@ -5,7 +5,7 @@ import {
   renderSingleSourceToMp4,
   renderVideoGraphToMp4,
   renderVideoSegmentsToMp4,
-  renderVideoWithAudioGraphToMp4,
+  renderVideoAudioGraphToMp4,
 } from "./export-renderer";
 import type { RenderPlan } from "./render-plan";
 
@@ -13,7 +13,7 @@ vi.mock("./export-renderer", () => ({
   renderVideoGraphToMp4: vi.fn(),
   renderSingleSourceToMp4: vi.fn(),
   renderVideoSegmentsToMp4: vi.fn(),
-  renderVideoWithAudioGraphToMp4: vi.fn(),
+  renderVideoAudioGraphToMp4: vi.fn(),
 }));
 
 describe("render video pipeline", () => {
@@ -525,7 +525,7 @@ describe("render video pipeline", () => {
   });
 
 
-  it("renders the base video before mixing an explicit audio track", async () => {
+  it("routes video and explicit audio tracks through one native AV graph", async () => {
     const plan: RenderPlan = {
       width: 406,
       height: 720,
@@ -533,13 +533,13 @@ describe("render video pipeline", () => {
       durationMs: 5000,
       segments: [
         {
-          inputIndex: 0,
+          inputIndex: 5,
           assetId: "video-a",
           sourcePath: "/media/a.mp4",
           mediaType: "video",
           trackId: "video-1",
           trackType: "video",
-          trackIndex: 0,
+          trackIndex: 1,
           timelineStartMs: 0,
           timelineEndMs: 5000,
           sourceStartMs: 0,
@@ -548,13 +548,13 @@ describe("render video pipeline", () => {
           isMuted: false,
         },
         {
-          inputIndex: 7,
+          inputIndex: 1,
           assetId: "audio-a",
           sourcePath: "/media/music.mp3",
           mediaType: "audio",
           trackId: "audio-1",
           trackType: "audio",
-          trackIndex: 1,
+          trackIndex: 0,
           timelineStartMs: 1000,
           timelineEndMs: 4000,
           sourceStartMs: 500,
@@ -565,10 +565,7 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderSingleSourceToMp4).mockResolvedValueOnce({
-      outputPath: "/tmp/project.mp4",
-    });
-    vi.mocked(renderVideoWithAudioGraphToMp4).mockResolvedValueOnce({
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
       outputPath: "/tmp/project.mp4",
     });
 
@@ -578,31 +575,103 @@ describe("render video pipeline", () => {
       outputPath: "/tmp/project.mp4",
     });
 
-    expect(renderSingleSourceToMp4).toHaveBeenCalledWith({
-      sourcePath: "/media/a.mp4",
-      outputPath: "/tmp/project.mp4",
-      width: 406,
-      height: 720,
-      frameRate: 30,
-      sourceStartMs: 0,
-      sourceDurationMs: 5000,
-      includeAudio: true,
-    });
-
-    expect(renderVideoWithAudioGraphToMp4).toHaveBeenCalledWith({
-      videoSourcePath: "/tmp/project.mp4",
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith({
+      videoInputs: ["/media/a.mp4"],
+      videoInputMediaTypes: ["video"],
       audioInputs: ["/media/music.mp3"],
+      videoFilterComplex: expect.stringContaining("[0:v:0]"),
+      videoMap: "[vout]",
       audioFilterComplex: expect.stringContaining(
         "[1:a:0]atrim=start=0.5:end=3.5",
       ),
       audioMap: "[aout]",
       durationMs: 5000,
+      width: 406,
+      height: 720,
+      frameRate: 30,
       outputPath: "/tmp/project.mp4",
     });
 
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
+
+  it("rebases visual graph inputs before adding audio graph inputs", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "audio-a",
+          sourcePath: "/media/music.mp3",
+          mediaType: "audio",
+          trackId: "audio-1",
+          trackType: "audio",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+        },
+        {
+          inputIndex: 9,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 1,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+          textOverlay: {
+            text: "Unified",
+            x: 0.5,
+            y: 0.5,
+            fontSize: 48,
+            color: "#ffffff",
+            alignment: "center",
+          },
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/rebased.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/rebased.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/rebased.mp4",
+    });
+
+    const request = vi.mocked(renderVideoAudioGraphToMp4).mock.calls[0]?.[0];
+    expect(request).toMatchObject({
+      videoInputs: ["/media/a.mp4"],
+      videoInputMediaTypes: ["video"],
+      audioInputs: ["/media/music.mp3"],
+      videoMap: "[vout]",
+      audioMap: "[aout]",
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      outputPath: "/tmp/rebased.mp4",
+    });
+    expect(request?.videoFilterComplex).toContain("[0:v:0]");
+    expect(request?.audioFilterComplex).toContain("[1:a:0]");
+  });
+
 
   it("routes a text overlay clip through the native graph renderer", async () => {
     const plan: RenderPlan = {
