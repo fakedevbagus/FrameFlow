@@ -261,7 +261,6 @@ function assertSupportedTransition(
 
 function buildTransitionGraphParts(
   outgoing: RenderSegment,
-  incoming: RenderSegment,
   outgoingFullLabel: string,
   incomingFullLabel: string,
   transition: NonNullable<ReturnType<typeof getClipTransition>>,
