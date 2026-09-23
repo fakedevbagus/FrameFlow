@@ -100,7 +100,7 @@ Branch:
 `feat/m3-68-non-centered-transform-anchor-export`
 
 PR:
-Draft — to be opened after implementation commits are pushed
+#82 — Draft
 
 Status:
 - In progress
