@@ -151,6 +151,121 @@ describe("single video render graph", () => {
     expect(() => compileSingleVideoTrackGraph(plan)).toThrow("audio mixing yet");
   });
 
+  it("compiles static X/Y/scale/rotation/opacity into the FFmpeg graph", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                transform: {
+                  x: 10,
+                  y: -5,
+                  scale: 1.25,
+                  rotation: 15,
+                  opacity: 0.75,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "[0:v:0]trim=start=0:end=5,setpts=PTS-STARTPTS,scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
+    );
+    expect(graph.filterComplex).toContain("scale=w=iw*1.25:h=ih*1.25");
+    expect(graph.filterComplex).toContain(
+      "rotate=0.261799:c=none:ow=rotw(0.261799):oh=roth(0.261799)",
+    );
+    expect(graph.filterComplex).toContain("colorchannelmixer=aa=0.75");
+    expect(graph.filterComplex).toContain(
+      "color=c=black@0.0:s=1080x1920:r=30:d=5,format=rgba",
+    );
+    expect(graph.filterComplex).toContain(
+      "overlay=x=(W-w)/2+108:y=(H-h)/2+-96:shortest=1,format=yuv420p",
+    );
+  });
+
+  it("retains the minimal direct graph for default transform values", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                transform: {
+                  x: 0,
+                  y: 0,
+                  scale: 1,
+                  rotation: 0,
+                  opacity: 1,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).not.toContain("transform_fg_");
+    expect(graph.filterComplex).not.toContain("color=c=black@0.0");
+    expect(graph.filterComplex).not.toContain("colorchannelmixer=");
+  });
+
+  it("rejects non-centered transform anchors", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                transform: {
+                  x: 10,
+                  y: 0,
+                  scale: 1,
+                  rotation: 0,
+                  opacity: 1,
+                },
+                transformAnchor: {
+                  x: 0,
+                  y: 0.5,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graphPlan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(() => compileSingleVideoTrackGraph(graphPlan)).toThrow(
+      "non-centered transform anchors",
+    );
+  });
+
   it("rejects transitions and non-default visual state", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
