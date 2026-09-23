@@ -94,21 +94,24 @@ cd ..
 
 ## Current repository state
 
-### M3.68 — Non-Centered Transform Anchor Export — active
+### M3.68 — Non-Centered Transform Anchor Export — active draft PR
 
 Branch:
 `feat/m3-68-non-centered-transform-anchor-export`
 
+PR:
+Draft — to be opened after implementation commits are pushed
+
 Status:
-- Implementation in progress
-- Draft PR will remain until user local validation PASS
+- In progress
+- Local validation pending
 
 M3.68 current scope:
-- Extend the existing static and animated FFmpeg transform graph to honor non-centered transform anchors already supported by the editor/Preview.
-- Preserve the existing transform model and Preview semantics, including anchor-aware transform origin and translation compensation when the pivot changes.
-- Preserve crop and visual-effects ordering, image/video support, keyframe easing, and transparent composition.
-- Cover static and animated scale/rotation around off-center pivots with graph, pipeline, and regression tests.
+- Export non-centered transform anchors already supported by the editor and Preview.
+- Preserve anchor-aware scale and rotation semantics for static transforms and animated keyframes.
+- Preserve existing crop/effects ordering, image/video compatibility, keyframe easing, and world-space X/Y translation.
 - Keep the project schema unchanged.
+- Route graph-required visual metadata through the graph renderer instead of direct/legacy render paths.
 
 Explicitly deferred:
 - Text Overlay Export remains parked in PR #76.
@@ -120,7 +123,7 @@ Explicitly deferred:
 - PR #81 was user-validated and squash-merged at `783885376209ec56013612147b217a13c8bf1ef7`.
 - GitHub CI run #181 passed.
 - Animated X/Y, Scale, Rotation, and Opacity export now uses the existing keyframe/easing model through the single-video FFmpeg graph.
-- Centered transform anchors remain supported; non-centered anchors are the M3.68 focus.
+- Centered transform anchors remain supported; non-centered anchor export is the current M3.68 focus.
 
 ## Previous merged audio milestones
 
