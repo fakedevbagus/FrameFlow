@@ -2055,6 +2055,46 @@ describe("App", () => {
     });
   });
 
+  it("updates the video track volume and pan from the timeline", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-video-track-controls",
+        name: "source.mp4",
+        mediaType: "video",
+        sourcePath: "/media/source.mp4",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("source.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add source.mp4 to timeline" }),
+    );
+
+    const volume = screen.getByRole("slider", { name: "Volume Video 1" });
+    const pan = screen.getByRole("slider", { name: "Pan Video 1" });
+
+    expect(volume).toHaveValue("1");
+    expect(pan).toHaveValue("0");
+
+    fireEvent.change(volume, { target: { value: "0.45" } });
+    fireEvent.change(pan, { target: { value: "0.3" } });
+
+    await waitFor(() => {
+      expect(volume).toHaveValue("0.45");
+      expect(volume).toHaveAttribute("aria-valuetext", "45%");
+      expect(pan).toHaveValue("0.3");
+      expect(pan).toHaveAttribute("aria-valuetext", "R 30%");
+    });
+  });
+
   it("updates audio clip EQ controls from the inspector", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
