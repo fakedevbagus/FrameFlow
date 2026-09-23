@@ -168,6 +168,41 @@ describe("render plan", () => {
     });
   });
 
+  it("propagates transform anchors for visual segments", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                transformAnchor: {
+                  x: 0.25,
+                  y: 0.75,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(
+      plan.segments.find((segment) => segment.assetId === "video-a")
+        ?.transformAnchor,
+    ).toEqual({
+      x: 0.25,
+      y: 0.75,
+    });
+  });
+
   it("compiles timeline clips with source and timeline timing", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");
