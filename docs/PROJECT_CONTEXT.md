@@ -11,16 +11,16 @@ Merge status: not merged; keep Draft until the user reports PASS.
 - The export slice reuses the existing optional per-clip text overlay model and keeps rendering deterministic without introducing a new project schema version.
 - Font selection uses the explicit renderer-owned `DejaVu Sans` policy.
 - Preview and export keep normalized X/Y, font size, color, and left/center/right alignment semantics aligned.
-- The live Linux/Tauri WebView path now has three layers: normal Inspector input/change handlers, an external edit-session store for transient state, and a Preview-local requestAnimationFrame bridge that reads the Inspector DOM directly.
-- Preview no longer depends on React event delivery to render live values. The Preview-local bridge reads Text/X/Y/Size DOM values on each animation frame.
-- The live Preview renderer uses an always-mounted canvas inside the selected clip layer and redraws the overlay directly from the current Inspector DOM values. This is the primary WebView live-preview path.
-- The compatibility DOM text node is also patched when live values are detected, but it is hidden for selected clips so it cannot produce duplicate visible text.
-- The selected visual clip keeps a hidden text overlay DOM target and a live canvas target mounted even when its committed overlay is empty.
-- The canvas renderer applies text, normalized X/Y, font size, color, left/center/right alignment, multiline line layout, and the existing text-shadow treatment without waiting for React reconciliation.
-- The external edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes do not discard an in-progress Text Overlay edit.
-- Commit handlers read the current external session at commit time. Blur/direct Text Overlay actions commit through the existing project history engine; the existing 400 ms idle autosave remains.
-- Regression coverage includes standard live Text/X/Y/Size updates, no per-keystroke history, one-entry commit + Undo/Redo + Reset, store behavior, direct DOM-value changes without events, and live canvas mounting.
-- A direct DOM-value regression intentionally mirrors the observed WebView failure mode and must remain green.
+- The transient live Inspector state remains in a synchronous external React edit-session store, separate from committed project/history state.
+- The live Linux/Tauri WebView renderer is now intentionally single-path: PreviewVisualLayer owns a `requestAnimationFrame` bridge that reads the actual Inspector DOM values directly and imperatively updates one permanently mounted Preview text DOM element.
+- The bridge does not depend on React receiving `input`/`change`/`keyup` events, `document.activeElement`, App-level polling, `flushSync`, or an additional canvas renderer.
+- `beforeinput` is handled natively on the Inspector controls so the next value can be computed from the edit intent before a delayed WebView value/event reaches the normal React pipeline.
+- The rAF readback remains as a fallback for direct DOM value changes, paste/delete paths, and WebView environments where value updates become observable without a reliable event.
+- When a live value changes, Preview updates the external edit session and directly patches text, X/Y, size, color, alignment transform, and visibility on the existing overlay element.
+- The selected visual clip keeps that overlay element mounted even when committed text is empty; it is hidden rather than removed.
+- Text/X/Y/Size React live handlers were removed so a delayed/stale React event cannot overwrite a newer beforeinput/DOM-read value.
+- The external edit session remains decoupled from `project.updatedAt`. Commit handlers read its current snapshot and the existing 400 ms idle autosave / blur/direct commit history semantics remain.
+- Regression coverage includes standard live editing, no per-keystroke history, one-entry commit + Undo/Redo + Reset, external-store behavior, direct DOM-value changes without dispatched events, and the selected Preview overlay target.
 - Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
