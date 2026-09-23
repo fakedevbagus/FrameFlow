@@ -1350,6 +1350,60 @@ mod tests {
   }
 
   #[test]
+  fn builds_unified_graph_with_embedded_source_audio() {
+    let video_paths = vec![PathBuf::from("/media/video.mp4")];
+    let video_media_types = vec!["video".to_string()];
+    let audio_paths = vec![PathBuf::from("/media/music.mp3")];
+    let source_audio_segments = vec![ResolvedSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 250,
+      timeline_start_ms: 1_000,
+      duration_ms: 4_000,
+      has_audio: true,
+    }];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &audio_paths,
+      &source_audio_segments,
+      "[0:v:0]null[vout]",
+      "[vout]",
+      "[1:a:0]anull[aout]",
+      "[aout]",
+      6_000,
+      1_280,
+      720,
+      30.0,
+      Path::new("/tmp/unified-source-audio.mp4"),
+    )
+    .unwrap();
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    let filter = values
+      .windows(2)
+      .find(|pair| pair[0] == "-filter_complex")
+      .map(|pair| pair[1].clone())
+      .expect("filter_complex argument should exist");
+
+    assert!(filter.contains(
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1000:all=1[frameflow_source_audio_0]"
+    ));
+    assert!(filter.contains("[frameflow_explicit_audio]"));
+    assert!(filter.contains(
+      "[frameflow_explicit_audio][frameflow_source_audio_0]amix=inputs=2:duration=longest:dropout_transition=0[aout]"
+    ));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[aout]".to_string()
+    ]));
+  }
+
+  #[test]
   fn preserves_unified_video_audio_input_order() {
     let video_paths = vec![
       PathBuf::from("/media/first.mp4"),
