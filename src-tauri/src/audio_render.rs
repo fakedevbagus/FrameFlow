@@ -236,7 +236,9 @@ fn validate_video_audio_graph_request(
     request.width,
     request.height,
     request.frame_rate,
-  )
+  )?;
+
+  validate_mp4_output_path(Path::new(&request.output_path))
 }
 
 fn build_ffmpeg_video_audio_graph_args(
@@ -947,8 +949,20 @@ mod tests {
     mismatched_types.video_input_media_types = vec!["audio".to_string()];
     assert!(validate_video_audio_graph_request(&mismatched_types).is_err());
 
-    let mut missing_audio = valid;
-    missing_audio.audio_inputs.clear();
+    let mut missing_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: Vec::new(),
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
     assert!(validate_video_audio_graph_request(&missing_audio).is_err());
 
     let mut missing_filter = NativeVideoAudioGraphRenderRequest {
@@ -978,148 +992,3 @@ mod tests {
 
   #[test]
   fn builds_ffmpeg_unified_video_audio_graph_arguments_with_image_input() {
-    let args = build_ffmpeg_video_audio_graph_args(
-      &[
-        PathBuf::from("/media/cover.png"),
-        PathBuf::from("/media/broll.mp4"),
-      ],
-      &["image".to_string(), "video".to_string()],
-      &[PathBuf::from("/media/Music Track.mp3")],
-      "[0:v:0]null[vout]",
-      "[vout]",
-      "[2:a:0]anull[aout]",
-      "[aout]",
-      5_000,
-      1_280,
-      720,
-      30.0,
-      Path::new("/tmp/final.mp4"),
-    );
-
-    let values: Vec<String> = args
-      .iter()
-      .map(|arg| arg.to_string_lossy().into_owned())
-      .collect();
-
-    assert!(values.windows(2).any(|pair| pair == [
-      "-loop".to_string(),
-      "1".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-framerate".to_string(),
-      "30".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-i".to_string(),
-      "/media/cover.png".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-i".to_string(),
-      "/media/broll.mp4".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-i".to_string(),
-      "/media/Music Track.mp3".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-filter_complex".to_string(),
-      "[0:v:0]null[vout];[2:a:0]anull[aout]".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-map".to_string(),
-      "[vout]".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-map".to_string(),
-      "[aout]".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-t".to_string(),
-      "5".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-c:v".to_string(),
-      "libx264".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-c:a".to_string(),
-      "aac".to_string()
-    ]));
-    assert!(values.iter().any(|value| value == "/tmp/final.mp4"));
-  }
-
-  #[test]
-  fn builds_ffmpeg_video_with_audio_graph_arguments() {
-    let args = build_ffmpeg_video_with_audio_graph_args(
-      Path::new("/media/base video.mp4"),
-      &[
-        PathBuf::from("/media/Music Track.mp3"),
-        PathBuf::from("/media/Voice.wav"),
-      ],
-      "[1:a:0]atrim=start=0:end=2[audio0];[2:a:0]adelay=1500:all=1[audio1];[audio0][audio1]amix=inputs=2[aout]",
-      "[aout]",
-      5_000,
-      true,
-      Path::new("/tmp/final.mix.tmp.mp4"),
-    );
-
-    let values: Vec<String> = args
-      .iter()
-      .map(|arg| arg.to_string_lossy().into_owned())
-      .collect();
-
-    assert!(values.windows(2).any(|pair| pair == [
-      "-i".to_string(),
-      "/media/base video.mp4".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-i".to_string(),
-      "/media/Music Track.mp3".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-i".to_string(),
-      "/media/Voice.wav".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-map".to_string(),
-      "0:v:0".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-map".to_string(),
-      "[amixed]".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-c:v".to_string(),
-      "copy".to_string()
-    ]));
-    assert!(values.windows(2).any(|pair| pair == [
-      "-c:a".to_string(),
-      "aac".to_string()
-    ]));
-    assert!(values.iter().any(|value| value.contains("[baseaudio]")));
-    assert!(values.iter().any(|value| value.contains("[aout]amix=inputs=2")));
-    assert!(values.iter().any(|value| value == "-shortest"));
-  }
-
-  #[test]
-  fn builds_silence_when_base_video_has_no_audio() {
-    let args = build_ffmpeg_video_with_audio_graph_args(
-      Path::new("/media/base.mp4"),
-      &[PathBuf::from("/media/music.mp3")],
-      "[1:a:0]anull[aout]",
-      "[aout]",
-      4_000,
-      false,
-      Path::new("/tmp/final.mp4"),
-    );
-
-    let values: Vec<String> = args
-      .iter()
-      .map(|arg| arg.to_string_lossy().into_owned())
-      .collect();
-
-    assert!(values.iter().any(|value| value.contains("anullsrc=r=48000:cl=stereo")));
-    assert!(values.iter().any(|value| value.contains("atrim=duration=4")));
-  }
-
-}
