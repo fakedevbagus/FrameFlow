@@ -1,6 +1,6 @@
 - M3.70 validation update: the latest user run had 392/393 frontend tests passing, with the sole failure in the new text-overlay crop/effects/transform ordering assertion.
-- Root cause was a stale test expectation: configured crop leaves 90% height, so the expected fragment is `crop=w=trunc(iw*0.85):h=trunc(ih*0.9)`.
-- The assertion is corrected on `feat/m3-70-text-overlay-export` in commit `d2c937b836bb2387cf76c67ed7035b7f6db3dcfc`.
+- Root cause was a stale test expectation: the fixture uses left/right crop values of 0.1 each, so visible width is 0.8; top/bottom crop values leave 0.9 visible height.
+- The assertion is corrected on `feat/m3-70-text-overlay-export` in commit `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.
 - Lint, production build, and 39 Rust tests passed in the user run. Tauri dev launched successfully. React `act(...)` messages are warnings only.
 - PR #84 stays Draft until a clean rerun and user `PASS`.
 
