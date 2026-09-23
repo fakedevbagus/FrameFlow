@@ -977,7 +977,7 @@ mod tests {
     assert!(validate_video_audio_graph_request(&missing_audio).is_err());
 
     let mut missing_filter = NativeVideoAudioGraphRenderRequest {
-
+      video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: vec!["/media/music.mp3".to_string()],
       video_filter_complex: String::new(),
