@@ -250,7 +250,6 @@ function PreviewVisualLayer({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
   const textOverlayDomRef = useRef<HTMLDivElement | null>(null);
-  const textOverlayLiveCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
@@ -361,12 +360,6 @@ function PreviewVisualLayer({
       return;
     }
 
-    const canvas = textOverlayLiveCanvasRef.current;
-
-    if (!canvas) {
-      return;
-    }
-
     let animationFrameId = 0;
     let disposed = false;
     const committedOverlay: TextOverlay = textOverlay ?? {
@@ -404,7 +397,7 @@ function PreviewVisualLayer({
       element.style.fontSize = overlay.fontSize + "px";
       element.style.textAlign = overlay.alignment;
       element.style.transform = horizontalTransform;
-      element.style.visibility = "hidden";
+      element.style.visibility = overlay.text.trim() ? "visible" : "hidden";
     };
 
     const getNextInputValue = (
@@ -541,7 +534,7 @@ function PreviewVisualLayer({
       };
     });
 
-    const drawLiveOverlay = () => {
+    const syncDomValue = () => {
       if (disposed) {
         return;
       }
@@ -556,11 +549,11 @@ function PreviewVisualLayer({
         currentSession?.clipId === layer.clip.id
           ? currentSession.overlay
           : committedOverlay;
-      const overlay = { ...currentOverlay };
+      const nextOverlay = { ...currentOverlay };
       let changed = false;
 
-      if (textInput && textInput.value !== overlay.text) {
-        overlay.text = textInput.value.slice(0, 500);
+      if (textInput && textInput.value !== currentOverlay.text) {
+        nextOverlay.text = textInput.value.slice(0, 500);
         changed = true;
       }
 
@@ -570,9 +563,9 @@ function PreviewVisualLayer({
           Number.isFinite(value) &&
           value >= 0 &&
           value <= 100 &&
-          value / 100 !== overlay.x
+          value / 100 !== currentOverlay.x
         ) {
-          overlay.x = value / 100;
+          nextOverlay.x = value / 100;
           changed = true;
         }
       }
@@ -583,9 +576,9 @@ function PreviewVisualLayer({
           Number.isFinite(value) &&
           value >= 0 &&
           value <= 100 &&
-          value / 100 !== overlay.y
+          value / 100 !== currentOverlay.y
         ) {
-          overlay.y = value / 100;
+          nextOverlay.y = value / 100;
           changed = true;
         }
       }
@@ -596,85 +589,23 @@ function PreviewVisualLayer({
           Number.isFinite(value) &&
           value >= 12 &&
           value <= 240 &&
-          Math.round(value) !== overlay.fontSize
+          Math.round(value) !== currentOverlay.fontSize
         ) {
-          overlay.fontSize = Math.round(value);
+          nextOverlay.fontSize = Math.round(value);
           changed = true;
         }
       }
 
-      if (
-        changed &&
-        (!currentSession || currentSession.clipId !== layer.clip.id ||
-          currentSession.overlay.text !== overlay.text ||
-          currentSession.overlay.x !== overlay.x ||
-          currentSession.overlay.y !== overlay.y ||
-          currentSession.overlay.fontSize !== overlay.fontSize)
-      ) {
+      if (changed) {
         setTextOverlayEditSession({
           clipId: layer.clip.id,
-          overlay,
+          overlay: nextOverlay,
         });
       }
 
-      applyOverlayToDom(overlay);
+      applyOverlayToDom(changed ? nextOverlay : currentOverlay);
 
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const pixelWidth = Math.max(1, Math.round(width * dpr));
-      const pixelHeight = Math.max(1, Math.round(height * dpr));
-
-      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
-        canvas.width = pixelWidth;
-        canvas.height = pixelHeight;
-      }
-
-      let context: CanvasRenderingContext2D | null = null;
-
-      try {
-        context = canvas.getContext("2d");
-      } catch {
-        context = null;
-      }
-
-      if (!context) {
-        animationFrameId = window.requestAnimationFrame(drawLiveOverlay);
-        return;
-      }
-
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
-      context.clearRect(0, 0, width, height);
-
-      if (overlay.text.trim()) {
-        const lines = overlay.text.split("\n");
-        const lineHeight = Math.max(1, overlay.fontSize * 1.15);
-        const centerY = overlay.y * height;
-        const firstBaseline =
-          centerY - ((lines.length - 1) * lineHeight) / 2;
-
-        context.font =
-          '700 ' +
-          overlay.fontSize +
-          'px "DejaVu Sans", sans-serif';
-        context.textAlign = overlay.alignment;
-        context.textBaseline = "middle";
-        context.fillStyle = overlay.color;
-        context.shadowColor = "rgba(0, 0, 0, 0.8)";
-        context.shadowBlur = 2;
-        context.shadowOffsetX = 0;
-        context.shadowOffsetY = 1;
-
-        for (let index = 0; index < lines.length; index += 1) {
-          context.fillText(
-            lines[index],
-            overlay.x * width,
-            firstBaseline + index * lineHeight,
-          );
-        }
-      }
-
-      animationFrameId = window.requestAnimationFrame(drawLiveOverlay);
+      animationFrameId = window.requestAnimationFrame(syncDomValue);
     };
 
     applyOverlayToDom(
@@ -682,7 +613,7 @@ function PreviewVisualLayer({
         ? getTextOverlayEditSession()!.overlay
         : committedOverlay,
     );
-    drawLiveOverlay();
+    animationFrameId = window.requestAnimationFrame(syncDomValue);
 
     return () => {
       disposed = true;
@@ -1604,12 +1535,6 @@ function PreviewVisualLayer({
               }}
             />
           </div>
-          <canvas
-            ref={textOverlayLiveCanvasRef}
-            className="preview-text-overlay-live-canvas"
-            data-testid={"preview-text-overlay-live-canvas-" + layer.clip.id}
-            aria-hidden="true"
-          />
           {renderTextOverlay()}
           {renderManipulationControls()}
         </div>
@@ -1684,12 +1609,6 @@ function PreviewVisualLayer({
             Preparing compatible preview…
           </div>
         ) : null}
-        <canvas
-          ref={textOverlayLiveCanvasRef}
-          className="preview-text-overlay-live-canvas"
-          data-testid={"preview-text-overlay-live-canvas-" + layer.clip.id}
-          aria-hidden="true"
-        />
         {renderTextOverlay()}
         {renderManipulationControls()}
       </div>
