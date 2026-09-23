@@ -1,3 +1,17 @@
+## 2026-09-23 — M3.66 Transition Export — merged
+
+- PR #80 was user-validated and squash-merged into `main` at `a3bf59055b76de1c485c8d410e2adb13862925d6`.
+- CI run #171 passed on the final implementation head.
+- Added dissolve and fade-through-black export while preserving timeline duration semantics and the existing single-video graph.
+- M3.62 remains parked in PR #76.
+
+## 2026-09-23 — M3.67 Animated Transform Export — started
+
+- The next concrete export gap is transform keyframes, which already exist in the project model, timeline controls, interpolation helpers, and Preview.
+- M3.67 will compile supported keyframed transform motion into the existing FFmpeg video graph without introducing a schema change.
+- Non-centered transform anchors, multi-track compositing, audio mixing, and parked Text Overlay Export remain deferred.
+- PR status will remain Draft until local validation is confirmed.
+
 ## 2026-09-23 — M3.66 transition guard correction
 
 - CI frontend tests initially failed because the pre-M3.66 transition guard still rejected every transitionOut before the new graph compiler could run.
