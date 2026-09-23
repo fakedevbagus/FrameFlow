@@ -13,6 +13,9 @@
 - M3.69 is merged at `5bac39d156aae38f2ab3c6a61d3851e816535128`; GitHub CI run #207 passed.
 - M3.70 is the next milestone: deterministic Text Overlay Export Rendering on current `main`. Reimplement only the export-relevant behavior from parked PR #76; do not merge the parked branch wholesale or couple this milestone to the Linux/WebKitGTK repaint investigation.
 
+- M3.70 is the active milestone on branch `feat/m3-70-text-overlay-export`: deterministic Text Overlay Export Rendering is being implemented against current `main`; parked PR #76 is not merged wholesale.
+
+
 # FrameFlow — New Chat Continuation Prompt
 
 You are continuing development of my existing project **FrameFlow**:
