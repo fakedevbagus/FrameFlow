@@ -1,10 +1,10 @@
-//! Linux-specific WebKitGTK repaint workaround.
+//! Linux-specific WebKitGTK redraw workaround.
 //!
-//! Some Linux desktop environments/WebKitGTK compositor combinations can keep
-//! a valid WebKit frame from being presented to the GTK window until another
-//! native expose/focus/resize occurs. FrameFlow uses a low-frequency GTK redraw
-//! request so frontend DOM/React changes become visible without requiring a
-//! user interaction.
+//! On some Linux desktop/compositor combinations a WebKitGTK frame can be
+//! rendered correctly by the web process but not presented by the GTK UI
+//! process until another native expose/focus/resize occurs. FrameFlow requests
+//! a lightweight GTK redraw on the main GTK loop instead of changing window
+//! geometry or reloading the WebView.
 
 #[cfg(target_os = "linux")]
 use std::time::Duration;
@@ -13,24 +13,35 @@ use std::time::Duration;
 use gtk::prelude::*;
 
 #[cfg(target_os = "linux")]
-const REPAINT_INTERVAL: Duration = Duration::from_millis(50);
+const REDRAW_INTERVAL: Duration = Duration::from_millis(50);
+
+#[cfg(target_os = "linux")]
+fn queue_redraw_tree(widget: &gtk::Widget) {
+    widget.queue_draw();
+
+    if let Ok(container) = widget.clone().downcast::<gtk::Container>() {
+        for child in container.children() {
+            queue_redraw_tree(&child);
+        }
+    }
+}
 
 /// Install the Linux repaint watchdog on the GTK main loop.
 ///
-/// This only requests a redraw; it does not resize or move the window and
-/// does not force a WebView re-navigation.
+/// The watchdog requests redraws only. It never resizes, moves, reloads, or
+/// navigates the application window.
 #[cfg(target_os = "linux")]
 pub fn install(app: &tauri::AppHandle) {
     let Some(window) = app.get_webview_window("main") else {
-        log::warn!("FrameFlow repaint watchdog: main window not found");
+        eprintln!("FrameFlow: repaint watchdog could not find the main window");
         return;
     };
 
     let native_window = match window.gtk_window() {
         Ok(window) => window,
         Err(error) => {
-            log::warn!(
-                "FrameFlow repaint watchdog: could not access GTK window: {error}"
+            eprintln!(
+                "FrameFlow: repaint watchdog could not access GTK window: {error}"
             );
             return;
         }
@@ -38,11 +49,12 @@ pub fn install(app: &tauri::AppHandle) {
 
     let default_vbox = window.default_vbox().ok();
 
-    gtk::glib::timeout_add_local(REPAINT_INTERVAL, move || {
+    gtk::glib::timeout_add_local(REDRAW_INTERVAL, move || {
         native_window.queue_draw();
 
         if let Some(vbox) = default_vbox.as_ref() {
-            vbox.queue_draw();
+            let widget = vbox.clone().upcast::<gtk::Widget>();
+            queue_redraw_tree(&widget);
         }
 
         gtk::glib::ControlFlow::Continue
