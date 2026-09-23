@@ -694,6 +694,8 @@ describe("render video pipeline", () => {
             sourceStartMs: 250,
             timelineStartMs: 1000,
             durationMs: 4000,
+            trackVolume: 0.8,
+            trackPan: 0.2,
           },
         ],
       }),
