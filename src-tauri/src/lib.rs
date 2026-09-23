@@ -59,6 +59,8 @@ struct NativeVideoSegmentsRenderRequest {
 #[serde(rename_all = "camelCase")]
 struct NativeVideoGraphRenderRequest {
   inputs: Vec<String>,
+  #[serde(default)]
+  input_media_types: Vec<String>,
   output_path: String,
   width: u32,
   height: u32,
@@ -302,6 +304,12 @@ fn render_video_graph_to_mp4(
 ) -> Result<NativeExportRenderResult, String> {
   validate_native_video_graph_request_metadata(&request)?;
 
+  if !request.input_media_types.is_empty() &&
+      request.input_media_types.len() != request.inputs.len()
+  {
+    return Err("Native video graph input media types must match the input count.".to_string());
+  }
+
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
 
@@ -315,8 +323,9 @@ fn render_video_graph_to_mp4(
         return Err("Native video graph inputs must use absolute paths.".to_string());
       }
 
-      if media_type(&path)? != "video" {
-        return Err("Native video graph render currently supports video inputs only.".to_string());
+      let source_type = media_type(&path)?;
+      if source_type != "video" && source_type != "image" {
+        return Err("Native video graph render supports video and image inputs only.".to_string());
       }
 
       if same_path(&path, &output_path) {
@@ -329,6 +338,7 @@ fn render_video_graph_to_mp4(
 
   let args = build_ffmpeg_video_graph_args(
     &input_paths,
+    &request.input_media_types,
     &request.filter_complex,
     &request.video_map,
     request.frame_rate,
@@ -905,6 +915,7 @@ fn validate_native_video_graph_request_metadata(
 
 fn build_ffmpeg_video_graph_args(
   input_paths: &[PathBuf],
+  input_media_types: &[String],
   filter_complex: &str,
   video_map: &str,
   frame_rate: f64,
@@ -917,7 +928,19 @@ fn build_ffmpeg_video_graph_args(
     "-y".into(),
   ];
 
-  for input_path in input_paths {
+  for (index, input_path) in input_paths.iter().enumerate() {
+    let media_type = input_media_types
+      .get(index)
+      .map(String::as_str)
+      .unwrap_or("video");
+
+    if media_type == "image" {
+      args.push("-loop".into());
+      args.push("1".into());
+      args.push("-framerate".into());
+      args.push(frame_rate.to_string().into());
+    }
+
     args.push("-i".into());
     args.push(input_path.as_os_str().to_os_string());
   }
