@@ -217,23 +217,28 @@ function buildTransformedSegmentFilter(
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
       : []),
     transform.scale !== 1
-      ? "scale=w=iw*" + formatNumber(transform.scale) + ":h=ih*" + formatNumber(transform.scale)
+      ? "scale=w=iw*" +
+        formatNumber(transform.scale) +
+        ":h=ih*" +
+        formatNumber(transform.scale)
       : null,
-    transform.rotation !== 0
-      ? "format=rgba",
+    transform.rotation !== 0 ? [
+      "format=rgba",
       "rotate=" +
         rotationRadians +
         ":c=none:ow=rotw(" +
         rotationRadians +
         "):oh=roth(" +
         rotationRadians +
-        ")"
-      : null,
+        ")",
+    ] : null,
     transform.opacity !== 1 ? "format=rgba" : null,
     transform.opacity !== 1
       ? "colorchannelmixer=aa=" + formatNumber(transform.opacity)
       : null,
-  ].filter((value): value is string => value !== null);
+  ]
+    .flat()
+    .filter((value): value is string => value !== null);
 
   const backgroundFilter =
     "color=c=black@0.0:s=" +
@@ -294,8 +299,6 @@ function isDefaultTransform(transform: ClipTransform): boolean {
 }
 
 function assertSupportedVisualMetadata(segment: RenderSegment): void {
-  const transform = getClipTransform(segment.transform);
-
   if (segment.transformKeyframes && segment.transformKeyframes.length > 0) {
     throw new Error(
       "M3.63 does not compile transform keyframes yet; animated transform export is deferred.",
