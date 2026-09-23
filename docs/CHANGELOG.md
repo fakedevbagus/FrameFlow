@@ -7,6 +7,15 @@
 - No project schema, export graph, or editing behavior was changed.
 - Fresh local validation remains required; PR #82 stays Draft until the user reports PASS.
 
+## 2026-09-23 — M3.68 Inspector layout follow-up
+
+- A second manual screenshot check showed the initial Inspector-width correction still allowed header actions and some Inspector controls to clip at the right edge.
+- Increased the Inspector workspace allocation to a flexible 300–320px column and reduced the media column budget to 210–240px to preserve the central editor.
+- Inspector section headers and action groups now wrap rather than forcing their parent section wider than the panel.
+- Anchor headers receive the same wrapping behavior.
+- No project schema or export behavior changed.
+- Fresh local validation remains required; PR #82 stays Draft.
+
 ## 2026-09-23 — M3.68 validation correction
 
 - User validation found two unused locals in `render-graph.ts` and a stale pipeline test that still expected non-centered animated anchors to be rejected. fileciteturn920file0L24-L35 fileciteturn920file0L129-L140 fileciteturn920file0L263-L280
