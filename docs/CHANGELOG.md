@@ -1,3 +1,37 @@
+## 2026-09-23 — M3.64 Static Crop Export — merged
+
+- PR #78 was validated by the user and squash-merged at `fd9d889c3975fdd076a87235913f3b37d1cbc50a`.
+- Static crop and crop-position export is now part of `main`.
+
+## 2026-09-23 — M3.65 Static Image Clip Export — in progress
+
+Branch: feat/m3-65-static-image-export
+PR: #79 — Draft
+
+Scope:
+- Export image assets as timeline video frames.
+- Support image-only clips and image/video sequences through the existing video render graph.
+- Preserve static crop and static transforms for image clips.
+
+Implementation:
+- Native graph requests carry optional per-input media types.
+- Image inputs use a looped FFmpeg image demuxer at the project frame rate.
+- Image duration remains controlled by RenderPlan segment trimming.
+- Pipeline bypasses direct video-source renderers when an image is present and uses the graph renderer instead.
+
+Deferred:
+- Image-specific audio extraction.
+- Transition export.
+- Transform keyframes.
+- Non-centered anchors.
+- Multi-track compositing.
+- Audio mixing.
+
+Validation:
+- Local lint/test/build/Cargo/Tauri validation pending user report.
+- PR #79 remains Draft until user PASS.
+- PR #76 remains Draft/parked.
+
 ## 2026-09-23 — M3.63 Static Visual Transform Export — merged
 
 - PR #77 was validated by the user and squash-merged at `67f5e9900fea9424e6e11fd247b4c26143927f27`.
