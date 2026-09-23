@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { MediaType } from "../project/domain";
 
 export interface NativeExportRenderRequest {
   sourcePath: string;
@@ -50,6 +51,7 @@ export interface NativeVideoWithAudioGraphRenderRequest {
 
 export interface NativeVideoGraphRenderRequest {
   inputs: string[];
+  inputMediaTypes?: MediaType[];
   outputPath: string;
   width: number;
   height: number;
