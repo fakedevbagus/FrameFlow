@@ -12,15 +12,15 @@ Merge status: not merged; keep Draft until the user reports PASS.
 - Font selection uses the explicit renderer-owned `DejaVu Sans` policy.
 - Preview and export keep normalized X/Y, font size, color, and left/center/right alignment semantics aligned.
 - The transient live Inspector state remains in a synchronous external React edit-session store, separate from committed project/history state.
-- The live Linux/Tauri WebView renderer is now intentionally single-path: PreviewVisualLayer owns a `requestAnimationFrame` bridge that reads the actual Inspector DOM values directly and imperatively updates one permanently mounted Preview text DOM element.
-- The bridge does not depend on React receiving `input`/`change`/`keyup` events, `document.activeElement`, App-level polling, `flushSync`, or an additional canvas renderer.
-- `beforeinput` is handled natively on the Inspector controls so the next value can be computed from the edit intent before a delayed WebView value/event reaches the normal React pipeline.
-- The rAF readback remains as a fallback for direct DOM value changes, paste/delete paths, and WebView environments where value updates become observable without a reliable event.
-- When a live value changes, Preview updates the external edit session and directly patches text, X/Y, size, color, alignment transform, and visibility on the existing overlay element.
-- The selected visual clip keeps that overlay element mounted even when committed text is empty; it is hidden rather than removed.
-- Text/X/Y/Size React live handlers were removed so a delayed/stale React event cannot overwrite a newer beforeinput/DOM-read value.
-- The external edit session remains decoupled from `project.updatedAt`. Commit handlers read its current snapshot and the existing 400 ms idle autosave / blur/direct commit history semantics remain.
-- Regression coverage includes standard live editing, synchronous beforeinput rendering, no per-keystroke history, one-entry commit + Undo/Redo + Reset, external-store behavior, direct DOM-value changes without dispatched events, and the selected Preview overlay target.
+- The latest WebView live-preview implementation deliberately separates live rendering from React reconciliation: PreviewVisualLayer owns one permanently mounted text overlay DOM element for the selected clip.
+- For Text/X/Y/Size, Preview installs native `beforeinput` and `keydown` intent listeners plus paste/cut handling, then computes the next value before delayed WebView value delivery and imperatively patches the existing overlay DOM.
+- Preview also keeps a `requestAnimationFrame` readback as a fallback for direct DOM value changes that arrive without a usable input event.
+- The selected overlay's React render is intentionally inert: while selected, React keeps a hidden placeholder geometry/value so a transient store update cannot reconcile stale text/style back over the imperative live DOM owner.
+- The live overlay DOM is therefore not recreated or visually controlled by each external-store update.
+- The external edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes do not discard an in-progress Text Overlay edit.
+- Commit handlers read the current external session snapshot; blur/direct Text Overlay actions and the existing 400 ms idle autosave commit through the existing project history engine.
+- Regression coverage explicitly reproduces the reported sequence `Text → X → Y → Size` and requires each previous value to appear before the next field is edited.
+- Additional coverage includes direct DOM value changes without dispatched input/change/keyup, synchronous beforeinput rendering, no per-keystroke history, one-entry commit + Undo/Redo + Reset, external-store behavior, and selected overlay mounting.
 - Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
