@@ -407,6 +407,140 @@ function PreviewVisualLayer({
       element.style.visibility = "hidden";
     };
 
+    const getNextInputValue = (
+      input: HTMLInputElement | HTMLTextAreaElement,
+      event: InputEvent,
+    ): string | null => {
+      const currentValue = input.value;
+      const selectionStart = input.selectionStart;
+      const selectionEnd = input.selectionEnd;
+      const start = selectionStart ?? currentValue.length;
+      const end = selectionEnd ?? start;
+
+      if (
+        event.inputType === "insertText" ||
+        event.inputType === "insertReplacementText" ||
+        event.inputType === "insertFromPaste" ||
+        event.inputType === "insertFromDrop"
+      ) {
+        const inserted = event.data ?? "";
+        return currentValue.slice(0, start) + inserted + currentValue.slice(end);
+      }
+
+      if (
+        event.inputType === "deleteContentBackward" ||
+        event.inputType === "deleteContentForward"
+      ) {
+        if (start !== end) {
+          return currentValue.slice(0, start) + currentValue.slice(end);
+        }
+
+        if (event.inputType === "deleteContentBackward" && start > 0) {
+          return currentValue.slice(0, start - 1) + currentValue.slice(end);
+        }
+
+        if (event.inputType === "deleteContentForward" && end < currentValue.length) {
+          return currentValue.slice(0, start) + currentValue.slice(end + 1);
+        }
+      }
+
+      return null;
+    };
+
+    const updateOverlayFromInputIntent = (
+      control: "text" | "x" | "y" | "size",
+      nextValue: string,
+    ) => {
+      const currentSession = getTextOverlayEditSession();
+      const currentOverlay =
+        currentSession?.clipId === layer.clip.id
+          ? currentSession.overlay
+          : committedOverlay;
+      const nextOverlay = { ...currentOverlay };
+
+      if (control === "text") {
+        nextOverlay.text = nextValue.slice(0, 500);
+      }
+
+      if (control === "x") {
+        const value = Number(nextValue);
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          return;
+        }
+        nextOverlay.x = value / 100;
+      }
+
+      if (control === "y") {
+        const value = Number(nextValue);
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          return;
+        }
+        nextOverlay.y = value / 100;
+      }
+
+      if (control === "size") {
+        const value = Number(nextValue);
+        if (!Number.isFinite(value) || value < 12 || value > 240) {
+          return;
+        }
+        nextOverlay.fontSize = Math.round(value);
+      }
+
+      setTextOverlayEditSession({
+        clipId: layer.clip.id,
+        overlay: nextOverlay,
+      });
+      applyOverlayToDom(nextOverlay);
+    };
+
+    const controls: Array<{
+      control: "text" | "x" | "y" | "size";
+      element: HTMLInputElement | HTMLTextAreaElement | null;
+    }> = [
+      {
+        control: "text",
+        element: getInspectorValue("text") as HTMLTextAreaElement | null,
+      },
+      {
+        control: "x",
+        element: getInspectorValue("x") as HTMLInputElement | null,
+      },
+      {
+        control: "y",
+        element: getInspectorValue("y") as HTMLInputElement | null,
+      },
+      {
+        control: "size",
+        element: getInspectorValue("size") as HTMLInputElement | null,
+      },
+    ];
+
+    const beforeInputCleanups = controls.map(({ control, element }) => {
+      if (!element) {
+        return () => {};
+      }
+
+      const handleBeforeInput = (event: Event) => {
+        const inputEvent = event as InputEvent;
+
+        if (inputEvent.isComposing) {
+          return;
+        }
+
+        const nextValue = getNextInputValue(element, inputEvent);
+
+        if (nextValue !== null) {
+          updateOverlayFromInputIntent(control, nextValue);
+        }
+      };
+
+      element.addEventListener("beforeinput", handleBeforeInput);
+
+      return () => {
+        element.removeEventListener("beforeinput", handleBeforeInput);
+      };
+    });
+
     const drawLiveOverlay = () => {
       if (disposed) {
         return;
@@ -418,15 +552,15 @@ function PreviewVisualLayer({
       const sizeInput = getInspectorValue("size") as HTMLInputElement | null;
 
       const currentSession = getTextOverlayEditSession();
-      const sessionOverlay =
+      const currentOverlay =
         currentSession?.clipId === layer.clip.id
           ? currentSession.overlay
           : committedOverlay;
-      const overlay = { ...sessionOverlay };
+      const overlay = { ...currentOverlay };
       let changed = false;
 
       if (textInput && textInput.value !== overlay.text) {
-        overlay.text = textInput.value;
+        overlay.text = textInput.value.slice(0, 500);
         changed = true;
       }
 
@@ -553,8 +687,22 @@ function PreviewVisualLayer({
     return () => {
       disposed = true;
       window.cancelAnimationFrame(animationFrameId);
+
+      for (const cleanup of beforeInputCleanups) {
+        cleanup();
+      }
     };
-  }, [isSelected, isPlaying, layer.clip.id, textOverlay?.text, textOverlay?.x, textOverlay?.y, textOverlay?.fontSize, textOverlay?.color, textOverlay?.alignment]);
+  }, [
+    isSelected,
+    isPlaying,
+    layer.clip.id,
+    textOverlay?.text,
+    textOverlay?.x,
+    textOverlay?.y,
+    textOverlay?.fontSize,
+    textOverlay?.color,
+    textOverlay?.alignment,
+  ]);
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
