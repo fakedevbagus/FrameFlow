@@ -1235,15 +1235,17 @@ function buildAnchorAwareCompositedSegmentFilter(
       ":round=near,setsar=1"
     : ",format=yuv420p";
 
-  return [
-    foregroundFilters.slice(0, -1).join(",") + "[" + anchorScaledLabel + "];",
-    pivotBackground + ";",
-    pivotComposite + ";",
-    rotatedFilters + ";",
-    foregroundOpacity + ";",
-    backgroundFilter + ";",
+  const filterParts = [
+    foregroundFilters.slice(0, -1).join(",") + "[" + anchorScaledLabel + "]",
+    pivotBackground,
+    pivotComposite,
+    rotatedFilters,
+    ...(foregroundOpacity ? [foregroundOpacity] : []),
+    backgroundFilter,
     overlayFilter + normalization,
-  ].join("");
+  ];
+
+  return filterParts.join(";");
 }
 
 function isDefaultTransform(transform: ClipTransform): boolean {
