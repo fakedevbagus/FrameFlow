@@ -20,7 +20,7 @@ Merge status: not merged; keep Draft until the user reports PASS.
 - The selected visual clip keeps that overlay element mounted even when committed text is empty; it is hidden rather than removed.
 - Text/X/Y/Size React live handlers were removed so a delayed/stale React event cannot overwrite a newer beforeinput/DOM-read value.
 - The external edit session remains decoupled from `project.updatedAt`. Commit handlers read its current snapshot and the existing 400 ms idle autosave / blur/direct commit history semantics remain.
-- Regression coverage includes standard live editing, no per-keystroke history, one-entry commit + Undo/Redo + Reset, external-store behavior, direct DOM-value changes without dispatched events, and the selected Preview overlay target.
+- Regression coverage includes standard live editing, synchronous beforeinput rendering, no per-keystroke history, one-entry commit + Undo/Redo + Reset, external-store behavior, direct DOM-value changes without dispatched events, and the selected Preview overlay target.
 - Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
