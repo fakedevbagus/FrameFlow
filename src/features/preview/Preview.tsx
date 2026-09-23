@@ -490,7 +490,16 @@ function PreviewVisualLayer({
       disposed = true;
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isSelected, layer.clip.id, textOverlay]);
+  }, [
+    isSelected,
+    layer.clip.id,
+    textOverlay?.text,
+    textOverlay?.x,
+    textOverlay?.y,
+    textOverlay?.fontSize,
+    textOverlay?.color,
+    textOverlay?.alignment,
+  ]);
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
