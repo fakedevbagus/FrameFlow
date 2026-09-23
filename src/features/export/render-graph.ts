@@ -1184,29 +1184,26 @@ function buildAnchorAwareCompositedSegmentFilter(
       "]";
 
   const visualLabel = anchorRotatedLabel;
+  const outputLabel =
+    isAnimated || transform.opacity !== 1 ? label : visualLabel;
   const foregroundOpacity =
-    isAnimated || transform.opacity !== 1
-      ? isAnimated
+    isAnimated
+      ? "[" +
+        visualLabel +
+        "]geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*" +
+        opacityExpression +
+        "'[" +
+        label +
+        "]"
+      : transform.opacity !== 1
         ? "[" +
-          visualLabel +
-          "]geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*" +
-          opacityExpression +
-          "'[" +
-          label +
-          "]"
-        : "[" +
           visualLabel +
           "]colorchannelmixer=aa=" +
           formatNumber(transform.opacity) +
           "[" +
           label +
           "]"
-      : "[" +
-        visualLabel +
-        "]copy[" +
-        label +
-        "]";
-
+        : "";
   const backgroundLabel = "anchor_output_bg_" + segment.inputIndex;
   const backgroundFilter =
     "color=c=black@0.0:s=" +
@@ -1225,7 +1222,7 @@ function buildAnchorAwareCompositedSegmentFilter(
     "[" +
     backgroundLabel +
     "][" +
-    label +
+    outputLabel +
     "]overlay=x='(W-w)/2+" +
     translationX +
     "':y='(H-h)/2+" +
