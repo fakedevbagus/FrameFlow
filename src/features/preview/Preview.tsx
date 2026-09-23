@@ -383,6 +383,30 @@ function PreviewVisualLayer({
         '[data-text-overlay-control="' + control + '"]',
       );
 
+    const applyOverlayToDom = (overlay: TextOverlay) => {
+      const element = textOverlayDomRef.current;
+
+      if (!element) {
+        return;
+      }
+
+      const horizontalTransform =
+        overlay.alignment === "left"
+          ? "translate(0, -50%)"
+          : overlay.alignment === "right"
+            ? "translate(-100%, -50%)"
+            : "translate(-50%, -50%)";
+
+      element.textContent = overlay.text;
+      element.style.left = overlay.x * 100 + "%";
+      element.style.top = overlay.y * 100 + "%";
+      element.style.color = overlay.color;
+      element.style.fontSize = overlay.fontSize + "px";
+      element.style.textAlign = overlay.alignment;
+      element.style.transform = horizontalTransform;
+      element.style.visibility = "hidden";
+    };
+
     const drawLiveOverlay = () => {
       if (disposed) {
         return;
@@ -459,6 +483,8 @@ function PreviewVisualLayer({
         });
       }
 
+      applyOverlayToDom(overlay);
+
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -511,6 +537,11 @@ function PreviewVisualLayer({
       animationFrameId = window.requestAnimationFrame(drawLiveOverlay);
     };
 
+    applyOverlayToDom(
+      getTextOverlayEditSession()?.clipId === layer.clip.id
+        ? getTextOverlayEditSession()!.overlay
+        : committedOverlay,
+    );
     drawLiveOverlay();
 
     return () => {
