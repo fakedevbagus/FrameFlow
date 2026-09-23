@@ -1420,6 +1420,7 @@ mod tests {
       &video_paths,
       &video_media_types,
       &audio_paths,
+      &[],
       "[0:v:0]null[v0];[1:v:0]null[vout]",
       "[vout]",
       "[2:a:0]anull[aout0];[3:a:0]anull[aout]",
