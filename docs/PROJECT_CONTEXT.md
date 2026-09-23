@@ -7,15 +7,19 @@ Validation status: pending user validation
 Merge status: not merged; keep Draft until the user reports PASS.
 
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
-- M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
-- The export slice reuses the existing optional per-clip text overlay model and keeps rendering deterministic without introducing a new project schema version.
-- Font selection uses the explicit renderer-owned `DejaVu Sans` policy.
-- Preview and export keep normalized X/Y, font size, color, and left/center/right alignment semantics aligned.
-- The target runtime is Linux/Tauri/WebKitGTK. Current symptoms match a broader WebKitGTK/GTK repaint issue where valid web content changes can remain visually stale until a focus/resize/Expose-style native event triggers a redraw.
-- A native Linux repaint watchdog now runs on the GTK main loop every 50 ms and calls `queue_draw()` on the Tauri GTK window plus the default GTK container subtree. It does not resize, move, reload, or navigate the window.
-- GTK bindings are target-gated to Linux and use the same gtk 0.18 generation already used transitively by current Tauri 2.x on Linux.
-- The frontend live Text Overlay fallback remains temporarily in place for this validation checkpoint. It is not considered the root-cause fix; the native watchdog is the new platform-level mitigation.
-- After native validation PASS, clean-up should remove redundant frontend workarounds and retain only the simplest React live-state path needed for normal browsers.
+- M3.62 extends the text overlay foundation into native export/render planning.
+- Export reuses the existing optional per-clip TextOverlay model, deterministic DejaVu Sans font policy, normalized X/Y, font size, color, and left/center/right alignment semantics.
+- The target runtime is Linux/Tauri/WebKitGTK. Observed Text/X/Y/Size Preview behavior showed a one-step-late sequence: Text appeared after X, X after Y, etc.
+- The current frontend architecture separates transient edit-session data from committed project/history state.
+- App no longer subscribes to the live edit session, so live Text/X/Y/Size changes do not trigger an App React render. App only has a non-rendering store subscription to schedule the existing autosave timer.
+- PreviewVisualLayer is the sole live-preview owner for the selected overlay DOM node. The node remains mounted and is hidden when no text is present.
+- Preview uses native beforeinput/keydown/paste/cut intent listeners plus requestAnimationFrame DOM readback to derive live values without relying on React input/change delivery.
+- When a live value changes, Preview patches the existing overlay DOM immediately. During unrelated React renders, Preview reads the latest live-session snapshot directly rather than rendering a stale placeholder.
+- React does not subscribe to the live session for render invalidation; committed project state continues through the existing history engine.
+- A Linux-only GTK repaint watchdog remains as a platform mitigation. It requests GTK redraws without resize, focus changes, reloads, or navigation.
+- GTK dependency is target-gated to Linux.
+- The previous canvas renderer and App-level polling experiments were removed; the current live path intentionally has one DOM renderer.
+- Regression coverage includes literal Text → X → Y → Size sequence, direct DOM value changes without dispatched events, synchronous beforeinput, no per-keystroke history, one-entry commit + Undo/Redo + Reset, and external-store behavior.
 - Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
