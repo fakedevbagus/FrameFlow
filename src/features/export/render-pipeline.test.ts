@@ -309,6 +309,73 @@ describe("render video pipeline", () => {
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
   });
 
+  it("routes transitioned video sequences through the native graph renderer", async () => {
+    const plan: RenderPlan = {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      durationMs: 8000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 5000,
+          sourceStartMs: 0,
+          sourceEndMs: 5000,
+          durationMs: 5000,
+          isMuted: false,
+          transitionOut: {
+            type: "dissolve",
+            durationMs: 500,
+          },
+        },
+        {
+          inputIndex: 1,
+          assetId: "video-b",
+          sourcePath: "/media/b.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 5000,
+          timelineEndMs: 8000,
+          sourceStartMs: 0,
+          sourceEndMs: 3000,
+          durationMs: 3000,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/transition-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/transition-export.mp4"),
+    ).resolves.toEqual({ outputPath: "/tmp/transition-export.mp4" });
+
+    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
+      inputs: ["/media/a.mp4", "/media/b.mp4"],
+      inputMediaTypes: ["video", "video"],
+      outputPath: "/tmp/transition-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      filterComplex: expect.stringContaining("transition_0_dissolve"),
+      videoMap: "[vout]",
+    });
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+  });
+
+
   it("renders the base video before mixing an explicit audio track", async () => {
     const plan: RenderPlan = {
       width: 406,
