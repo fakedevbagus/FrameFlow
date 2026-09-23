@@ -311,6 +311,46 @@ describe("render plan", () => {
     ]);
   });
 
+  it("carries normalized text overlay metadata into visual render segments", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "  FrameFlow title  ",
+                  x: 0.25,
+                  y: 0.75,
+                  fontSize: 64,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(plan.segments[0].textOverlay).toEqual({
+      text: "FrameFlow title",
+      x: 0.25,
+      y: 0.75,
+      fontSize: 64,
+      color: "#ffffff",
+      alignment: "center",
+    });
+  });
+
   it("carries audio track pan into audio render segments", () => {
     let project = projectWithAssets();
     project = addAssetToTrack(project, "audio-a", "audio-1", 0);
