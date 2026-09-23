@@ -1,3 +1,30 @@
+## 2026-09-23 — M3.63 Static Visual Transform Export — merged
+
+- PR #77 was validated by the user and squash-merged at `67f5e9900fea9424e6e11fd247b4c26143927f27`.
+- Static X/Y, Scale, Rotation, and Opacity export is now part of `main`.
+- Transform keyframes and non-centered anchors remain explicitly deferred.
+
+## 2026-09-23 — M3.64 Static Crop Export — in progress
+
+Branch: feat/m3-64-static-crop-export
+PR: #78 — Draft
+
+Scope:
+- Export static `ClipCrop` and `CropPosition` using the existing normalized project model.
+- Preserve Preview crop-before-transform semantics.
+- Support crop alone and crop combined with static X/Y/Scale/Rotation/Opacity.
+- Preserve the minimal default graph when no crop/transform is active.
+
+Implementation:
+- RenderPlan normalizes non-empty crop metadata and crop position.
+- The FFmpeg graph fits source content, applies visual effects, crops the requested visible region, restores that region to the original contained-content bounds, then applies static transforms and output composition.
+- Non-centered transform anchors, transform keyframes, transitions, images, multi-track compositing, and audio mixing remain deferred.
+
+Validation:
+- Local lint/test/build/Cargo/Tauri validation pending user report.
+- PR #78 remains Draft until user PASS.
+- PR #76 remains Draft/parked.
+
 ## 2026-09-23 — M3.63 stale regression assertion correction
 
 Branch: feat/m3-63-static-transform-export
