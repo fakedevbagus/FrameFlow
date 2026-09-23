@@ -332,6 +332,7 @@ fn build_ffmpeg_video_audio_graph_args(
   video_paths: &[PathBuf],
   video_input_media_types: &[String],
   audio_paths: &[PathBuf],
+  source_audio_segments: &[ResolvedSourceAudioSegment],
   video_filter_complex: &str,
   video_map: &str,
   audio_filter_complex: &str,
