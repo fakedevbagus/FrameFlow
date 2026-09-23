@@ -1,3 +1,8 @@
+- M3.70 progress update: PR #84 on `feat/m3-70-text-overlay-export` now includes resolution-aware text scaling and expanded regression coverage for image clips, drawtext escaping, transform ordering, and dissolve/fade-through-black transitions.
+- The latest test fix corrected the crop-order assertion to use the actual `ih` expression.
+- Latest M3.70 changes are not yet user-validated; keep PR #84 Draft until the user reports `PASS`.
+- PR #76 remains parked, unmerged, and must not be revived wholesale.
+
 - M3.68 currently includes a UI/layout validation correction for Inspector clipping on narrower desktop widths. The workspace now gives the Inspector a flexible 270–300px column, and Inspector two-column grids use minmax(0, 1fr) so controls stay inside the panel.
 
 - M3.68 also includes a follow-up Inspector layout correction: the Inspector workspace column is now 300–320px, section headers/actions wrap when needed, and anchor headers avoid horizontal overflow.
