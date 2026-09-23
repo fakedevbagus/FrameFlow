@@ -646,7 +646,6 @@ function PreviewVisualLayer({
           "";
 
         if (pasted) {
-          event.preventDefault();
           updateOverlayFromInputIntent(
             control,
             getNextClipboardValue(element, pasted),
