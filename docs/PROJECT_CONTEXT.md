@@ -11,17 +11,16 @@ Merge status: not merged; keep Draft until the user reports PASS.
 - The export slice reuses the existing optional per-clip text overlay model and keeps rendering deterministic without introducing a new project schema version.
 - Font selection uses the explicit renderer-owned `DejaVu Sans` policy.
 - Preview and export keep normalized X/Y, font size, color, and left/center/right alignment semantics aligned.
-- Live Inspector state is stored outside committed project/history state in a synchronous external React edit-session store using `useSyncExternalStore`.
-- The observed Linux/Tauri WebView failure is handled inside Preview itself: when a visual clip is selected, Preview runs a `requestAnimationFrame` bridge that reads the actual Text/X/Y/Size Inspector DOM values directly.
-- The Preview bridge no longer depends on React receiving input/change/keyup events, `document.activeElement`, App-level intervals, or React re-rendering to display the live value.
-- When a DOM value differs, Preview updates both the external edit session and the already-mounted overlay DOM element in the same animation-frame cycle.
-- The selected visual clip keeps a hidden overlay DOM target mounted even when its committed text is empty, so live text has a concrete DOM destination.
-- The overlay DOM patch updates text content, X/Y, font size, color, alignment transform, and visibility directly.
-- Normal Inspector `input`/`change` handlers remain the fast path; the Preview `requestAnimationFrame` bridge is the WebView fallback.
-- The transient edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes no longer discard an in-progress Text Overlay edit.
+- The live Linux/Tauri WebView path now has three layers: normal Inspector input/change handlers, an external edit-session store for transient state, and a Preview-local requestAnimationFrame bridge that reads the Inspector DOM directly.
+- Preview no longer depends on React event delivery to render live values. The Preview-local bridge reads Text/X/Y/Size DOM values on each animation frame.
+- The live Preview renderer uses an always-mounted canvas inside the selected clip layer and redraws the overlay directly from the current Inspector DOM values. This is the primary WebView live-preview path.
+- The compatibility DOM text node is also patched when live values are detected, but it is hidden for selected clips so it cannot produce duplicate visible text.
+- The selected visual clip keeps a hidden text overlay DOM target and a live canvas target mounted even when its committed overlay is empty.
+- The canvas renderer applies text, normalized X/Y, font size, color, left/center/right alignment, multiline line layout, and the existing text-shadow treatment without waiting for React reconciliation.
+- The external edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes do not discard an in-progress Text Overlay edit.
 - Commit handlers read the current external session at commit time. Blur/direct Text Overlay actions commit through the existing project history engine; the existing 400 ms idle autosave remains.
-- Added regression coverage for synchronous live Text/X/Y/Size updates, no per-keystroke history entry, one-entry commit + Undo/Redo, Reset, external-store behavior, and direct DOM-value changes without dispatched input events.
-- The direct DOM-value regression now mirrors the observed failure mode; Preview must update without relying on a synthetic input event.
+- Regression coverage includes standard live Text/X/Y/Size updates, no per-keystroke history, one-entry commit + Undo/Redo + Reset, store behavior, direct DOM-value changes without events, and live canvas mounting.
+- A direct DOM-value regression intentionally mirrors the observed WebView failure mode and must remain green.
 - Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
