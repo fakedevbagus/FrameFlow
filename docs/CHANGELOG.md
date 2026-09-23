@@ -1,3 +1,13 @@
+## 2026-09-23 — M3.68 validation correction
+
+- User validation found two unused locals in `render-graph.ts` and a stale pipeline test that still expected non-centered animated anchors to be rejected. fileciteturn920file0L24-L35 fileciteturn920file0L129-L140 fileciteturn920file0L263-L280
+- Removed the unused locals and converted the stale rejection test to the still-deferred multi-track graph boundary.
+- Simplified off-center anchor composition to place the selected pivot at the transparent surface center before rotation, matching the Preview transform-origin model more directly.
+- Corrected transparent surface sizing so its side length covers twice the maximum pivot-to-corner radius.
+- Narrowed pipeline graph routing so neutral visual-effects state does not unnecessarily bypass the direct renderer.
+- Build and Rust tests were already passing in the supplied run; the remaining frontend failures are addressed by this correction. fileciteturn920file0L289-L305 fileciteturn920file0L305-L349
+- PR #82 remains Draft until a fresh local validation reports PASS.
+
 ## 2026-09-23 — M3.68 Non-Centered Transform Anchor Export — implementation
 
 Branch: `feat/m3-68-non-centered-transform-anchor-export`
