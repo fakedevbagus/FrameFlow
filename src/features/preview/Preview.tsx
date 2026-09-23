@@ -68,7 +68,7 @@ interface PreviewProps {
   ) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
-  textOverlayOverride?: { clipId: string; overlay?: TextOverlay } | null;
+
 }
 
 interface PreviewError {
@@ -87,7 +87,6 @@ export function Preview({
   onVisualMediaDimensionsChange,
   onCropCommit,
   onCropPositionCommit,
-  textOverlayOverride = null,
 }: PreviewProps) {
   const visualClips = getActiveVisualPreviewClips(project, currentTimeMs);
   const audioClips = getActiveAudioPreviewClips(project, currentTimeMs);
@@ -342,10 +341,7 @@ function PreviewVisualLayer({
   const visualEffectsFilter = buildVisualEffectsCssFilter(
     getVisualEffects(layer.clip),
   );
-  const textOverlay =
-    textOverlayOverride?.clipId === layer.clip.id
-      ? textOverlayOverride.overlay
-      : getTextOverlay(layer.clip);
+  const textOverlay = getTextOverlay(layer.clip);
   const committedTextOverlay = getTextOverlay(layer.clip);
   const committedTextOverlayRef = useRef<TextOverlay | undefined>(
     committedTextOverlay,
