@@ -795,6 +795,93 @@ describe("render video pipeline", () => {
   });
 
 
+  it("routes multiple video tracks and explicit audio through one native AV graph", async () => {
+    const plan: RenderPlan = {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+        },
+        {
+          inputIndex: 1,
+          assetId: "video-b",
+          sourcePath: "/media/b.mp4",
+          mediaType: "video",
+          trackId: "video-2",
+          trackType: "video",
+          trackIndex: 1,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+        },
+        {
+          inputIndex: 2,
+          assetId: "audio-a",
+          sourcePath: "/media/music.mp3",
+          mediaType: "audio",
+          trackId: "audio-1",
+          trackType: "audio",
+          trackIndex: 0,
+          timelineStartMs: 500,
+          timelineEndMs: 3500,
+          sourceStartMs: 0,
+          sourceEndMs: 3000,
+          durationMs: 3000,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/multitrack-audio-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/multitrack-audio-export.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/multitrack-audio-export.mp4",
+    });
+
+    const request = vi.mocked(renderVideoAudioGraphToMp4).mock.calls[0]?.[0];
+
+    expect(request).toMatchObject({
+      videoInputs: ["/media/a.mp4", "/media/b.mp4"],
+      videoInputMediaTypes: ["video", "video"],
+      audioInputs: ["/media/music.mp3"],
+      videoMap: "[vout]",
+      audioMap: "[aout]",
+      durationMs: 4000,
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      outputPath: "/tmp/multitrack-audio-export.mp4",
+    });
+    expect(request?.videoFilterComplex).toContain("track_0_sequence");
+    expect(request?.videoFilterComplex).toContain("track_1_sequence");
+    expect(request?.audioFilterComplex).toContain("[2:a:0]atrim=start=0:end=3");
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+  });
+
   it("compiles the graph before invoking native rendering", () => {
     expect(typeof compileSingleVideoTrackGraph).toBe("function");
   });
