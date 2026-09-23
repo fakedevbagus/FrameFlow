@@ -1,3 +1,21 @@
+## 2026-09-23 — M3.65 test/native-file restoration
+
+User-supplied validation showed:
+- Frontend tests: 367/368 passed; only the image graph test expected a 5-second trim while the project fixture produced a 3-second image clip. fileciteturn601file0L243-L261
+- Rust compilation failed because `src-tauri/src/lib.rs` on the branch had been corrupted to a test-fragment beginning with an unexpected closing brace. fileciteturn601file0L277-L307
+
+Corrections applied:
+- Restored `src-tauri/src/lib.rs` from `main` and reapplied M3.65 native image graph support, including optional per-input media types and looped image inputs.
+- Updated native Rust graph request fixtures for the new media-type field.
+- Corrected the image RenderGraph regression expectation to the actual 3-second default image duration.
+
+CI note:
+- Run #155 failed on an older head before the restoration.
+- Run #156 was still running an intermediate head before the final test correction.
+- Do not treat either result as the final M3.65 validation.
+
+PR #79 remains Draft until a fresh full local validation and green CI are available.
+
 ## 2026-09-23 — M3.65 native graph test fixture hardening
 
 - Updated the existing Rust `NativeVideoGraphRenderRequest` test fixtures to include the new optional per-input `input_media_types` field.
