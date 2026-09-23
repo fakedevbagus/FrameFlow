@@ -605,6 +605,99 @@ describe("render video pipeline", () => {
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
+  it("preserves only unmuted video source audio segments in unified export", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 6000,
+      segments: [
+        {
+          inputIndex: 4,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 1000,
+          timelineEndMs: 5000,
+          sourceStartMs: 250,
+          sourceEndMs: 4250,
+          durationMs: 4000,
+          isMuted: false,
+        },
+        {
+          inputIndex: 9,
+          assetId: "video-b",
+          sourcePath: "/media/b.mp4",
+          mediaType: "video",
+          trackId: "video-2",
+          trackType: "video",
+          trackIndex: 1,
+          timelineStartMs: 0,
+          timelineEndMs: 3000,
+          sourceStartMs: 0,
+          sourceEndMs: 3000,
+          durationMs: 3000,
+          isMuted: true,
+        },
+        {
+          inputIndex: 12,
+          assetId: "image-a",
+          sourcePath: "/media/cover.png",
+          mediaType: "image",
+          trackId: "video-2",
+          trackType: "video",
+          trackIndex: 1,
+          timelineStartMs: 3000,
+          timelineEndMs: 6000,
+          sourceStartMs: 0,
+          sourceEndMs: 3000,
+          durationMs: 3000,
+          isMuted: false,
+        },
+        {
+          inputIndex: 13,
+          assetId: "audio-a",
+          sourcePath: "/media/music.mp3",
+          mediaType: "audio",
+          trackId: "audio-1",
+          trackType: "audio",
+          trackIndex: 2,
+          timelineStartMs: 0,
+          timelineEndMs: 6000,
+          sourceStartMs: 0,
+          sourceEndMs: 6000,
+          durationMs: 6000,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/source-audio.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/source-audio.mp4"),
+    ).resolves.toEqual({ outputPath: "/tmp/source-audio.mp4" });
+
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4", "/media/b.mp4", "/media/cover.png"],
+        sourceAudioSegments: [
+          {
+            inputIndex: 0,
+            sourceStartMs: 250,
+            timelineStartMs: 1000,
+            durationMs: 4000,
+          },
+        ],
+      }),
+    );
+  });
+
   it("rebases visual graph inputs before adding audio graph inputs", async () => {
     const plan: RenderPlan = {
       width: 406,
