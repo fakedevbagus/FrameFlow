@@ -217,7 +217,7 @@ pub fn render_video_audio_graph_to_mp4(
     request.height,
     request.frame_rate,
     &output_path,
-  );
+  )?;
 
   if let Err(error) = export_process::run_ffmpeg_with_progress(
     &app,
