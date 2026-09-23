@@ -49,6 +49,21 @@ export interface NativeVideoWithAudioGraphRenderRequest {
   outputPath: string;
 }
 
+export interface NativeVideoAudioGraphRenderRequest {
+  videoInputs: string[];
+  videoInputMediaTypes: MediaType[];
+  audioInputs: string[];
+  videoFilterComplex: string;
+  videoMap: string;
+  audioFilterComplex: string;
+  audioMap: string;
+  durationMs: number;
+  width: number;
+  height: number;
+  frameRate: number;
+  outputPath: string;
+}
+
 export interface NativeVideoGraphRenderRequest {
   inputs: string[];
   inputMediaTypes?: MediaType[];
@@ -88,6 +103,19 @@ export function renderVideoWithAudioGraphToMp4(
 ): Promise<NativeExportRenderResult> {
   return invoke<NativeExportRenderResult>(
     "render_video_with_audio_graph_to_mp4",
+    {
+      request,
+      ...(jobId ? { jobId } : {}),
+    },
+  );
+}
+
+export function renderVideoAudioGraphToMp4(
+  request: NativeVideoAudioGraphRenderRequest,
+  jobId?: string,
+): Promise<NativeExportRenderResult> {
+  return invoke<NativeExportRenderResult>(
+    "render_video_audio_graph_to_mp4",
     {
       request,
       ...(jobId ? { jobId } : {}),
