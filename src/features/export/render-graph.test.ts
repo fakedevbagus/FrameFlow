@@ -763,6 +763,176 @@ describe("single video render graph", () => {
     );
   });
 
+  it("keeps text after crop and effects and before transforms", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                visualEffects: {
+                  brightness: 0.1,
+                  contrast: 0.2,
+                  saturation: -0.1,
+                },
+                crop: {
+                  top: 0.05,
+                  right: 0.1,
+                  bottom: 0.05,
+                  left: 0.1,
+                },
+                cropPosition: {
+                  x: 0.6,
+                  y: 0.5,
+                },
+                textOverlay: {
+                  text: "Ordered",
+                  x: 0.5,
+                  y: 0.5,
+                  fontSize: 64,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+                transform: {
+                  x: 8,
+                  y: -4,
+                  scale: 1.2,
+                  rotation: 12,
+                  opacity: 0.8,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const filter = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    ).filterComplex;
+
+    const effectsIndex = filter.indexOf("eq=brightness=0.1:contrast=1.2:saturation=0.9");
+    const cropIndex = filter.indexOf("crop=w=trunc(iw*0.85):h=trunc(iw*0.85)");
+    const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
+    const transformIndex = filter.indexOf("scale=w=iw*1.2:h=ih*1.2");
+
+    expect(effectsIndex).toBeGreaterThanOrEqual(0);
+    expect(cropIndex).toBeGreaterThanOrEqual(0);
+    expect(textIndex).toBeGreaterThan(cropIndex);
+    expect(textIndex).toBeGreaterThan(effectsIndex);
+    expect(transformIndex).toBeGreaterThan(textIndex);
+  });
+
+  it("keeps text before animated transform stages", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Animated",
+                  x: 0.5,
+                  y: 0.5,
+                  fontSize: 56,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+                transformKeyframes: [
+                  {
+                    timeMs: 0,
+                    transform: {
+                      x: 0,
+                      y: 0,
+                      scale: 1,
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  },
+                  {
+                    timeMs: 1000,
+                    transform: {
+                      x: 10,
+                      y: 5,
+                      scale: 1.25,
+                      rotation: 15,
+                      opacity: 0.8,
+                    },
+                  },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const filter = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    ).filterComplex;
+
+    const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
+    const scaleIndex = filter.indexOf("scale=w='iw*");
+
+    expect(textIndex).toBeGreaterThanOrEqual(0);
+    expect(scaleIndex).toBeGreaterThan(textIndex);
+    expect(filter).toContain("eval=frame");
+  });
+
+  it("keeps text inside the anchor-aware transform chain", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Anchored",
+                  x: 0.25,
+                  y: 0.75,
+                  fontSize: 48,
+                  color: "#ffffff",
+                  alignment: "left" as const,
+                },
+                transformAnchor: {
+                  x: 0.25,
+                  y: 0.75,
+                },
+                transform: {
+                  x: 8,
+                  y: -4,
+                  scale: 1.5,
+                  rotation: 30,
+                  opacity: 0.9,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const filter = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    ).filterComplex;
+
+    const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
+    const scaleIndex = filter.indexOf("scale=w='iw*1.5':h='ih*1.5':eval=frame");
+
+    expect(textIndex).toBeGreaterThanOrEqual(0);
+    expect(scaleIndex).toBeGreaterThan(textIndex);
+    expect(filter).toContain("anchor_pivot_0");
+  });
+
   it("preserves text overlay rendering on an upper multi-track clip", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
