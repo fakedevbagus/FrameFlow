@@ -590,7 +590,7 @@ describe("render video pipeline", () => {
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
-  it("does not call the native renderer when graph compilation rejects an unsupported animated anchor", () => {
+  it("does not call the native renderer when graph compilation rejects multiple video tracks", () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -611,37 +611,28 @@ describe("render video pipeline", () => {
           sourceEndMs: 2000,
           durationMs: 2000,
           isMuted: false,
-          transform: { x: 10, y: 0, scale: 1, rotation: 0, opacity: 1 },
-          transformAnchor: { x: 0.4, y: 0.5 },
-          transformKeyframes: [
-            {
-              timeMs: 0,
-              transform: {
-                x: 0,
-                y: 0,
-                scale: 1,
-                rotation: 0,
-                opacity: 1,
-              },
-            },
-            {
-              timeMs: 1000,
-              transform: {
-                x: 20,
-                y: 0,
-                scale: 1.5,
-                rotation: 15,
-                opacity: 0.8,
-              },
-            },
-          ],
+        },
+        {
+          inputIndex: 1,
+          assetId: "video-b",
+          sourcePath: "/media/b.mp4",
+          mediaType: "video",
+          trackId: "video-2",
+          trackType: "video",
+          trackIndex: 1,
+          timelineStartMs: 0,
+          timelineEndMs: 2000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
+          durationMs: 2000,
+          isMuted: false,
         },
       ],
     };
 
     expect(() =>
       renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4"),
-    ).toThrow("non-centered transform anchors");
+    ).toThrow("multi-track compositing is deferred");
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
