@@ -82,7 +82,12 @@ function renderVideoOnlyPlanToMp4(
       Boolean(segment.transitionOut) ||
       Boolean(segment.transformKeyframes?.length) ||
       Boolean(segment.crop) ||
-      Boolean(segment.visualEffects) ||
+      Boolean(
+        segment.visualEffects &&
+          (segment.visualEffects.brightness !== 0 ||
+            segment.visualEffects.contrast !== 0 ||
+            segment.visualEffects.saturation !== 0),
+      ) ||
       transform.x !== 0 ||
       transform.y !== 0 ||
       transform.scale !== 1 ||
