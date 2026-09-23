@@ -3,6 +3,9 @@
 - M3.68 also includes a follow-up Inspector layout correction: the Inspector workspace column is now 300–320px, section headers/actions wrap when needed, and anchor headers avoid horizontal overflow.
 - M3.68's Inspector layout refinement now also adds extra right padding so the panel content has visible breathing room from the application edge.
 
+- M3.68 is merged at `ba34a0aed73f56b85217f0c4c9584299f4544ff8`.
+- M3.69 is the next focused milestone: Multi-Track Video Compositing Foundation in the existing FFmpeg visual graph, preserving current clip transforms/crop/effects/anchors and keeping audio mixing separate.
+
 # FrameFlow — New Chat Continuation Prompt
 
 You are continuing development of my existing project **FrameFlow**:
