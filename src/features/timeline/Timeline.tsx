@@ -1502,8 +1502,7 @@ function TimelineTrack({
         <div className="track-label-main">
           <strong>{trackLabel}</strong>
           <span>{track.name}</span>
-          {track.type === "audio" ? (
-            <div className="track-audio-controls" onClick={(event) => event.stopPropagation()}>
+          <div className="track-audio-controls" onClick={(event) => event.stopPropagation()}>
               <div className="track-audio-control">
                 <span aria-hidden="true">V</span>
                 <input
@@ -1535,7 +1534,7 @@ function TimelineTrack({
                 <span aria-hidden="true">{formatTrackPan(getTrackPan(track))}</span>
               </div>
             </div>
-          ) : null}
+          </div>
         </div>
         <div className="track-label-actions">
           <button
