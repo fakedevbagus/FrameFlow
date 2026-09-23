@@ -1,19 +1,20 @@
-## M3.66 — Transition Export — in progress — 2026-09-23
+## M3.67 — Animated Transform Export — in progress — 2026-09-23
 
-- M3.65 Static Image Clip Export was completed, user-validated, and squash-merged into `main` at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
-- M3.62 Text Overlay Export Rendering remains parked in PR #76 Draft because the user's Linux/Tauri/WebKitGTK Preview timing issue is unresolved.
-- M3.66 is implemented on branch `feat/m3-66-transition-export` with Draft PR #80.
-- The existing project model already supports `dissolve` and `fade-through-black` transition metadata, and Preview exposes both behaviours.
-- Transition timelines now route through the single-video FFmpeg graph rather than the legacy sequential segment renderer.
-- The graph builds full normalized streams for the affected clips, then composes the outgoing transition window without shortening the overall timeline.
-- Dissolve uses the incoming clip's first frame, looped for the transition duration, with an alpha ramp over the outgoing tail.
-- Fade-through-black uses explicit outgoing fade-out and incoming first-frame fade-in stages, producing the black midpoint without requiring an `xfade` duration-shortening model.
-- Transition validation requires directly adjacent video/image clips on the same video track.
-- Existing static crop, static transforms, visual effects, and video/image graph inputs remain on the same render path.
-- No project schema change is introduced.
-- Transform keyframes, non-centered transform anchors, multi-track compositing, audio mixing, and the parked text-export runtime issue remain deferred.
-- Added render-graph regression coverage for dissolve, fade-through-black, and non-adjacent transition rejection, plus pipeline routing coverage.
-- CI run #162 exposed the old transition guard in assertSupportedVisualMetadata; the guard was removed in commit ea660dd9bc608e0a1de0858cd611e63cb0c94ea7 because M3.66 now owns transition compilation. A fresh CI run is in progress.
+- M3.66 Transition Export was completed, user-validated, CI-validated, and squash-merged into `main` at `a3bf59055b76de1c485c8d410e2adb13862925d6`.
+- PR #76 remains parked for the unresolved Linux/Tauri/WebKitGTK Text Overlay Export Preview timing issue.
+- M3.67 targets the next concrete export gap already represented in the editor: transform keyframes are fully modeled, edited, and previewed, but the export graph still rejects them.
+- The existing RenderPlan already carries normalized transform keyframes and interpolation data; the task is to compile supported keyframed motion into deterministic FFmpeg filters without changing the project schema.
+- The focused first slice should preserve the existing centered-anchor boundary and static crop/visual-effects/image-video compatibility where technically composable.
+- Non-centered anchors, multi-track compositing, audio mixing, and Text Overlay Export remain outside this slice.
+
+## M3.66 — Transition Export — merged — 2026-09-23
+
+- M3.65 image clip export was merged at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
+- M3.66 implemented dissolve and fade-through-black export in the single-video graph.
+- PR #80 was user-validated and squash-merged at `a3bf59055b76de1c485c8d410e2adb13862925d6`.
+- CI run #171 passed on the final M3.66 branch head before merge.
+- M3.62 Text Overlay Export remains intentionally parked in PR #76.
+
 
 ## M3.64 — Static Crop Export — merged — 2026-09-23
 
