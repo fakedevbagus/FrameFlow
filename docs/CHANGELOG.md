@@ -1,7 +1,7 @@
 ## 2026-09-23 — M3.68 Non-Centered Transform Anchor Export — implementation
 
 Branch: `feat/m3-68-non-centered-transform-anchor-export`
-PR: Draft
+PR #82 — Draft
 
 Implemented:
 - Added an anchor-aware FFmpeg composition path for non-centered static and animated transform scale/rotation.
