@@ -20,26 +20,29 @@ Validation:
 Branch: feat/m3-62-text-overlay-export-rendering
 PR: #76
 
-Observed runtime failure:
-- Inspector Text/X/Y/Size values visibly changed while editing.
-- Preview remained stale until the field lost focus.
-- The earlier App-level DOM polling + direct DOM patch was not sufficient in the target Tauri WebView.
+Observed runtime behavior:
+- Inspector Text/X/Y/Size values changed while the Preview stayed stale until another interaction.
+- Subsequent edits could appear in sequence, indicating that live values were being observed later than the user's edit moment.
 
-Current fix:
-- Move the WebView live-preview bridge into `PreviewVisualLayer` itself.
-- While the visual clip is selected, Preview schedules a continuous `requestAnimationFrame` loop.
-- The loop reads the Text/X/Y/Size Inspector DOM controls directly, independent of React event delivery and `document.activeElement`.
-- A changed DOM value updates the external edit session and imperatively updates the matching Preview overlay DOM element in the same animation frame.
-- A hidden overlay DOM target remains mounted for the selected visual clip even when committed text is empty.
-- App-level polling was removed so there is one source of truth for the live Preview fallback.
-- Effect dependencies use Text Overlay primitive fields instead of the normalized object identity, avoiding unnecessary bridge teardown/restart on unrelated renders.
+Current architecture:
+- Normal Inspector input/change handlers remain the fast path.
+- Transient values remain in a synchronous external edit-session store, separate from committed project/history state.
+- The live fallback is now hosted inside `PreviewVisualLayer`.
+- While the visual clip is selected and paused, Preview runs a `requestAnimationFrame` loop that reads the actual Inspector DOM values directly.
+- The fallback does not use `document.activeElement`.
+- A live canvas is mounted inside the same transformed content layer as the media. The rAF loop redraws the text overlay directly on that canvas from the current DOM values.
+- The loop also patches the hidden compatibility DOM text node, but the canvas is the visible renderer for the selected clip.
+- The selected clip keeps a concrete canvas target even when the committed overlay is empty, avoiding React overlay creation as a prerequisite for live Preview.
+- Canvas rendering preserves text, X/Y, font size, color, alignment, and multiline behavior.
+- Previous App-level interval polling, native listener registration, keyboard-only fallback, and `flushSync` workaround chains are not used by the current live path.
 
 Regression coverage:
 - Standard input/change live Text/X/Y/Size updates.
 - Direct DOM value changes without dispatching input/change/keyup.
-- No Undo history entry while an edit remains uncommitted.
+- Live canvas target is mounted for the selected visual clip.
+- No Undo history entry while edits remain uncommitted.
 - Single history entry on commit with Undo/Redo and Reset.
-- External edit-session store publish/deduplication/replacement/clear.
+- External edit-session publish/deduplication/replacement/clear.
 
 Validation:
 - Local Linux/Tauri validation pending user verification.
