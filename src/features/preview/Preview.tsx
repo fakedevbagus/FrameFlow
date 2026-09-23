@@ -250,6 +250,7 @@ function PreviewVisualLayer({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
   const textOverlayDomRef = useRef<HTMLDivElement | null>(null);
+  const textOverlayLiveCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
@@ -356,52 +357,33 @@ function PreviewVisualLayer({
   };
 
   useEffect(() => {
-    if (!isSelected) {
+    if (!isSelected || isPlaying) {
+      return;
+    }
+
+    const canvas = textOverlayLiveCanvasRef.current;
+
+    if (!canvas) {
       return;
     }
 
     let animationFrameId = 0;
     let disposed = false;
+    const committedOverlay: TextOverlay = textOverlay ?? {
+      text: "",
+      x: 0.5,
+      y: 0.5,
+      fontSize: 56,
+      color: "#ffffff",
+      alignment: "center",
+    };
 
     const getInspectorValue = (control: "text" | "x" | "y" | "size") =>
       document.querySelector<HTMLElement>(
         '[data-text-overlay-control="' + control + '"]',
       );
 
-    const getCommittedOverlay = (): TextOverlay => ({
-      text: textOverlay?.text ?? "",
-      x: textOverlay?.x ?? 0.5,
-      y: textOverlay?.y ?? 0.5,
-      fontSize: textOverlay?.fontSize ?? 56,
-      color: textOverlay?.color ?? "#ffffff",
-      alignment: textOverlay?.alignment ?? "center",
-    });
-
-    const applyOverlayToDom = (overlay: TextOverlay) => {
-      const element = textOverlayDomRef.current;
-
-      if (!element) {
-        return;
-      }
-
-      const horizontalTransform =
-        overlay.alignment === "left"
-          ? "translate(0, -50%)"
-          : overlay.alignment === "right"
-            ? "translate(-100%, -50%)"
-            : "translate(-50%, -50%)";
-
-      element.textContent = overlay.text;
-      element.style.left = overlay.x * 100 + "%";
-      element.style.top = overlay.y * 100 + "%";
-      element.style.color = overlay.color;
-      element.style.fontSize = overlay.fontSize + "px";
-      element.style.textAlign = overlay.alignment;
-      element.style.transform = horizontalTransform;
-      element.style.visibility = overlay.text.trim() ? "visible" : "hidden";
-    };
-
-    const syncInspectorToPreview = () => {
+    const drawLiveOverlay = () => {
       if (disposed) {
         return;
       }
@@ -412,94 +394,130 @@ function PreviewVisualLayer({
       const sizeInput = getInspectorValue("size") as HTMLInputElement | null;
 
       const currentSession = getTextOverlayEditSession();
-      const currentOverlay =
+      const sessionOverlay =
         currentSession?.clipId === layer.clip.id
           ? currentSession.overlay
-          : getCommittedOverlay();
+          : committedOverlay;
+      const overlay = { ...sessionOverlay };
+      let changed = false;
 
-      if (!textInput || !xInput || !yInput || !sizeInput) {
-        animationFrameId = window.requestAnimationFrame(syncInspectorToPreview);
+      if (textInput && textInput.value !== overlay.text) {
+        overlay.text = textInput.value;
+        changed = true;
+      }
+
+      if (xInput) {
+        const value = Number(xInput.value);
+        if (
+          Number.isFinite(value) &&
+          value >= 0 &&
+          value <= 100 &&
+          value / 100 !== overlay.x
+        ) {
+          overlay.x = value / 100;
+          changed = true;
+        }
+      }
+
+      if (yInput) {
+        const value = Number(yInput.value);
+        if (
+          Number.isFinite(value) &&
+          value >= 0 &&
+          value <= 100 &&
+          value / 100 !== overlay.y
+        ) {
+          overlay.y = value / 100;
+          changed = true;
+        }
+      }
+
+      if (sizeInput) {
+        const value = Number(sizeInput.value);
+        if (
+          Number.isFinite(value) &&
+          value >= 12 &&
+          value <= 240 &&
+          Math.round(value) !== overlay.fontSize
+        ) {
+          overlay.fontSize = Math.round(value);
+          changed = true;
+        }
+      }
+
+      if (
+        changed &&
+        (!currentSession || currentSession.clipId !== layer.clip.id ||
+          currentSession.overlay.text !== overlay.text ||
+          currentSession.overlay.x !== overlay.x ||
+          currentSession.overlay.y !== overlay.y ||
+          currentSession.overlay.fontSize !== overlay.fontSize)
+      ) {
+        setTextOverlayEditSession({
+          clipId: layer.clip.id,
+          overlay,
+        });
+      }
+
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const pixelWidth = Math.max(1, Math.round(width * dpr));
+      const pixelHeight = Math.max(1, Math.round(height * dpr));
+
+      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
+      }
+
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        animationFrameId = window.requestAnimationFrame(drawLiveOverlay);
         return;
       }
 
-      const nextOverlay = { ...currentOverlay };
-      let changed = false;
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.clearRect(0, 0, width, height);
 
-      if (textInput.value !== currentOverlay.text) {
-        nextOverlay.text = textInput.value;
-        changed = true;
+      if (overlay.text.trim()) {
+        const lines = overlay.text.split("\n");
+        const lineHeight = Math.max(1, overlay.fontSize * 1.15);
+        const centerY = overlay.y * height;
+        const firstBaseline =
+          centerY - ((lines.length - 1) * lineHeight) / 2;
+
+        context.font =
+          '700 ' +
+          overlay.fontSize +
+          'px "DejaVu Sans", sans-serif';
+        context.textAlign = overlay.alignment;
+        context.textBaseline = "middle";
+        context.fillStyle = overlay.color;
+        context.shadowColor = "rgba(0, 0, 0, 0.8)";
+        context.shadowBlur = 2;
+        context.shadowOffsetX = 0;
+        context.shadowOffsetY = 1;
+
+        for (let index = 0; index < lines.length; index += 1) {
+          context.fillText(
+            lines[index],
+            overlay.x * width,
+            firstBaseline + index * lineHeight,
+          );
+        }
       }
 
-      const xValue = Number(xInput.value);
-      if (
-        Number.isFinite(xValue) &&
-        xValue >= 0 &&
-        xValue <= 100 &&
-        xValue / 100 !== currentOverlay.x
-      ) {
-        nextOverlay.x = xValue / 100;
-        changed = true;
-      }
-
-      const yValue = Number(yInput.value);
-      if (
-        Number.isFinite(yValue) &&
-        yValue >= 0 &&
-        yValue <= 100 &&
-        yValue / 100 !== currentOverlay.y
-      ) {
-        nextOverlay.y = yValue / 100;
-        changed = true;
-      }
-
-      const sizeValue = Number(sizeInput.value);
-      if (
-        Number.isFinite(sizeValue) &&
-        sizeValue >= 12 &&
-        sizeValue <= 240 &&
-        Math.round(sizeValue) !== currentOverlay.fontSize
-      ) {
-        nextOverlay.fontSize = Math.round(sizeValue);
-        changed = true;
-      }
-
-      if (changed) {
-        setTextOverlayEditSession({
-          clipId: layer.clip.id,
-          overlay: nextOverlay,
-        });
-        applyOverlayToDom(nextOverlay);
-      } else if (
-        textOverlayDomRef.current &&
-        textOverlayDomRef.current.style.visibility === "hidden" &&
-        currentOverlay.text.trim()
-      ) {
-        applyOverlayToDom(currentOverlay);
-      }
-
-      animationFrameId = window.requestAnimationFrame(syncInspectorToPreview);
+      animationFrameId = window.requestAnimationFrame(drawLiveOverlay);
     };
 
-    applyOverlayToDom(currentSession?.clipId === layer.clip.id
-      ? currentSession.overlay
-      : getCommittedOverlay());
-
-    animationFrameId = window.requestAnimationFrame(syncInspectorToPreview);
+    drawLiveOverlay();
 
     return () => {
       disposed = true;
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [
-    isSelected,
-    layer.clip.id,
-    textOverlay?.text,
-    textOverlay?.x,
-    textOverlay?.y,
-    textOverlay?.fontSize,
-    textOverlay?.color,
-    textOverlay?.alignment,
-  ]);
+  }, [isSelected, isPlaying, layer.clip.id, textOverlay?.text, textOverlay?.x, textOverlay?.y, textOverlay?.fontSize, textOverlay?.color, textOverlay?.alignment]);
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
@@ -1268,7 +1286,12 @@ function PreviewVisualLayer({
           fontSize: activeFontSize + "px",
           textAlign: activeAlignment,
           transform: horizontalTransform,
-          visibility: activeText.trim() ? "visible" : "hidden",
+          visibility:
+            isSelected
+              ? "hidden"
+              : activeText.trim()
+                ? "visible"
+                : "hidden",
         }}
       >
         {activeText}
@@ -1396,6 +1419,12 @@ function PreviewVisualLayer({
               }}
             />
           </div>
+          <canvas
+            ref={textOverlayLiveCanvasRef}
+            className="preview-text-overlay-live-canvas"
+            data-testid={"preview-text-overlay-live-canvas-" + layer.clip.id}
+            aria-hidden="true"
+          />
           {renderTextOverlay()}
           {renderManipulationControls()}
         </div>
@@ -1470,6 +1499,12 @@ function PreviewVisualLayer({
             Preparing compatible preview…
           </div>
         ) : null}
+        <canvas
+          ref={textOverlayLiveCanvasRef}
+          className="preview-text-overlay-live-canvas"
+          data-testid={"preview-text-overlay-live-canvas-" + layer.clip.id}
+          aria-hidden="true"
+        />
         {renderTextOverlay()}
         {renderManipulationControls()}
       </div>
