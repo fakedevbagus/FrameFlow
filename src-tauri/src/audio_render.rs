@@ -284,6 +284,29 @@ fn validate_video_audio_graph_request(
     return Err("Native unified AV graph requires the [aout] audio map.".to_string());
   }
 
+  for segment in &request.source_audio_segments {
+    if segment.duration_ms == 0 {
+      return Err(
+        "Native unified AV graph source audio segments require a positive duration."
+          .to_string(),
+      );
+    }
+
+    let Some(media_type) = request.video_input_media_types.get(segment.input_index) else {
+      return Err(format!(
+        "Native unified AV graph source audio segment references invalid video input index {}.",
+        segment.input_index
+      ));
+    };
+
+    if media_type != "video" {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} requires a video input.",
+        segment.input_index
+      ));
+    }
+  }
+
   if request.duration_ms == 0 {
     return Err("Native unified AV graph requires a positive duration.".to_string());
   }
