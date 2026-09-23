@@ -1,3 +1,29 @@
+### M3.73 — Preserve Source Audio in Unified AV Export — in progress — 2026-09-24
+
+Branch: `feat/m3-73-source-audio-unified-export`
+PR: Draft
+
+Scope:
+- Preserve embedded audio from non-muted video clips when explicit Audio tracks use the unified AV export path.
+
+Implemented:
+- Added source-audio timing metadata to the unified render request.
+- Rebased source-audio input indexes alongside the visual graph inputs.
+- Native renderer probes referenced video inputs and preserves only inputs that actually contain audio.
+- Source audio is trimmed to the clip source range, delayed to its timeline position, converted to the unified 48 kHz stereo format, and mixed with explicit Audio-track output.
+- Added frontend and Rust regression coverage.
+- No project schema change.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- Scope is limited to the unified AV path with explicit Audio tracks.
+- Only source stream `a:0` is preserved.
+
+Next step:
+- User local validation and actual export verification.
+
 ### M3.72 — Multi-Track + Audio Export Integration — merged — 2026-09-24
 
 Branch: `feat/m3-72-multitrack-audio-export`
