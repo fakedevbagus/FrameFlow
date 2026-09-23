@@ -1,3 +1,10 @@
+## 2026-09-24 — M3.72 validation correction
+
+- User validation passed lint, production build, 42/42 Rust tests, and Tauri development startup.
+- Frontend tests reported 32/33 files and 395/396 tests passing; the sole failure was a stale assertion expecting `track_1_sequence` instead of the actual `track_2_sequence` in the test fixture's track ordering.
+- Corrected only that regression assertion in commit `230dcf7c0d09e01319602c662bb3a50d33f1d320`.
+- Fresh frontend validation is required before M3.72 can be marked PASS.
+
 ## 2026-09-24 — M3.72 Multi-Track + Audio Export Integration — implementation
 
 Branch: `feat/m3-72-multitrack-audio-export`
