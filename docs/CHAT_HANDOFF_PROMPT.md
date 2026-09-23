@@ -1,3 +1,7 @@
+- M3.71 validation correction: user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the frontend production build.
+- The remaining failure was Rust compilation because `validate_native_export_settings` was not imported by the new unified AV native renderer; Tauri launch failed on the same compiler error.
+- Corrected the import and warning-level issues in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
+- Fresh `cargo test` and `npm run tauri dev` validation is required before M3.71 can be marked PASS.
 - M3.71 is the active milestone on `feat/m3-71-unified-av-export`: Unified AV Export Foundation.
 - M3.70 is complete and merged in PR #84 at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
 - M3.71 routes projects with explicit Audio track clips through one native FFmpeg invocation containing the existing visual graph and audio graph.
