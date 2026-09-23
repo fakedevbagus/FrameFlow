@@ -6,6 +6,11 @@
 - The existing RenderPlan already carries normalized transform keyframes and interpolation data; the task is to compile supported keyframed motion into deterministic FFmpeg filters without changing the project schema.
 - The focused first slice should preserve the existing centered-anchor boundary and static crop/visual-effects/image-video compatibility where technically composable.
 - Non-centered anchors, multi-track compositing, audio mixing, and Text Overlay Export remain outside this slice.
+- M3.67 implements keyframed X/Y, Scale, Rotation, and Opacity as per-frame FFmpeg expressions using the existing keyframe easing rules.
+- Video inputs are normalized to the project frame rate before animated transform evaluation so frame-based opacity expressions stay aligned with the export timeline.
+- Animated transforms are rendered on a project-sized transparent composition surface; crop and visual effects remain before the animated transform stage.
+- The pipeline routes animated transform clips through the graph renderer instead of the direct single-source or legacy segment renderers.
+
 
 ## M3.66 — Transition Export — merged — 2026-09-23
 
