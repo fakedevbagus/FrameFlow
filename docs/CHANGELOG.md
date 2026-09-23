@@ -1,3 +1,24 @@
+## 2026-09-23 — M3.63 Static Visual Transform Export — in progress
+
+Branch: feat/m3-63-static-transform-export
+PR: #77 — Draft
+
+Scope:
+- Compile static visual X/Y, Scale, Rotation, and Opacity into the existing single-video FFmpeg render graph.
+- Preserve the existing minimal direct graph for default transforms.
+- Propagate transform anchors into RenderPlan and reject non-centered anchors explicitly.
+- Keep transform keyframes, crop/crop position, transitions, image export, multi-track compositing, and audio mixing deferred.
+
+Implementation:
+- Static non-default transforms now render the source content to project-sized transparent RGBA, apply visual effects, scale, rotation, and opacity, then overlay it at canvas-relative X/Y translation.
+- Transformed segments normalize to project-sized `yuv420p` output for deterministic concat/export behavior.
+- Existing default-transform graph output remains unchanged.
+
+Validation:
+- Local lint/test/build/Cargo/Tauri validation pending user report.
+- PR #77 remains Draft until user PASS.
+- M3.62 PR #76 stays Draft and parked; its WebKitGTK delayed repaint issue is intentionally deferred.
+
 ## 2026-09-22 — M3.62 Text Overlay Export Rendering — in progress
 
 Branch: feat/m3-62-text-overlay-export-rendering
