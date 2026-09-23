@@ -15,6 +15,7 @@ import {
   MIN_DISSOLVE_DURATION_MS,
   getClipTransition,
 } from "../transition/transition";
+import type { TransformKeyframe } from "../project/domain";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
