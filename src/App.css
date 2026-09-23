@@ -157,6 +157,7 @@ button:focus-visible {
 }
 
 .inspector-panel {
+  padding-right: 28px;
   border-left: 1px solid #2a2f3a;
 }
 
