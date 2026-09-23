@@ -566,7 +566,7 @@ describe("single video render graph", () => {
                       rotation: -30,
                       opacity: 1,
                     },
-                    easing: "ease-out",
+                    easing: "ease-in-out",
                   },
                 ],
               })),
