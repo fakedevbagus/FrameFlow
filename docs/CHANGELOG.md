@@ -1,3 +1,21 @@
+### M3.74 — Video Track Volume/Pan for Embedded Source Audio — in progress — 2026-09-24
+
+Branch: `feat/m3-74-source-audio-track-controls`
+PR: Draft
+
+Implemented:
+- Exposed Volume/Pan controls on video tracks using the existing track update callbacks and history commands.
+- Routed video-track Volume/Pan into unified source-audio export metadata.
+- Applied clamped Volume and constant-power stereo Pan to embedded video source audio in native FFmpeg.
+- Added Timeline, App, pipeline, and Rust regression coverage.
+- No project schema change.
+
+Validation:
+- Pending user local validation.
+
+Next step:
+- Validate UI controls and exported audio behavior locally.
+
 ### M3.73 — Preserve Source Audio in Unified AV Export — merged — 2026-09-24
 
 Branch: `feat/m3-73-source-audio-unified-export`
