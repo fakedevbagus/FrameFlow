@@ -100,7 +100,7 @@ Branch:
 `feat/m3-67-animated-transform-export`
 
 PR:
-TBD
+#81
 
 Status:
 - In progress
@@ -114,6 +114,7 @@ M3.67 current scope:
 - Preserve existing crop, visual effects, and image/video compatibility where composable.
 - Keep centered transform-anchor support as the boundary for this focused slice.
 - Add regression coverage for keyframe RenderPlan propagation, graph compilation, and export pipeline routing.
+- Animated transforms use time-based FFmpeg expressions, with opacity evaluated from the project frame-rate frame index.
 
 Explicitly deferred:
 - Text overlay export remains parked in PR #76.
