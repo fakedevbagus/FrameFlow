@@ -6,7 +6,6 @@ import {
   getVisualEffects,
   getTrackPan,
   getTrackVolume,
-  getClipTransformAnchor,
   type AudioCompressor,
   type AudioEq,
   type AudioVolumeKeyframe,
@@ -21,6 +20,7 @@ import {
   type TransformAnchor,
   type TransformKeyframe,
 } from "../project/domain";
+import { getClipTransformAnchor } from "../transform/transform";
 import {
   getExportDimensions,
   normalizeExportSettings,
