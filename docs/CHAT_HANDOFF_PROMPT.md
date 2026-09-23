@@ -6,6 +6,7 @@
 - M3.68 is merged at `ba34a0aed73f56b85217f0c4c9584299f4544ff8`.
 - M3.69 is the next focused milestone: Multi-Track Video Compositing Foundation in the existing FFmpeg visual graph, preserving current clip transforms/crop/effects/anchors and keeping audio mixing separate.
 
+- M3.69 is active in Draft PR #83 on branch `feat/m3-69-multi-track-video-compositing`: multi-track visual export is being added in the existing FFmpeg graph while audio remains separate.
 - M3.69 is the active milestone on branch `feat/m3-69-multi-track-video-compositing`: multi-track visual export is being added in the existing FFmpeg graph while audio remains separate.
 - M3.69 adds transparent multi-track visual compositing, stable per-track graph labels, and input-media-type ordering that follows FFmpeg input order.
 
