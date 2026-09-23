@@ -10,6 +10,9 @@
 - M3.69 is the active milestone on branch `feat/m3-69-multi-track-video-compositing`: multi-track visual export is being added in the existing FFmpeg graph while audio remains separate.
 - M3.69 adds transparent multi-track visual compositing, stable per-track graph labels, and input-media-type ordering that follows FFmpeg input order.
 
+- M3.69 is merged at `5bac39d156aae38f2ab3c6a61d3851e816535128`; GitHub CI run #207 passed.
+- M3.70 is the next milestone: deterministic Text Overlay Export Rendering on current `main`. Reimplement only the export-relevant behavior from parked PR #76; do not merge the parked branch wholesale or couple this milestone to the Linux/WebKitGTK repaint investigation.
+
 # FrameFlow — New Chat Continuation Prompt
 
 You are continuing development of my existing project **FrameFlow**:
