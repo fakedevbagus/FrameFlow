@@ -1,4 +1,19 @@
 ## 2026-09-23 — M3.67 Animated Transform Export — implementation
+## 2026-09-23 — M3.67 validation correction
+
+Branch: `feat/m3-67-animated-transform-export`
+PR #81 — Draft
+
+User-supplied validation exposed five stale/implementation-level failures before local acceptance:
+- ESLint rejected the FFmpeg expression helper because the source used unnecessary JavaScript escapes; the helper was corrected to emit the intended literal `\\,` sequence.
+- The render pipeline could still route an animated single video through the legacy single-source or segment renderer, bypassing the compiled animation graph; animated segments are now forced through the graph path.
+- The old graph test still expected animated transforms to be rejected even though M3.67 implements them.
+- The animated crop fixture expected `0.85` width while its left/right crop values produce `0.8` visible width.
+- The old pipeline rejection test was updated to cover the still-supported failure boundary: non-centered animated transform anchors.
+
+Validation status:
+- The supplied run showed the frontend build and Rust tests passing, but the frontend lint/test suite was not green, so M3.67 remains unvalidated and PR #81 remains Draft.
+
 
 Branch: `feat/m3-67-animated-transform-export`
 PR #81 — Draft
