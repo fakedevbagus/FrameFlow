@@ -1,3 +1,21 @@
+## 2026-09-23 — M3.68 Non-Centered Transform Anchor Export — implementation
+
+Branch: `feat/m3-68-non-centered-transform-anchor-export`
+PR: Draft
+
+Implemented:
+- Added an anchor-aware FFmpeg composition path for non-centered static and animated transform scale/rotation.
+- Preserved Preview transform semantics by keeping the anchor pivot fixed during scale/rotation and applying X/Y translation in world space.
+- Preserved crop/effects ordering and image/video graph compatibility.
+- Reused the existing animated keyframe expressions and easing model.
+- Routed graph-required single-video metadata through the graph renderer so static transforms are not silently bypassed by direct/legacy native renderers.
+- Added graph tests for static and animated off-center anchors and pipeline routing coverage.
+- No project schema change.
+
+Validation:
+- Pending user local validation and CI.
+- PR remains Draft.
+
 ## 2026-09-23 — M3.68 Non-Centered Transform Anchor Export — started
 
 - M3.67 was completed after user PASS and squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
