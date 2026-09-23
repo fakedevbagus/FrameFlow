@@ -128,7 +128,6 @@ export function Preview({
           onVisualMediaDimensionsChange={onVisualMediaDimensionsChange}
           onCropCommit={onCropCommit}
           onCropPositionCommit={onCropPositionCommit}
-          textOverlayOverride={textOverlayOverride}
           onError={handleMediaError}
         />
       ))}
@@ -187,7 +186,6 @@ interface PreviewVisualLayerProps extends PreviewLayerProps {
   ) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
-  textOverlayOverride?: { clipId: string; overlay?: TextOverlay } | null;
 }
 
 interface CanvasGesture {
@@ -241,7 +239,6 @@ function PreviewVisualLayer({
   onVisualMediaDimensionsChange,
   onCropCommit,
   onCropPositionCommit,
-  textOverlayOverride = null,
   onError,
 }: PreviewVisualLayerProps) {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
