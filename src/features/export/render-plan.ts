@@ -178,7 +178,12 @@ export function createRenderPlan(
         ...(track.type === "video"
           ? {
               visualEffects: getVisualEffects(clip),
-              textOverlay: scaleTextOverlayForExport(\n                getTextOverlay(clip),\n                project,\n                normalizedSettings.width,\n                normalizedSettings.height,\n              ),
+              textOverlay: scaleTextOverlayForExport(
+                getTextOverlay(clip),
+                project,
+                normalizedSettings.width,
+                normalizedSettings.height,
+              ),
             }
           : {}),
         transform: clip.transform,
