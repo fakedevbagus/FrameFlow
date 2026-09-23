@@ -1,3 +1,8 @@
+- M3.71 follow-up correction: inspection of the validation failure found src-tauri/src/audio_render.rs truncated inside the unified AV native test module, leaving an unclosed missing_filter initializer.
+- Restored the truncated test body, restored legacy native argument coverage, and fixed the missing_filter fixture's required video_inputs field in commit 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
+- GitHub branch head is now 5ae42b2dc3d01408e30c9451e1a0926ad749b137; local Rust/Tauri validation is still required.
+- PR #85 remains Draft until the user reports PASS.
+
 - M3.71 validation correction: user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the frontend production build.
 - The remaining failure was Rust compilation because `validate_native_export_settings` was not imported by the new unified AV native renderer; Tauri launch failed on the same compiler error.
 - Corrected the import and warning-level issues in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
