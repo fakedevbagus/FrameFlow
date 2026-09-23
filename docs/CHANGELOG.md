@@ -1,3 +1,59 @@
+## 2026-09-23 — M3.70 crop-order test correction
+
+- User validation found one failing regression assertion in `render-graph.test.ts`.
+- The failure was caused by the test expecting a 0.85 visible crop width, while the fixture uses left/right crop values of 0.1 each, producing a 0.8 visible width. The configured top/bottom crop values produce a 0.9 visible height.
+- Corrected only the test assertion from `crop=w=trunc(iw*0.85):h=trunc(ih*0.9)` to `crop=w=trunc(iw*0.8):h=trunc(ih*0.9)`.
+- Commit: `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.
+- The same validation run had lint, production build, and all 39 Rust tests passing.
+- Existing React `act(...)` warnings remain non-fatal.
+- Fresh frontend test/build validation is required before M3.70 can be considered clean; PR #84 remains Draft.
+
+## 2026-09-23 — M3.70 export coverage and resolution scaling
+
+Branch: `feat/m3-70-text-overlay-export`
+PR: #84 — Draft
+
+Updated:
+- Scaled rendered Text Overlay `fontSize` with the export canvas so lower export qualities preserve project-space visual scale.
+- Added 720p RenderPlan regression coverage for text scaling.
+- Strengthened drawtext escaping coverage with a real newline plus apostrophe, comma, colon, semicolon, backslash, and long-text limits.
+- Added graph coverage for text on image clips.
+- Added graph ordering coverage for effects → crop → text → transforms, including animated and anchor-aware transform paths.
+- Added transition coverage for text across dissolve and fade-through-black.
+- Corrected a crop assertion typo in the new ordering test.
+
+Validation:
+- These latest changes have not yet received a fresh user local PASS.
+- Existing CI run #212 passed the earlier M3.70 head; a fresh CI run for the latest commits is required before treating the branch as cleanly validated.
+- PR #84 remains Draft.
+
+## 2026-09-23 — M3.70 validation correction
+
+- The supplied local validation found one failing multi-track text-overlay regression assertion: the test expected `track_2_sequence`, while the generated graph correctly uses `track_1_sequence` for the second video track.
+- Corrected the test expectation to match the actual project track index assigned by `addTrack("video")`.
+- The failure was isolated to the test assertion; the same run showed the production build and all 39 Rust tests passing. fileciteturn1176file0L253-L271 fileciteturn1176file0L276-L287
+- PR #84 remains Draft pending a clean rerun after this correction.
+
+## 2026-09-23 — M3.70 Text Overlay Export Rendering — implementation
+
+Branch: `feat/m3-70-text-overlay-export`
+
+Implemented:
+- Carried normalized per-clip text overlays into RenderPlan.
+- Rendered text overlays through the existing FFmpeg drawtext graph using an explicit DejaVu Sans renderer font.
+- Preserved normalized X/Y placement and left/center/right alignment.
+- Escaped drawtext text delimiters and multiline content.
+- Inserted text after visual effects/crop preparation and before transform stages.
+- Routed text-bearing clips through the graph pipeline, including M3.69 multi-track visual compositing.
+- Added renderer, RenderPlan, graph, pipeline, and multi-track regression tests.
+- No project schema change.
+- Parked PR #76 remains separate and unmerged because its Linux/WebKitGTK repaint investigation is not part of this milestone.
+
+Validation:
+- Pending user local validation and CI.
+- PR remains Draft.
+
+
 ## 2026-09-23 — M3.69 merged / M3.70 started
 
 - PR #83 was user-validated and squash-merged at `5bac39d156aae38f2ab3c6a61d3851e816535128`.

@@ -1,3 +1,14 @@
+- M3.70 validation update: the latest user run had 392/393 frontend tests passing, with the sole failure in the new text-overlay crop/effects/transform ordering assertion.
+- Root cause was a stale test expectation: the fixture uses left/right crop values of 0.1 each, so visible width is 0.8; top/bottom crop values leave 0.9 visible height.
+- The assertion is corrected on `feat/m3-70-text-overlay-export` in commit `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.
+- Lint, production build, and 39 Rust tests passed in the user run. Tauri dev launched successfully. React `act(...)` messages are warnings only.
+- PR #84 stays Draft until a clean rerun and user `PASS`.
+
+- M3.70 progress update: PR #84 on `feat/m3-70-text-overlay-export` now includes resolution-aware text scaling and expanded regression coverage for image clips, drawtext escaping, transform ordering, and dissolve/fade-through-black transitions.
+- The latest test fix corrected the crop-order assertion to use the actual `ih` expression.
+- Latest M3.70 changes are not yet user-validated; keep PR #84 Draft until the user reports `PASS`.
+- PR #76 remains parked, unmerged, and must not be revived wholesale.
+
 - M3.68 currently includes a UI/layout validation correction for Inspector clipping on narrower desktop widths. The workspace now gives the Inspector a flexible 270–300px column, and Inspector two-column grids use minmax(0, 1fr) so controls stay inside the panel.
 
 - M3.68 also includes a follow-up Inspector layout correction: the Inspector workspace column is now 300–320px, section headers/actions wrap when needed, and anchor headers avoid horizontal overflow.
@@ -12,6 +23,10 @@
 
 - M3.69 is merged at `5bac39d156aae38f2ab3c6a61d3851e816535128`; GitHub CI run #207 passed.
 - M3.70 is the next milestone: deterministic Text Overlay Export Rendering on current `main`. Reimplement only the export-relevant behavior from parked PR #76; do not merge the parked branch wholesale or couple this milestone to the Linux/WebKitGTK repaint investigation.
+
+- M3.70 validation correction: the multi-track upper text test was fixed to expect `track_1_sequence`, matching the actual second video track index. PR #84 remains Draft pending clean validation.
+- M3.70 is the active milestone on branch `feat/m3-70-text-overlay-export`: deterministic Text Overlay Export Rendering is being implemented against current `main`; parked PR #76 is not merged wholesale.
+
 
 # FrameFlow — New Chat Continuation Prompt
 

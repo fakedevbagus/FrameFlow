@@ -1,3 +1,58 @@
+## M3.70 — validation update — 2026-09-23
+
+- User reran the corrected M3.70 branch successfully: all 33 frontend test files passed and all 393 frontend tests passed.
+- Lint passed and the production Vite build completed successfully.
+- All 39 Rust tests passed.
+- GitHub CI run #231 for commit `a137b87f776aa0067508613514f526d2d4a1d545` completed successfully.
+- The final manual Tauri command in the user run was `npm run tauri` without the required `dev` subcommand, so it displayed CLI help instead of launching the application.
+- React `act(...)` messages remain non-fatal test warnings.
+- PR #84 remains Draft pending the final `npm run tauri dev` launch check and user PASS.
+
+## M3.70 — validation correction — 2026-09-23
+
+- User validation reached the full frontend test suite on the M3.70 branch: 32 test files passed and 1 failed, with 392/393 tests passing.
+- The sole failure was the new text-overlay ordering regression assertion in `render-graph.test.ts`.
+- The production graph was correct; the test fixture uses left/right crop values of 0.1 each, so the visible width is 0.8 and the visible height is 0.9.
+- Corrected the stale assertion from `crop=w=trunc(iw*0.85):h=trunc(ih*0.9)` to `crop=w=trunc(iw*0.8):h=trunc(ih*0.9)` in commit `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.
+- The same validation run showed lint passing, production build passing, 39 Rust tests passing, and Tauri dev launching successfully before being stopped manually.
+- The React `act(...)` messages are existing test warnings and did not fail the run.
+- Fresh validation after this correction is still required; PR #84 remains Draft.
+
+## M3.70 — Text Overlay Export Rendering — implementation update — 2026-09-23
+
+- PR #84 remains the active Draft PR on `feat/m3-70-text-overlay-export`, based directly on the current `main`.
+- RenderPlan text overlays now scale `fontSize` with the export canvas using the smaller width/height scale factor, so logical project-space text remains visually consistent for lower export qualities.
+- Added regression coverage for 720p text scaling.
+- Expanded text renderer coverage to real multiline text, apostrophe/backslash/drawtext delimiters, and the existing 500-character project limit.
+- Expanded render-graph coverage to image clips and text ordering around effects, crop, static transforms, animated transforms, anchor-aware transforms, dissolve, and fade-through-black transitions.
+- Expanded pipeline coverage so an image clip carrying text is explicitly forced through graph rendering.
+- One new render-graph assertion typo was corrected (`ih`, not `iw`) before fresh validation.
+- No project schema change; PR #76 remains parked and its Preview repaint investigation remains out of scope.
+- Fresh CI/local validation of these latest commits is still pending; do not treat this update as user-validated.
+
+## M3.70 — Text Overlay Export Rendering — in progress — 2026-09-23
+
+- PR for M3.70 is being prepared from the updated `main`.
+- RenderPlan now carries the existing optional per-clip `TextOverlay` metadata using the domain normalizer.
+- The existing renderer-owned `DejaVu Sans` FFmpeg drawtext helper is used to compile overlay content, normalized X/Y position, font size, color, and left/center/right alignment.
+- Drawtext text is escaped for FFmpeg delimiters and multiline content while preserving the existing project schema.
+- Text rendering is placed after visual effects and crop preparation but before the existing transform stage so text remains coupled to the clip's transform/opacity semantics like Preview.
+- Text overlays participate in the M3.69 multi-track compositor and remain visible on the correct video track layer.
+- Export pipeline routing explicitly sends clips with a text overlay through the graph instead of direct-source or legacy segment renderers.
+- Parked PR #76 was not merged or reused wholesale; only the export-relevant renderer pattern was reimplemented on current main.
+- The Linux/Tauri/WebKitGTK repaint timing issue from PR #76 remains separate and is not touched by this milestone.
+- Added text-overlay renderer, RenderPlan, render-graph, pipeline, and multi-track regression coverage.
+- Local validation is pending; PR will remain Draft until user PASS.
+
+
+## M3.70 — Text Overlay Export Rendering — in progress — 2026-09-23
+
+- PR #84 is the active Draft PR for this milestone.
+- Local validation exposed a stale multi-track text-overlay test assertion expecting `track_2_sequence`; the actual second video track is `track_1_sequence`, so the assertion has been corrected.
+- The failure did not indicate an export-graph implementation error: the generated graph contained the expected upper-track text drawtext chain and `track_1_sequence`.
+- The same validation run completed the production build and all 39 Rust tests successfully; the remaining requirement is a clean frontend test rerun. fileciteturn1176file0L253-L271 fileciteturn1176file0L276-L287
+- The parked PR #76 remains separate.
+
 ## M3.70 — Text Overlay Export Rendering — next — 2026-09-23
 
 - M3.69 Multi-Track Video Compositing Foundation was user-validated, CI-validated, and squash-merged in PR #83 at `5bac39d156aae38f2ab3c6a61d3851e816535128`.

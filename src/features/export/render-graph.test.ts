@@ -104,6 +104,50 @@ describe("single video render graph", () => {
     expect(graph.videoMap).toBe("[vout]");
   });
 
+  it("compiles a text overlay on an image clip", () => {
+    let project = createVideoProject();
+    project.assets = [
+      ...project.assets,
+      {
+        id: "image-a",
+        name: "cover.png",
+        mediaType: "image",
+        sourcePath: "/media/cover.png",
+        durationMs: null,
+      },
+    ];
+    project = addAssetToTimeline(project, "image-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Image",
+                  x: 0.5,
+                  y: 0.5,
+                  fontSize: 48,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Image':fontsize=48",
+    );
+  });
+
   it("compiles visual effects into the segment filter chain", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
@@ -490,6 +534,14 @@ describe("single video render graph", () => {
                 clip.assetId === "video-a"
                   ? {
                       ...clip,
+                      textOverlay: {
+                        text: "Dissolve",
+                        x: 0.5,
+                        y: 0.25,
+                        fontSize: 40,
+                        color: "#ffffff",
+                        alignment: "center" as const,
+                      },
                       transitionOut: {
                         type: "dissolve" as const,
                         durationMs: 500,
@@ -521,6 +573,9 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain(
       "[transition_0_prefix][transition_0_dissolve][full1]concat=n=3:v=1:a=0",
     );
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Dissolve':fontsize=40",
+    );
     expect(graph.filterComplex).not.toContain("xfade=");
   });
 
@@ -538,6 +593,14 @@ describe("single video render graph", () => {
                 clip.assetId === "video-a"
                   ? {
                       ...clip,
+                      textOverlay: {
+                        text: "Fade through black",
+                        x: 0.5,
+                        y: 0.75,
+                        fontSize: 40,
+                        color: "#ffffff",
+                        alignment: "center" as const,
+                      },
                       transitionOut: {
                         type: "fade-through-black" as const,
                         durationMs: 1000,
@@ -558,6 +621,9 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain("fade=t=in:st=0:d=0.5");
     expect(graph.filterComplex).toContain(
       "[transition_0_prefix][transition_0_fade_out][transition_0_fade_in][full1]concat=n=4:v=1:a=0",
+    );
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Fade through black':fontsize=40",
     );
   });
 
@@ -728,6 +794,251 @@ describe("single video render graph", () => {
     expect(filter.indexOf("overlay=x='")).toBeGreaterThanOrEqual(0);
   });
 
+
+  it("compiles text overlays into the visual segment filter chain", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Hello, FrameFlow!",
+                  x: 0.25,
+                  y: 0.75,
+                  fontSize: 64,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Hello\\, FrameFlow!':fontsize=64:fontcolor=#ffffff:x=(w-text_w)*0.25:y=(h-text_h)*0.75:line_spacing=4:expansion=none",
+    );
+  });
+
+  it("keeps text after crop and effects and before transforms", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                visualEffects: {
+                  brightness: 0.1,
+                  contrast: 0.2,
+                  saturation: -0.1,
+                },
+                crop: {
+                  top: 0.05,
+                  right: 0.1,
+                  bottom: 0.05,
+                  left: 0.1,
+                },
+                cropPosition: {
+                  x: 0.6,
+                  y: 0.5,
+                },
+                textOverlay: {
+                  text: "Ordered",
+                  x: 0.5,
+                  y: 0.5,
+                  fontSize: 64,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+                transform: {
+                  x: 8,
+                  y: -4,
+                  scale: 1.2,
+                  rotation: 12,
+                  opacity: 0.8,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const filter = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    ).filterComplex;
+
+    const effectsIndex = filter.indexOf("eq=brightness=0.1:contrast=1.2:saturation=0.9");
+    const cropIndex = filter.indexOf("crop=w=trunc(iw*0.8):h=trunc(ih*0.9)");
+    const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
+    const transformIndex = filter.indexOf("scale=w=iw*1.2:h=ih*1.2");
+
+    expect(effectsIndex).toBeGreaterThanOrEqual(0);
+    expect(cropIndex).toBeGreaterThanOrEqual(0);
+    expect(textIndex).toBeGreaterThan(cropIndex);
+    expect(textIndex).toBeGreaterThan(effectsIndex);
+    expect(transformIndex).toBeGreaterThan(textIndex);
+  });
+
+  it("keeps text before animated transform stages", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Animated",
+                  x: 0.5,
+                  y: 0.5,
+                  fontSize: 56,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+                transformKeyframes: [
+                  {
+                    timeMs: 0,
+                    transform: {
+                      x: 0,
+                      y: 0,
+                      scale: 1,
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  },
+                  {
+                    timeMs: 1000,
+                    transform: {
+                      x: 10,
+                      y: 5,
+                      scale: 1.25,
+                      rotation: 15,
+                      opacity: 0.8,
+                    },
+                  },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const filter = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    ).filterComplex;
+
+    const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
+    const scaleIndex = filter.indexOf("scale=w='iw*");
+
+    expect(textIndex).toBeGreaterThanOrEqual(0);
+    expect(scaleIndex).toBeGreaterThan(textIndex);
+    expect(filter).toContain("eval=frame");
+  });
+
+  it("keeps text inside the anchor-aware transform chain", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Anchored",
+                  x: 0.25,
+                  y: 0.75,
+                  fontSize: 48,
+                  color: "#ffffff",
+                  alignment: "left" as const,
+                },
+                transformAnchor: {
+                  x: 0.25,
+                  y: 0.75,
+                },
+                transform: {
+                  x: 8,
+                  y: -4,
+                  scale: 1.5,
+                  rotation: 30,
+                  opacity: 0.9,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const filter = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    ).filterComplex;
+
+    const textIndex = filter.indexOf("drawtext=font='DejaVu Sans'");
+    const scaleIndex = filter.indexOf("scale=w='iw*1.5':h='ih*1.5':eval=frame");
+
+    expect(textIndex).toBeGreaterThanOrEqual(0);
+    expect(scaleIndex).toBeGreaterThan(textIndex);
+    expect(filter).toContain("anchor_pivot_0");
+  });
+
+  it("preserves text overlay rendering on an upper multi-track clip", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find(
+      (track) => track.id !== "video-1" && track.type === "video",
+    )?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 0);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrackId
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Upper track",
+                  x: 0.5,
+                  y: 0.2,
+                  fontSize: 48,
+                  color: "#00ff00",
+                  alignment: "left" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileVideoTracksGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Upper track':fontsize=48:fontcolor=#00ff00:x=w*0.5:y=(h-text_h)*0.2:line_spacing=4:expansion=none",
+    );
+    expect(graph.filterComplex).toContain("track_1_sequence");
+  });
 
   it("composites multiple video tracks in project track order", () => {
     let project = createVideoProject();

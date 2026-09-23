@@ -4,12 +4,14 @@ import {
   getAudioCompressor,
   getAudioFadeDurations,
   getVisualEffects,
+  getTextOverlay,
   getTrackPan,
   getTrackVolume,
   type AudioCompressor,
   type AudioEq,
   type AudioVolumeKeyframe,
   type VisualEffects,
+  type TextOverlay,
   type Clip,
   type ClipCrop,
   type ClipTransform,
@@ -53,6 +55,7 @@ export interface RenderSegment {
   audioCompressor?: AudioCompressor;
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
   visualEffects?: VisualEffects;
+  textOverlay?: TextOverlay;
   transform?: ClipTransform;
   transformAnchor?: TransformAnchor;
   crop?: ClipCrop;
@@ -175,6 +178,12 @@ export function createRenderPlan(
         ...(track.type === "video"
           ? {
               visualEffects: getVisualEffects(clip),
+              textOverlay: scaleTextOverlayForExport(
+                getTextOverlay(clip),
+                project,
+                normalizedSettings.width,
+                normalizedSettings.height,
+              ),
             }
           : {}),
         transform: clip.transform,
@@ -199,6 +208,26 @@ export function createRenderPlan(
     frameRate: normalizedSettings.frameRate,
     durationMs,
     segments,
+  };
+}
+
+function scaleTextOverlayForExport(
+  overlay: TextOverlay | undefined,
+  project: Project,
+  outputWidth: number,
+  outputHeight: number,
+): TextOverlay | undefined {
+  if (!overlay) {
+    return undefined;
+  }
+
+  const widthScale = outputWidth / project.canvas.width;
+  const heightScale = outputHeight / project.canvas.height;
+  const renderScale = Math.min(widthScale, heightScale);
+
+  return {
+    ...overlay,
+    fontSize: Math.max(1, Math.round(overlay.fontSize * renderScale)),
   };
 }
 
