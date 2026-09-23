@@ -13,6 +13,14 @@
 - Local validation is pending; PR will remain Draft until user PASS.
 
 
+## M3.70 — Text Overlay Export Rendering — in progress — 2026-09-23
+
+- PR #84 is the active Draft PR for this milestone.
+- Local validation exposed a stale multi-track text-overlay test assertion expecting `track_2_sequence`; the actual second video track is `track_1_sequence`, so the assertion has been corrected.
+- The failure did not indicate an export-graph implementation error: the generated graph contained the expected upper-track text drawtext chain and `track_1_sequence`.
+- The same validation run completed the production build and all 39 Rust tests successfully; the remaining requirement is a clean frontend test rerun. fileciteturn1176file0L253-L271 fileciteturn1176file0L276-L287
+- The parked PR #76 remains separate.
+
 ## M3.70 — Text Overlay Export Rendering — next — 2026-09-23
 
 - M3.69 Multi-Track Video Compositing Foundation was user-validated, CI-validated, and squash-merged in PR #83 at `5bac39d156aae38f2ab3c6a61d3851e816535128`.
