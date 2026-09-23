@@ -13,7 +13,7 @@
 - No project schema change is introduced.
 - Transform keyframes, non-centered transform anchors, multi-track compositing, audio mixing, and the parked text-export runtime issue remain deferred.
 - Added render-graph regression coverage for dissolve, fade-through-black, and non-adjacent transition rejection, plus pipeline routing coverage.
-- Local validation is still required before PR #80 can be marked ready and merged.
+- CI run #162 exposed the old transition guard in assertSupportedVisualMetadata; the guard was removed in commit ea660dd9bc608e0a1de0858cd611e63cb0c94ea7 because M3.66 now owns transition compilation. A fresh CI run is in progress.
 
 ## M3.64 — Static Crop Export — merged — 2026-09-23
 
