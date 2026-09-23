@@ -10,7 +10,7 @@
 - Centered-anchor behavior remains on the existing optimized graph path; anchor-sensitive work is isolated to non-centered scale/rotation cases.
 - Added render-graph coverage for static and animated off-center anchors plus pipeline coverage proving static transforms use the graph.
 - Local and CI validation are pending for M3.68; PR will remain Draft until user PASS.
-- M3.67 merged above; Text Overlay Export remains parked in PR #76; multi-track compositing and audio mixing remain deferred.
+- PR #82 is open as Draft; Text Overlay Export remains parked in PR #76; multi-track compositing and audio mixing remain deferred.
 
 ## M3.67 — Animated Transform Export — merged — 2026-09-23
 
