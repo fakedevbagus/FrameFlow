@@ -933,6 +933,17 @@ fn format_seconds(milliseconds: u64) -> String {
   )
 }
 
+fn format_number(value: f64) -> String {
+  if value.fract().abs() < f64::EPSILON {
+    return format!("{value:.0}");
+  }
+
+  format!("{value:.6}")
+    .trim_end_matches('0')
+    .trim_end_matches('.')
+    .to_string()
+}
+
 fn same_path(first: &Path, second: &Path) -> bool {
   let first_canonical = fs::canonicalize(first).ok();
   let second_canonical = fs::canonicalize(second)
@@ -1171,6 +1182,8 @@ mod tests {
         source_start_ms: 0,
         timeline_start_ms: 0,
         duration_ms: 5_000,
+        track_volume: 1.0,
+        track_pan: 0.0,
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1425,7 +1438,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=0.65,pan=stereo|c0=0.831470*c0|c1=0.555570*c1,adelay=1000:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=0.65,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
     ));
     assert!(filter.contains("[frameflow_explicit_audio]"));
     assert!(filter.contains(
