@@ -100,7 +100,7 @@ Branch:
 `feat/m3-66-transition-export`
 
 PR:
-TBD
+#80
 
 Status:
 - In progress
@@ -115,6 +115,9 @@ M3.66 current scope:
 - Reuse the existing transition domain model; do not introduce a project schema version change.
 - Keep the one-video-track export boundary.
 - Add regression coverage for transition graph compilation and export-pipeline routing.
+- Dissolve uses a looped incoming first frame with alpha ramp over the outgoing tail.
+- Fade-through-black uses explicit outgoing fade-out and incoming first-frame fade-in stages.
+- Any transitioned timeline routes through the native video graph.
 
 Explicitly deferred:
 - Text overlay export remains parked in PR #76.
