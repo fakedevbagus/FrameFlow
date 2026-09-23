@@ -1,3 +1,8 @@
+## 2026-09-23 — M3.65 native graph test fixture hardening
+
+- Updated the existing Rust `NativeVideoGraphRenderRequest` test fixtures to include the new optional per-input `input_media_types` field.
+- This is test-only compatibility for the M3.65 graph request contract; no production behavior changed.
+
 ## 2026-09-23 — M3.64 Static Crop Export — merged
 
 - PR #78 was validated by the user and squash-merged at `fd9d889c3975fdd076a87235913f3b37d1cbc50a`.
