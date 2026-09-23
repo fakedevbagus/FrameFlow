@@ -1,4 +1,20 @@
-## M3.63 — Static Visual Transform Export — in progress — 2026-09-23
+## M3.64 — Static Crop Export — in progress — 2026-09-23
+
+- M3.63 Static Visual Transform Export completed and was squash-merged into main at `67f5e9900fea9424e6e11fd247b4c26143927f27`.
+- M3.62 Text Overlay Export Rendering remains intentionally parked in PR #76 Draft because the user's Linux/Tauri/WebKitGTK Preview live-update timing issue remains unresolved.
+- M3.64 is a focused export slice for the existing `ClipCrop` and `CropPosition` model on the single video track.
+- Preview crop semantics are already defined by a normalized crop viewport plus crop-content position. M3.64 mirrors those semantics in FFmpeg rather than inventing a second crop model.
+- RenderPlan now normalizes non-empty crop metadata and its crop position using the existing transform helpers.
+- Export applies crop after source fit/effects, then restores the cropped viewport into the original contained-content bounds before static transforms are applied. This keeps crop-before-transform ordering aligned with Preview.
+- Static crop is supported with no transform, and static crop composes with the M3.63 X/Y/Scale/Rotation/Opacity export path.
+- Default no-crop/no-transform keeps the existing minimal direct graph unchanged.
+- Crop is validated as normalized fractions; crop position is clamped through the existing domain helper.
+- Transform keyframes, non-centered transform anchors, transitions, images, multi-track compositing, and audio mixing remain deferred.
+- Added RenderPlan and render-graph regression coverage for crop normalization, crop positioning, and crop + static transform composition.
+- Local validation is pending. Keep PR #78 Draft until the user reports PASS.
+- Do not close or merge PR #76 as part of M3.64.
+
+## M3.63 — Static Visual Transform Export — merged — 2026-09-23
 
 - M3.62 Text Overlay Export Rendering is intentionally parked as PR #76 Draft because its Linux/Tauri/WebKitGTK Preview live-update path remains functionally usable but not immediate; the known limitation is preserved for later investigation.
 - M3.63 is based directly on the current verified `main` and is intentionally independent of the parked M3.62 WebView issue.
