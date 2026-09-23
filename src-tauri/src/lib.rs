@@ -2,6 +2,8 @@ mod media_server;
 mod audio_render;
 mod audio_waveform;
 mod export_process;
+#[cfg(target_os = "linux")]
+mod linux_repaint;
 
 use std::{
   fs,
@@ -1337,7 +1339,23 @@ fn temporary_path(project_path: &Path) -> PathBuf {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  tauri::Builder::default()
+  let builder = tauri::Builder::default();
+  let builder = {
+    #[cfg(target_os = "linux")]
+    {
+      builder.setup(|app| {
+        linux_repaint::install(app.handle());
+        Ok(())
+      })
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+      builder
+    }
+  };
+
+  builder
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_opener::init())
     .manage(media_server::MediaServerState::start().expect("could not start local media server"))
