@@ -104,7 +104,6 @@ import { TransitionInspector } from "./features/transition/TransitionInspector";
 import {
   clearTextOverlayEditSession,
   getTextOverlayEditSession,
-  setTextOverlayEditSession,
   subscribeToTextOverlayEditSession,
 } from "./features/effects/text-overlay-edit-session";
 import { ExportPanel } from "./features/export/ExportPanel";
@@ -866,33 +865,6 @@ function App() {
         alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
       }
     );
-  }
-
-  function handleUpdateTextOverlayDraft(changes: Partial<TextOverlay>) {
-    if (!selectedClipContext) {
-      return;
-    }
-
-    const clipId = selectedClipContext.clip.id;
-    const fallback: TextOverlay = {
-      text: "",
-      x: DEFAULT_TEXT_OVERLAY_X,
-      y: DEFAULT_TEXT_OVERLAY_Y,
-      fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
-      color: DEFAULT_TEXT_OVERLAY_COLOR,
-      alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
-    };
-    const currentSession = getTextOverlayEditSession();
-    const currentOverlay =
-      currentSession?.clipId === clipId
-        ? currentSession.overlay
-        : selectedTextOverlay ?? fallback;
-    const nextOverlay = { ...currentOverlay, ...changes };
-
-    setTextOverlayEditSession({
-      clipId,
-      overlay: nextOverlay,
-    });
   }
 
   function clearTextOverlayAutoCommitTimer() {
