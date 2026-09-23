@@ -1,3 +1,8 @@
+- M3.68 currently includes a UI/layout validation correction for Inspector clipping on narrower desktop widths. The workspace now gives the Inspector a flexible 270–300px column, and Inspector two-column grids use minmax(0, 1fr) so controls stay inside the panel.
+
+- M3.68 also includes a follow-up Inspector layout correction: the Inspector workspace column is now 300–320px, section headers/actions wrap when needed, and anchor headers avoid horizontal overflow.
+- M3.68's Inspector layout refinement now also adds extra right padding so the panel content has visible breathing room from the application edge.
+
 # FrameFlow — New Chat Continuation Prompt
 
 You are continuing development of my existing project **FrameFlow**:
@@ -94,21 +99,25 @@ cd ..
 
 ## Current repository state
 
-### M3.68 — Non-Centered Transform Anchor Export — active
+### M3.68 — Non-Centered Transform Anchor Export — active draft PR
 
 Branch:
 `feat/m3-68-non-centered-transform-anchor-export`
 
+PR:
+#82 — Draft
+
 Status:
-- Implementation in progress
-- Draft PR will remain until user local validation PASS
+- In progress
+- Local validation pending
 
 M3.68 current scope:
-- Extend the existing static and animated FFmpeg transform graph to honor non-centered transform anchors already supported by the editor/Preview.
-- Preserve the existing transform model and Preview semantics, including anchor-aware transform origin and translation compensation when the pivot changes.
-- Preserve crop and visual-effects ordering, image/video support, keyframe easing, and transparent composition.
-- Cover static and animated scale/rotation around off-center pivots with graph, pipeline, and regression tests.
+- Export non-centered transform anchors already supported by the editor and Preview.
+- Preserve anchor-aware scale and rotation semantics for static transforms and animated keyframes.
+- Preserve existing crop/effects ordering, image/video compatibility, keyframe easing, and world-space X/Y translation.
 - Keep the project schema unchanged.
+- Off-center pivot export uses a transparent surface with the selected anchor placed at its center before rotation; X/Y translation is then applied in world space.
+- Route graph-required visual metadata through the graph renderer instead of direct/legacy render paths.
 
 Explicitly deferred:
 - Text Overlay Export remains parked in PR #76.
@@ -120,7 +129,7 @@ Explicitly deferred:
 - PR #81 was user-validated and squash-merged at `783885376209ec56013612147b217a13c8bf1ef7`.
 - GitHub CI run #181 passed.
 - Animated X/Y, Scale, Rotation, and Opacity export now uses the existing keyframe/easing model through the single-video FFmpeg graph.
-- Centered transform anchors remain supported; non-centered anchors are the M3.68 focus.
+- Centered transform anchors remain supported; non-centered anchor export is the current M3.68 focus.
 
 ## Previous merged audio milestones
 

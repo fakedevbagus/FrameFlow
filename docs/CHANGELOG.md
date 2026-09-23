@@ -1,3 +1,55 @@
+## 2026-09-23 — M3.68 Inspector layout validation correction
+
+- The supplied Linux/Tauri screenshot showed the right-side Inspector content clipped at the panel edge, with form controls and quick-action UI extending beyond the visible width.
+- Adjusted the workspace columns to give the Inspector a flexible 270–300px budget while retaining a 420px minimum central editor area.
+- Hardened Inspector grid tracks and section containers with zeroable minimum widths so controls can shrink without horizontal overflow.
+- Kept action buttons non-shrinking and summary/readout values allowed to wrap where necessary.
+- No project schema, export graph, or editing behavior was changed.
+- Fresh local validation remains required; PR #82 stays Draft until the user reports PASS.
+
+## 2026-09-23 — M3.68 Inspector layout follow-up
+
+- A second manual screenshot check showed the initial Inspector-width correction still allowed header actions and some Inspector controls to clip at the right edge.
+- Increased the Inspector workspace allocation to a flexible 300–320px column and reduced the media column budget to 210–240px to preserve the central editor.
+- Inspector section headers and action groups now wrap rather than forcing their parent section wider than the panel.
+- Anchor headers receive the same wrapping behavior.
+- No project schema or export behavior changed.
+- Fresh local validation remains required; PR #82 stays Draft.
+
+## 2026-09-23 — M3.68 Inspector spacing refinement
+
+- Added a small extra right inset to the Inspector panel after the latest Linux screenshot showed the content was fixed but still visually too close to the application edge.
+- This is a CSS-only visual refinement; no editor state, export graph, or project schema behavior changed.
+- A fresh local validation is required after this final UI adjustment before M3.68 can be marked ready and merged.
+
+## 2026-09-23 — M3.68 validation correction
+
+- User validation found two unused locals in `render-graph.ts` and a stale pipeline test that still expected non-centered animated anchors to be rejected. fileciteturn920file0L24-L35 fileciteturn920file0L129-L140 fileciteturn920file0L263-L280
+- Removed the unused locals and converted the stale rejection test to the still-deferred multi-track graph boundary.
+- Simplified off-center anchor composition to place the selected pivot at the transparent surface center before rotation, matching the Preview transform-origin model more directly.
+- Corrected transparent surface sizing so its side length covers twice the maximum pivot-to-corner radius.
+- Narrowed pipeline graph routing so neutral visual-effects state does not unnecessarily bypass the direct renderer.
+- Build and Rust tests were already passing in the supplied run; the remaining frontend failures are addressed by this correction. fileciteturn920file0L289-L305 fileciteturn920file0L305-L349
+- PR #82 remains Draft until a fresh local validation reports PASS.
+
+## 2026-09-23 — M3.68 Non-Centered Transform Anchor Export — implementation
+
+Branch: `feat/m3-68-non-centered-transform-anchor-export`
+PR #82 — Draft
+
+Implemented:
+- Added an anchor-aware FFmpeg composition path for non-centered static and animated transform scale/rotation.
+- Preserved Preview transform semantics by keeping the anchor pivot fixed during scale/rotation and applying X/Y translation in world space.
+- Preserved crop/effects ordering and image/video graph compatibility.
+- Reused the existing animated keyframe expressions and easing model.
+- Routed graph-required single-video metadata through the graph renderer so static transforms are not silently bypassed by direct/legacy native renderers.
+- Added graph tests for static and animated off-center anchors and pipeline routing coverage.
+- No project schema change.
+
+Validation:
+- Pending user local validation and CI.
+- PR remains Draft.
+
 ## 2026-09-23 — M3.68 Non-Centered Transform Anchor Export — started
 
 - M3.67 was completed after user PASS and squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.

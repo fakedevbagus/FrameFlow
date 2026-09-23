@@ -235,6 +235,11 @@ describe("render video pipeline", () => {
           sourceEndMs: 5038,
           durationMs: 5038,
           isMuted: false,
+          visualEffects: {
+            brightness: 0,
+            contrast: 0,
+            saturation: 0,
+          },
         },
       ],
     };
@@ -260,6 +265,66 @@ describe("render video pipeline", () => {
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });
 
+
+  it("routes a static transform clip through the native graph renderer", async () => {
+    const plan: RenderPlan = {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      durationMs: 2000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 2000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
+          durationMs: 2000,
+          isMuted: false,
+          transform: {
+            x: 5,
+            y: -5,
+            scale: 1.25,
+            rotation: 20,
+            opacity: 1,
+          },
+          transformAnchor: {
+            x: 0.2,
+            y: 0.75,
+          },
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/anchored-static-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/anchored-static-export.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/anchored-static-export.mp4",
+    });
+
+    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
+      inputs: ["/media/a.mp4"],
+      inputMediaTypes: ["video"],
+      outputPath: "/tmp/anchored-static-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      filterComplex: expect.stringContaining("anchor_pivot_0"),
+      videoMap: "[vout]",
+    });
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+  });
 
   it("routes a single image clip through the graph renderer", async () => {
     const plan: RenderPlan = {
@@ -530,7 +595,7 @@ describe("render video pipeline", () => {
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
-  it("does not call the native renderer when graph compilation rejects an unsupported animated anchor", () => {
+  it("does not call the native renderer when graph compilation rejects multiple video tracks", () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -551,37 +616,28 @@ describe("render video pipeline", () => {
           sourceEndMs: 2000,
           durationMs: 2000,
           isMuted: false,
-          transform: { x: 10, y: 0, scale: 1, rotation: 0, opacity: 1 },
-          transformAnchor: { x: 0.4, y: 0.5 },
-          transformKeyframes: [
-            {
-              timeMs: 0,
-              transform: {
-                x: 0,
-                y: 0,
-                scale: 1,
-                rotation: 0,
-                opacity: 1,
-              },
-            },
-            {
-              timeMs: 1000,
-              transform: {
-                x: 20,
-                y: 0,
-                scale: 1.5,
-                rotation: 15,
-                opacity: 0.8,
-              },
-            },
-          ],
+        },
+        {
+          inputIndex: 1,
+          assetId: "video-b",
+          sourcePath: "/media/b.mp4",
+          mediaType: "video",
+          trackId: "video-2",
+          trackType: "video",
+          trackIndex: 1,
+          timelineStartMs: 0,
+          timelineEndMs: 2000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
+          durationMs: 2000,
+          isMuted: false,
         },
       ],
     };
 
     expect(() =>
       renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4"),
-    ).toThrow("non-centered transform anchors");
+    ).toThrow("multi-track compositing is deferred");
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();

@@ -1,13 +1,34 @@
-## M3.68 — Non-Centered Transform Anchor Export — next
+## M3.68 — Non-Centered Transform Anchor Export — in progress — 2026-09-23
 
-- M3.67 Animated Transform Export was user-validated and CI-validated, then squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
-- The current export graph supports centered transform anchors only and explicitly rejects non-centered anchors.
-- The editor already models normalized transform anchors and uses anchor-aware transform-origin semantics in Preview; changing the anchor compensates translation so the visual position remains stable.
-- M3.68 will extend the existing static and animated transform export paths to honor non-centered anchors without changing the project schema.
-- The implementation must preserve the existing anchor compensation semantics, crop/effects ordering, keyframe easing, image/video support, and transparent composition strategy.
-- Anchor behavior must be validated for both static transforms and animated transform keyframes, including rotation and scale around the selected pivot.
-- Multi-track compositing, audio mixing, and Text Overlay Export remain separate deferred work; PR #76 stays parked.
-- Add domain-level/graph-level regression coverage and at least one pipeline coverage case for anchored animated export.
+- M3.67 Animated Transform Export was user-validated and squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
+- M3.68 addresses the remaining export limitation for non-centered transform anchors already supported by the editor/Preview.
+- Validation on 2026-09-23 found two unused locals in the anchor-aware graph and one stale pipeline test that still expected non-centered anchors to be rejected; these were corrected.
+- The anchor composition math was simplified to mirror CSS transform-origin directly: the selected anchor is placed at the transparent surface center before rotation, then X/Y translation is applied in world space.
+- The transparent anchor surface now uses the full twice-radius extent required to contain the furthest scaled corner around the pivot.
+- The pipeline graph-required check was narrowed so neutral visual-effects metadata does not disable the existing direct renderer.
+- Static and animated transforms now have an anchor-aware graph path when scale or rotation makes the anchor visually significant.
+- The anchor-aware path keeps the source content in its contained bounds, preserves crop/effects ordering, scales around the selected pivot, compensates pre-rotation placement, rotates around the pivot, then applies world-space X/Y translation.
+- Animated anchor-aware transforms reuse the existing X/Y, Scale, Rotation, and Opacity keyframe expressions and easing rules without changing the project schema.
+- The graph uses a conservative transparent composition surface sized from the project bounds, maximum animated scale, and anchor offset so rotation can occur without clipping transformed content.
+- The export pipeline now routes any graph-required visual metadata through the graph renderer; this also prevents single-source or legacy segment rendering from silently dropping static transforms, crops, visual effects, or keyframes.
+- Centered-anchor behavior remains on the existing optimized graph path; anchor-sensitive work is isolated to non-centered scale/rotation cases.
+- Added render-graph coverage for static and animated off-center anchors plus pipeline coverage proving static transforms use the graph.
+- Local and CI validation are pending for M3.68; PR will remain Draft until user PASS.
+- PR #82 is open as Draft; Text Overlay Export remains parked in PR #76; multi-track compositing and audio mixing remain deferred.
+
+- Manual validation on 2026-09-23 also exposed a workspace-layout issue: at the current desktop width the Inspector contents were visibly clipped horizontally, especially the quick-action buttons and two-column form fields.
+- Hardened the workspace grid with flexible side-panel bounds and a wider Inspector budget while preserving a minimum editor canvas width.
+- Added min-width constraints and intrinsic-width-safe two-column grid tracks for Inspector content so controls shrink within the panel instead of painting past its right edge.
+- Kept the PR Draft because this is a UI validation correction and fresh lint/test/build/Tauri validation is still required.
+
+- Follow-up manual screenshot validation showed the first layout correction was insufficient: the Inspector remained clipped at the right edge because section headers with multiple action buttons could still exceed the narrow panel's intrinsic width.
+- Hardened the workspace again with a 300–320px Inspector column and a 210–240px media column, while preserving a 420px minimum editor area.
+- Inspector section headers and action groups now wrap when necessary instead of forcing horizontal overflow; anchor headers use the same safe behavior.
+- This remains a layout-only correction; export/editor data models are unchanged. Fresh local validation is still required.
+
+- Final visual follow-up from the latest screenshot adds a small right-side breathing room to the Inspector so its content does not sit against the application edge.
+- The Inspector panel now uses explicit extra right padding; this is a layout-only refinement after the clipping issue was resolved.
+- M3.68 remains awaiting the user's final validation after this last CSS adjustment.
 
 ## M3.67 — Animated Transform Export — merged — 2026-09-23
 
