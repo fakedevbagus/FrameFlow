@@ -15,30 +15,22 @@ Validation:
 - Local validation pending implementation.
 - Keep PR Draft until user reports PASS.
 
-## 2026-09-22 — M3.62 Text Overlay live-edit stabilization — in progress
+## 2026-09-23 — Native Linux repaint mitigation added
 
 Branch: feat/m3-62-text-overlay-export-rendering
 PR: #76
 
-Observed runtime pattern:
-- Typing Text produced a visible Inspector value but Preview remained stale until the next field was edited.
-- The next field then caused the previous field's value to appear, producing a one-step-late sequence.
+Root-cause direction:
+- The observed sequence (Inspector changes immediately, Preview updates only after the next interaction) is consistent with a native repaint/invalidation issue rather than a text-state ordering bug.
+- An independent September 2026 report against a Tauri/WebKitGTK Linux desktop application shows the same symptom: UI state changes correctly but is not repainted until focus/resize, with a 1px resize forcing one repaint. citeturn544558search0
+- Tauri documents Linux rendering through WebKitGTK and notes platform-level compositor/rendering issues can cause subtle or complete rendering failures. citeturn544558search3
 
-Current fix:
-- PreviewVisualLayer is now the sole live-preview owner for the selected Text Overlay DOM node.
-- React does not render the selected overlay's transient text/style; it maintains only a hidden placeholder state so reconciliation cannot overwrite imperative changes.
-- Native `beforeinput`, `keydown`, paste, and cut listeners calculate the intended next Text/X/Y/Size value directly and patch the Preview DOM immediately.
-- A `requestAnimationFrame` fallback reads the actual Inspector DOM values for environments where a native intent event is unavailable.
-- The external edit session is used only as the transient data source for commit/autosave and Undo/Redo integration.
-- This removes the previous one-step-lag race between a direct DOM patch and React reconciliation.
-
-Regression coverage:
-- Literal sequential Text → X → Y → Size live-preview flow.
-- Direct DOM value changes without dispatched input/change/keyup.
-- Synchronous beforeinput update.
-- No per-keystroke history.
-- Single-entry commit + Undo/Redo + Reset.
-- External edit-session store behavior.
+Implementation:
+- Added a Linux-only GTK repaint watchdog on the GTK main loop.
+- Every 50 ms it calls `queue_draw()` on the native Tauri GTK window and recursively on its default GTK container subtree, including the WebView widget.
+- No window geometry mutation, reload, navigation, or focus change is used.
+- GTK dependency is target-gated to Linux and locked against the existing gtk 0.18 dependency generation.
+- Frontend live-edit workarounds are kept temporarily until this native mitigation is validated, then should be simplified.
 
 Validation:
 - Local Linux/Tauri validation pending user verification.
