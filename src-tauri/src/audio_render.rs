@@ -32,8 +32,6 @@ pub struct NativeVideoWithAudioGraphRenderRequest {
   pub duration_ms: u64,
   pub output_path: String,
 }
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeSourceAudioSegment {
@@ -932,6 +930,7 @@ mod tests {
     validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
     NativeAudioGraphRenderRequest, NativeSourceAudioSegment,
     NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
+    ResolvedSourceAudioSegment,
   };
   use std::path::{Path, PathBuf};
 
@@ -1082,6 +1081,7 @@ mod tests {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -1099,6 +1099,7 @@ mod tests {
       video_inputs: Vec::new(),
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -1182,6 +1183,7 @@ mod tests {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: Vec::new(),
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -1201,6 +1203,7 @@ mod tests {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: Vec::new(),
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -1217,6 +1220,7 @@ mod tests {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: String::new(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -1267,6 +1271,7 @@ mod tests {
       &video_paths,
       &video_media_types,
       &audio_paths,
+      &[],
       "[0:v:0]null[video0];[1:v:0]null[video1];[video0][video1]overlay[outvideo][vout]",
       "[vout]",
       "[2:a:0]anull[aout]",
