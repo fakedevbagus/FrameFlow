@@ -16,7 +16,9 @@ Implementation:
 - No project schema change.
 
 Validation:
-- Local validation is pending user verification.
+- Supplied local validation exposed Timeline JSX/test/native fixture issues; corrections are now applied.
+- Added a RenderPlan regression for Video-track Volume/Pan propagation.
+- Fresh local lint/tests/build/Rust/Tauri validation is still required.
 
 Known limitations:
 - Video-track Volume/Pan affect embedded source audio during unified export; clip-level source-audio EQ/compressor/fade controls remain separate audio-track functionality.
