@@ -61,7 +61,7 @@ function orderedMediaTypes(
   segments: RenderPlan["segments"],
 ): RenderPlan["segments"][number]["mediaType"][] {
   return [...segments]
-    .sort((left, right) => left.timelineStartMs - right.timelineStartMs)
+    .sort((left, right) => left.inputIndex - right.inputIndex)
     .map((segment) => segment.mediaType);
 }
 
