@@ -20,22 +20,24 @@ Validation:
 Branch: feat/m3-62-text-overlay-export-rendering
 PR: #76
 
-Observed runtime failure:
-- The Inspector displayed new Text/X/Y/Size values immediately, while Preview updated one interaction later and appeared to process the previous edit when the next field changed.
+Observed runtime pattern:
+- Typing Text produced a visible Inspector value but Preview remained stale until the next field was edited.
+- The next field then caused the previous field's value to appear, producing a one-step-late sequence.
 
 Current fix:
-- Keep transient Text Overlay editing in the external edit-session store.
-- Remove React `onInput`/`onChange` live-update handlers for Text/X/Y/Size to prevent delayed WebView events from overwriting newer state.
-- Native `beforeinput` listeners on the Preview side derive the next value from the edit intent and immediately patch the Preview overlay DOM.
-- PreviewVisualLayer also uses a continuous `requestAnimationFrame` readback of the actual Inspector DOM values as a fallback.
-- The live Preview target is one permanently mounted `preview-text-overlay` DOM element for the selected visual clip; it is hidden only when text is empty.
-- No App-level polling, `document.activeElement`, keyboard-only fallback, `flushSync`, or live canvas renderer is used.
+- PreviewVisualLayer is now the sole live-preview owner for the selected Text Overlay DOM node.
+- React does not render the selected overlay's transient text/style; it maintains only a hidden placeholder state so reconciliation cannot overwrite imperative changes.
+- Native `beforeinput`, `keydown`, paste, and cut listeners calculate the intended next Text/X/Y/Size value directly and patch the Preview DOM immediately.
+- A `requestAnimationFrame` fallback reads the actual Inspector DOM values for environments where a native intent event is unavailable.
+- The external edit session is used only as the transient data source for commit/autosave and Undo/Redo integration.
+- This removes the previous one-step-lag race between a direct DOM patch and React reconciliation.
 
 Regression coverage:
-- Direct DOM value changes without input/change/keyup.
-- Live Text/X/Y/Size Preview updates before blur.
-- No per-keystroke history entry.
-- Single-entry commit with Undo/Redo and Reset.
+- Literal sequential Text → X → Y → Size live-preview flow.
+- Direct DOM value changes without dispatched input/change/keyup.
+- Synchronous beforeinput update.
+- No per-keystroke history.
+- Single-entry commit + Undo/Redo + Reset.
 - External edit-session store behavior.
 
 Validation:
