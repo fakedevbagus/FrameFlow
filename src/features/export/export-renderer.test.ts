@@ -158,6 +158,31 @@ describe("export renderer", () => {
     );
   });
 
+  it("invokes the native video graph renderer with image media metadata", async () => {
+    vi.mocked(invoke).mockResolvedValueOnce({
+      outputPath: "/tmp/image-export.mp4",
+    });
+
+    const request = {
+      inputs: ["/media/cover.png"],
+      inputMediaTypes: ["image" as const],
+      outputPath: "/tmp/image-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      filterComplex: "[0:v:0]loop=loop=-1:size=1:start=0[image];[image]trim=duration=5[vout]",
+      videoMap: "[vout]",
+    };
+
+    await expect(renderVideoGraphToMp4(request)).resolves.toEqual({
+      outputPath: "/tmp/image-export.mp4",
+    });
+
+    expect(invoke).toHaveBeenCalledWith("render_video_graph_to_mp4", {
+      request,
+    });
+  });
+
   it("invokes the native video graph renderer with the compiled graph contract", async () => {
     vi.mocked(invoke).mockResolvedValueOnce({
       outputPath: "/tmp/timeline-export.mp4",

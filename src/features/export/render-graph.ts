@@ -40,9 +40,14 @@ export function compileSingleVideoTrackGraph(
     );
   }
 
-  if (videoSegments.some((segment) => segment.mediaType !== "video")) {
+  if (
+    videoSegments.some(
+      (segment) =>
+        segment.mediaType !== "video" && segment.mediaType !== "image",
+    )
+  ) {
     throw new Error(
-      "M3.36 supports video assets only; image rendering is deferred.",
+      "Video render graph supports video and image visual assets only.",
     );
   }
 

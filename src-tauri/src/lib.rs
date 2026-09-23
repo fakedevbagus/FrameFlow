@@ -59,6 +59,8 @@ struct NativeVideoSegmentsRenderRequest {
 #[serde(rename_all = "camelCase")]
 struct NativeVideoGraphRenderRequest {
   inputs: Vec<String>,
+  #[serde(default)]
+  input_media_types: Vec<String>,
   output_path: String,
   width: u32,
   height: u32,
@@ -302,6 +304,12 @@ fn render_video_graph_to_mp4(
 ) -> Result<NativeExportRenderResult, String> {
   validate_native_video_graph_request_metadata(&request)?;
 
+  if !request.input_media_types.is_empty()
+    && request.input_media_types.len() != request.inputs.len()
+  {
+    return Err("Native video graph input media types must match the input count.".to_string());
+  }
+
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
 
@@ -315,8 +323,12 @@ fn render_video_graph_to_mp4(
         return Err("Native video graph inputs must use absolute paths.".to_string());
       }
 
-      if media_type(&path)? != "video" {
-        return Err("Native video graph render currently supports video inputs only.".to_string());
+      let source_type = media_type(&path)?;
+      if source_type != "video" && source_type != "image" {
+        return Err(
+          "Native video graph render supports video and image inputs only."
+            .to_string(),
+        );
       }
 
       if same_path(&path, &output_path) {
@@ -329,6 +341,7 @@ fn render_video_graph_to_mp4(
 
   let args = build_ffmpeg_video_graph_args(
     &input_paths,
+    &request.input_media_types,
     &request.filter_complex,
     &request.video_map,
     request.frame_rate,
@@ -905,6 +918,7 @@ fn validate_native_video_graph_request_metadata(
 
 fn build_ffmpeg_video_graph_args(
   input_paths: &[PathBuf],
+  input_media_types: &[String],
   filter_complex: &str,
   video_map: &str,
   frame_rate: f64,
@@ -917,7 +931,19 @@ fn build_ffmpeg_video_graph_args(
     "-y".into(),
   ];
 
-  for input_path in input_paths {
+  for (index, input_path) in input_paths.iter().enumerate() {
+    let media_type = input_media_types
+      .get(index)
+      .map(String::as_str)
+      .unwrap_or("video");
+
+    if media_type == "image" {
+      args.push("-loop".into());
+      args.push("1".into());
+      args.push("-framerate".into());
+      args.push(frame_rate.to_string().into());
+    }
+
     args.push("-i".into());
     args.push(input_path.as_os_str().to_os_string());
   }
@@ -1455,6 +1481,7 @@ mod tests {
   fn validates_native_video_graph_request_metadata() {
     let valid = super::NativeVideoGraphRenderRequest {
       inputs: vec!["/media/a.mp4".to_string()],
+      input_media_types: vec!["video".to_string()],
       output_path: "/tmp/output.mp4".to_string(),
       width: 1280,
       height: 720,
@@ -1471,6 +1498,7 @@ mod tests {
 
     let mut missing_graph = super::NativeVideoGraphRenderRequest {
       inputs: vec!["/media/a.mp4".to_string()],
+      input_media_types: vec!["video".to_string()],
       output_path: "/tmp/output.mp4".to_string(),
       width: 1280,
       height: 720,
@@ -1492,6 +1520,7 @@ mod tests {
         Path::new("/media/First Video.mp4").to_path_buf(),
         Path::new("/media/Second; Video.mp4").to_path_buf(),
       ],
+      &["video".to_string(), "video".to_string()],
       "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
       "[vout]",
       30.0,
@@ -1671,6 +1700,31 @@ mod tests {
     assert!(super::project_path("/tmp/first-edit.json").is_err());
     assert!(super::project_path("/tmp/first-edit.mp4").is_err());
     assert!(super::project_path("/tmp").is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_video_graph_arguments_with_looped_image_inputs() {
+    let args = super::build_ffmpeg_video_graph_args(
+      &[
+        Path::new("/media/title.png").to_path_buf(),
+        Path::new("/media/video.mp4").to_path_buf(),
+      ],
+      &["image".to_string(), "video".to_string()],
+      "[0:v:0]trim=start=0:end=2[clip0];[1:v:0]trim=start=0:end=3[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
+      "[vout]",
+      30.0,
+      Path::new("/tmp/image-export.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-loop".to_string(), "1".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-framerate".to_string(), "30".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/title.png".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/video.mp4".to_string()]));
   }
 
   #[test]

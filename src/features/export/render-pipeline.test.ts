@@ -261,6 +261,54 @@ describe("render video pipeline", () => {
   });
 
 
+  it("routes a single image clip through the graph renderer", async () => {
+    const plan: RenderPlan = {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      durationMs: 5000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "image-a",
+          sourcePath: "/media/cover.png",
+          mediaType: "image",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 5000,
+          sourceStartMs: 0,
+          sourceEndMs: 5000,
+          durationMs: 5000,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/image-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/image-export.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/image-export.mp4",
+    });
+
+    expect(renderVideoGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputs: ["/media/cover.png"],
+        inputMediaTypes: ["image"],
+        outputPath: "/tmp/image-export.mp4",
+        width: 1080,
+        height: 1920,
+        frameRate: 30,
+      }),
+    );
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+  });
+
   it("renders the base video before mixing an explicit audio track", async () => {
     const plan: RenderPlan = {
       width: 406,

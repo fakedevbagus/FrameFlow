@@ -1,3 +1,68 @@
+## 2026-09-23 — M3.65 validation assertion correction
+
+- User-supplied validation showed 366/368 frontend tests passing, with two failures in `render-graph.test.ts`.
+- The failures were stale duration expectations: the video fixture has a 5-second duration but the test expected 3 seconds, while the image fixture uses the default 3-second duration but the test expected 5 seconds. fileciteturn621file0L234-L261
+- Production build passed, Rust unit tests passed 39/39, and Tauri dev started successfully in the same run. fileciteturn621file0L273-L285 fileciteturn621file0L288-L329 fileciteturn621file0L344-L360
+- Corrected both assertions in commit `f85e56a19e622005ab501707cf12ce90369384e0`.
+- Fresh frontend test execution and final CI remain required before M3.65 can be marked PASS/ready.
+
+## 2026-09-23 — M3.65 test/native-file restoration
+
+User-supplied validation showed:
+- Frontend tests: 367/368 passed; only the image graph test expected a 5-second trim while the project fixture produced a 3-second image clip. fileciteturn601file0L243-L261
+- Rust compilation failed because `src-tauri/src/lib.rs` on the branch had been corrupted to a test-fragment beginning with an unexpected closing brace. fileciteturn601file0L277-L307
+
+Corrections applied:
+- Restored `src-tauri/src/lib.rs` from `main` and reapplied M3.65 native image graph support, including optional per-input media types and looped image inputs.
+- Updated native Rust graph request fixtures for the new media-type field.
+- Corrected the image RenderGraph regression expectation to the actual 3-second default image duration.
+
+CI note:
+- Run #155 failed on an older head before the restoration.
+- Run #156 was still running an intermediate head before the final test correction.
+- Do not treat either result as the final M3.65 validation.
+
+PR #79 remains Draft until a fresh full local validation and green CI are available.
+
+## 2026-09-23 — M3.65 native graph test fixture hardening
+
+- Updated the existing Rust `NativeVideoGraphRenderRequest` test fixtures to include the new optional per-input `input_media_types` field.
+- This is test-only compatibility for the M3.65 graph request contract; no production behavior changed.
+
+## 2026-09-23 — M3.64 Static Crop Export — merged
+
+- PR #78 was validated by the user and squash-merged at `fd9d889c3975fdd076a87235913f3b37d1cbc50a`.
+- Static crop and crop-position export is now part of `main`.
+
+## 2026-09-23 — M3.65 Static Image Clip Export — in progress
+
+Branch: feat/m3-65-static-image-export
+PR: #79 — Draft
+
+Scope:
+- Export image assets as timeline video frames.
+- Support image-only clips and image/video sequences through the existing video render graph.
+- Preserve static crop and static transforms for image clips.
+
+Implementation:
+- Native graph requests carry optional per-input media types.
+- Image inputs use a looped FFmpeg image demuxer at the project frame rate.
+- Image duration remains controlled by RenderPlan segment trimming.
+- Pipeline bypasses direct video-source renderers when an image is present and uses the graph renderer instead.
+
+Deferred:
+- Image-specific audio extraction.
+- Transition export.
+- Transform keyframes.
+- Non-centered anchors.
+- Multi-track compositing.
+- Audio mixing.
+
+Validation:
+- Local lint/test/build/Cargo/Tauri validation pending user report.
+- PR #79 remains Draft until user PASS.
+- PR #76 remains Draft/parked.
+
 ## 2026-09-23 — M3.63 Static Visual Transform Export — merged
 
 - PR #77 was validated by the user and squash-merged at `67f5e9900fea9424e6e11fd247b4c26143927f27`.

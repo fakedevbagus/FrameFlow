@@ -56,6 +56,14 @@ export function renderVideoPlanToMp4(
   });
 }
 
+function orderedMediaTypes(
+  segments: RenderPlan["segments"],
+): RenderPlan["segments"][number]["mediaType"][] {
+  return [...segments]
+    .sort((left, right) => left.timelineStartMs - right.timelineStartMs)
+    .map((segment) => segment.mediaType);
+}
+
 function renderVideoOnlyPlanToMp4(
   plan: RenderPlan,
   outputPath: string,
@@ -68,7 +76,8 @@ function renderVideoOnlyPlanToMp4(
 
   if (
     videoSegments.length === 1 &&
-    videoSegments[0].timelineStartMs === 0
+    videoSegments[0].timelineStartMs === 0 &&
+    videoSegments[0].mediaType === "video"
   ) {
     const segment = videoSegments[0];
 
@@ -90,7 +99,11 @@ function renderVideoOnlyPlanToMp4(
 
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
 
-  if (videoSegments.length > 0 && videoTrackIds.size === 1) {
+  if (
+    videoSegments.length > 0 &&
+    videoTrackIds.size === 1 &&
+    videoSegments.every((segment) => segment.mediaType === "video")
+  ) {
     const ordered = [...videoSegments].sort(
       (left, right) => left.timelineStartMs - right.timelineStartMs,
     );
@@ -132,6 +145,7 @@ function renderVideoOnlyPlanToMp4(
 
   const request = {
     inputs: graph.inputs.map((input) => input.sourcePath),
+    inputMediaTypes: orderedMediaTypes(videoSegments),
     outputPath,
     width: plan.width,
     height: plan.height,
