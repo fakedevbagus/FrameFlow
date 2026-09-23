@@ -1,3 +1,13 @@
+## M3.70 — validation update — 2026-09-23
+
+- User reran the corrected M3.70 branch successfully: all 33 frontend test files passed and all 393 frontend tests passed.
+- Lint passed and the production Vite build completed successfully.
+- All 39 Rust tests passed.
+- GitHub CI run #231 for commit `a137b87f776aa0067508613514f526d2d4a1d545` completed successfully.
+- The final manual Tauri command in the user run was `npm run tauri` without the required `dev` subcommand, so it displayed CLI help instead of launching the application.
+- React `act(...)` messages remain non-fatal test warnings.
+- PR #84 remains Draft pending the final `npm run tauri dev` launch check and user PASS.
+
 ## M3.70 — validation correction — 2026-09-23
 
 - User validation reached the full frontend test suite on the M3.70 branch: 32 test files passed and 1 failed, with 392/393 tests passing.
