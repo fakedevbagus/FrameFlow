@@ -266,10 +266,9 @@ describe("single video render graph", () => {
     );
   });
 
-  it("rejects transitions and non-default visual state", () => {
+  it("rejects transform keyframes until animated export is implemented", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
-
     project = {
       ...project,
       tracks: project.tracks.map((track) =>
@@ -278,12 +277,57 @@ describe("single video render graph", () => {
               ...track,
               clips: track.clips.map((clip) => ({
                 ...clip,
-                transform: {
-                  x: 10,
-                  y: 0,
-                  scale: 1,
-                  rotation: 0,
-                  opacity: 1,
+                transformKeyframes: [
+                  {
+                    timeMs: 0,
+                    transform: {
+                      x: 0,
+                      y: 0,
+                      scale: 1,
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  },
+                  {
+                    timeMs: 1000,
+                    transform: {
+                      x: 20,
+                      y: 0,
+                      scale: 1.5,
+                      rotation: 15,
+                      opacity: 0.8,
+                    },
+                  },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(project, createDefaultExportSettings(project));
+
+    expect(() => compileSingleVideoTrackGraph(plan)).toThrow(
+      "animated transform export is deferred",
+    );
+  });
+
+  it("rejects crop graph support independently of static transforms", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                crop: {
+                  top: 0,
+                  right: 0.1,
+                  bottom: 0,
+                  left: 0,
                 },
               })),
             }
@@ -293,6 +337,9 @@ describe("single video render graph", () => {
 
     const plan = createRenderPlan(project, createDefaultExportSettings(project));
 
-    expect(() => compileSingleVideoTrackGraph(plan)).toThrow("visual transforms");
+    expect(() => compileSingleVideoTrackGraph(plan)).toThrow(
+      "crop graph support is deferred",
+    );
   });
+
 });
