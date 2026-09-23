@@ -52,6 +52,19 @@ export function renderVideoPlanToMp4(
     audioInputs: audioGraph.inputs
       .sort((left, right) => left.inputIndex - right.inputIndex)
       .map((input) => input.sourcePath),
+    sourceAudioSegments: videoPlan.segments
+      .filter(
+        (segment) =>
+          segment.mediaType === "video" &&
+          !segment.isMuted &&
+          segment.durationMs > 0,
+      )
+      .map((segment) => ({
+        inputIndex: segment.inputIndex,
+        sourceStartMs: segment.sourceStartMs,
+        timelineStartMs: segment.timelineStartMs,
+        durationMs: segment.durationMs,
+      })),
     videoFilterComplex: videoGraph.filterComplex,
     videoMap: videoGraph.videoMap,
     audioFilterComplex: audioGraph.filterComplex,
