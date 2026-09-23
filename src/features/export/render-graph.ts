@@ -353,6 +353,200 @@ export function compileSingleVideoTrackGraph(
   };
 }
 
+function buildVideoTrackSequenceGraph(
+  plan: RenderPlan,
+  segments: RenderSegment[],
+  label: string,
+  graphPrefix: string,
+): string {
+  const ordered = [...segments].sort(
+    (left, right) => left.timelineStartMs - right.timelineStartMs,
+  );
+  const graphParts: string[] = [];
+  const concatInputs: string[] = [];
+  const hasTransitions = ordered.some((segment) => Boolean(segment.transitionOut));
+
+  if (hasTransitions) {
+    const fullLabels = ordered.map(
+      (segment) => graphPrefix + "_full_" + segment.inputIndex,
+    );
+
+    ordered.forEach((segment, index) => {
+      graphParts.push(
+        buildSegmentFilter(
+          segment,
+          plan,
+          fullLabels[index],
+          true,
+          true,
+        ),
+      );
+    });
+
+    let previousEndMs = 0;
+
+    for (let index = 0; index < ordered.length; index += 1) {
+      const segment = ordered[index];
+
+      if (segment.timelineStartMs > previousEndMs) {
+        const gapLabel = graphPrefix + "_gap_" + index;
+        graphParts.push(
+          buildTransparentGapFilter(
+            plan,
+            segment.timelineStartMs - previousEndMs,
+            gapLabel,
+          ),
+        );
+        concatInputs.push("[" + gapLabel + "]");
+      }
+
+      const transition = getClipTransition(segment.transitionOut);
+
+      if (!transition) {
+        concatInputs.push("[" + fullLabels[index] + "]");
+        previousEndMs = segment.timelineEndMs;
+        continue;
+      }
+
+      const next = ordered[index + 1];
+
+      if (!next) {
+        throw new Error("Transition requires an adjacent incoming visual clip.");
+      }
+
+      assertSupportedTransition(segment, next, transition);
+
+      const durationMs = Math.min(
+        transition.durationMs,
+        segment.durationMs,
+        next.durationMs,
+      );
+
+      if (durationMs < MIN_DISSOLVE_DURATION_MS) {
+        throw new Error(
+          "Transition duration is shorter than the supported minimum.",
+        );
+      }
+
+      concatInputs.push(
+        ...buildTransitionGraphParts(
+          segment,
+          fullLabels[index],
+          fullLabels[index + 1],
+          transition,
+          graphParts,
+          index,
+          durationMs,
+          graphPrefix,
+          true,
+        ),
+      );
+
+      previousEndMs = segment.timelineEndMs;
+    }
+  } else {
+    let previousEndMs = 0;
+
+    ordered.forEach((segment, index) => {
+      if (segment.timelineStartMs > previousEndMs) {
+        const gapLabel = graphPrefix + "_gap_" + index;
+        graphParts.push(
+          buildTransparentGapFilter(
+            plan,
+            segment.timelineStartMs - previousEndMs,
+            gapLabel,
+          ),
+        );
+        concatInputs.push("[" + gapLabel + "]");
+      }
+
+      const segmentLabel = graphPrefix + "_clip_" + index;
+      graphParts.push(
+        buildSegmentFilter(
+          segment,
+          plan,
+          segmentLabel,
+          true,
+          true,
+        ),
+      );
+      concatInputs.push("[" + segmentLabel + "]");
+      previousEndMs = segment.timelineEndMs;
+    });
+  }
+
+  const lastEndMs = ordered.length
+    ? Math.max(...ordered.map((segment) => segment.timelineEndMs))
+    : 0;
+
+  if (lastEndMs < plan.durationMs) {
+    const gapLabel = graphPrefix + "_tail_gap";
+    graphParts.push(
+      buildTransparentGapFilter(
+        plan,
+        plan.durationMs - lastEndMs,
+        gapLabel,
+      ),
+    );
+    concatInputs.push("[" + gapLabel + "]");
+  }
+
+  if (concatInputs.length === 1) {
+    graphParts.push(
+      concatInputs[0] +
+        "trim=duration=" +
+        formatSeconds(plan.durationMs) +
+        ",setpts=PTS-STARTPTS,format=rgba[" +
+        label +
+        "]",
+    );
+  } else {
+    graphParts.push(
+      concatInputs.join("") +
+        "concat=n=" +
+        concatInputs.length +
+        ":v=1:a=0,format=rgba,setpts=PTS-STARTPTS[" +
+        label +
+        "]",
+    );
+  }
+
+  return graphParts.join(";");
+}
+
+function buildTransparentGapFilter(
+  plan: RenderPlan,
+  durationMs: number,
+  label: string,
+): string {
+  return (
+    "color=c=black@0.0:s=" +
+    plan.width +
+    "x" +
+    plan.height +
+    ":r=" +
+    formatNumber(plan.frameRate) +
+    ":d=" +
+    formatSeconds(durationMs) +
+    ",format=rgba[" +
+    label +
+    "]"
+  );
+}
+
+function assertSupportedVisualMetadataForMultiTrack(
+  segment: RenderSegment,
+): void {
+  if (
+    segment.mediaType !== "video" &&
+    segment.mediaType !== "image"
+  ) {
+    throw new Error(
+      "Video render graph supports video and image visual assets only.",
+    );
+  }
+}
+
 function assertSupportedTransition(
   outgoing: RenderSegment,
   incoming: RenderSegment,
