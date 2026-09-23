@@ -791,11 +791,14 @@ describe("single video render graph", () => {
   it("preserves transformed visual clips while compositing multiple tracks", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
-    project = addAssetToTrack(project, "video-b", "video-2", 0);
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find((track) => track.id !== "video-1" && track.type === "video")?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 0);
     project = {
       ...project,
       tracks: project.tracks.map((track) =>
-        track.id === "video-2"
+        track.id === videoTrackId
           ? {
               ...track,
               clips: track.clips.map((clip) => ({
