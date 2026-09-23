@@ -2,14 +2,18 @@
 
 - M3.65 Static Image Clip Export was completed, user-validated, and squash-merged into `main` at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
 - M3.62 Text Overlay Export Rendering remains parked in PR #76 Draft because the user's Linux/Tauri/WebKitGTK Preview timing issue is unresolved.
-- M3.66 targets the next concrete export gap already represented in the editor: visual transitions between directly adjacent clips.
-- The existing project model already supports `dissolve` and `fade-through-black` transition metadata and Preview renders both transition types.
-- M3.66 will keep the existing single-video-track architecture and compile transition timing without changing the project schema.
-- Transition export will preserve the existing timeline-duration semantics used by Preview: the outgoing clip's transition window uses the incoming clip's first frame, then the incoming clip starts from source time zero at its original timeline boundary.
-- Static crop, static transforms, visual effects, and image/video visual inputs should remain composable with the transition path.
-- Multi-track compositing, audio mixing, transform keyframes, non-centered transform anchors, and text overlay export remain outside this focused slice unless the repository evidence requires otherwise.
-- Regression coverage is required for transition graph compilation and pipeline routing.
-- PR for M3.66 must remain Draft until the user reports successful local validation.
+- M3.66 is implemented on branch `feat/m3-66-transition-export` with Draft PR #80.
+- The existing project model already supports `dissolve` and `fade-through-black` transition metadata, and Preview exposes both behaviours.
+- Transition timelines now route through the single-video FFmpeg graph rather than the legacy sequential segment renderer.
+- The graph builds full normalized streams for the affected clips, then composes the outgoing transition window without shortening the overall timeline.
+- Dissolve uses the incoming clip's first frame, looped for the transition duration, with an alpha ramp over the outgoing tail.
+- Fade-through-black uses explicit outgoing fade-out and incoming first-frame fade-in stages, producing the black midpoint without requiring an `xfade` duration-shortening model.
+- Transition validation requires directly adjacent video/image clips on the same video track.
+- Existing static crop, static transforms, visual effects, and video/image graph inputs remain on the same render path.
+- No project schema change is introduced.
+- Transform keyframes, non-centered transform anchors, multi-track compositing, audio mixing, and the parked text-export runtime issue remain deferred.
+- Added render-graph regression coverage for dissolve, fade-through-black, and non-adjacent transition rejection, plus pipeline routing coverage.
+- Local validation is still required before PR #80 can be marked ready and merged.
 
 ## M3.64 — Static Crop Export — merged — 2026-09-23
 
