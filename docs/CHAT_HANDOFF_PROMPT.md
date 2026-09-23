@@ -1,3 +1,16 @@
+## M3.73 — active — 2026-09-24
+
+- Branch: `feat/m3-73-source-audio-unified-export`.
+- Scope: preserve embedded audio from non-muted video clips when explicit Audio tracks use the unified AV export path.
+- The request now carries optional `sourceAudioSegments` metadata for rebased video input indexes and source/timeline timing.
+- Native export probes referenced video sources for audio, trims the first audio stream to the clip source range, delays it to the timeline start, normalizes it to 48 kHz stereo, and mixes it with the existing explicit Audio graph.
+- Image inputs and muted video segments are excluded from source-audio preservation.
+- No project schema change.
+- PR #87 is the intended draft PR.
+- Local validation is pending.
+- M3.72 is complete and merged at `8aaae96d09bd7275c9171dc08cf89b74e1dd8e38`.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
 ## M3.72 — completed — 2026-09-24
 
 - PR #86 `feat: integrate audio with multitrack export` was user-validated, marked ready, and squash-merged.
