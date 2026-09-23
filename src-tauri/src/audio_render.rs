@@ -37,10 +37,31 @@ pub struct NativeVideoWithAudioGraphRenderRequest {
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeSourceAudioSegment {
+  pub input_index: usize,
+  pub source_start_ms: u64,
+  pub timeline_start_ms: u64,
+  pub duration_ms: u64,
+}
+
+struct ResolvedSourceAudioSegment {
+  input_index: usize,
+  source_start_ms: u64,
+  timeline_start_ms: u64,
+  duration_ms: u64,
+  has_audio: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NativeVideoAudioGraphRenderRequest {
   pub video_inputs: Vec<String>,
   pub video_input_media_types: Vec<String>,
   pub audio_inputs: Vec<String>,
+  #[serde(default)]
+  pub source_audio_segments: Vec<NativeSourceAudioSegment>,
   pub video_filter_complex: String,
   pub video_map: String,
   pub audio_filter_complex: String,
