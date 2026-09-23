@@ -1,3 +1,9 @@
+- M3.70 validation update: the latest user run had 392/393 frontend tests passing, with the sole failure in the new text-overlay crop/effects/transform ordering assertion.
+- Root cause was a stale test expectation: configured crop leaves 90% height, so the expected fragment is `crop=w=trunc(iw*0.85):h=trunc(ih*0.9)`.
+- The assertion is corrected on `feat/m3-70-text-overlay-export` in commit `d2c937b836bb2387cf76c67ed7035b7f6db3dcfc`.
+- Lint, production build, and 39 Rust tests passed in the user run. Tauri dev launched successfully. React `act(...)` messages are warnings only.
+- PR #84 stays Draft until a clean rerun and user `PASS`.
+
 - M3.70 progress update: PR #84 on `feat/m3-70-text-overlay-export` now includes resolution-aware text scaling and expanded regression coverage for image clips, drawtext escaping, transform ordering, and dissolve/fade-through-black transitions.
 - The latest test fix corrected the crop-order assertion to use the actual `ih` expression.
 - Latest M3.70 changes are not yet user-validated; keep PR #84 Draft until the user reports `PASS`.
