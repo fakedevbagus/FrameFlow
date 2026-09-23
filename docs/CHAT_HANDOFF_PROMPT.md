@@ -1,3 +1,13 @@
+## M3.72 — completed — 2026-09-24
+
+- PR #86 `feat: integrate audio with multitrack export` was user-validated, marked ready, and squash-merged.
+- Merge SHA: `8aaae96d09bd7275c9171dc08cf89b74e1dd8e38`.
+- User reported PASS for the requested local lint, frontend test suite, production build, Rust tests, and Tauri development startup.
+- A stale render-graph assertion was corrected before the successful validation; no production implementation change was required for that correction.
+- M3.72 removed the visual graph compilers' obsolete rejection of explicit Audio track segments and connected multi-video + explicit-audio plans to the unified native AV renderer.
+- Known next gap: embedded/source audio from graph-rendered visual clips is still not preserved when explicit Audio tracks trigger the unified AV path.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
 - M3.72 validation correction: user validation found one stale render-graph assertion expecting `track_1_sequence`; the actual generated graph correctly uses `track_2_sequence` because the fixture's second video track is project track index 2.
 - Corrected the assertion in commit `230dcf7c0d09e01319602c662bb3a50d33f1d320`.
 - Lint, production build, 42 Rust tests, and Tauri startup passed in that run; fresh frontend validation is still required.
