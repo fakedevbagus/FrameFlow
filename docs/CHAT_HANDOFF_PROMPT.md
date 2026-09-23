@@ -94,29 +94,42 @@ cd ..
 
 ## Current repository state
 
-### M3.63 — Static Visual Transform Export — active draft PR
+### M3.66 — Transition Export — active draft PR
 
 Branch:
-`feat/m3-63-static-transform-export`
+`feat/m3-66-transition-export`
 
 PR:
-#77
+TBD
 
 Status:
-- Open
+- In progress
 - Draft
 - Not merged
 - Local validation pending
 
-M3.63 implementation:
-- Static visual X/Y, Scale, Rotation, and Opacity are now compiled into the single-video FFmpeg graph.
-- Default transform values preserve the existing minimal direct graph.
-- Transform anchors are propagated into RenderPlan.
-- Non-centered transform anchors are explicitly rejected until anchor-aware export is implemented.
-- Transform keyframes, crop/crop position, transitions, images, multi-track compositing, and audio mixing remain deferred.
-- Regression coverage was added for RenderPlan anchor propagation and static transform graph compilation/guards.
+M3.66 current scope:
+- Export the existing dissolve and fade-through-black transitions between directly adjacent visual clips.
+- Preserve the Preview timeline-duration semantics rather than shortening the total timeline by transition duration.
+- Keep compatibility with video/image visual inputs and the existing static crop/static transform pipeline.
+- Reuse the existing transition domain model; do not introduce a project schema version change.
+- Keep the one-video-track export boundary.
+- Add regression coverage for transition graph compilation and export-pipeline routing.
 
-### M3.62 — Text Overlay Export Rendering — parked Draft
+Explicitly deferred:
+- Text overlay export remains parked in PR #76.
+- Transform keyframe export.
+- Non-centered transform-anchor export.
+- Multi-track compositing.
+- Audio mixing.
+
+### M3.65 — Static Image Clip Export — merged
+- PR #79 was user-validated and squash-merged at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
+- Image assets export through the native video graph using looped image inputs.
+- Image/video sequences, static crop, and static transforms remain supported through the existing graph architecture.
+
+### M3.64 — Static Crop Export — merged
+ — Text Overlay Export Rendering — parked Draft
 
 PR:
 #76
