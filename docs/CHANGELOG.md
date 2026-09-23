@@ -1,3 +1,10 @@
+### M3.73 — validation correction — 2026-09-24
+
+- User validation passed lint, 33/33 frontend test files, 397/397 frontend tests, and production build.
+- Rust/Tauri failed on compile issues in the first implementation pass.
+- Corrected duplicate serde attributes, missing unified-request test fields, the missing builder argument, and test-scope native type coverage in commit `66afae8ad3307bddebcf3ca320cee51c1c936913`.
+- Fresh Rust/Tauri validation remains required.
+
 ### M3.73 — Preserve Source Audio in Unified AV Export — in progress — 2026-09-24
 
 Branch: `feat/m3-73-source-audio-unified-export`
