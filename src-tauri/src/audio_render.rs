@@ -431,6 +431,65 @@ fn build_ffmpeg_video_audio_graph_args(
 
   args
 }
+struct SourceAudioFilter {
+  filter_complex: String,
+  labels: Vec<String>,
+}
+
+fn build_source_audio_filter(
+  segments: &[ResolvedSourceAudioSegment],
+) -> SourceAudioFilter {
+  let mut filter_parts = Vec::new();
+  let mut labels = Vec::new();
+
+  for segment in segments.iter().filter(|segment| segment.has_audio) {
+    let source_end_ms = segment
+      .source_start_ms
+      .saturating_add(segment.duration_ms);
+    let label = format!("[frameflow_source_audio_{}]", segment.input_index);
+    filter_parts.push(format!(
+      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay={}:all=1{}",
+      segment.input_index,
+      format_seconds(segment.source_start_ms),
+      format_seconds(source_end_ms),
+      segment.timeline_start_ms,
+      label,
+    ));
+    labels.push(label);
+  }
+
+  SourceAudioFilter {
+    filter_complex: filter_parts.join(";"),
+    labels,
+  }
+}
+
+fn rename_audio_graph_output(
+  filter_complex: &str,
+  audio_map: &str,
+  replacement: &str,
+) -> Result<String, String> {
+  let occurrences = filter_complex.match_indices(audio_map).count();
+
+  if occurrences != 1 {
+    return Err(
+      "Unified AV audio graph must contain exactly one declared audio output label."
+        .to_string(),
+    );
+  }
+
+  let index = filter_complex
+    .rfind(audio_map)
+    .ok_or_else(|| "Unified AV audio graph audio output label is missing.".to_string())?;
+
+  Ok(format!(
+    "{}{}{}",
+    &filter_complex[..index],
+    replacement,
+    &filter_complex[index + audio_map.len()..],
+  ))
+}
+
 #[tauri::command]
 pub fn render_video_with_audio_graph_to_mp4(
   app: tauri::AppHandle,
