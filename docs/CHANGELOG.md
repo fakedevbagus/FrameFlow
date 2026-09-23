@@ -1,3 +1,10 @@
+## 2026-09-24 — M3.71 validation correction
+
+- Supplied user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the production Vite build.
+- Rust compilation failed because the unified AV renderer did not import `validate_native_export_settings`; Tauri development startup hit the same compiler error.
+- Corrected the missing import and cleaned the reported unused-parameter / unnecessary-mut warnings in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
+- Fresh Rust and Tauri validation is still required.
+
 ## 2026-09-24 — M3.71 Unified AV Export Foundation — implementation
 
 Branch: `feat/m3-71-unified-av-export`
