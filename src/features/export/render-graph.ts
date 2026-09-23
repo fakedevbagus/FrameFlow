@@ -604,12 +604,6 @@ function assertSupportedVisualMetadata(segment: RenderSegment): void {
     );
   }
 
-  if (segment.transitionOut) {
-    throw new Error(
-      "M3.36 does not compile transitions yet; transition graph support is deferred.",
-    );
-  }
-
   if (segment.isMuted) {
     throw new Error(
       "M3.36 does not compile track mute state yet; audio/video graph policy is deferred.",
