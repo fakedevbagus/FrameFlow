@@ -111,6 +111,7 @@ M3.68 current scope:
 - Preserve anchor-aware scale and rotation semantics for static transforms and animated keyframes.
 - Preserve existing crop/effects ordering, image/video compatibility, keyframe easing, and world-space X/Y translation.
 - Keep the project schema unchanged.
+- Off-center pivot export uses a transparent surface with the selected anchor placed at its center before rotation; X/Y translation is then applied in world space.
 - Route graph-required visual metadata through the graph renderer instead of direct/legacy render paths.
 
 Explicitly deferred:
