@@ -1,6 +1,7 @@
 ## 2026-09-23 — M3.69 Multi-Track Video Compositing Foundation — implementation
 
 Branch: `feat/m3-69-multi-track-video-compositing`
+PR: #83 — Draft
 
 Implemented:
 - Added multi-video-track graph compilation while preserving the existing single-track graph path.
