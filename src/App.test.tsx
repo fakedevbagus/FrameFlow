@@ -754,7 +754,7 @@ describe("App", () => {
     expect(screen.getByTestId("preview-video")).toHaveStyle({ filter: "" });
   });
 
-  it("edits and resets a text overlay from the inspector", async () => {
+  it("keeps Text/X/Y/Size preview updates live in sequence before commit", async () => {
     let project = createProject({ id: "text-overlay-ui" });
 
     project = {
@@ -786,62 +786,306 @@ describe("App", () => {
       screen.getByRole("button", { name: "Select text-ui.mp4 clip" }),
     );
 
-    expect(screen.getByTestId("text-overlay")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Show text overlay" }),
-    ).toBeInTheDocument();
+    const clipId = project.tracks[0].clips[0].id;
+    const previewOverlay = () =>
+      screen.getByTestId("preview-text-overlay-" + clipId);
 
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Text overlay content" }),
-      { target: { value: "Hello FrameFlow" } },
-    );
-    fireEvent.blur(
-      screen.getByRole("textbox", { name: "Text overlay content" }),
-    );
+    const textInput = screen.getByRole("textbox", {
+      name: "Text overlay content",
+    }) as HTMLTextAreaElement;
+
+    textInput.value = "hello";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    });
+
+    const xInput = screen.getByRole("spinbutton", {
+      name: "Text overlay X position",
+    }) as HTMLInputElement;
+    xInput.value = "20";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({ left: "20%" });
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    });
+
+    const yInput = screen.getByRole("spinbutton", {
+      name: "Text overlay Y position",
+    }) as HTMLInputElement;
+    yInput.value = "80";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({
+        left: "20%",
+        top: "80%",
+      });
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    });
+
+    const sizeInput = screen.getByRole("spinbutton", {
+      name: "Text overlay font size",
+    }) as HTMLInputElement;
+    sizeInput.value = "72";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({
+        left: "20%",
+        top: "80%",
+        fontSize: "72px",
+      });
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    });
+
+    fireEvent.blur(sizeInput);
 
     await waitFor(() =>
-      expect(screen.getByTestId("preview-text-overlay-" + project.tracks[0].clips[0].id)).toHaveTextContent(
-        "Hello FrameFlow",
-      ),
+      expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled(),
     );
 
-    fireEvent.change(
-      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
-      { target: { value: "20" } },
-    );
-    fireEvent.blur(
-      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
 
-    fireEvent.change(
-      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
-      { target: { value: "72" } },
-    );
-    fireEvent.blur(
-      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
-    );
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("");
+      expect(previewOverlay()).toHaveStyle({ visibility: "hidden" });
+      expect(screen.getByRole("button", { name: "Redo" })).not.toBeDisabled();
+    });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Align text left" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Redo" }));
 
-    expect(
-      screen.getByRole("spinbutton", { name: "Text overlay X position" }),
-    ).toHaveValue(20);
-    expect(
-      screen.getByRole("spinbutton", { name: "Text overlay font size" }),
-    ).toHaveValue(72);
-    expect(
-      screen.getByRole("button", { name: "Align text left" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({
+        left: "20%",
+        top: "80%",
+        fontSize: "72px",
+      });
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Reset text overlay" }));
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId("preview-text-overlay-" + project.tracks[0].clips[0].id),
-      ).not.toBeInTheDocument();
+      expect(previewOverlay()).toHaveTextContent("");
+      expect(previewOverlay()).toHaveStyle({ visibility: "hidden" });
     });
+  });
+
+  it("updates the preview when the WebView changes a DOM value without dispatching an input event", async () => {
+    let project = createProject({ id: "text-overlay-webview-dom-polling" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-text-webview-poll",
+          name: "webview-poll.mp4",
+          mediaType: "video",
+          sourcePath: "/media/webview-poll.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-text-webview-poll");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTitle("webview-poll.mp4 · 00:05"),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select webview-poll.mp4 clip",
+      }),
+    );
+
+    const overlay = () =>
+      screen.getByTestId(
+        "preview-text-overlay-" + project.tracks[0].clips[0].id,
+      );
+
+    const textInput = screen.getByRole("textbox", {
+      name: "Text overlay content",
+    });
+
+    textInput.dispatchEvent(
+      new InputEvent("beforeinput", {
+        bubbles: true,
+        inputType: "insertText",
+        data: "h",
+      }),
+    );
+
+    expect(
+      screen.getByTestId(
+        "preview-text-overlay-" + project.tracks[0].clips[0].id,
+      ),
+    ).toHaveTextContent("h");
+
+    (textInput as HTMLTextAreaElement).value = "WebView live text";
+
+    await waitFor(
+      () => expect(overlay()).toHaveTextContent("WebView live text"),
+      { timeout: 1000 },
+    );
+
+    const xInput = screen.getByRole("spinbutton", {
+      name: "Text overlay X position",
+    });
+    (xInput as HTMLInputElement).value = "25";
+
+    await waitFor(
+      () => expect(overlay()).toHaveStyle({ left: "25%" }),
+      { timeout: 1000 },
+    );
+
+    const yInput = screen.getByRole("spinbutton", {
+      name: "Text overlay Y position",
+    });
+    (yInput as HTMLInputElement).value = "75";
+
+    await waitFor(
+      () => expect(overlay()).toHaveStyle({ top: "75%" }),
+      { timeout: 1000 },
+    );
+
+    const sizeInput = screen.getByRole("spinbutton", {
+      name: "Text overlay font size",
+    });
+    (sizeInput as HTMLInputElement).value = "72";
+
+    await waitFor(
+      () => expect(overlay()).toHaveStyle({ fontSize: "72px" }),
+      { timeout: 1000 },
+    );
+
+    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+  });
+
+  it("autosaves text overlay edits without requiring another control", async () => {
+    let project = createProject({ id: "text-overlay-autosave-ui" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "asset-text-autosave",
+          name: "autosave-text.mp4",
+          mediaType: "video",
+          sourcePath: "/media/autosave-text.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "asset-text-autosave");
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByTitle("autosave-text.mp4 · 00:05"),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select autosave-text.mp4 clip" }),
+    );
+
+    const textInput = screen.getByRole("textbox", {
+      name: "Text overlay content",
+    });
+    textInput.value = "Keyboard live";
+    fireEvent.input(textInput, { target: { value: "Keyboard live" } });
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveTextContent("Keyboard live"),
+    );
+
+    fireEvent.input(textInput, {
+      target: { value: "Autosave now" },
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveTextContent("Autosave now"),
+    );
+
+    await waitFor(
+      () => {
+        const saved = JSON.parse(
+          localStorage.getItem("frameflow.workspace-project") ?? "{}",
+        );
+        expect(saved.tracks?.[0]?.clips?.[0]?.textOverlay?.text).toBe(
+          "Autosave now",
+        );
+      },
+      { timeout: 1500 },
+    );
+
+    const xInput = screen.getByRole("spinbutton", {
+      name: "Text overlay X position",
+    });
+    fireEvent.input(xInput, { target: { value: "20" } });
+    fireEvent.input(xInput, { target: { value: "20" } });
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ left: "20%" }),
+    );
+
+    const yInput = screen.getByRole("spinbutton", {
+      name: "Text overlay Y position",
+    });
+    fireEvent.input(yInput, { target: { value: "80" } });
+    fireEvent.input(yInput, { target: { value: "80" } });
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ top: "80%" }),
+    );
+
+    const sizeInput = screen.getByRole("spinbutton", {
+      name: "Text overlay font size",
+    });
+    fireEvent.input(sizeInput, { target: { value: "72" } });
+    fireEvent.input(sizeInput, { target: { value: "72" } });
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(
+          "preview-text-overlay-" + project.tracks[0].clips[0].id,
+        ),
+      ).toHaveStyle({ fontSize: "72px" }),
+    );
   });
 
   it("edits transform values precisely from the inspector", async () => {

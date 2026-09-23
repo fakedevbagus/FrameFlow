@@ -13,12 +13,12 @@ import {
   getTextOverlay,
   getTrackPan,
   getTrackVolume,
-  type 
-  ClipCrop,
-  ClipTransform,
-  CropPosition,
-  Project,
-  TransformAnchor,
+  type ClipCrop,
+  type ClipTransform,
+  type CropPosition,
+  type Project,
+  type TextOverlay,
+  type TransformAnchor,
 } from "../project/domain";
 import {
   getClipCrop,
@@ -42,6 +42,10 @@ import {
 } from "./canvasManipulation";
 import { buildVisualEffectsCssFilter } from "../effects/visual-effects";
 import {
+  getTextOverlayEditSession,
+  setTextOverlayEditSession,
+} from "../effects/text-overlay-edit-session";
+import {
   getActiveAudioPreviewClips,
   getActiveVisualPreviewClips,
   getAudioFadeGain,
@@ -63,6 +67,7 @@ interface PreviewProps {
   ) => void;
   onCropCommit?: (clipId: string, crop: ClipCrop) => void;
   onCropPositionCommit?: (clipId: string, position: CropPosition) => void;
+
 }
 
 interface PreviewError {
@@ -239,6 +244,7 @@ function PreviewVisualLayer({
   const mediaRef = useRef<HTMLVideoElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
+  const textOverlayDomRef = useRef<HTMLDivElement | null>(null);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
   const [videoSourceUrl, setVideoSourceUrl] = useState<string | null>(null);
   const [gesture, setGesture] = useState<CanvasGesture | null>(null);
@@ -332,6 +338,11 @@ function PreviewVisualLayer({
     getVisualEffects(layer.clip),
   );
   const textOverlay = getTextOverlay(layer.clip);
+  const committedTextOverlay = getTextOverlay(layer.clip);
+  const committedTextOverlayRef = useRef<TextOverlay | undefined>(
+    committedTextOverlay,
+  );
+  committedTextOverlayRef.current = committedTextOverlay;
   const cropMediaStyle = {
     position: "absolute" as const,
     left: `${50 - (cropPosition.x / visibleWidth) * 100}%`,
@@ -341,6 +352,419 @@ function PreviewVisualLayer({
     objectFit: "fill" as const,
   };
 
+  useEffect(() => {
+    if (!isSelected || isPlaying) {
+      return;
+    }
+
+    let animationFrameId = 0;
+    let disposed = false;
+    const committedOverlay: TextOverlay = textOverlay ?? {
+      text: "",
+      x: 0.5,
+      y: 0.5,
+      fontSize: 56,
+      color: "#ffffff",
+      alignment: "center",
+    };
+
+    const getInspectorValue = (control: "text" | "x" | "y" | "size") =>
+      document.querySelector<HTMLElement>(
+        '[data-text-overlay-control="' + control + '"]',
+      );
+
+    const applyOverlayToDom = (overlay: TextOverlay) => {
+      const element = textOverlayDomRef.current;
+
+      if (!element) {
+        return;
+      }
+
+      const horizontalTransform =
+        overlay.alignment === "left"
+          ? "translate(0, -50%)"
+          : overlay.alignment === "right"
+            ? "translate(-100%, -50%)"
+            : "translate(-50%, -50%)";
+
+      element.textContent = overlay.text;
+      element.style.left = overlay.x * 100 + "%";
+      element.style.top = overlay.y * 100 + "%";
+      element.style.color = overlay.color;
+      element.style.fontSize = overlay.fontSize + "px";
+      element.style.textAlign = overlay.alignment;
+      element.style.transform = horizontalTransform;
+      element.style.visibility = overlay.text.trim() ? "visible" : "hidden";
+    };
+
+    const getNextInputValue = (
+      input: HTMLInputElement | HTMLTextAreaElement,
+      event: InputEvent,
+    ): string | null => {
+      const currentValue = input.value;
+      const selectionStart = input.selectionStart;
+      const selectionEnd = input.selectionEnd;
+      const start = selectionStart ?? currentValue.length;
+      const end = selectionEnd ?? start;
+
+      if (
+        event.inputType === "insertText" ||
+        event.inputType === "insertReplacementText" ||
+        event.inputType === "insertFromPaste" ||
+        event.inputType === "insertFromDrop"
+      ) {
+        const inserted = event.data ?? "";
+        return currentValue.slice(0, start) + inserted + currentValue.slice(end);
+      }
+
+      if (
+        event.inputType === "deleteContentBackward" ||
+        event.inputType === "deleteContentForward"
+      ) {
+        if (start !== end) {
+          return currentValue.slice(0, start) + currentValue.slice(end);
+        }
+
+        if (event.inputType === "deleteContentBackward" && start > 0) {
+          return currentValue.slice(0, start - 1) + currentValue.slice(end);
+        }
+
+        if (event.inputType === "deleteContentForward" && end < currentValue.length) {
+          return currentValue.slice(0, start) + currentValue.slice(end + 1);
+        }
+      }
+
+      return null;
+    };
+
+    const updateOverlayFromInputIntent = (
+      control: "text" | "x" | "y" | "size",
+      nextValue: string,
+    ) => {
+      const currentSession = getTextOverlayEditSession();
+      const currentOverlay =
+        currentSession?.clipId === layer.clip.id
+          ? currentSession.overlay
+          : committedTextOverlayRef.current ?? committedOverlay;
+      const nextOverlay = { ...currentOverlay };
+
+      if (control === "text") {
+        nextOverlay.text = nextValue.slice(0, 500);
+      }
+
+      if (control === "x") {
+        const value = Number(nextValue);
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          return;
+        }
+        nextOverlay.x = value / 100;
+      }
+
+      if (control === "y") {
+        const value = Number(nextValue);
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          return;
+        }
+        nextOverlay.y = value / 100;
+      }
+
+      if (control === "size") {
+        const value = Number(nextValue);
+        if (!Number.isFinite(value) || value < 12 || value > 240) {
+          return;
+        }
+        nextOverlay.fontSize = Math.round(value);
+      }
+
+      setTextOverlayEditSession({
+        clipId: layer.clip.id,
+        overlay: nextOverlay,
+      });
+      applyOverlayToDom(nextOverlay);
+    };
+
+    const controls: Array<{
+      control: "text" | "x" | "y" | "size";
+      element: HTMLInputElement | HTMLTextAreaElement | null;
+    }> = [
+      {
+        control: "text",
+        element: getInspectorValue("text") as HTMLTextAreaElement | null,
+      },
+      {
+        control: "x",
+        element: getInspectorValue("x") as HTMLInputElement | null,
+      },
+      {
+        control: "y",
+        element: getInspectorValue("y") as HTMLInputElement | null,
+      },
+      {
+        control: "size",
+        element: getInspectorValue("size") as HTMLInputElement | null,
+      },
+    ];
+
+    const getNextKeyboardValue = (
+      input: HTMLInputElement | HTMLTextAreaElement,
+      event: KeyboardEvent,
+    ): string | null => {
+      const currentValue = input.value;
+      const selectionStart = input.selectionStart;
+      const selectionEnd = input.selectionEnd;
+      const start = selectionStart ?? currentValue.length;
+      const end = selectionEnd ?? start;
+
+      if (input instanceof HTMLTextAreaElement) {
+        if (event.key === "Backspace") {
+          if (start !== end) {
+            return currentValue.slice(0, start) + currentValue.slice(end);
+          }
+          return start > 0
+            ? currentValue.slice(0, start - 1) + currentValue.slice(end)
+            : currentValue;
+        }
+
+        if (event.key === "Delete") {
+          if (start !== end) {
+            return currentValue.slice(0, start) + currentValue.slice(end);
+          }
+          return end < currentValue.length
+            ? currentValue.slice(0, start) + currentValue.slice(end + 1)
+            : currentValue;
+        }
+
+        if (event.key === "Enter") {
+          return currentValue.slice(0, start) + "\n" + currentValue.slice(end);
+        }
+
+        if (
+          event.key.length === 1 &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.altKey
+        ) {
+          return currentValue.slice(0, start) + event.key + currentValue.slice(end);
+        }
+
+        return null;
+      }
+
+      if (input.type === "number") {
+        const currentNumber = Number(currentValue);
+
+        if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+          const fallback = Number.isFinite(currentNumber) ? currentNumber : 0;
+          const step = Number(input.step) > 0 ? Number(input.step) : 1;
+          return String(
+            event.key === "ArrowUp" ? fallback + step : fallback - step,
+          );
+        }
+
+        if (
+          event.key.length === 1 &&
+          /[0-9.-]/.test(event.key) &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.altKey
+        ) {
+          return currentValue.slice(0, start) + event.key + currentValue.slice(end);
+        }
+
+        if (event.key === "Backspace" || event.key === "Delete") {
+          if (start !== end) {
+            return currentValue.slice(0, start) + currentValue.slice(end);
+          }
+          if (event.key === "Backspace" && start > 0) {
+            return currentValue.slice(0, start - 1) + currentValue.slice(end);
+          }
+          if (event.key === "Delete" && end < currentValue.length) {
+            return currentValue.slice(0, start) + currentValue.slice(end + 1);
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const getNextClipboardValue = (
+      input: HTMLInputElement | HTMLTextAreaElement,
+      replacement: string,
+    ) => {
+      const currentValue = input.value;
+      const start = input.selectionStart ?? currentValue.length;
+      const end = input.selectionEnd ?? start;
+      return currentValue.slice(0, start) + replacement + currentValue.slice(end);
+    };
+
+    const nativeEventCleanups = controls.map(({ control, element }) => {
+      if (!element) {
+        return () => {};
+      }
+
+      const handleBeforeInput = (event: Event) => {
+        const inputEvent = event as InputEvent;
+
+        if (inputEvent.isComposing) {
+          return;
+        }
+
+        const nextValue = getNextInputValue(element, inputEvent);
+
+        if (nextValue !== null) {
+          updateOverlayFromInputIntent(control, nextValue);
+        }
+      };
+
+      const handleKeyDown = (event: Event) => {
+        const keyboardEvent = event as KeyboardEvent;
+
+        if (keyboardEvent.isComposing) {
+          return;
+        }
+
+        const nextValue = getNextKeyboardValue(element, keyboardEvent);
+
+        if (nextValue !== null) {
+          updateOverlayFromInputIntent(control, nextValue);
+        }
+      };
+
+      const handlePaste = (event: Event) => {
+        const clipboardEvent = event as ClipboardEvent;
+        const pasted =
+          clipboardEvent.clipboardData?.getData("text/plain") ??
+          clipboardEvent.clipboardData?.getData("text") ??
+          "";
+
+        if (pasted) {
+          updateOverlayFromInputIntent(
+            control,
+            getNextClipboardValue(element, pasted),
+          );
+        }
+      };
+
+      const handleCut = (event: Event) => {
+        const clipboardEvent = event as ClipboardEvent;
+        const start = element.selectionStart ?? element.value.length;
+        const end = element.selectionEnd ?? start;
+
+        if (start !== end) {
+          clipboardEvent.clipboardData?.setData(
+            "text/plain",
+            element.value.slice(start, end),
+          );
+          updateOverlayFromInputIntent(
+            control,
+            element.value.slice(0, start) + element.value.slice(end),
+          );
+        }
+      };
+
+      element.addEventListener("beforeinput", handleBeforeInput);
+      element.addEventListener("keydown", handleKeyDown);
+      element.addEventListener("paste", handlePaste);
+      element.addEventListener("cut", handleCut);
+
+      return () => {
+        element.removeEventListener("beforeinput", handleBeforeInput);
+        element.removeEventListener("keydown", handleKeyDown);
+        element.removeEventListener("paste", handlePaste);
+        element.removeEventListener("cut", handleCut);
+      };
+    });
+
+    const syncDomValue = () => {
+      if (disposed) {
+        return;
+      }
+
+      const textInput = getInspectorValue("text") as HTMLTextAreaElement | null;
+      const xInput = getInspectorValue("x") as HTMLInputElement | null;
+      const yInput = getInspectorValue("y") as HTMLInputElement | null;
+      const sizeInput = getInspectorValue("size") as HTMLInputElement | null;
+
+      const currentSession = getTextOverlayEditSession();
+      const currentOverlay =
+        currentSession?.clipId === layer.clip.id
+          ? currentSession.overlay
+          : committedOverlay;
+      const nextOverlay = { ...currentOverlay };
+      let changed = false;
+
+      if (textInput && textInput.value !== currentOverlay.text) {
+        nextOverlay.text = textInput.value.slice(0, 500);
+        changed = true;
+      }
+
+      if (xInput) {
+        const value = Number(xInput.value);
+        if (
+          Number.isFinite(value) &&
+          value >= 0 &&
+          value <= 100 &&
+          value / 100 !== currentOverlay.x
+        ) {
+          nextOverlay.x = value / 100;
+          changed = true;
+        }
+      }
+
+      if (yInput) {
+        const value = Number(yInput.value);
+        if (
+          Number.isFinite(value) &&
+          value >= 0 &&
+          value <= 100 &&
+          value / 100 !== currentOverlay.y
+        ) {
+          nextOverlay.y = value / 100;
+          changed = true;
+        }
+      }
+
+      if (sizeInput) {
+        const value = Number(sizeInput.value);
+        if (
+          Number.isFinite(value) &&
+          value >= 12 &&
+          value <= 240 &&
+          Math.round(value) !== currentOverlay.fontSize
+        ) {
+          nextOverlay.fontSize = Math.round(value);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        setTextOverlayEditSession({
+          clipId: layer.clip.id,
+          overlay: nextOverlay,
+        });
+      }
+
+      applyOverlayToDom(changed ? nextOverlay : currentOverlay);
+
+      animationFrameId = window.requestAnimationFrame(syncDomValue);
+    };
+
+    applyOverlayToDom(
+      getTextOverlayEditSession()?.clipId === layer.clip.id
+        ? getTextOverlayEditSession()!.overlay
+        : committedOverlay,
+    );
+    animationFrameId = window.requestAnimationFrame(syncDomValue);
+
+    return () => {
+      disposed = true;
+      window.cancelAnimationFrame(animationFrameId);
+
+      for (const cleanup of nativeEventCleanups) {
+        cleanup();
+      }
+    };
+  }, [isSelected, isPlaying, layer.clip.id]);
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
@@ -1078,23 +1502,46 @@ function PreviewVisualLayer({
   }
 
   function renderTextOverlay() {
-    if (!textOverlay) {
+    const liveSession = getTextOverlayEditSession();
+    const liveOverlay =
+      liveSession?.clipId === layer.clip.id ? liveSession.overlay : null;
+    const renderedOverlay = liveOverlay ?? textOverlay;
+
+    if (!renderedOverlay) {
       return null;
     }
+
+    const activeText = renderedOverlay.text;
+    const activeX = renderedOverlay.x;
+    const activeY = renderedOverlay.y;
+    const activeFontSize = renderedOverlay.fontSize;
+    const activeColor = renderedOverlay.color;
+    const activeAlignment = renderedOverlay.alignment;
+    const horizontalTransform =
+      activeAlignment === "left"
+        ? "translate(0, -50%)"
+        : activeAlignment === "right"
+          ? "translate(-100%, -50%)"
+          : "translate(-50%, -50%)";
 
     return (
       <div
         className="preview-text-overlay"
+        id={"preview-text-overlay-" + layer.clip.id}
         data-testid={"preview-text-overlay-" + layer.clip.id}
+        data-clip-id={layer.clip.id}
+        ref={textOverlayDomRef}
         style={{
-          left: textOverlay.x * 100 + "%",
-          top: textOverlay.y * 100 + "%",
-          color: textOverlay.color,
-          fontSize: textOverlay.fontSize + "px",
-          textAlign: textOverlay.alignment,
+          left: activeX * 100 + "%",
+          top: activeY * 100 + "%",
+          color: activeColor,
+          fontSize: activeFontSize + "px",
+          textAlign: activeAlignment,
+          transform: horizontalTransform,
+          visibility: activeText.trim() ? "visible" : "hidden",
         }}
       >
-        {textOverlay.text}
+        {activeText}
       </div>
     );
   }

@@ -101,6 +101,11 @@ import { importMediaFiles } from "./features/media/import";
 import { loadWorkspaceProject, saveWorkspaceProject } from "./features/project/workspace";
 import { openProjectFromDialog, saveProjectFromDialog } from "./features/project/file-dialog";
 import { TransitionInspector } from "./features/transition/TransitionInspector";
+import {
+  clearTextOverlayEditSession,
+  getTextOverlayEditSession,
+  subscribeToTextOverlayEditSession,
+} from "./features/effects/text-overlay-edit-session";
 import { ExportPanel } from "./features/export/ExportPanel";
 import {
   getClipTransition,
@@ -164,6 +169,8 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
+const TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS = 400;
+
 function App() {
   const [activeView, setActiveView] = useState<WorkspaceView>("editor");
   const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
@@ -171,6 +178,9 @@ function App() {
     createHistoryState(loadWorkspaceProject()),
   );
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const textOverlayAutoCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [currentTimeMs, setCurrentTimeMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timelineZoom, setTimelineZoom] = useState(DEFAULT_TIMELINE_ZOOM);
@@ -188,6 +198,86 @@ function App() {
     Record<string, { width: number; height: number }>
   >({});
   const project = history.present;
+  useEffect(() => {
+    if (textOverlayAutoCommitTimerRef.current !== null) {
+      clearTimeout(textOverlayAutoCommitTimerRef.current);
+      textOverlayAutoCommitTimerRef.current = null;
+    }
+
+    clearTextOverlayEditSession();
+
+    return () => {
+      if (textOverlayAutoCommitTimerRef.current !== null) {
+        clearTimeout(textOverlayAutoCommitTimerRef.current);
+        textOverlayAutoCommitTimerRef.current = null;
+      }
+
+      clearTextOverlayEditSession();
+    };
+  }, [selectedClipId]);
+
+  useEffect(() => {
+    const scheduleTextOverlayAutosave = () => {
+      const session = getTextOverlayEditSession();
+
+      if (session === null) {
+        return;
+      }
+
+      if (textOverlayAutoCommitTimerRef.current !== null) {
+        clearTimeout(textOverlayAutoCommitTimerRef.current);
+      }
+
+      const scheduledClipId = session.clipId;
+      textOverlayAutoCommitTimerRef.current = setTimeout(() => {
+        textOverlayAutoCommitTimerRef.current = null;
+
+        const latestSession = getTextOverlayEditSession();
+
+        if (
+          latestSession === null ||
+          latestSession.clipId !== scheduledClipId
+        ) {
+          return;
+        }
+
+        setHistory((currentHistory) => {
+          try {
+            const nextProject = updateClipTextOverlay(
+              currentHistory.present,
+              latestSession.clipId,
+              latestSession.overlay,
+            );
+
+            setProjectNotice("Text overlay updated.");
+            return commitHistory(currentHistory, nextProject);
+          } catch (error) {
+            setProjectNotice(
+              error instanceof Error
+                ? error.message
+                : "Text overlay could not be autosaved.",
+            );
+            return currentHistory;
+          }
+        });
+
+        clearTextOverlayEditSession();
+      }, TEXT_OVERLAY_AUTO_COMMIT_DELAY_MS);
+    };
+
+    const unsubscribe = subscribeToTextOverlayEditSession(
+      scheduleTextOverlayAutosave,
+    );
+
+    return () => {
+      unsubscribe();
+
+      if (textOverlayAutoCommitTimerRef.current !== null) {
+        clearTimeout(textOverlayAutoCommitTimerRef.current);
+        textOverlayAutoCommitTimerRef.current = null;
+      }
+    };
+  }, []);
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
   const assets = project.assets;
@@ -233,6 +323,10 @@ function App() {
   const selectedTextOverlay = selectedClipContext
     ? getTextOverlay(selectedClipContext.clip)
     : null;
+  const activeTextOverlay =
+    textOverlayDraft?.clipId === selectedClipId
+      ? textOverlayDraft.overlay
+      : selectedTextOverlay;
   const selectedAudioVolume = selectedClipContext
     ? getAudioVolumeAtTime(selectedClipContext.clip, selectedClipLocalTimeMs)
     : 1;
@@ -434,6 +528,12 @@ function App() {
   }
 
   function handleSelectClip(clipId: string) {
+    if (textOverlayAutoCommitTimerRef.current !== null) {
+      clearTimeout(textOverlayAutoCommitTimerRef.current);
+      textOverlayAutoCommitTimerRef.current = null;
+    }
+
+    clearTextOverlayEditSession();
     setSelectedClipId(clipId);
     setProjectNotice(null);
   }
@@ -475,11 +575,6 @@ function App() {
   const colorAdjustmentsRef = useRef<HTMLDivElement | null>(null);
   const textOverlayRef = useRef<HTMLDivElement | null>(null);
   const previewCanvasRef = useRef<HTMLDivElement | null>(null);
-  const previewStageRegionRef = useRef<HTMLDivElement | null>(null);
-  const [previewCanvasSize, setPreviewCanvasSize] = useState({
-    width: 0,
-    height: 0,
-  });
 
   useEffect(() => {
     const stageRegion = previewStageRegionRef.current;
@@ -753,32 +848,80 @@ function App() {
     handleUpdateVisualEffects(selectedClipContext.clip.id, nextEffects);
   }
 
-  function handleUpdateSelectedTextOverlay(changes: Partial<TextOverlay>) {
+  function getSelectedTextOverlayValue(): TextOverlay {
+    const currentSession = getTextOverlayEditSession();
+
+    if (currentSession?.clipId === selectedClipContext?.clip.id) {
+      return currentSession.overlay;
+    }
+
+    return (
+      selectedTextOverlay ?? {
+        text: "",
+        x: DEFAULT_TEXT_OVERLAY_X,
+        y: DEFAULT_TEXT_OVERLAY_Y,
+        fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
+        color: DEFAULT_TEXT_OVERLAY_COLOR,
+        alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
+      }
+    );
+  }
+
+  function clearTextOverlayAutoCommitTimer() {
+    if (textOverlayAutoCommitTimerRef.current !== null) {
+      clearTimeout(textOverlayAutoCommitTimerRef.current);
+      textOverlayAutoCommitTimerRef.current = null;
+    }
+  }
+
+  function handleCommitSelectedTextOverlayDraft() {
+    const editSession = getTextOverlayEditSession();
+
     if (
       !selectedClipContext ||
-      (selectedClipContext.asset?.mediaType !== "video" &&
-        selectedClipContext.asset?.mediaType !== "image")
+      editSession?.clipId !== selectedClipContext.clip.id
     ) {
       return;
     }
 
-    const current: TextOverlay = selectedTextOverlay ?? {
-      text: "",
-      x: DEFAULT_TEXT_OVERLAY_X,
-      y: DEFAULT_TEXT_OVERLAY_Y,
-      fontSize: DEFAULT_TEXT_OVERLAY_FONT_SIZE,
-      color: DEFAULT_TEXT_OVERLAY_COLOR,
-      alignment: DEFAULT_TEXT_OVERLAY_ALIGNMENT,
-    };
+    clearTextOverlayAutoCommitTimer();
 
     applyProjectChange(
       (currentProject) =>
-        updateClipTextOverlay(currentProject, selectedClipContext.clip.id, {
-          ...current,
-          ...changes,
-        }),
+        updateClipTextOverlay(
+          currentProject,
+          selectedClipContext.clip.id,
+          editSession.overlay,
+        ),
       "Text overlay updated.",
     );
+    clearTextOverlayEditSession();
+  }
+
+  function handleCommitSelectedTextOverlayChange(
+    changes: Partial<TextOverlay>,
+  ) {
+    if (!selectedClipContext) {
+      return;
+    }
+
+    clearTextOverlayAutoCommitTimer();
+
+    const currentOverlay = getSelectedTextOverlayValue();
+
+    applyProjectChange(
+      (currentProject) =>
+        updateClipTextOverlay(
+          currentProject,
+          selectedClipContext.clip.id,
+          {
+            ...currentOverlay,
+            ...changes,
+          },
+        ),
+      "Text overlay updated.",
+    );
+    clearTextOverlayEditSession();
   }
 
   function handleResetSelectedTextOverlay() {
@@ -786,11 +929,14 @@ function App() {
       return;
     }
 
+    clearTextOverlayAutoCommitTimer();
+
     applyProjectChange(
       (currentProject) =>
         updateClipTextOverlay(currentProject, selectedClipContext.clip.id, undefined),
       "Text overlay reset.",
     );
+    clearTextOverlayEditSession();
   }
 
   function handleUpdateAudioClipCompressor(
@@ -2126,7 +2272,7 @@ function App() {
                                 defaultValue={Math.round(
                                   (selectedVisualEffects?.[field] ?? 0) * 100,
                                 )}
-                                onBlur={(event) => {
+                            onBlur={(event) => {
                                   const rawValue = event.currentTarget.value.trim();
                                   const fallback = Math.round(
                                     (selectedVisualEffects?.[field] ?? 0) * 100,
@@ -2482,17 +2628,19 @@ function App() {
                     </div>
                     <textarea
                       aria-label="Text overlay content"
+                      data-text-overlay-control="text"
                       className="inspector-textarea"
-                      defaultValue={selectedTextOverlay?.text ?? ""}
+                      defaultValue={activeTextOverlay?.text ?? ""}
+                      key={
+                        "text-" +
+                        selectedClipContext.clip.id +
+                        "-" +
+                        (selectedTextOverlay?.text ?? "")
+                      }
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
-                      key={selectedTextOverlay?.text ?? "empty"}
-                      onBlur={(event) =>
-                        handleUpdateSelectedTextOverlay({
-                          text: event.currentTarget.value,
-                        })
-                      }
+                      onBlur={handleCommitSelectedTextOverlayDraft}
                     />
                     <div className="inspector-transform-input-grid">
                       <label className="inspector-transform-field">
@@ -2500,26 +2648,32 @@ function App() {
                         <div className="inspector-transform-input-wrap">
                           <input
                             aria-label="Text overlay X position"
+                            data-text-overlay-control="x"
                             className="inspector-transform-input"
                             defaultValue={Math.round(
-                              (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
+                              (activeTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
                             )}
+                            key={
+                              "x-" +
+                              selectedClipContext.clip.id +
+                              "-" +
+                              (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)
+                            }
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            key={"x-" + (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
                                 event.currentTarget.value = String(
                                   Math.round(
-                                    (selectedTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
+                                    (activeTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
                                   ),
                                 );
                                 return;
                               }
-                              handleUpdateSelectedTextOverlay({ x: value / 100 });
+                              handleCommitSelectedTextOverlayDraft();
                             }}
                             onKeyDown={handleTransformInputKeyDown}
                           />
@@ -2531,26 +2685,32 @@ function App() {
                         <div className="inspector-transform-input-wrap">
                           <input
                             aria-label="Text overlay Y position"
+                            data-text-overlay-control="y"
                             className="inspector-transform-input"
                             defaultValue={Math.round(
-                              (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
+                              (activeTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
                             )}
+                            key={
+                              "y-" +
+                              selectedClipContext.clip.id +
+                              "-" +
+                              (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)
+                            }
                             max="100"
                             min="0"
                             step="1"
                             type="number"
-                            key={"y-" + (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
                                 event.currentTarget.value = String(
                                   Math.round(
-                                    (selectedTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
+                                    (activeTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
                                   ),
                                 );
                                 return;
                               }
-                              handleUpdateSelectedTextOverlay({ y: value / 100 });
+                              handleCommitSelectedTextOverlayDraft();
                             }}
                             onKeyDown={handleTransformInputKeyDown}
                           />
@@ -2562,28 +2722,33 @@ function App() {
                         <div className="inspector-transform-input-wrap">
                           <input
                             aria-label="Text overlay font size"
+                            data-text-overlay-control="size"
                             className="inspector-transform-input"
                             defaultValue={
-                              selectedTextOverlay?.fontSize ??
+                              activeTextOverlay?.fontSize ??
                               DEFAULT_TEXT_OVERLAY_FONT_SIZE
+                            }
+                            key={
+                              "size-" +
+                              selectedClipContext.clip.id +
+                              "-" +
+                              (selectedTextOverlay?.fontSize ??
+                                DEFAULT_TEXT_OVERLAY_FONT_SIZE)
                             }
                             max="240"
                             min="12"
                             step="1"
                             type="number"
-                            key={"size-" + (selectedTextOverlay?.fontSize ?? DEFAULT_TEXT_OVERLAY_FONT_SIZE)}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 12 || value > 240) {
                                 event.currentTarget.value = String(
-                                  selectedTextOverlay?.fontSize ??
+                                  activeTextOverlay?.fontSize ??
                                     DEFAULT_TEXT_OVERLAY_FONT_SIZE,
                                 );
                                 return;
                               }
-                              handleUpdateSelectedTextOverlay({
-                                fontSize: Math.round(value),
-                              });
+                              handleCommitSelectedTextOverlayDraft();
                             }}
                             onKeyDown={handleTransformInputKeyDown}
                           />
@@ -2598,10 +2763,13 @@ function App() {
                             defaultValue={
                               selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR
                             }
-                            key={"color-" + (selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR)}
+                            key={
+                              "color-" +
+                              (selectedTextOverlay?.color ?? DEFAULT_TEXT_OVERLAY_COLOR)
+                            }
                             type="color"
                             onChange={(event) =>
-                              handleUpdateSelectedTextOverlay({
+                              handleCommitSelectedTextOverlayChange({
                                 color: event.currentTarget.value,
                               })
                             }
@@ -2616,7 +2784,7 @@ function App() {
                     >
                       {(["left", "center", "right"] as const).map((alignment) => {
                         const active =
-                          (selectedTextOverlay?.alignment ??
+                          (activeTextOverlay?.alignment ??
                             DEFAULT_TEXT_OVERLAY_ALIGNMENT) === alignment;
 
                         return (
@@ -2626,7 +2794,7 @@ function App() {
                             className="inspector-inline-button"
                             key={alignment}
                             onClick={() =>
-                              handleUpdateSelectedTextOverlay({ alignment })
+                              handleCommitSelectedTextOverlayChange({ alignment })
                             }
                             type="button"
                           >

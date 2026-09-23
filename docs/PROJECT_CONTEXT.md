@@ -1,11 +1,27 @@
 ## M3.62 — Text Overlay Export Rendering — in progress — 2026-09-22
 
+Active branch: `feat/m3-62-text-overlay-export-rendering`
+PR: #76 — Draft
+Base: `main`
+Validation status: pending user validation
+Merge status: not merged; keep Draft until the user reports PASS.
+
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
-- M3.62 extends the text overlay foundation into native export/render planning so text visible in Preview can be rendered into exported video.
-- The export slice will reuse the existing optional per-clip text overlay model and keep rendering deterministic without introducing a new project schema version.
-- Font selection will use a small explicit renderer-owned font family policy rather than relying on arbitrary platform defaults.
-- Preserve the existing single-video FFmpeg graph architecture and keep transform/crop/transition interactions explicitly validated.
-- Local validation remains required before the M3.62 PR is marked ready.
+- M3.62 extends the text overlay foundation into native export/render planning.
+- Export reuses the existing optional per-clip TextOverlay model, deterministic DejaVu Sans font policy, normalized X/Y, font size, color, and left/center/right alignment semantics.
+- The target runtime is Linux/Tauri/WebKitGTK. Observed Text/X/Y/Size Preview behavior showed a one-step-late sequence: Text appeared after X, X after Y, etc.
+- The current frontend architecture separates transient edit-session data from committed project/history state.
+- App no longer subscribes to the live edit session, so live Text/X/Y/Size changes do not trigger an App React render. App only has a non-rendering store subscription to schedule the existing autosave timer.
+- PreviewVisualLayer is the sole live-preview owner for the selected overlay DOM node. The node remains mounted and is hidden when no text is present.
+- Preview uses native beforeinput/keydown/paste/cut intent listeners plus requestAnimationFrame DOM readback to derive live values without relying on React input/change delivery.
+- When a live value changes, Preview patches the existing overlay DOM immediately. During unrelated React renders, Preview reads the latest live-session snapshot directly rather than rendering a stale placeholder.
+- React does not subscribe to the live session for render invalidation; committed project state continues through the existing history engine.
+- A Linux-only GTK repaint watchdog remains as a platform mitigation. It requests GTK redraws without resize, focus changes, reloads, or navigation.
+- GTK dependency is target-gated to Linux.
+- The previous canvas renderer and App-level polling experiments were removed; the current live path intentionally has one DOM renderer.
+- Regression coverage includes literal Text → X → Y → Size sequence, direct DOM value changes without dispatched events, synchronous beforeinput, no per-keystroke history, one-entry commit + Undo/Redo + Reset, and external-store behavior.
+- Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
+- Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
 ## M3.61 — Text Overlay Foundation — merged — 2026-09-22
 

@@ -1,3 +1,26 @@
+## 2026-09-24 — M3.62 live edit React-render isolation
+
+Branch: feat/m3-62-text-overlay-export-rendering
+PR: #76
+
+Observed one-step-lag pattern:
+- Inspector changes were immediately visible in the control.
+- Preview showed the prior field value only after the next field was edited.
+
+Architecture correction:
+- Removed App's `useSyncExternalStore` render subscription to the transient Text Overlay edit session.
+- App now uses a non-rendering store subscription only to restart the 400 ms autosave timer.
+- Removed the obsolete `textOverlayOverride` Preview prop.
+- Preview keeps one permanently mounted selected overlay DOM element and reads the latest edit-session snapshot directly during render.
+- Native beforeinput/keydown/paste/cut plus requestAnimationFrame DOM readback remain the live WebView input path.
+- This prevents live-edit store updates from causing React reconciliation to overwrite imperative Preview changes with stale data.
+- The Linux GTK repaint watchdog remains enabled as a platform-level mitigation while the user validates the corrected frontend architecture.
+
+Validation:
+- Local Linux/Tauri validation pending user verification.
+- CI run #145 is currently in progress for an intermediate head; the latest branch head should be rechecked again before merge.
+- PR #76 remains Draft and unmerged.
+
 ## 2026-09-22 — M3.62 Text Overlay Export Rendering — in progress
 
 Branch: feat/m3-62-text-overlay-export-rendering
@@ -14,6 +37,28 @@ Scope:
 Validation:
 - Local validation pending implementation.
 - Keep PR Draft until user reports PASS.
+
+## 2026-09-23 — Native Linux repaint mitigation added
+
+Branch: feat/m3-62-text-overlay-export-rendering
+PR: #76
+
+Root-cause direction:
+- The observed sequence (Inspector changes immediately, Preview updates only after the next interaction) is consistent with a native repaint/invalidation issue rather than a text-state ordering bug.
+- An independent September 2026 report against a Tauri/WebKitGTK Linux desktop application shows the same symptom: UI state changes correctly but is not repainted until focus/resize, with a 1px resize forcing one repaint. citeturn544558search0
+- Tauri documents Linux rendering through WebKitGTK and notes platform-level compositor/rendering issues can cause subtle or complete rendering failures. citeturn544558search3
+
+Implementation:
+- Added a Linux-only GTK repaint watchdog on the GTK main loop.
+- Every 50 ms it calls `queue_draw()` on the native Tauri GTK window and recursively on its default GTK container subtree, including the WebView widget.
+- No window geometry mutation, reload, navigation, or focus change is used.
+- GTK dependency is target-gated to Linux and locked against the existing gtk 0.18 dependency generation.
+- Frontend live-edit workarounds are kept temporarily until this native mitigation is validated, then should be simplified.
+
+Validation:
+- Local Linux/Tauri validation pending user verification.
+- GitHub CI must be rechecked on the latest branch head.
+- Merge status: not merged; PR #76 remains Draft until the user reports PASS.
 
 ## 2026-09-22 — M3.61 Text Overlay Foundation — merged
 
