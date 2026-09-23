@@ -1,3 +1,15 @@
+## M3.71 — Unified AV Export Foundation — in progress — 2026-09-24
+
+- M3.70 Text Overlay Export Rendering is complete, user-validated, and squash-merged as PR #84 at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
+- M3.71 starts from the post-M3.70 `main` state and focuses on removing the two-pass export path used when explicit Audio track clips are present.
+- Video graph and audio graph are now compiled as one native export request, with video inputs rebased to contiguous FFmpeg input indexes and audio inputs placed after the visual inputs.
+- The unified native renderer supports video and image visual inputs, keeps image looping metadata, maps `[vout]` and `[aout]`, and encodes the final MP4 in one FFmpeg invocation.
+- The existing no-audio video fast paths are unchanged.
+- The older native `render_video_with_audio_graph_to_mp4` command remains for compatibility but is no longer used by the TypeScript export pipeline in this milestone.
+- No project schema change.
+- Added regression coverage for unified routing, input-index rebasing, image inputs, request validation, and native argument construction.
+- PR for M3.71 should remain Draft until the full local validation and Tauri launch are reported clean.
+
 ## M3.70 — validation update — 2026-09-23
 
 - User reran the corrected M3.70 branch successfully: all 33 frontend test files passed and all 393 frontend tests passed.
