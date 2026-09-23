@@ -1,3 +1,18 @@
+## 2026-09-23 — M3.65 Static Image Clip Export — merged
+
+- PR #79 was validated locally by the user and squash-merged into `main` at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
+- Image clips can now be exported through the single-video FFmpeg graph as looped visual inputs.
+- Mixed video/image sequences route through the graph while preserving the existing static crop and static transform pipeline.
+- Native graph requests carry optional per-input media-type metadata; the project schema remains unchanged.
+- M3.62 remains intentionally parked in PR #76.
+
+## 2026-09-23 — M3.66 Transition Export — started
+
+- The next focused export gap is transition rendering between directly adjacent visual clips.
+- The existing project model and Preview already define dissolve and fade-through-black transition behavior.
+- M3.66 will implement transition graph compilation while preserving the existing timeline-duration semantics and one-video-track boundary.
+- PR status remains Draft until local validation is confirmed by the user.
+
 ## 2026-09-23 — M3.65 validation assertion correction
 
 - User-supplied validation showed 366/368 frontend tests passing, with two failures in `render-graph.test.ts`.
