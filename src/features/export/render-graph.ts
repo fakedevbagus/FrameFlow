@@ -682,6 +682,7 @@ function buildSegmentFilter(
   plan: RenderPlan,
   label: string,
   includeOutputNormalization: boolean,
+  preserveAlpha = false,
 ): string {
   const transform = getClipTransform(segment.transform);
   const transformKeyframes = normalizeTransformKeyframes(segment.transformKeyframes);
@@ -696,6 +697,7 @@ function buildSegmentFilter(
         includeOutputNormalization,
         transform,
         transformKeyframes,
+        preserveAlpha,
       );
     }
 
@@ -705,6 +707,7 @@ function buildSegmentFilter(
       label,
       includeOutputNormalization,
       transformKeyframes,
+      preserveAlpha,
     );
   }
 
@@ -721,6 +724,8 @@ function buildSegmentFilter(
         label,
         includeOutputNormalization,
         transform,
+        [],
+        preserveAlpha,
       );
     }
 
@@ -732,6 +737,7 @@ function buildSegmentFilter(
       transform,
       crop,
       cropPosition,
+      preserveAlpha,
     );
   }
 
@@ -751,7 +757,9 @@ function buildSegmentFilter(
       plan.width +
       ":h=" +
       plan.height +
-      ":x=(ow-iw)/2:y=(oh-ih)/2",
+      ":x=(ow-iw)/2:y=(oh-ih)/2" +
+      (preserveAlpha ? ":color=black@0.0" : ""),
+    ...(preserveAlpha ? ["format=rgba"] : []),
     ...(segment.visualEffects &&
     buildVisualEffectsFfmpegFilters(segment.visualEffects)
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
