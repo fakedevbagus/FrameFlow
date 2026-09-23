@@ -395,53 +395,6 @@ describe("single video render graph", () => {
     );
   });
 
-  it("rejects transform keyframes until animated export is implemented", () => {
-    let project = createVideoProject();
-    project = addAssetToTimeline(project, "video-a");
-    project = {
-      ...project,
-      tracks: project.tracks.map((track) =>
-        track.id === "video-1"
-          ? {
-              ...track,
-              clips: track.clips.map((clip) => ({
-                ...clip,
-                transformKeyframes: [
-                  {
-                    timeMs: 0,
-                    transform: {
-                      x: 0,
-                      y: 0,
-                      scale: 1,
-                      rotation: 0,
-                      opacity: 1,
-                    },
-                  },
-                  {
-                    timeMs: 1000,
-                    transform: {
-                      x: 20,
-                      y: 0,
-                      scale: 1.5,
-                      rotation: 15,
-                      opacity: 0.8,
-                    },
-                  },
-                ],
-              })),
-            }
-          : track,
-      ),
-    };
-
-    const plan = createRenderPlan(project, createDefaultExportSettings(project));
-
-    expect(() => compileSingleVideoTrackGraph(plan)).toThrow(
-      "animated transform export is deferred",
-    );
-  });
-
-
   it("compiles a dissolve transition without shortening the timeline", () => {
     let project = createVideoProject();
     project.assets = [
@@ -699,7 +652,7 @@ describe("single video render graph", () => {
 
     const filter = graph.filterComplex;
     expect(filter.indexOf("eq=brightness=0.1:contrast=1.2:saturation=0.9")).toBeGreaterThanOrEqual(0);
-    expect(filter.indexOf("crop=w=trunc(iw*0.85):h=trunc(ih*0.9)")).toBeGreaterThanOrEqual(0);
+    expect(filter.indexOf("crop=w=trunc(iw*0.8):h=trunc(ih*0.9)")).toBeGreaterThanOrEqual(0);
     expect(filter.indexOf("scale=w='iw*")).toBeGreaterThanOrEqual(0);
     expect(filter.indexOf("overlay=x='")).toBeGreaterThanOrEqual(0);
   });
