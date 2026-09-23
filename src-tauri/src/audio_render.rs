@@ -904,6 +904,14 @@ fn media_type(path: &Path) -> Result<String, String> {
   Ok(media_type.to_string())
 }
 
+fn format_seconds(milliseconds: u64) -> String {
+  format!(
+    "{}.{:03}",
+    milliseconds / 1_000,
+    milliseconds % 1_000
+  )
+}
+
 fn same_path(first: &Path, second: &Path) -> bool {
   let first_canonical = fs::canonicalize(first).ok();
   let second_canonical = fs::canonicalize(second)
