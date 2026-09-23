@@ -1,3 +1,12 @@
+## 2026-09-23 — M3.70 crop-order test correction
+
+- User validation found one failing regression assertion in `render-graph.test.ts`.
+- The failure was caused by the test expecting `h=trunc(ih*0.85)`; the configured crop leaves 90% visible height, so the correct graph fragment is `h=trunc(ih*0.9)`.
+- Corrected only the test assertion; no production export code was changed for this failure.
+- The same validation run had lint, production build, and all 39 Rust tests passing.
+- Existing React `act(...)` warnings remain non-fatal.
+- Fresh frontend test/build validation is required before M3.70 can be considered clean; PR #84 remains Draft.
+
 ## 2026-09-23 — M3.70 export coverage and resolution scaling
 
 Branch: `feat/m3-70-text-overlay-export`
