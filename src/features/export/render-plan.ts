@@ -20,7 +20,11 @@ import {
   type TransformAnchor,
   type TransformKeyframe,
 } from "../project/domain";
-import { getClipTransformAnchor } from "../transform/transform";
+import {
+  getClipCrop,
+  getClipCropPosition,
+  getClipTransformAnchor,
+} from "../transform/transform";
 import {
   getExportDimensions,
   normalizeExportSettings,
@@ -127,6 +131,12 @@ export function createRenderPlan(
 
       const sourceEndMs = clip.sourceStartMs + clipDurationMs;
       const timelineEndMs = clip.timelineStartMs + clipDurationMs;
+      const normalizedCrop = getClipCrop(clip.crop);
+      const hasCrop =
+        normalizedCrop.top > 0 ||
+        normalizedCrop.right > 0 ||
+        normalizedCrop.bottom > 0 ||
+        normalizedCrop.left > 0;
 
       segments.push({
         inputIndex,
@@ -169,8 +179,10 @@ export function createRenderPlan(
           : {}),
         transform: clip.transform,
         transformAnchor: getClipTransformAnchor(clip.transformAnchor),
-        crop: clip.crop,
-        cropPosition: clip.cropPosition,
+        crop: hasCrop ? normalizedCrop : undefined,
+        cropPosition: hasCrop
+          ? getClipCropPosition(normalizedCrop, clip.cropPosition)
+          : undefined,
         transformKeyframes: clip.transformKeyframes,
         transitionOut: clip.transitionOut,
       });
