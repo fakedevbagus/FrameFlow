@@ -1,3 +1,24 @@
+## 2026-09-23 — M3.67 Animated Transform Export — implementation
+
+Branch: `feat/m3-67-animated-transform-export`
+PR #81 — Draft
+
+Implemented:
+- Added FFmpeg graph compilation for animated X/Y, Scale, Rotation, and Opacity keyframes.
+- Reused the existing normalized keyframe model and easing semantics from Preview.
+- Added project-frame-rate normalization before animated transform evaluation.
+- Used time-based expressions for scale, rotation, and position plus a frame-index-based alpha expression for opacity.
+- Preserved crop and visual-effects ordering before animated transforms.
+- Kept centered transform-anchor export as the supported boundary; non-centered anchors remain explicitly deferred.
+- Routed animated transform clips through the native graph renderer.
+- Added render-graph and pipeline regression coverage.
+- No project schema change.
+
+Validation:
+- User local validation of the M3.67 implementation is pending.
+- CI validation is pending.
+- PR #81 remains Draft.
+
 ## 2026-09-23 — M3.66 Transition Export — merged
 
 - PR #80 was user-validated and squash-merged into `main` at `a3bf59055b76de1c485c8d410e2adb13862925d6`.
