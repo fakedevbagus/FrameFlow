@@ -1,3 +1,11 @@
+## 2026-09-24 — M3.71 test restoration correction
+
+- User validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the production Vite build, but Rust compilation failed on an unclosed delimiter in src-tauri/src/audio_render.rs.
+- Inspection of the branch confirmed the unified-AV native test module had been truncated at the start of missing_filter.
+- Restored the missing test body, re-added legacy native argument coverage, and fixed the restored fixture's missing video_inputs field.
+- Commit: 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
+- Local cargo test and npm run tauri dev validation remain required; do not mark M3.71 PASS yet.
+
 ## 2026-09-24 — M3.71 validation correction
 
 - Supplied user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the production Vite build.
