@@ -932,8 +932,8 @@ mod tests {
     build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
     build_ffmpeg_video_with_audio_graph_args, media_type,
     validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
-    NativeAudioGraphRenderRequest, NativeVideoAudioGraphRenderRequest,
-    NativeVideoWithAudioGraphRenderRequest,
+    NativeAudioGraphRenderRequest, NativeSourceAudioSegment,
+    NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
   };
   use std::path::{Path, PathBuf};
 
@@ -1212,7 +1212,8 @@ mod tests {
       720,
       29.97,
       Path::new("/tmp/FrameFlow final.mp4"),
-    );
+    )
+    .unwrap();
 
     let values: Vec<String> = args
       .iter()
@@ -1307,7 +1308,8 @@ mod tests {
       1_080,
       30.0,
       Path::new("/tmp/final.mp4"),
-    );
+    )
+    .unwrap();
 
     let values: Vec<String> = args
       .iter()
