@@ -2669,16 +2669,6 @@ function App() {
                       maxLength={500}
                       placeholder="Type text…"
                       rows={3}
-                      onInput={(event) =>
-                        handleUpdateTextOverlayDraft({
-                          text: event.currentTarget.value,
-                        })
-                      }
-                      onChange={(event) =>
-                        handleUpdateTextOverlayDraft({
-                          text: event.currentTarget.value,
-                        })
-                      }
                       onBlur={handleCommitSelectedTextOverlayDraft}
                     />
                     <div className="inspector-transform-input-grid">
@@ -2702,19 +2692,6 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
-                            ref={textOverlayXInputRef}
-                            onInput={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ x: value / 100 });
-                              }
-                            }}
-                            onChange={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ x: value / 100 });
-                              }
-                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
@@ -2752,19 +2729,6 @@ function App() {
                             min="0"
                             step="1"
                             type="number"
-                            ref={textOverlayYInputRef}
-                            onInput={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ y: value / 100 });
-                              }
-                            }}
-                            onChange={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 0 && value <= 100) {
-                                handleUpdateTextOverlayDraft({ y: value / 100 });
-                              }
-                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 0 || value > 100) {
@@ -2804,23 +2768,6 @@ function App() {
                             min="12"
                             step="1"
                             type="number"
-                            ref={textOverlaySizeInputRef}
-                            onInput={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
-                                handleUpdateTextOverlayDraft({
-                                  fontSize: Math.round(value),
-                                });
-                              }
-                            }}
-                            onChange={(event) => {
-                              const value = Number(event.currentTarget.value);
-                              if (Number.isFinite(value) && value >= 12 && value <= 240) {
-                                handleUpdateTextOverlayDraft({
-                                  fontSize: Math.round(value),
-                                });
-                              }
-                            }}
                             onBlur={(event) => {
                               const value = Number(event.currentTarget.value);
                               if (!Number.isFinite(value) || value < 12 || value > 240) {
