@@ -1,5 +1,12 @@
 ## 2026-09-23 — M3.67 Animated Transform Export — implementation
 ## 2026-09-23 — M3.67 validation correction
+## 2026-09-23 — M3.67 final test fixture correction
+
+- Latest user validation reached 373/374 frontend tests; the remaining failure was a stale assertion expecting the `2*(` term even though the test fixture only exercised ease-in and ease-out interpolation. fileciteturn836file0L139-L154 fileciteturn836file0L277-L299
+- Updated the final animated-transform keyframe fixture to use ease-in-out, so the existing `2*(` assertion now verifies actual easing output instead of testing an absent condition.
+- The same validation run passed production build, 39/39 Rust tests, and Tauri dev startup. fileciteturn836file0L302-L312 fileciteturn836file0L313-L370 fileciteturn836file0L372-L387
+- PR #81 remains Draft until the user reruns the frontend test suite and reports PASS.
+
 
 Branch: `feat/m3-67-animated-transform-export`
 PR #81 — Draft
