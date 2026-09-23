@@ -730,7 +730,7 @@ function buildEasedProgress(
 }
 
 function ffmpegIf(condition: string, whenTrue: string, whenFalse: string): string {
-  return "if(" + condition + "\," + whenTrue + "\," + whenFalse + ")";
+  return "if(" + condition + "\\," + whenTrue + "\\," + whenFalse + ")";
 }
 
 function radiansExpression(degreesExpression: string): string {
