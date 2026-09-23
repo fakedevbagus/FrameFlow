@@ -729,6 +729,81 @@ describe("single video render graph", () => {
   });
 
 
+  it("compiles text overlays into the visual segment filter chain", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Hello, FrameFlow!",
+                  x: 0.25,
+                  y: 0.75,
+                  fontSize: 64,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Hello\\, FrameFlow!':fontsize=64:fontcolor=#ffffff:x=(w-text_w)*0.25:y=(h-text_h)*0.75:line_spacing=4:expansion=none",
+    );
+  });
+
+  it("preserves text overlay rendering on an upper multi-track clip", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find(
+      (track) => track.id !== "video-1" && track.type === "video",
+    )?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 0);
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrackId
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Upper track",
+                  x: 0.5,
+                  y: 0.2,
+                  fontSize: 48,
+                  color: "#00ff00",
+                  alignment: "left" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileVideoTracksGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain(
+      "drawtext=font='DejaVu Sans':text='Upper track':fontsize=48:fontcolor=#00ff00:x=w*0.5:y=(h-text_h)*0.2:line_spacing=4:expansion=none",
+    );
+    expect(graph.filterComplex).toContain("track_2_sequence");
+  });
+
   it("composites multiple video tracks in project track order", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
