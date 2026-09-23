@@ -1,3 +1,31 @@
+## M3.73 — Preserve Source Audio in Unified AV Export — completed — 2026-09-24
+
+Branch:
+`feat/m3-73-source-audio-unified-export`
+
+PR #87
+
+Merge SHA:
+`8c7292f1b4484c9a2156484c2d06f4980760c468`
+
+Implemented:
+- Preserved embedded audio from non-muted video clips when explicit Audio tracks use the unified AV export path.
+- Passed rebased visual input indexes and source/timeline timing into the unified native renderer.
+- Probed referenced video inputs for an audio stream and preserved the first audio stream (`a:0`) when present.
+- Trimmed source audio to the clip range, delayed it to its timeline position, normalized it to 48 kHz stereo, and mixed it with explicit Audio-track output.
+- Excluded muted video segments and image inputs from source-audio preservation.
+- Added frontend and Rust regression coverage.
+- No project schema change.
+
+Validation:
+- User reported PASS for lint, 33/33 frontend test files with 397/397 tests, production build, Rust tests, Tauri development startup, and manual export checks covering source audio plus explicit Audio tracks, mute behavior, and image/no-audio inputs.
+
+Known limitation:
+- Video-track volume and pan controls are not yet applied to preserved embedded source audio in the unified AV export path.
+
+Next step:
+- M3.74 should route video-track volume/pan into preserved embedded source audio.
+
 ## M3.73 — validation correction — 2026-09-24
 
 - User validation passed `npm run lint`, 33/33 frontend test files, 397/397 frontend tests, and the production build.
