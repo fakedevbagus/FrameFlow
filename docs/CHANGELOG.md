@@ -11,10 +11,12 @@ Implemented:
 - No project schema change.
 
 Validation:
-- Pending user local validation.
+- Supplied local validation exposed a Timeline JSX parse error, stale unified-export fixtures, a missing native numeric formatter, and missing native fixture fields.
+- Corrected those issues and added RenderPlan coverage for Video-track Volume/Pan propagation.
+- Fresh user local validation is still pending.
 
 Next step:
-- Validate UI controls and exported audio behavior locally.
+- Rerun lint, frontend tests, production build, Rust tests, Tauri startup, and the manual export check.
 
 ### M3.73 — Preserve Source Audio in Unified AV Export — merged — 2026-09-24
 
