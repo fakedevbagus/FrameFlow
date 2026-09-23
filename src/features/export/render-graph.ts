@@ -154,7 +154,6 @@ export function compileSingleVideoTrackGraph(
       concatInputs.push(
         ...buildTransitionGraphParts(
           segment,
-          next,
           fullLabels[index],
           fullLabels[index + 1],
           transition,
