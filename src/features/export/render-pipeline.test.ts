@@ -595,6 +595,63 @@ describe("render video pipeline", () => {
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
+  it("routes a text overlay clip through the native graph renderer", async () => {
+    const plan: RenderPlan = {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      durationMs: 2000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 2000,
+          sourceStartMs: 0,
+          sourceEndMs: 2000,
+          durationMs: 2000,
+          isMuted: false,
+          textOverlay: {
+            text: "Hello",
+            x: 0.5,
+            y: 0.5,
+            fontSize: 56,
+            color: "#ffffff",
+            alignment: "center",
+          },
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/text-overlay-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/text-overlay-export.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/text-overlay-export.mp4",
+    });
+
+    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
+      inputs: ["/media/a.mp4"],
+      inputMediaTypes: ["video"],
+      outputPath: "/tmp/text-overlay-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      filterComplex: expect.stringContaining("drawtext=font='DejaVu Sans'"),
+      videoMap: "[vout]",
+    });
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+  });
+
   it("routes multiple video tracks through the native graph renderer", async () => {
     const plan: RenderPlan = {
       width: 1080,
