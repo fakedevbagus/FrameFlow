@@ -300,8 +300,7 @@ describe("single video render graph", () => {
       "scale=w='iw*1.5':h='ih*1.5':eval=frame",
     );
     expect(graph.filterComplex).toContain("rotate='");
-    expect(graph.filterComplex).toContain("cos(");
-    expect(graph.filterComplex).toContain("sin(");
+    expect(graph.filterComplex).toContain("overlay=x='(W/2)-(0.25)*w':y='(H/2)-(0.75)*h'");
     expect(graph.filterComplex).toContain("colorchannelmixer=aa=0.8");
     expect(graph.filterComplex).toContain("anchor_output_bg_0");
     expect(graph.filterComplex).toContain("overlay=x='(W-w)/2+");
@@ -458,8 +457,7 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain("eval=frame");
     expect(graph.filterComplex).toContain("anchor_pivot_0");
     expect(graph.filterComplex).toContain("rotate='");
-    expect(graph.filterComplex).toContain("cos(");
-    expect(graph.filterComplex).toContain("sin(");
+    expect(graph.filterComplex).toContain("overlay=x='(W/2)-(0.2)*w':y='(H/2)-(0.8)*h'");
     expect(graph.filterComplex).toContain("N/30");
     expect(graph.filterComplex).toContain("\\,");
     expect(graph.filterComplex).not.toContain(
