@@ -418,15 +418,6 @@ button:focus-visible {
   align-items: stretch;
 }
 
-.preview-text-overlay-live-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 31;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
 .preview-text-overlay {
   position: absolute;
   z-index: 30;
