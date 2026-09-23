@@ -1,4 +1,9 @@
-- M3.72 is the active milestone on `feat/m3-72-multitrack-audio-export`: Multi-Track + Audio Export Integration.
+- M3.72 validation correction: user validation found one stale render-graph assertion expecting `track_1_sequence`; the actual generated graph correctly uses `track_2_sequence` because the fixture's second video track is project track index 2.
+- Corrected the assertion in commit `230dcf7c0d09e01319602c662bb3a50d33f1d320`.
+- Lint, production build, 42 Rust tests, and Tauri startup passed in that run; fresh frontend validation is still required.
+- PR #86 remains Draft.
+
+- M3.72 is the active milestone- M3.72 is the active milestone on `feat/m3-72-multitrack-audio-export`: Multi-Track + Audio Export Integration.
 - M3.71 is complete and squash-merged as PR #85 at `3ae70e91ad5ff0dc2a11bcde59c32a39cab3ab89`.
 - M3.72 removes the visual graph compiler's obsolete rejection of explicit Audio track segments.
 - Regression coverage includes single-track + audio, multi-track + audio graph compilation, and unified pipeline routing for multiple video tracks plus explicit audio.
