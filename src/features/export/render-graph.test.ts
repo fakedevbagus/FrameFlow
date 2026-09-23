@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createProject } from "../project/domain";
-import { addAssetToTimeline, addAssetToTrack } from "../timeline/commands";
+import { addAssetToTimeline, addAssetToTrack, addTrack } from "../timeline/commands";
 import { createDefaultExportSettings } from "./export";
 import { createRenderPlan } from "./render-plan";
 import {
@@ -732,7 +732,10 @@ describe("single video render graph", () => {
   it("composites multiple video tracks in project track order", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
-    project = addAssetToTrack(project, "video-b", "video-2", 0);
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find((track) => track.id !== "video-1" && track.type === "video")?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 0);
 
     const graph = compileVideoTracksGraph(
       createRenderPlan(project, createDefaultExportSettings(project)),
@@ -758,11 +761,14 @@ describe("single video render graph", () => {
   it("keeps lower tracks visible through transparent gaps and ignores muted video tracks", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
-    project = addAssetToTrack(project, "video-b", "video-2", 2000);
+    project = addTrack(project, "video");
+    const videoTrackId = project.tracks.find((track) => track.id !== "video-1" && track.type === "video")?.id;
+    if (!videoTrackId) throw new Error("Test video track was not created.");
+    project = addAssetToTrack(project, "video-b", videoTrackId, 2000);
     project = {
       ...project,
       tracks: project.tracks.map((track) =>
-        track.id === "video-2"
+        track.id === videoTrackId
           ? {
               ...track,
               isMuted: true,
