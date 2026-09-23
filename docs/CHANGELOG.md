@@ -1,3 +1,19 @@
+## 2026-09-23 — M3.68 Non-Centered Transform Anchor Export — started
+
+- M3.67 was completed after user PASS and squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
+- Repository audit after the merge shows non-centered transform anchors remain an explicit export limitation while the editor and Preview already support anchor-aware transform behavior.
+- M3.68 will make static and animated export honor non-centered transform anchors using the existing transform model and crop/effects ordering, without a schema change.
+- Validation must cover scaling and rotation around off-center pivots, animated keyframes, image/video inputs, and the existing centered-anchor regression path.
+- PR #76 Text Overlay Export remains parked; multi-track compositing and audio mixing remain separate deferred work.
+
+## 2026-09-23 — M3.67 Animated Transform Export — merged
+
+- PR #81 was user-validated and squash-merged into `main` at `783885376209ec56013612147b217a13c8bf1ef7`.
+- GitHub CI run #181 passed the frontend lint/tests, TypeScript/production build, and Rust tests on the final head.
+- Added animated X/Y, Scale, Rotation, and Opacity export using deterministic FFmpeg expressions and the existing keyframe easing model.
+- Animated clips now route through the graph renderer, with project-FPS normalization and transparent composition.
+- Crop and visual effects remain before animated transforms; centered transform anchors remain the supported anchor boundary.
+- No project schema change.
 ## 2026-09-23 — M3.67 Animated Transform Export — implementation
 ## 2026-09-23 — M3.67 validation correction
 ## 2026-09-23 — M3.67 final test fixture correction
