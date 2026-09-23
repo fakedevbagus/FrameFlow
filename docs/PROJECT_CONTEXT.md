@@ -1,33 +1,30 @@
-## M3.71 — test restoration correction — 2026-09-24
+## M3.72 — validation correction — 2026-09-24
 
-- Follow-up inspection of user validation exposed that src-tauri/src/audio_render.rs had been truncated inside validates_unified_video_audio_graph_request_metadata, before the missing_filter fixture was completed.
-- Restored the missing unified-AV test body and restored native legacy argument coverage that had been displaced by the truncated test edit.
-- The restored tests cover unified request validation, image/video input handling, video/audio input ordering, unified FFmpeg argument construction, and legacy video/audio mix argument coverage.
-- Corrected the restored missing_filter fixture so it includes its required video_inputs field.
-- Commit: 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
-- The GitHub branch is now structurally complete; local Rust/Tauri validation is still required. PR #85 remains Draft.
+- User validation reached the full frontend suite with 32/33 test files passing and 395/396 tests passing.
+- The only failure was a stale regression assertion expecting `track_1_sequence`; the generated multi-track graph correctly used `track_2_sequence` because the audio track occupies index 1 and the second video track is index 2.
+- Lint, production build, all 42 Rust tests, and Tauri development startup completed successfully in the same user run.
+- Corrected only the stale assertion in commit `230dcf7c0d09e01319602c662bb3a50d33f1d320`.
+- Fresh frontend validation is required; PR #86 remains Draft.
 
-## M3.71 — validation correction — 2026-09-24
+## M3.72 — Multi-Track + Audio Export Integration — in progress — 2026-09-24
 
-- User validation passed lint and all 33 frontend test files / 394 frontend tests.
-- Production Vite build passed.
-- Rust compilation and Tauri launch failed because the new unified AV renderer referenced `validate_native_export_settings` without importing it from the crate root.
-- The same compiler output reported two unused `width`/`height` parameters in the native FFmpeg argument helper and one unnecessary mutable test binding.
-- Corrected the missing import and warning-level issues in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
-- React `act(...)` messages remain existing non-fatal test warnings.
-- Fresh Rust/Tauri validation is required after this correction; PR #85 remains Draft.
-
-## M3.71 — Unified AV Export Foundation — in progress — 2026-09-24
-
-- M3.70 Text Overlay Export Rendering is complete, user-validated, and squash-merged as PR #84 at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
-- M3.71 starts from the post-M3.70 `main` state and focuses on removing the two-pass export path used when explicit Audio track clips are present.
-- Video graph and audio graph are now compiled as one native export request, with video inputs rebased to contiguous FFmpeg input indexes and audio inputs placed after the visual inputs.
-- The unified native renderer supports video and image visual inputs, keeps image looping metadata, maps `[vout]` and `[aout]`, and encodes the final MP4 in one FFmpeg invocation.
-- The existing no-audio video fast paths are unchanged.
-- The older native `render_video_with_audio_graph_to_mp4` command remains for compatibility but is no longer used by the TypeScript export pipeline in this milestone.
+- M3.71 Unified AV Export Foundation was user-validated and squash-merged as PR #85 at `3ae70e91ad5ff0dc2a11bcde59c32a39cab3ab89`.
+- M3.72 addresses the next repository-proven export gap: the video graph compositor still rejected plans containing explicit Audio track clips, even though the M3.71 pipeline now combines the visual and audio graphs natively.
+- Removed the obsolete audio-rejection guards from both the single-video-track and multi-video-track graph compilers.
+- Added regression coverage proving single-track and multi-track visual graphs can coexist with explicit audio segments.
+- Added end-to-end export-pipeline coverage proving multiple video tracks plus an explicit Audio track route through one native unified AV render request with correctly rebased visual and offset audio input indexes.
 - No project schema change.
-- Added regression coverage for unified routing, input-index rebasing, image inputs, request validation, and native argument construction.
-- PR for M3.71 should remain Draft until the full local validation and Tauri launch are reported clean.
+- PR for M3.72 should remain Draft until fresh local lint/test/build/Rust/Tauri validation is reported.
+
+## M3.71 — Unified AV Export Foundation — completed — 2026-09-24
+
+- PR #85 was user-validated and squash-merged into `main` at `3ae70e91ad5ff0dc2a11bcde59c32a39cab3ab89`.
+- Final user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, production Vite build, Rust tests, and Tauri development startup after the documented Rust/test corrections.
+- Unified explicit Audio-track export now uses one native FFmpeg invocation containing the compiled visual and audio graphs.
+- Visual input indexes are rebased to contiguous native slots before the audio graph is offset.
+- Video/image visual inputs, image looping, [vout]/[aout] mapping, and existing video-only fast paths are preserved.
+- No project schema change.
+- The older `render_video_with_audio_graph_to_mp4` command remains as compatibility code and is not used by the active TypeScript export pipeline.
 
 ## M3.70 — validation update — 2026-09-23
 

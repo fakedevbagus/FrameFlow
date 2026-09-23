@@ -1,35 +1,40 @@
-## 2026-09-24 — M3.71 test restoration correction
+## 2026-09-24 — M3.72 validation correction
 
-- User validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the production Vite build, but Rust compilation failed on an unclosed delimiter in src-tauri/src/audio_render.rs.
-- Inspection of the branch confirmed the unified-AV native test module had been truncated at the start of missing_filter.
-- Restored the missing test body, re-added legacy native argument coverage, and fixed the restored fixture's missing video_inputs field.
-- Commit: 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
-- Local cargo test and npm run tauri dev validation remain required; do not mark M3.71 PASS yet.
+- User validation passed lint, production build, 42/42 Rust tests, and Tauri development startup.
+- Frontend tests reported 32/33 files and 395/396 tests passing; the sole failure was a stale assertion expecting `track_1_sequence` instead of the actual `track_2_sequence` in the test fixture's track ordering.
+- Corrected only that regression assertion in commit `230dcf7c0d09e01319602c662bb3a50d33f1d320`.
+- Fresh frontend validation is required before M3.72 can be marked PASS.
 
-## 2026-09-24 — M3.71 validation correction
+## 2026-09-24 — M3.72 Multi-Track + Audio Export Integration — implementation
 
-- Supplied user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the production Vite build.
-- Rust compilation failed because the unified AV renderer did not import `validate_native_export_settings`; Tauri development startup hit the same compiler error.
-- Corrected the missing import and cleaned the reported unused-parameter / unnecessary-mut warnings in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
-- Fresh Rust and Tauri validation is still required.
-
-## 2026-09-24 — M3.71 Unified AV Export Foundation — implementation
-
-Branch: `feat/m3-71-unified-av-export`
+Branch: `feat/m3-72-multitrack-audio-export`
+PR: Draft
 
 Implemented:
-- Added a native unified video+audio graph render contract.
-- Routed exports containing explicit Audio track clips through one FFmpeg invocation instead of rendering an intermediate video and then performing a second audio-mix pass.
-- Rebased visual graph input indexes to contiguous native input slots before combining them with the offset audio graph.
-- Preserved image-input looping metadata and the existing video/audio encoding settings.
-- Kept no-audio video fast paths unchanged.
-- Retained the previous native video-with-audio command for compatibility but removed it from the active TypeScript pipeline path.
-- Added frontend and Rust regression coverage for unified routing, index rebasing, image input handling, validation, and FFmpeg argument construction.
+- Removed obsolete audio-rejection guards from the single- and multi-video-track visual graph compilers.
+- Allowed the existing visual graph compiler to operate alongside explicit Audio track segments so M3.71 can combine both graphs in one native FFmpeg invocation.
+- Added regression coverage for single-track graphs with audio, multi-track graphs with audio, and end-to-end multi-video + explicit-audio unified routing.
+- Preserved input-index rebasing and audio-input offsetting from M3.71.
 - No project schema change.
 
 Validation:
-- Pending fresh CI/local validation for M3.71.
-- PR should remain Draft until the user reports PASS.
+- Pending user local validation.
+
+## 2026-09-24 — M3.71 Unified AV Export Foundation — completed
+
+Branch: `feat/m3-71-unified-av-export`
+PR #85
+Merge SHA: `3ae70e91ad5ff0dc2a11bcde59c32a39cab3ab89`
+
+Implemented:
+- Unified explicit Audio-track export with the visual FFmpeg graph in a single native invocation.
+- Rebased visual input indexes and offset audio graph indexes.
+- Preserved image-input handling and existing video-only fast paths.
+- Added frontend and Rust regression coverage for routing, index rebasing, validation, input ordering, and FFmpeg argument construction.
+
+Validation:
+- User reported PASS after clean local validation.
+- GitHub CI completed successfully for the validated M3.71 head.
 
 ## 2026-09-24 — M3.70 Text Overlay Export Rendering — completed
 
