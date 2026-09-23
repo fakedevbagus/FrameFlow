@@ -118,6 +118,7 @@ M3.66 current scope:
 - Dissolve uses a looped incoming first frame with alpha ramp over the outgoing tail.
 - Fade-through-black uses explicit outgoing fade-out and incoming first-frame fade-in stages.
 - Any transitioned timeline routes through the native video graph.
+- The pre-M3.66 transition rejection guard was removed after CI exposed it as stale; transition graph compilation is now the owning path.
 
 Explicitly deferred:
 - Text overlay export remains parked in PR #76.
