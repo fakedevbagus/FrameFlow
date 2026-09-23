@@ -94,13 +94,13 @@ cd ..
 
 ## Current repository state
 
-### M3.66 — Transition Export — active draft PR
+### M3.67 — Animated Transform Export — active draft PR
 
 Branch:
-`feat/m3-66-transition-export`
+`feat/m3-67-animated-transform-export`
 
 PR:
-#80
+TBD
 
 Status:
 - In progress
@@ -108,24 +108,22 @@ Status:
 - Not merged
 - Local validation pending
 
-M3.66 current scope:
-- Export the existing dissolve and fade-through-black transitions between directly adjacent visual clips.
-- Preserve the Preview timeline-duration semantics rather than shortening the total timeline by transition duration.
-- Keep compatibility with video/image visual inputs and the existing static crop/static transform pipeline.
-- Reuse the existing transition domain model; do not introduce a project schema version change.
-- Keep the one-video-track export boundary.
-- Add regression coverage for transition graph compilation and export-pipeline routing.
-- Dissolve uses a looped incoming first frame with alpha ramp over the outgoing tail.
-- Fade-through-black uses explicit outgoing fade-out and incoming first-frame fade-in stages.
-- Any transitioned timeline routes through the native video graph.
-- The pre-M3.66 transition rejection guard was removed after CI exposed it as stale; transition graph compilation is now the owning path.
+M3.67 current scope:
+- Export transform keyframes already represented in the project model and Preview.
+- Compile deterministic keyframed X/Y, Scale, Rotation, and Opacity motion through the existing single-video FFmpeg graph.
+- Preserve existing crop, visual effects, and image/video compatibility where composable.
+- Keep centered transform-anchor support as the boundary for this focused slice.
+- Add regression coverage for keyframe RenderPlan propagation, graph compilation, and export pipeline routing.
 
 Explicitly deferred:
 - Text overlay export remains parked in PR #76.
-- Transform keyframe export.
-- Non-centered transform-anchor export.
+- Non-centered transform anchors.
 - Multi-track compositing.
 - Audio mixing.
+
+### M3.66 — Transition Export — merged
+- PR #80 was user-validated and squash-merged at `a3bf59055b76de1c485c8d410e2adb13862925d6`.
+- Dissolve and fade-through-black now export through the native video graph.
 
 ### M3.65 — Static Image Clip Export — merged
 - PR #79 was user-validated and squash-merged at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
