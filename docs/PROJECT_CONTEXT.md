@@ -1,3 +1,14 @@
+## M3.70 — validation correction — 2026-09-23
+
+- User validation reached the full frontend test suite on the M3.70 branch.
+- Result: 32 test files passed and 1 test file failed, with 392/393 tests passing.
+- The sole failure was the new text-overlay ordering regression assertion; the export graph itself was already producing the expected crop/effects/text/transform chain.
+- The failing assertion expected crop height `trunc(ih*0.85)`, while the test fixture configures top/bottom crop values totaling 0.1, so the correct visible height is `trunc(ih*0.9)`.
+- Corrected the assertion to `crop=w=trunc(iw*0.85):h=trunc(ih*0.9)`.
+- The same validation run showed lint passing, production build passing, 39 Rust tests passing, and Tauri dev launching successfully before being stopped manually.
+- The React `act(...)` messages are existing test warnings and did not fail the run.
+- Fresh validation after this correction is still required; PR #84 remains Draft.
+
 ## M3.70 — Text Overlay Export Rendering — implementation update — 2026-09-23
 
 - PR #84 remains the active Draft PR on `feat/m3-70-text-overlay-export`, based directly on the current `main`.
