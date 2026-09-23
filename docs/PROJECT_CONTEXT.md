@@ -1,3 +1,12 @@
+## M3.71 — test restoration correction — 2026-09-24
+
+- Follow-up inspection of user validation exposed that src-tauri/src/audio_render.rs had been truncated inside validates_unified_video_audio_graph_request_metadata, before the missing_filter fixture was completed.
+- Restored the missing unified-AV test body and restored native legacy argument coverage that had been displaced by the truncated test edit.
+- The restored tests cover unified request validation, image/video input handling, video/audio input ordering, unified FFmpeg argument construction, and legacy video/audio mix argument coverage.
+- Corrected the restored missing_filter fixture so it includes its required video_inputs field.
+- Commit: 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
+- The GitHub branch is now structurally complete; local Rust/Tauri validation is still required. PR #85 remains Draft.
+
 ## M3.71 — validation correction — 2026-09-24
 
 - User validation passed lint and all 33 frontend test files / 394 frontend tests.
