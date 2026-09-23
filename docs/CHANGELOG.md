@@ -1,3 +1,46 @@
+## 2026-09-23 — M3.63 stale regression assertion correction
+
+Branch: feat/m3-63-static-transform-export
+PR: #77
+
+Validation evidence supplied by the user:
+- `npm ci`: completed with 0 vulnerabilities.
+- `npm run lint`: completed without a reported lint failure.
+- Frontend test run: 32 test files executed; 31 files passed and 1 file failed only because `render-pipeline.test.ts` still expected static transforms to be rejected. Totals were 362 passed / 363 tests. fileciteturn451file0L269-L270
+- `npm run build`: passed. fileciteturn451file0L275-L285
+- `cargo test`: 38 passed, 0 failed. fileciteturn451file0L286-L329
+- `npm run tauri dev`: Vite started and the Tauri app launched successfully. fileciteturn451file0L344-L359
+
+Correction:
+- Static X/Y/Scale/Rotation/Opacity export is now supported, so the old pipeline test expectation was stale.
+- The test now supplies transform keyframes and expects the intentional `animated transform export is deferred` guard.
+- No production transform-export behavior was rolled back.
+
+Validation:
+- Fresh full local validation is still required after this test-only correction.
+- PR #77 remains Draft.
+
+## 2026-09-23 — M3.63 Static Visual Transform Export — in progress
+
+Branch: feat/m3-63-static-transform-export
+PR: #77 — Draft
+
+Scope:
+- Compile static visual X/Y, Scale, Rotation, and Opacity into the existing single-video FFmpeg render graph.
+- Preserve the existing minimal direct graph for default transforms.
+- Propagate transform anchors into RenderPlan and reject non-centered anchors explicitly.
+- Keep transform keyframes, crop/crop position, transitions, image export, multi-track compositing, and audio mixing deferred.
+
+Implementation:
+- Static non-default transforms now render the source content to project-sized transparent RGBA, apply visual effects, scale, rotation, and opacity, then overlay it at canvas-relative X/Y translation.
+- Transformed segments normalize to project-sized `yuv420p` output for deterministic concat/export behavior.
+- Existing default-transform graph output remains unchanged.
+
+Validation:
+- Local lint/test/build/Cargo/Tauri validation pending user report.
+- PR #77 remains Draft until user PASS.
+- M3.62 PR #76 stays Draft and parked; its WebKitGTK delayed repaint issue is intentionally deferred.
+
 ## 2026-09-22 — M3.62 Text Overlay Export Rendering — in progress
 
 Branch: feat/m3-62-text-overlay-export-rendering

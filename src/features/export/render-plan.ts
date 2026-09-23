@@ -17,8 +17,10 @@ import {
   type MediaType,
   type Project,
   type TrackType,
+  type TransformAnchor,
   type TransformKeyframe,
 } from "../project/domain";
+import { getClipTransformAnchor } from "../transform/transform";
 import {
   getExportDimensions,
   normalizeExportSettings,
@@ -48,6 +50,7 @@ export interface RenderSegment {
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
   visualEffects?: VisualEffects;
   transform?: ClipTransform;
+  transformAnchor?: TransformAnchor;
   crop?: ClipCrop;
   cropPosition?: CropPosition;
   transformKeyframes?: TransformKeyframe[];
@@ -165,6 +168,7 @@ export function createRenderPlan(
             }
           : {}),
         transform: clip.transform,
+        transformAnchor: getClipTransformAnchor(clip.transformAnchor),
         crop: clip.crop,
         cropPosition: clip.cropPosition,
         transformKeyframes: clip.transformKeyframes,

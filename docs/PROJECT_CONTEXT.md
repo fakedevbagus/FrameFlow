@@ -1,3 +1,18 @@
+## M3.63 — Static Visual Transform Export — in progress — 2026-09-23
+
+- M3.62 Text Overlay Export Rendering is intentionally parked as PR #76 Draft because its Linux/Tauri/WebKitGTK Preview live-update path remains functionally usable but not immediate; the known limitation is preserved for later investigation.
+- M3.63 is based directly on the current verified `main` and is intentionally independent of the parked M3.62 WebView issue.
+- Preview already supports static visual X/Y translation, Scale, Rotation, and Opacity, but the export graph previously rejected any non-default transform.
+- M3.63 propagates `transformAnchor` into RenderPlan for explicit validation and adds FFmpeg graph compilation for static centered-anchor transforms.
+- Static transform export maps X/Y to canvas-pixel translation, Scale to source-content scaling, Rotation to transparent rotating content, and Opacity to alpha modulation.
+- Transformed content is composited onto a transparent project-sized canvas so scaled/rotated content can extend beyond the project bounds and be clipped by the final output frame.
+- Default transforms keep the existing minimal direct graph path unchanged.
+- Non-centered transform anchors remain deferred and are rejected explicitly rather than silently misrendered.
+- Transform keyframes, crop, crop position, transitions, images, multi-track compositing, and audio mixing remain outside this focused slice.
+- Added RenderPlan coverage for transform-anchor propagation and render-graph coverage for static transform compilation, default-graph preservation, non-centered-anchor rejection, transform-keyframe rejection, and crop-guard preservation.
+- Supplied local validation reached the full suite and found one stale regression assertion: `render-pipeline.test.ts` still expected static transforms to be rejected. The assertion was corrected to use transform keyframes, which remain intentionally deferred. The same supplied run showed 362/363 frontend tests passing, production build passing, and 38/38 Rust tests passing. A fresh validation run is required after the test correction. Keep PR #77 Draft until the user reports PASS.
+- Do not close or merge PR #76 as part of M3.63; it remains the parked Text Overlay Export work item.
+
 ## M3.62 — Text Overlay Export Rendering — in progress — 2026-09-22
 
 - M3.61 Text Overlay Foundation was completed, user-validated, and squash-merged into main at `947f3c33fcf61b1e07d1d75e275d721755568ae8`.
