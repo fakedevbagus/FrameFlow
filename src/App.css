@@ -139,7 +139,7 @@ button:focus-visible {
   display: grid;
   min-height: 0;
   overflow: hidden;
-  grid-template-columns: minmax(220px, 250px) minmax(420px, 1fr) minmax(270px, 300px);
+  grid-template-columns: minmax(210px, 240px) minmax(420px, 1fr) minmax(300px, 320px);
 }
 
 .panel {
@@ -1780,9 +1780,10 @@ button:disabled {
 .inspector-section-header {
   display: flex;
   min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
 }
 
 .inspector-help {
@@ -1798,6 +1799,22 @@ button:disabled {
   min-width: 0;
   align-items: center;
   gap: 6px;
+}
+
+.inspector-section-title-group {
+  flex: 1 1 auto;
+}
+
+.inspector-section-actions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.inspector-section-title,
+.inspector-section-title-group > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .inspector-keyframe-count {
@@ -1841,9 +1858,11 @@ button:disabled {
 
 .inspector-anchor-header {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px 8px;
 }
 
 .inspector-anchor-header > span {
