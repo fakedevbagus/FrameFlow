@@ -1421,7 +1421,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1000:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=0.65,pan=stereo|c0=0.831470*c0|c1=0.555570*c1,adelay=1000:all=1[frameflow_source_audio_0]"
     ));
     assert!(filter.contains("[frameflow_explicit_audio]"));
     assert!(filter.contains(
