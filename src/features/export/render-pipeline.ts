@@ -8,6 +8,7 @@ import {
 } from "./export-renderer";
 import { compileAudioTracksGraph } from "./audio-render-graph";
 import { compileSingleVideoTrackGraph } from "./render-graph";
+import { getClipTransform } from "../transform/transform";
 
 export function renderVideoPlanToMp4(
   plan: RenderPlan,
@@ -73,15 +74,28 @@ function renderVideoOnlyPlanToMp4(
     (segment) => segment.trackType === "video",
   );
   const graph = compileSingleVideoTrackGraph(plan);
-  const hasAnimatedTransforms = videoSegments.some(
-    (segment) => Boolean(segment.transformKeyframes?.length),
-  );
+  const requiresVideoGraph = videoSegments.some((segment) => {
+    const transform = getClipTransform(segment.transform);
+
+    return (
+      segment.mediaType !== "video" ||
+      Boolean(segment.transitionOut) ||
+      Boolean(segment.transformKeyframes?.length) ||
+      Boolean(segment.crop) ||
+      Boolean(segment.visualEffects) ||
+      transform.x !== 0 ||
+      transform.y !== 0 ||
+      transform.scale !== 1 ||
+      transform.rotation !== 0 ||
+      transform.opacity !== 1
+    );
+  });
 
   if (
     videoSegments.length === 1 &&
     videoSegments[0].timelineStartMs === 0 &&
     videoSegments[0].mediaType === "video" &&
-    !hasAnimatedTransforms
+    !requiresVideoGraph
   ) {
     const segment = videoSegments[0];
 
@@ -112,7 +126,7 @@ function renderVideoOnlyPlanToMp4(
     videoTrackIds.size === 1 &&
     videoSegments.every((segment) => segment.mediaType === "video") &&
     !hasVisualTransitions &&
-    !hasAnimatedTransforms
+    !requiresVideoGraph
   ) {
     const ordered = [...videoSegments].sort(
       (left, right) => left.timelineStartMs - right.timelineStartMs,
