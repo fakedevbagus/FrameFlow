@@ -1,3 +1,26 @@
+## 2026-09-24 — M3.62 live edit React-render isolation
+
+Branch: feat/m3-62-text-overlay-export-rendering
+PR: #76
+
+Observed one-step-lag pattern:
+- Inspector changes were immediately visible in the control.
+- Preview showed the prior field value only after the next field was edited.
+
+Architecture correction:
+- Removed App's `useSyncExternalStore` render subscription to the transient Text Overlay edit session.
+- App now uses a non-rendering store subscription only to restart the 400 ms autosave timer.
+- Removed the obsolete `textOverlayOverride` Preview prop.
+- Preview keeps one permanently mounted selected overlay DOM element and reads the latest edit-session snapshot directly during render.
+- Native beforeinput/keydown/paste/cut plus requestAnimationFrame DOM readback remain the live WebView input path.
+- This prevents live-edit store updates from causing React reconciliation to overwrite imperative Preview changes with stale data.
+- The Linux GTK repaint watchdog remains enabled as a platform-level mitigation while the user validates the corrected frontend architecture.
+
+Validation:
+- Local Linux/Tauri validation pending user verification.
+- CI run #145 is currently in progress for an intermediate head; the latest branch head should be rechecked again before merge.
+- PR #76 remains Draft and unmerged.
+
 ## 2026-09-22 — M3.62 Text Overlay Export Rendering — in progress
 
 Branch: feat/m3-62-text-overlay-export-rendering
