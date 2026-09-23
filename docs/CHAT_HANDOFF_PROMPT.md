@@ -1,3 +1,10 @@
+## M3.73 — validation correction — 2026-09-24
+
+- User run passed lint, the full frontend suite (33/33 files, 397/397 tests), and production build.
+- The Rust/Tauri stage failed on implementation/test integration issues.
+- Corrected the duplicate serde declaration, missing `source_audio_segments` fields in native test fixtures, missing builder argument coverage, and test import scope in commit `66afae8ad3307bddebcf3ca320cee51c1c936913`.
+- PR #87 remains Draft and requires fresh Rust/Tauri validation before PASS.
+
 ## M3.73 — active — 2026-09-24
 
 - Branch: `feat/m3-73-source-audio-unified-export`.
