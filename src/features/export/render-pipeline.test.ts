@@ -585,6 +585,8 @@ describe("render video pipeline", () => {
           sourceStartMs: 0,
           timelineStartMs: 0,
           durationMs: 5000,
+          trackVolume: 0.65,
+          trackPan: -0.25,
         },
       ],
       videoFilterComplex: expect.stringContaining("[0:v:0]"),
