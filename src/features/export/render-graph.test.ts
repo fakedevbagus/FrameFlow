@@ -261,7 +261,7 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).not.toContain("colorchannelmixer=");
   });
 
-  it("rejects non-centered transform anchors", () => {
+  it("compiles static transforms around a non-centered anchor", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
     project = {
@@ -273,15 +273,15 @@ describe("single video render graph", () => {
               clips: track.clips.map((clip) => ({
                 ...clip,
                 transform: {
-                  x: 10,
-                  y: 0,
-                  scale: 1,
-                  rotation: 0,
-                  opacity: 1,
+                  x: 8,
+                  y: -4,
+                  scale: 1.5,
+                  rotation: 90,
+                  opacity: 0.8,
                 },
                 transformAnchor: {
-                  x: 0,
-                  y: 0.5,
+                  x: 0.25,
+                  y: 0.75,
                 },
               })),
             }
@@ -289,12 +289,23 @@ describe("single video render graph", () => {
       ),
     };
 
-    const graphPlan = createRenderPlan(
-      project,
-      createDefaultExportSettings(project),
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
     );
 
-    expect(() => compileSingleVideoTrackGraph(graphPlan)).toThrow(
+    expect(graph.filterComplex).toContain("anchor_bg_0");
+    expect(graph.filterComplex).toContain("anchor_pivot_0");
+    expect(graph.filterComplex).toContain("anchor_rotated_0");
+    expect(graph.filterComplex).toContain(
+      "scale=w='iw*1.5':h='ih*1.5':eval=frame",
+    );
+    expect(graph.filterComplex).toContain("rotate='");
+    expect(graph.filterComplex).toContain("cos(");
+    expect(graph.filterComplex).toContain("sin(");
+    expect(graph.filterComplex).toContain("colorchannelmixer=aa=0.8");
+    expect(graph.filterComplex).toContain("anchor_output_bg_0");
+    expect(graph.filterComplex).toContain("overlay=x='(W-w)/2+");
+    expect(graph.filterComplex).not.toContain(
       "non-centered transform anchors",
     );
   });
@@ -392,6 +403,67 @@ describe("single video render graph", () => {
     expect(graph.filterComplex).toContain("colorchannelmixer=aa=0.8");
     expect(graph.filterComplex).toContain(
       "overlay=x=(W-w)/2+86.4:y=(H-h)/2+-76.8:shortest=1",
+    );
+  });
+
+  it("compiles animated transforms around a non-centered anchor", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                transformAnchor: {
+                  x: 0.2,
+                  y: 0.8,
+                },
+                transformKeyframes: [
+                  {
+                    timeMs: 0,
+                    transform: {
+                      x: 0,
+                      y: 0,
+                      scale: 1,
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  },
+                  {
+                    timeMs: 1000,
+                    transform: {
+                      x: 20,
+                      y: -10,
+                      scale: 1.4,
+                      rotation: 75,
+                      opacity: 0.65,
+                    },
+                    easing: "ease-in-out",
+                  },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const graph = compileSingleVideoTrackGraph(
+      createRenderPlan(project, createDefaultExportSettings(project)),
+    );
+
+    expect(graph.filterComplex).toContain("anchor_scaled_0");
+    expect(graph.filterComplex).toContain("eval=frame");
+    expect(graph.filterComplex).toContain("anchor_pivot_0");
+    expect(graph.filterComplex).toContain("rotate='");
+    expect(graph.filterComplex).toContain("cos(");
+    expect(graph.filterComplex).toContain("sin(");
+    expect(graph.filterComplex).toContain("N/30");
+    expect(graph.filterComplex).toContain("\\,");
+    expect(graph.filterComplex).not.toContain(
+      "non-centered transform anchors",
     );
   });
 
