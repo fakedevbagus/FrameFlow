@@ -342,7 +342,7 @@ fn build_ffmpeg_video_audio_graph_args(
   _height: u32,
   frame_rate: f64,
   output_path: &Path,
-) -> Vec<std::ffi::OsString> {
+) -> Result<Vec<std::ffi::OsString>, String> {
   let mut args = vec![
     "-hide_banner".into(),
     "-loglevel".into(),
@@ -428,8 +428,9 @@ fn build_ffmpeg_video_audio_graph_args(
     output_path.as_os_str().to_os_string(),
   ]);
 
-  args
+  Ok(args)
 }
+
 struct SourceAudioFilter {
   filter_complex: String,
   labels: Vec<String>,
