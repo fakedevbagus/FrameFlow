@@ -7,7 +7,7 @@ import {
   type NativeExportRenderResult,
 } from "./export-renderer";
 import { compileAudioTracksGraph } from "./audio-render-graph";
-import { compileSingleVideoTrackGraph } from "./render-graph";
+import { compileVideoTracksGraph } from "./render-graph";
 import { getClipTransform } from "../transform/transform";
 
 export function renderVideoPlanToMp4(
@@ -73,7 +73,7 @@ function renderVideoOnlyPlanToMp4(
   const videoSegments = plan.segments.filter(
     (segment) => segment.trackType === "video",
   );
-  const graph = compileSingleVideoTrackGraph(plan);
+  const graph = compileVideoTracksGraph(plan);
   const requiresVideoGraph = videoSegments.some((segment) => {
     const transform = getClipTransform(segment.transform);
 
