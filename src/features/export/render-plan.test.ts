@@ -247,6 +247,41 @@ describe("render plan", () => {
     });
   });
 
+  it("scales text overlay font size with export quality", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                textOverlay: {
+                  text: "Resolution-aware",
+                  x: 0.5,
+                  y: 0.5,
+                  fontSize: 64,
+                  color: "#ffffff",
+                  alignment: "center" as const,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(project, {
+      ...createDefaultExportSettings(project),
+      quality: "720p",
+    });
+
+    expect(plan.width).toBe(406);
+    expect(plan.height).toBe(720);
+    expect(plan.segments[0].textOverlay?.fontSize).toBe(24);
+  });
+
   it("compiles timeline clips with source and timeline timing", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");
