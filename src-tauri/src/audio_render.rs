@@ -1,7 +1,6 @@
 use std::{
   fs,
   path::{Path, PathBuf},
-
 };
 
 use serde::{Deserialize, Serialize};
@@ -22,8 +21,6 @@ pub struct NativeAudioGraphRenderRequest {
 pub struct NativeAudioRenderResult {
   output_path: String,
 }
-
-
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
