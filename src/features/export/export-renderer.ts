@@ -49,10 +49,18 @@ export interface NativeVideoWithAudioGraphRenderRequest {
   outputPath: string;
 }
 
+export interface NativeSourceAudioSegment {
+  inputIndex: number;
+  sourceStartMs: number;
+  timelineStartMs: number;
+  durationMs: number;
+}
+
 export interface NativeVideoAudioGraphRenderRequest {
   videoInputs: string[];
   videoInputMediaTypes: MediaType[];
   audioInputs: string[];
+  sourceAudioSegments?: NativeSourceAudioSegment[];
   videoFilterComplex: string;
   videoMap: string;
   audioFilterComplex: string;

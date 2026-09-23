@@ -1,7 +1,6 @@
 use std::{
   fs,
   path::{Path, PathBuf},
-
 };
 
 use serde::{Deserialize, Serialize};
@@ -23,8 +22,6 @@ pub struct NativeAudioRenderResult {
   output_path: String,
 }
 
-
-
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeVideoWithAudioGraphRenderRequest {
@@ -35,12 +32,31 @@ pub struct NativeVideoWithAudioGraphRenderRequest {
   pub duration_ms: u64,
   pub output_path: String,
 }
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeSourceAudioSegment {
+  pub input_index: usize,
+  pub source_start_ms: u64,
+  pub timeline_start_ms: u64,
+  pub duration_ms: u64,
+}
+
+struct ResolvedSourceAudioSegment {
+  input_index: usize,
+  source_start_ms: u64,
+  timeline_start_ms: u64,
+  duration_ms: u64,
+  has_audio: bool,
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeVideoAudioGraphRenderRequest {
   pub video_inputs: Vec<String>,
   pub video_input_media_types: Vec<String>,
   pub audio_inputs: Vec<String>,
+  #[serde(default)]
+  pub source_audio_segments: Vec<NativeSourceAudioSegment>,
   pub video_filter_complex: String,
   pub video_map: String,
   pub audio_filter_complex: String,
@@ -147,10 +163,46 @@ pub fn render_video_audio_graph_to_mp4(
     })
     .collect::<Result<Vec<_>, String>>()?;
 
+  let source_audio_segments = request
+    .source_audio_segments
+    .iter()
+    .map(|segment| {
+      let Some(video_path) = video_paths.get(segment.input_index) else {
+        return Err(format!(
+          "Native unified AV graph source audio segment references invalid video input index {}.",
+          segment.input_index
+        ));
+      };
+
+      if request
+        .video_input_media_types
+        .get(segment.input_index)
+        .map(String::as_str)
+        != Some("video")
+      {
+        return Err(format!(
+          "Native unified AV graph source audio segment at input index {} requires a video input.",
+          segment.input_index
+        ));
+      }
+
+      let has_audio = probe_has_audio(video_path)?;
+
+      Ok(ResolvedSourceAudioSegment {
+        input_index: segment.input_index,
+        source_start_ms: segment.source_start_ms,
+        timeline_start_ms: segment.timeline_start_ms,
+        duration_ms: segment.duration_ms,
+        has_audio,
+      })
+    })
+    .collect::<Result<Vec<_>, String>>()?;
+
   let args = build_ffmpeg_video_audio_graph_args(
     &video_paths,
     &request.video_input_media_types,
     &audio_paths,
+    &source_audio_segments,
     &request.video_filter_complex,
     &request.video_map,
     &request.audio_filter_complex,
@@ -160,7 +212,7 @@ pub fn render_video_audio_graph_to_mp4(
     request.height,
     request.frame_rate,
     &output_path,
-  );
+  )?;
 
   if let Err(error) = export_process::run_ffmpeg_with_progress(
     &app,
@@ -227,6 +279,29 @@ fn validate_video_audio_graph_request(
     return Err("Native unified AV graph requires the [aout] audio map.".to_string());
   }
 
+  for segment in &request.source_audio_segments {
+    if segment.duration_ms == 0 {
+      return Err(
+        "Native unified AV graph source audio segments require a positive duration."
+          .to_string(),
+      );
+    }
+
+    let Some(media_type) = request.video_input_media_types.get(segment.input_index) else {
+      return Err(format!(
+        "Native unified AV graph source audio segment references invalid video input index {}.",
+        segment.input_index
+      ));
+    };
+
+    if media_type != "video" {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} requires a video input.",
+        segment.input_index
+      ));
+    }
+  }
+
   if request.duration_ms == 0 {
     return Err("Native unified AV graph requires a positive duration.".to_string());
   }
@@ -252,6 +327,7 @@ fn build_ffmpeg_video_audio_graph_args(
   video_paths: &[PathBuf],
   video_input_media_types: &[String],
   audio_paths: &[PathBuf],
+  source_audio_segments: &[ResolvedSourceAudioSegment],
   video_filter_complex: &str,
   video_map: &str,
   audio_filter_complex: &str,
@@ -261,7 +337,7 @@ fn build_ffmpeg_video_audio_graph_args(
   _height: u32,
   frame_rate: f64,
   output_path: &Path,
-) -> Vec<std::ffi::OsString> {
+) -> Result<Vec<std::ffi::OsString>, String> {
   let mut args = vec![
     "-hide_banner".into(),
     "-loglevel".into(),
@@ -288,13 +364,38 @@ fn build_ffmpeg_video_audio_graph_args(
     args.push(audio_path.as_os_str().to_os_string());
   }
 
+  let source_audio_filter = build_source_audio_filter(source_audio_segments);
+  let (resolved_audio_filter_complex, resolved_audio_map) =
+    if source_audio_filter.labels.is_empty() {
+      (audio_filter_complex.to_string(), audio_map.to_string())
+    } else {
+      let explicit_audio_map = "[frameflow_explicit_audio]";
+      let explicit_audio_filter =
+        rename_audio_graph_output(audio_filter_complex, audio_map, explicit_audio_map)?;
+
+      let source_labels = source_audio_filter.labels.concat();
+      let mix_input_count = source_audio_filter.labels.len() + 1;
+      (
+        format!(
+          "{};{};{}{}amix=inputs={}:duration=longest:dropout_transition=0{}",
+          explicit_audio_filter,
+          source_audio_filter.filter_complex,
+          explicit_audio_map,
+          source_labels,
+          mix_input_count,
+          audio_map,
+        ),
+        audio_map.to_string(),
+      )
+    };
+
   args.extend([
     "-filter_complex".into(),
-    format!("{};{}", video_filter_complex, audio_filter_complex).into(),
+    format!("{};{}", video_filter_complex, resolved_audio_filter_complex).into(),
     "-map".into(),
     video_map.into(),
     "-map".into(),
-    audio_map.into(),
+    resolved_audio_map.into(),
     "-t".into(),
     ((duration_ms as f64) / 1000.0).to_string().into(),
     "-r".into(),
@@ -322,8 +423,68 @@ fn build_ffmpeg_video_audio_graph_args(
     output_path.as_os_str().to_os_string(),
   ]);
 
-  args
+  Ok(args)
 }
+
+struct SourceAudioFilter {
+  filter_complex: String,
+  labels: Vec<String>,
+}
+
+fn build_source_audio_filter(
+  segments: &[ResolvedSourceAudioSegment],
+) -> SourceAudioFilter {
+  let mut filter_parts = Vec::new();
+  let mut labels = Vec::new();
+
+  for segment in segments.iter().filter(|segment| segment.has_audio) {
+    let source_end_ms = segment
+      .source_start_ms
+      .saturating_add(segment.duration_ms);
+    let label = format!("[frameflow_source_audio_{}]", segment.input_index);
+    filter_parts.push(format!(
+      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay={}:all=1{}",
+      segment.input_index,
+      format_seconds(segment.source_start_ms),
+      format_seconds(source_end_ms),
+      segment.timeline_start_ms,
+      label,
+    ));
+    labels.push(label);
+  }
+
+  SourceAudioFilter {
+    filter_complex: filter_parts.join(";"),
+    labels,
+  }
+}
+
+fn rename_audio_graph_output(
+  filter_complex: &str,
+  audio_map: &str,
+  replacement: &str,
+) -> Result<String, String> {
+  let occurrences = filter_complex.match_indices(audio_map).count();
+
+  if occurrences != 1 {
+    return Err(
+      "Unified AV audio graph must contain exactly one declared audio output label."
+        .to_string(),
+    );
+  }
+
+  let index = filter_complex
+    .rfind(audio_map)
+    .ok_or_else(|| "Unified AV audio graph audio output label is missing.".to_string())?;
+
+  Ok(format!(
+    "{}{}{}",
+    &filter_complex[..index],
+    replacement,
+    &filter_complex[index + audio_map.len()..],
+  ))
+}
+
 #[tauri::command]
 pub fn render_video_with_audio_graph_to_mp4(
   app: tauri::AppHandle,
@@ -739,6 +900,14 @@ fn media_type(path: &Path) -> Result<String, String> {
   Ok(media_type.to_string())
 }
 
+fn format_seconds(milliseconds: u64) -> String {
+  format!(
+    "{}.{:03}",
+    milliseconds / 1_000,
+    milliseconds % 1_000
+  )
+}
+
 fn same_path(first: &Path, second: &Path) -> bool {
   let first_canonical = fs::canonicalize(first).ok();
   let second_canonical = fs::canonicalize(second)
@@ -759,8 +928,9 @@ mod tests {
     build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
     build_ffmpeg_video_with_audio_graph_args, media_type,
     validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
-    NativeAudioGraphRenderRequest, NativeVideoAudioGraphRenderRequest,
-    NativeVideoWithAudioGraphRenderRequest,
+    NativeAudioGraphRenderRequest, NativeSourceAudioSegment,
+    NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
+    ResolvedSourceAudioSegment,
   };
   use std::path::{Path, PathBuf};
 
@@ -911,6 +1081,7 @@ mod tests {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -928,6 +1099,7 @@ mod tests {
       video_inputs: Vec::new(),
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -941,10 +1113,77 @@ mod tests {
     assert!(validate_video_audio_graph_request(&missing_video).is_err());
     missing_video.video_inputs = vec!["/media/video.mp4".to_string()];
 
+    let invalid_source_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![NativeSourceAudioSegment {
+        input_index: 1,
+        source_start_ms: 0,
+        timeline_start_ms: 0,
+        duration_ms: 5_000,
+      }],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&invalid_source_audio).is_err());
+
+    let invalid_image_source_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/cover.png".to_string()],
+      video_input_media_types: vec!["image".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![NativeSourceAudioSegment {
+        input_index: 0,
+        source_start_ms: 0,
+        timeline_start_ms: 0,
+        duration_ms: 5_000,
+      }],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&invalid_image_source_audio).is_err());
+
+    let invalid_zero_duration_source_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![NativeSourceAudioSegment {
+        input_index: 0,
+        source_start_ms: 0,
+        timeline_start_ms: 0,
+        duration_ms: 0,
+      }],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&invalid_zero_duration_source_audio).is_err());
+
     let mut mismatched_types = NativeVideoAudioGraphRenderRequest {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: Vec::new(),
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -964,6 +1203,7 @@ mod tests {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: Vec::new(),
+      source_audio_segments: Vec::new(),
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -980,6 +1220,7 @@ mod tests {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
       audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
       video_filter_complex: String::new(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
@@ -1030,6 +1271,7 @@ mod tests {
       &video_paths,
       &video_media_types,
       &audio_paths,
+      &[],
       "[0:v:0]null[video0];[1:v:0]null[video1];[video0][video1]overlay[outvideo][vout]",
       "[vout]",
       "[2:a:0]anull[aout]",
@@ -1039,7 +1281,8 @@ mod tests {
       720,
       29.97,
       Path::new("/tmp/FrameFlow final.mp4"),
-    );
+    )
+    .unwrap();
 
     let values: Vec<String> = args
       .iter()
@@ -1110,6 +1353,60 @@ mod tests {
   }
 
   #[test]
+  fn builds_unified_graph_with_embedded_source_audio() {
+    let video_paths = vec![PathBuf::from("/media/video.mp4")];
+    let video_media_types = vec!["video".to_string()];
+    let audio_paths = vec![PathBuf::from("/media/music.mp3")];
+    let source_audio_segments = vec![ResolvedSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 250,
+      timeline_start_ms: 1_000,
+      duration_ms: 4_000,
+      has_audio: true,
+    }];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &audio_paths,
+      &source_audio_segments,
+      "[0:v:0]null[vout]",
+      "[vout]",
+      "[1:a:0]anull[aout]",
+      "[aout]",
+      6_000,
+      1_280,
+      720,
+      30.0,
+      Path::new("/tmp/unified-source-audio.mp4"),
+    )
+    .unwrap();
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    let filter = values
+      .windows(2)
+      .find(|pair| pair[0] == "-filter_complex")
+      .map(|pair| pair[1].clone())
+      .expect("filter_complex argument should exist");
+
+    assert!(filter.contains(
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1000:all=1[frameflow_source_audio_0]"
+    ));
+    assert!(filter.contains("[frameflow_explicit_audio]"));
+    assert!(filter.contains(
+      "[frameflow_explicit_audio][frameflow_source_audio_0]amix=inputs=2:duration=longest:dropout_transition=0[aout]"
+    ));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[aout]".to_string()
+    ]));
+  }
+
+  #[test]
   fn preserves_unified_video_audio_input_order() {
     let video_paths = vec![
       PathBuf::from("/media/first.mp4"),
@@ -1125,6 +1422,7 @@ mod tests {
       &video_paths,
       &video_media_types,
       &audio_paths,
+      &[],
       "[0:v:0]null[v0];[1:v:0]null[vout]",
       "[vout]",
       "[2:a:0]anull[aout0];[3:a:0]anull[aout]",
@@ -1134,7 +1432,8 @@ mod tests {
       1_080,
       30.0,
       Path::new("/tmp/final.mp4"),
-    );
+    )
+    .unwrap();
 
     let values: Vec<String> = args
       .iter()
