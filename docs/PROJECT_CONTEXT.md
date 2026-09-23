@@ -1,3 +1,29 @@
+## M3.74 — Video Track Volume/Pan for Embedded Source Audio — in progress — 2026-09-24
+
+Branch:
+`feat/m3-74-source-audio-track-controls`
+
+Scope:
+- Expose the existing track Volume/Pan controls for video tracks.
+- Apply video-track Volume/Pan to embedded source audio preserved by the M3.73 unified AV export path.
+- Keep audio-track controls, source trim/timeline placement, mute behavior, project schema, and video-only fast paths unchanged.
+
+Implementation:
+- Timeline now shows the existing V/P track controls for both video and audio tracks.
+- Unified export source-audio metadata now carries `trackVolume` and `trackPan` from the rebased video render segments.
+- Native source-audio filtering clamps volume to 0..1 and pan to -1..1, applies volume and constant-power stereo panning, then performs the existing timeline delay.
+- Added Timeline/App regression coverage for video-track controls and pipeline/native coverage for source-audio mix settings.
+- No project schema change.
+
+Validation:
+- Local validation is pending user verification.
+
+Known limitations:
+- Video-track Volume/Pan affect embedded source audio during unified export; clip-level source-audio EQ/compressor/fade controls remain separate audio-track functionality.
+
+Next step:
+- Run local lint, frontend tests, production build, Rust tests, Tauri development startup, and an export with adjusted Video-track Volume/Pan.
+
 ## M3.73 — Preserve Source Audio in Unified AV Export — completed — 2026-09-24
 
 Branch:
