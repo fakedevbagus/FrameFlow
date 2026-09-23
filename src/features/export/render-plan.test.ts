@@ -131,6 +131,39 @@ describe("render plan", () => {
   });
 
 
+  it("propagates video track volume and pan", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+
+    const videoTrack = project.tracks.find((track) => track.type === "video");
+    if (!videoTrack) throw new Error("Expected video track.");
+
+    const projectWithMix = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrack.id
+          ? {
+              ...track,
+              volume: 0.45,
+              pan: -0.3,
+            }
+          : track,
+      ),
+    };
+
+    const segment = createRenderPlan(
+      projectWithMix,
+      createDefaultExportSettings(projectWithMix),
+    ).segments.find((item) => item.assetId === "video-a");
+
+    expect(segment).toEqual(
+      expect.objectContaining({
+        trackVolume: 0.45,
+        trackPan: -0.3,
+      }),
+    );
+  });
+
   it("propagates visual effects for visual clips", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");
