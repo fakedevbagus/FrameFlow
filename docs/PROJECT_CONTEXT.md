@@ -1,3 +1,15 @@
+## M3.70 — Text Overlay Export Rendering — implementation update — 2026-09-23
+
+- PR #84 remains the active Draft PR on `feat/m3-70-text-overlay-export`, based directly on the current `main`.
+- RenderPlan text overlays now scale `fontSize` with the export canvas using the smaller width/height scale factor, so logical project-space text remains visually consistent for lower export qualities.
+- Added regression coverage for 720p text scaling.
+- Expanded text renderer coverage to real multiline text, apostrophe/backslash/drawtext delimiters, and the existing 500-character project limit.
+- Expanded render-graph coverage to image clips and text ordering around effects, crop, static transforms, animated transforms, anchor-aware transforms, dissolve, and fade-through-black transitions.
+- Expanded pipeline coverage so an image clip carrying text is explicitly forced through graph rendering.
+- One new render-graph assertion typo was corrected (`ih`, not `iw`) before fresh validation.
+- No project schema change; PR #76 remains parked and its Preview repaint investigation remains out of scope.
+- Fresh CI/local validation of these latest commits is still pending; do not treat this update as user-validated.
+
 ## M3.70 — Text Overlay Export Rendering — in progress — 2026-09-23
 
 - PR for M3.70 is being prepared from the updated `main`.
