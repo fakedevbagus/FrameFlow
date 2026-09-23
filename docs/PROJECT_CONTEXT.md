@@ -21,6 +21,11 @@
 - Added min-width constraints and intrinsic-width-safe two-column grid tracks for Inspector content so controls shrink within the panel instead of painting past its right edge.
 - Kept the PR Draft because this is a UI validation correction and fresh lint/test/build/Tauri validation is still required.
 
+- Follow-up manual screenshot validation showed the first layout correction was insufficient: the Inspector remained clipped at the right edge because section headers with multiple action buttons could still exceed the narrow panel's intrinsic width.
+- Hardened the workspace again with a 300–320px Inspector column and a 210–240px media column, while preserving a 420px minimum editor area.
+- Inspector section headers and action groups now wrap when necessary instead of forcing horizontal overflow; anchor headers use the same safe behavior.
+- This remains a layout-only correction; export/editor data models are unchanged. Fresh local validation is still required.
+
 ## M3.67 — Animated Transform Export — merged — 2026-09-23
 
 - PR #81 was user-validated and squash-merged into `main` at `783885376209ec56013612147b217a13c8bf1ef7`.
