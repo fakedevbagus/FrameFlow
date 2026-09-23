@@ -779,6 +779,7 @@ function buildAnimatedCompositedSegmentFilter(
   label: string,
   includeOutputNormalization: boolean,
   keyframes: ReturnType<typeof normalizeTransformKeyframes>,
+  preserveAlpha = false,
 ): string {
   const crop = getClipCrop(segment.crop);
   const cropPosition = getClipCropPosition(crop, segment.cropPosition);
@@ -883,7 +884,8 @@ function buildAnimatedCompositedSegmentFilter(
       plan.width +
       ":h=" +
       plan.height +
-      ":x=(ow-iw)/2:y=(oh-ih)/2",
+      ":x=(ow-iw)/2:y=(oh-ih)/2" +
+      (preserveAlpha ? ":color=black@0.0" : ""),
     ...(segment.visualEffects &&
     buildVisualEffectsFfmpegFilters(segment.visualEffects)
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
@@ -967,10 +969,16 @@ function buildAnimatedCompositedSegmentFilter(
     "':shortest=1";
 
   const normalization = includeOutputNormalization
-    ? ",format=yuv420p,fps=fps=" +
-      formatNumber(plan.frameRate) +
-      ":round=near,setsar=1"
-    : ",format=yuv420p";
+    ? (preserveAlpha
+        ? ",format=rgba,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1"
+        : ",format=yuv420p,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1")
+    : preserveAlpha
+      ? ",format=rgba"
+      : ",format=yuv420p";
 
   return (
     foregroundFilters.join(",") +
