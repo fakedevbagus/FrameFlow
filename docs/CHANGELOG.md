@@ -1,3 +1,26 @@
+### M3.72 — Multi-Track + Audio Export Integration — merged — 2026-09-24
+
+Branch: `feat/m3-72-multitrack-audio-export`
+PR #86
+Merge SHA: `8aaae96d09bd7275c9171dc08cf89b74e1dd8e38`
+
+Implemented:
+- Removed obsolete audio-rejection guards from the visual graph compilers.
+- Enabled multi-video-track visual graphs to coexist with explicit Audio track segments.
+- Routed multi-video + explicit-audio projects through the M3.71 unified AV renderer in one native FFmpeg invocation.
+- Preserved visual input rebasing and audio input offsetting.
+- Added regression coverage for graph compilation and unified routing.
+- No project schema change.
+
+Validation:
+- User reported PASS for the requested local lint, frontend tests, production build, Rust tests, and Tauri development startup.
+
+Known limitation:
+- Embedded source-audio preservation for graph-rendered visual clips remains deferred.
+
+Next step:
+- M3.73 — Preserve Source Audio in Unified AV Export.
+
 ## 2026-09-24 — M3.72 validation correction
 
 - User validation passed lint, production build, 42/42 Rust tests, and Tauri development startup.
