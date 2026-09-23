@@ -178,7 +178,7 @@ export function createRenderPlan(
         ...(track.type === "video"
           ? {
               visualEffects: getVisualEffects(clip),
-              textOverlay: getTextOverlay(clip),
+              textOverlay: scaleTextOverlayForExport(\n                getTextOverlay(clip),\n                project,\n                normalizedSettings.width,\n                normalizedSettings.height,\n              ),
             }
           : {}),
         transform: clip.transform,
@@ -203,6 +203,26 @@ export function createRenderPlan(
     frameRate: normalizedSettings.frameRate,
     durationMs,
     segments,
+  };
+}
+
+function scaleTextOverlayForExport(
+  overlay: TextOverlay | undefined,
+  project: Project,
+  outputWidth: number,
+  outputHeight: number,
+): TextOverlay | undefined {
+  if (!overlay) {
+    return undefined;
+  }
+
+  const widthScale = outputWidth / project.canvas.width;
+  const heightScale = outputHeight / project.canvas.height;
+  const renderScale = Math.min(widthScale, heightScale);
+
+  return {
+    ...overlay,
+    fontSize: Math.max(1, Math.round(overlay.fontSize * renderScale)),
   };
 }
 
