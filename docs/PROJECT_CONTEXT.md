@@ -1,5 +1,7 @@
 ## M3.69 — Multi-Track Video Compositing Foundation — in progress — 2026-09-23
 
+- PR #83 is the active Draft PR for this milestone.
+
 - M3.69 extends export from one video track to multiple visual tracks while keeping the existing single-track graph as the compatibility path.
 - Added `compileVideoTracksGraph` and routed export pipeline graph rendering through it.
 - Multiple video tracks are grouped by project track order and each active track is compiled to a project-duration RGBA sequence.
