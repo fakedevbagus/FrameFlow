@@ -1087,31 +1087,40 @@ function PreviewVisualLayer({
   }
 
   function renderTextOverlay() {
-    if (!textOverlay) {
+    if (!textOverlay && !isSelected) {
       return null;
     }
 
+    const activeText = textOverlay?.text ?? "";
+    const activeX = textOverlay?.x ?? 0.5;
+    const activeY = textOverlay?.y ?? 0.5;
+    const activeFontSize = textOverlay?.fontSize ?? 56;
+    const activeColor = textOverlay?.color ?? "#ffffff";
+    const activeAlignment = textOverlay?.alignment ?? "center";
     const horizontalTransform =
-      textOverlay.alignment === "left"
+      activeAlignment === "left"
         ? "translate(0, -50%)"
-        : textOverlay.alignment === "right"
+        : activeAlignment === "right"
           ? "translate(-100%, -50%)"
           : "translate(-50%, -50%)";
 
     return (
       <div
         className="preview-text-overlay"
+        id={"preview-text-overlay-" + layer.clip.id}
         data-testid={"preview-text-overlay-" + layer.clip.id}
+        data-clip-id={layer.clip.id}
         style={{
-          left: textOverlay.x * 100 + "%",
-          top: textOverlay.y * 100 + "%",
-          color: textOverlay.color,
-          fontSize: textOverlay.fontSize + "px",
-          textAlign: textOverlay.alignment,
+          left: activeX * 100 + "%",
+          top: activeY * 100 + "%",
+          color: activeColor,
+          fontSize: activeFontSize + "px",
+          textAlign: activeAlignment,
           transform: horizontalTransform,
+          visibility: activeText.trim() ? "visible" : "hidden",
         }}
       >
-        {textOverlay.text}
+        {activeText}
       </div>
     );
   }
