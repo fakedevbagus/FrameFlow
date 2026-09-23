@@ -1,3 +1,25 @@
+### M3.73 — Preserve Source Audio in Unified AV Export — merged — 2026-09-24
+
+Branch: `feat/m3-73-source-audio-unified-export`
+PR #87
+Merge SHA: `8c7292f1b4484c9a2156484c2d06f4980760c468`
+
+Implemented:
+- Preserved embedded audio from non-muted video clips on the unified AV export path.
+- Trimmed and delayed source audio according to source and timeline placement.
+- Mixed preserved source audio with explicit Audio-track output in one native FFmpeg invocation.
+- Added regression coverage for source-audio routing and native FFmpeg graph construction.
+- No project schema change.
+
+Validation:
+- User reported PASS for lint, all 397 frontend tests, production build, Rust tests, Tauri startup, and manual export verification.
+
+Known limitation:
+- Video-track volume and pan are not yet applied to preserved embedded source audio.
+
+Next step:
+- M3.74 — Preserve Video-Track Volume and Pan for Embedded Source Audio.
+
 ### M3.73 — validation correction — 2026-09-24
 
 - User validation passed lint, 33/33 frontend test files, 397/397 frontend tests, and production build.
