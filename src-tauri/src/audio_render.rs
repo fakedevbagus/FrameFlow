@@ -197,6 +197,8 @@ pub fn render_video_audio_graph_to_mp4(
         source_start_ms: segment.source_start_ms,
         timeline_start_ms: segment.timeline_start_ms,
         duration_ms: segment.duration_ms,
+        track_volume: segment.track_volume,
+        track_pan: segment.track_pan,
         has_audio,
       })
     })
@@ -446,14 +448,33 @@ fn build_source_audio_filter(
       .source_start_ms
       .saturating_add(segment.duration_ms);
     let label = format!("[frameflow_source_audio_{}]", segment.input_index);
-    filter_parts.push(format!(
-      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay={}:all=1{}",
+    let volume = segment.track_volume.clamp(0.0, 1.0);
+    let pan = segment.track_pan.clamp(-1.0, 1.0);
+    let mut filters = format!(
+      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume={}",
       segment.input_index,
       format_seconds(segment.source_start_ms),
       format_seconds(source_end_ms),
+      format_number(volume),
+    );
+
+    if pan.abs() >= 0.000001 {
+      let normalized = (pan + 1.0) * std::f64::consts::PI / 4.0;
+      let left_gain = normalized.cos();
+      let right_gain = normalized.sin();
+      filters.push_str(&format!(
+        ",pan=stereo|c0={}*c0|c1={}*c1",
+        format_number(left_gain),
+        format_number(right_gain),
+      ));
+    }
+
+    filters.push_str(&format!(
+      ",adelay={}:all=1{}",
       segment.timeline_start_ms,
       label,
     ));
+    filter_parts.push(filters);
     labels.push(label);
   }
 
