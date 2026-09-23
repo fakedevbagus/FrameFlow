@@ -1,3 +1,42 @@
+## 2026-09-24 — M3.71 test restoration correction
+
+- User validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the production Vite build, but Rust compilation failed on an unclosed delimiter in src-tauri/src/audio_render.rs.
+- Inspection of the branch confirmed the unified-AV native test module had been truncated at the start of missing_filter.
+- Restored the missing test body, re-added legacy native argument coverage, and fixed the restored fixture's missing video_inputs field.
+- Commit: 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
+- Local cargo test and npm run tauri dev validation remain required; do not mark M3.71 PASS yet.
+
+## 2026-09-24 — M3.71 validation correction
+
+- Supplied user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the production Vite build.
+- Rust compilation failed because the unified AV renderer did not import `validate_native_export_settings`; Tauri development startup hit the same compiler error.
+- Corrected the missing import and cleaned the reported unused-parameter / unnecessary-mut warnings in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
+- Fresh Rust and Tauri validation is still required.
+
+## 2026-09-24 — M3.71 Unified AV Export Foundation — implementation
+
+Branch: `feat/m3-71-unified-av-export`
+
+Implemented:
+- Added a native unified video+audio graph render contract.
+- Routed exports containing explicit Audio track clips through one FFmpeg invocation instead of rendering an intermediate video and then performing a second audio-mix pass.
+- Rebased visual graph input indexes to contiguous native input slots before combining them with the offset audio graph.
+- Preserved image-input looping metadata and the existing video/audio encoding settings.
+- Kept no-audio video fast paths unchanged.
+- Retained the previous native video-with-audio command for compatibility but removed it from the active TypeScript pipeline path.
+- Added frontend and Rust regression coverage for unified routing, index rebasing, image input handling, validation, and FFmpeg argument construction.
+- No project schema change.
+
+Validation:
+- Pending fresh CI/local validation for M3.71.
+- PR should remain Draft until the user reports PASS.
+
+## 2026-09-24 — M3.70 Text Overlay Export Rendering — completed
+
+- PR #84 was user-validated and squash-merged at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
+- Final user validation passed 33/33 frontend test files and 393/393 frontend tests, plus production build and 39/39 Rust tests.
+- M3.70 preserved the parked PR #76 boundary; Linux/Tauri/WebKitGTK repaint investigation remains separate.
+
 ## 2026-09-23 — M3.70 crop-order test correction
 
 - User validation found one failing regression assertion in `render-graph.test.ts`.

@@ -3,7 +3,7 @@ import {
   renderSingleSourceToMp4,
   renderVideoGraphToMp4,
   renderVideoSegmentsToMp4,
-  renderVideoWithAudioGraphToMp4,
+  renderVideoAudioGraphToMp4,
   type NativeExportRenderResult,
 } from "./export-renderer";
 import { compileAudioTracksGraph } from "./audio-render-graph";
@@ -26,35 +26,65 @@ export function renderVideoPlanToMp4(
     throw new Error("Render plan has no video clips.");
   }
 
-  const videoPlan: RenderPlan = {
-    ...plan,
-    segments: videoSegments,
-  };
+  const videoPlan = rebaseVideoPlanInputIndexes(plan, videoSegments);
 
   if (audioSegments.length === 0) {
     return renderVideoOnlyPlanToMp4(videoPlan, outputPath, jobId);
   }
 
+  const videoGraph = compileVideoTracksGraph(videoPlan);
   const audioGraph = compileAudioTracksGraph(plan, {
-    inputIndexOffset: 1,
+    inputIndexOffset: videoGraph.inputs.length,
   });
 
-  return renderVideoOnlyPlanToMp4(videoPlan, outputPath, jobId).then(() => {
-    const request = {
-      videoSourcePath: outputPath,
-      audioInputs: audioGraph.inputs
-        .sort((left, right) => left.inputIndex - right.inputIndex)
-        .map((input) => input.sourcePath),
-      audioFilterComplex: audioGraph.filterComplex,
-      audioMap: audioGraph.audioMap,
-      durationMs: plan.durationMs,
-      outputPath,
-    };
+  const request = {
+    videoInputs: videoGraph.inputs
+      .sort((left, right) => left.inputIndex - right.inputIndex)
+      .map((input) => input.sourcePath),
+    videoInputMediaTypes: videoGraph.inputs
+      .sort((left, right) => left.inputIndex - right.inputIndex)
+      .map((input) => {
+        const segment = videoPlan.segments.find(
+          (candidate) => candidate.inputIndex === input.inputIndex,
+        );
+        return segment?.mediaType ?? "video";
+      }),
+    audioInputs: audioGraph.inputs
+      .sort((left, right) => left.inputIndex - right.inputIndex)
+      .map((input) => input.sourcePath),
+    videoFilterComplex: videoGraph.filterComplex,
+    videoMap: videoGraph.videoMap,
+    audioFilterComplex: audioGraph.filterComplex,
+    audioMap: audioGraph.audioMap,
+    durationMs: plan.durationMs,
+    width: plan.width,
+    height: plan.height,
+    frameRate: plan.frameRate,
+    outputPath,
+  };
 
-    return jobId
-      ? renderVideoWithAudioGraphToMp4(request, jobId)
-      : renderVideoWithAudioGraphToMp4(request);
-  });
+  return jobId
+    ? renderVideoAudioGraphToMp4(request, jobId)
+    : renderVideoAudioGraphToMp4(request);
+}
+
+function rebaseVideoPlanInputIndexes(
+  plan: RenderPlan,
+  videoSegments: RenderPlan["segments"],
+): RenderPlan {
+  const ordered = [...videoSegments].sort(
+    (left, right) => left.inputIndex - right.inputIndex,
+  );
+
+  const segments = ordered.map((segment, inputIndex) => ({
+    ...segment,
+    inputIndex,
+  }));
+
+  return {
+    ...plan,
+    segments,
+  };
 }
 
 function orderedMediaTypes(

@@ -1,3 +1,22 @@
+- M3.71 follow-up correction: inspection of the validation failure found src-tauri/src/audio_render.rs truncated inside the unified AV native test module, leaving an unclosed missing_filter initializer.
+- Restored the truncated test body, restored legacy native argument coverage, and fixed the missing_filter fixture's required video_inputs field in commit 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
+- GitHub branch head is now 5ae42b2dc3d01408e30c9451e1a0926ad749b137; local Rust/Tauri validation is still required.
+- PR #85 remains Draft until the user reports PASS.
+
+- M3.71 validation correction: user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the frontend production build.
+- The remaining failure was Rust compilation because `validate_native_export_settings` was not imported by the new unified AV native renderer; Tauri launch failed on the same compiler error.
+- Corrected the import and warning-level issues in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
+- Fresh `cargo test` and `npm run tauri dev` validation is required before M3.71 can be marked PASS.
+- M3.71 is the active milestone on `feat/m3-71-unified-av-export`: Unified AV Export Foundation.
+- M3.70 is complete and merged in PR #84 at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
+- M3.71 routes projects with explicit Audio track clips through one native FFmpeg invocation containing the existing visual graph and audio graph.
+- Visual inputs are rebased to contiguous native indexes before the audio graph is offset, preventing mixed RenderPlan input indexes from pointing at the wrong FFmpeg input.
+- Keep the existing video-only fast paths unchanged.
+- The previous `render_video_with_audio_graph_to_mp4` command remains as compatibility code but is no longer called by the active frontend export pipeline.
+- No project schema change.
+- Regression coverage exists for unified routing, index rebasing, image input handling, native validation, and argument construction.
+- PR for M3.71 remains Draft until clean local validation and user PASS.
+
 - M3.70 validation update: the latest user run had 392/393 frontend tests passing, with the sole failure in the new text-overlay crop/effects/transform ordering assertion.
 - Root cause was a stale test expectation: the fixture uses left/right crop values of 0.1 each, so visible width is 0.8; top/bottom crop values leave 0.9 visible height.
 - The assertion is corrected on `feat/m3-70-text-overlay-export` in commit `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.

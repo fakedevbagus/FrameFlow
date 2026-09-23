@@ -1378,6 +1378,7 @@ pub fn run() {
       audio_waveform::get_audio_waveform_source_fingerprint,
       audio_waveform::generate_audio_waveform,
       audio_render::render_video_with_audio_graph_to_mp4,
+      audio_render::render_video_audio_graph_to_mp4,
       export_process::cancel_export_job,
       get_media_http_url,
       open_project,

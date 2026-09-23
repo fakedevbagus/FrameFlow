@@ -6,7 +6,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{export_process, probe_has_audio};
+use crate::{export_process, probe_has_audio, validate_native_export_settings};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,7 +35,295 @@ pub struct NativeVideoWithAudioGraphRenderRequest {
   pub duration_ms: u64,
   pub output_path: String,
 }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeVideoAudioGraphRenderRequest {
+  pub video_inputs: Vec<String>,
+  pub video_input_media_types: Vec<String>,
+  pub audio_inputs: Vec<String>,
+  pub video_filter_complex: String,
+  pub video_map: String,
+  pub audio_filter_complex: String,
+  pub audio_map: String,
+  pub duration_ms: u64,
+  pub width: u32,
+  pub height: u32,
+  pub frame_rate: f64,
+  pub output_path: String,
+}
 
+#[tauri::command]
+pub fn render_video_audio_graph_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
+  request: NativeVideoAudioGraphRenderRequest,
+) -> Result<NativeAudioRenderResult, String> {
+  validate_video_audio_graph_request(&request)?;
+
+  let output_path = PathBuf::from(&request.output_path);
+
+  let video_paths = request
+    .video_inputs
+    .iter()
+    .enumerate()
+    .map(|(index, value)| {
+      let path = PathBuf::from(value);
+
+      if !path.is_absolute() {
+        return Err(
+          "Native unified AV graph video inputs must use absolute paths.".to_string()
+        );
+      }
+
+      if !path.is_file() {
+        return Err(format!(
+          "Native unified AV graph video input does not exist: {}",
+          path.display()
+        ));
+      }
+
+      let actual_type = media_type(&path)?;
+      let expected_type = request
+        .video_input_media_types
+        .get(index)
+        .map(String::as_str)
+        .unwrap_or_default();
+
+      if actual_type != expected_type {
+        return Err(format!(
+          "Native unified AV graph video input media type mismatch at index {index}."
+        ));
+      }
+
+      if actual_type != "video" && actual_type != "image" {
+        return Err(
+          "Native unified AV graph video inputs must be video or image sources.".to_string()
+        );
+      }
+
+      if same_path(&path, &output_path) {
+        return Err(
+          "Export output must differ from every unified AV graph video input.".to_string()
+        );
+      }
+
+      Ok(path)
+    })
+    .collect::<Result<Vec<_>, String>>()?;
+
+  let audio_paths = request
+    .audio_inputs
+    .iter()
+    .map(|value| {
+      let path = PathBuf::from(value);
+
+      if !path.is_absolute() {
+        return Err(
+          "Native unified AV graph audio inputs must use absolute paths.".to_string()
+        );
+      }
+
+      if !path.is_file() {
+        return Err(format!(
+          "Native unified AV graph audio input does not exist: {}",
+          path.display()
+        ));
+      }
+
+      if media_type(&path)? != "audio" {
+        return Err(
+          "Native unified AV graph audio inputs must be audio sources only.".to_string()
+        );
+      }
+
+      if same_path(&path, &output_path) {
+        return Err(
+          "Export output must differ from every unified AV graph audio input.".to_string()
+        );
+      }
+
+      Ok(path)
+    })
+    .collect::<Result<Vec<_>, String>>()?;
+
+  let args = build_ffmpeg_video_audio_graph_args(
+    &video_paths,
+    &request.video_input_media_types,
+    &audio_paths,
+    &request.video_filter_complex,
+    &request.video_map,
+    &request.audio_filter_complex,
+    &request.audio_map,
+    request.duration_ms,
+    request.width,
+    request.height,
+    request.frame_rate,
+    &output_path,
+  );
+
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    &app,
+    state.inner(),
+    args,
+    job_id.as_deref(),
+    "export",
+    Some(request.duration_ms),
+    0,
+    None,
+    "the unified video and audio graph",
+  ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
+  }
+
+  let metadata = fs::metadata(&output_path).map_err(|error| {
+    let _ = fs::remove_file(&output_path);
+    format!(
+      "FFmpeg completed but the unified AV export file could not be inspected: {error}"
+    )
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&output_path);
+    return Err("FFmpeg completed but produced an empty unified AV export.".to_string());
+  }
+
+  Ok(NativeAudioRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+fn validate_video_audio_graph_request(
+  request: &NativeVideoAudioGraphRenderRequest,
+) -> Result<(), String> {
+  if request.video_inputs.is_empty() {
+    return Err("Native unified AV graph requires at least one video input.".to_string());
+  }
+
+  if request.video_input_media_types.len() != request.video_inputs.len() {
+    return Err(
+      "Native unified AV graph video media types must match the video input count.".to_string(),
+    );
+  }
+
+  if request.audio_inputs.is_empty() {
+    return Err("Native unified AV graph requires at least one audio input.".to_string());
+  }
+
+  if request.video_filter_complex.trim().is_empty() {
+    return Err("Native unified AV graph requires a video filter graph.".to_string());
+  }
+
+  if request.audio_filter_complex.trim().is_empty() {
+    return Err("Native unified AV graph requires an audio filter graph.".to_string());
+  }
+
+  if request.video_map != "[vout]" {
+    return Err("Native unified AV graph requires the [vout] video map.".to_string());
+  }
+
+  if request.audio_map != "[aout]" {
+    return Err("Native unified AV graph requires the [aout] audio map.".to_string());
+  }
+
+  if request.duration_ms == 0 {
+    return Err("Native unified AV graph requires a positive duration.".to_string());
+  }
+
+  for media_type in &request.video_input_media_types {
+    if media_type != "video" && media_type != "image" {
+      return Err(
+        "Native unified AV graph video media types must be video or image.".to_string(),
+      );
+    }
+  }
+
+  validate_native_export_settings(
+    request.width,
+    request.height,
+    request.frame_rate,
+  )?;
+
+  validate_mp4_output_path(Path::new(&request.output_path))
+}
+
+fn build_ffmpeg_video_audio_graph_args(
+  video_paths: &[PathBuf],
+  video_input_media_types: &[String],
+  audio_paths: &[PathBuf],
+  video_filter_complex: &str,
+  video_map: &str,
+  audio_filter_complex: &str,
+  audio_map: &str,
+  duration_ms: u64,
+  _width: u32,
+  _height: u32,
+  frame_rate: f64,
+  output_path: &Path,
+) -> Vec<std::ffi::OsString> {
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+  ];
+
+  for (index, video_path) in video_paths.iter().enumerate() {
+    if video_input_media_types.get(index).map(String::as_str) == Some("image") {
+      args.extend([
+        "-loop".into(),
+        "1".into(),
+        "-framerate".into(),
+        frame_rate.to_string().into(),
+      ]);
+    }
+
+    args.push("-i".into());
+    args.push(video_path.as_os_str().to_os_string());
+  }
+
+  for audio_path in audio_paths {
+    args.push("-i".into());
+    args.push(audio_path.as_os_str().to_os_string());
+  }
+
+  args.extend([
+    "-filter_complex".into(),
+    format!("{};{}", video_filter_complex, audio_filter_complex).into(),
+    "-map".into(),
+    video_map.into(),
+    "-map".into(),
+    audio_map.into(),
+    "-t".into(),
+    ((duration_ms as f64) / 1000.0).to_string().into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-c:a".into(),
+    "aac".into(),
+    "-b:a".into(),
+    "192k".into(),
+    "-ar".into(),
+    "48000".into(),
+    "-ac".into(),
+    "2".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
+}
 #[tauri::command]
 pub fn render_video_with_audio_graph_to_mp4(
   app: tauri::AppHandle,
@@ -468,8 +756,10 @@ fn same_path(first: &Path, second: &Path) -> bool {
 #[cfg(test)]
 mod tests {
   use super::{
-    build_ffmpeg_audio_graph_args, build_ffmpeg_video_with_audio_graph_args, media_type,
-    validate_request, validate_video_audio_mix_request, NativeAudioGraphRenderRequest,
+    build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
+    build_ffmpeg_video_with_audio_graph_args, media_type,
+    validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
+    NativeAudioGraphRenderRequest, NativeVideoAudioGraphRenderRequest,
     NativeVideoWithAudioGraphRenderRequest,
   };
   use std::path::{Path, PathBuf};
@@ -616,7 +906,263 @@ mod tests {
   }
 
   #[test]
-  fn builds_ffmpeg_video_with_audio_graph_arguments() {
+  fn validates_unified_video_audio_graph_request_metadata() {
+    let valid = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    assert!(validate_video_audio_graph_request(&valid).is_ok());
+
+    let mut missing_video = NativeVideoAudioGraphRenderRequest {
+      video_inputs: Vec::new(),
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&missing_video).is_err());
+    missing_video.video_inputs = vec!["/media/video.mp4".to_string()];
+
+    let mut mismatched_types = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: Vec::new(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&mismatched_types).is_err());
+
+    mismatched_types.video_input_media_types = vec!["audio".to_string()];
+    assert!(validate_video_audio_graph_request(&mismatched_types).is_err());
+
+    let missing_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: Vec::new(),
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&missing_audio).is_err());
+
+    let mut missing_filter = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      video_filter_complex: String::new(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.video_filter_complex = "[0:v:0]null[vout]".to_string();
+    missing_filter.video_map = "[other]".to_string();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.video_map = "[vout]".to_string();
+    missing_filter.audio_filter_complex = String::new();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.audio_filter_complex = "[1:a:0]anull[aout]".to_string();
+    missing_filter.audio_map = "[other]".to_string();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.audio_map = "[aout]".to_string();
+    missing_filter.duration_ms = 0;
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.duration_ms = 5_000;
+    missing_filter.video_input_media_types = vec!["audio".to_string()];
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.video_input_media_types = vec!["video".to_string()];
+    missing_filter.output_path = "relative/final.mp4".to_string();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_video_audio_graph_arguments() {
+    let video_paths = vec![
+      PathBuf::from("/media/Video Track.mp4"),
+      PathBuf::from("/media/title card.png"),
+    ];
+    let video_media_types = vec!["video".to_string(), "image".to_string()];
+    let audio_paths = vec![PathBuf::from("/media/Music Track.mp3")];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &audio_paths,
+      "[0:v:0]null[video0];[1:v:0]null[video1];[video0][video1]overlay[outvideo][vout]",
+      "[vout]",
+      "[2:a:0]anull[aout]",
+      "[aout]",
+      5_000,
+      1_280,
+      720,
+      29.97,
+      Path::new("/tmp/FrameFlow final.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == [
+      "-loop".to_string(),
+      "1".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-framerate".to_string(),
+      "29.97".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Video Track.mp4".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/title card.png".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Music Track.mp3".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-filter_complex".to_string(),
+      "[0:v:0]null[video0];[1:v:0]null[video1];[video0][video1]overlay[outvideo][vout];[2:a:0]anull[aout]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[vout]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[aout]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-t".to_string(),
+      "5".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-r".to_string(),
+      "29.97".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:v".to_string(),
+      "libx264".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:a".to_string(),
+      "aac".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-b:a".to_string(),
+      "192k".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-ar".to_string(),
+      "48000".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-ac".to_string(),
+      "2".to_string()
+    ]));
+    assert!(values.iter().any(|value| value == "/tmp/FrameFlow final.mp4"));
+  }
+
+  #[test]
+  fn preserves_unified_video_audio_input_order() {
+    let video_paths = vec![
+      PathBuf::from("/media/first.mp4"),
+      PathBuf::from("/media/second.mp4"),
+    ];
+    let video_media_types = vec!["video".to_string(), "video".to_string()];
+    let audio_paths = vec![
+      PathBuf::from("/media/first.mp3"),
+      PathBuf::from("/media/second.wav"),
+    ];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &audio_paths,
+      "[0:v:0]null[v0];[1:v:0]null[vout]",
+      "[vout]",
+      "[2:a:0]anull[aout0];[3:a:0]anull[aout]",
+      "[aout]",
+      4_000,
+      1_920,
+      1_080,
+      30.0,
+      Path::new("/tmp/final.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    let input_positions: Vec<usize> = values
+      .iter()
+      .enumerate()
+      .filter_map(|(index, value)| (value == "-i").then_some(index + 1))
+      .collect();
+
+    assert_eq!(
+      input_positions
+        .iter()
+        .map(|index| &values[*index])
+        .collect::<Vec<_>>(),
+      vec![
+        &"/media/first.mp4".to_string(),
+        &"/media/second.mp4".to_string(),
+        &"/media/first.mp3".to_string(),
+        &"/media/second.wav".to_string(),
+      ]
+    );
+  }
+
+  #[test]
+  fn retains_legacy_video_audio_graph_argument_coverage() {
     let args = build_ffmpeg_video_with_audio_graph_args(
       Path::new("/media/base video.mp4"),
       &[
@@ -688,5 +1234,4 @@ mod tests {
     assert!(values.iter().any(|value| value.contains("anullsrc=r=48000:cl=stereo")));
     assert!(values.iter().any(|value| value.contains("atrim=duration=4")));
   }
-
 }

@@ -1,3 +1,34 @@
+## M3.71 — test restoration correction — 2026-09-24
+
+- Follow-up inspection of user validation exposed that src-tauri/src/audio_render.rs had been truncated inside validates_unified_video_audio_graph_request_metadata, before the missing_filter fixture was completed.
+- Restored the missing unified-AV test body and restored native legacy argument coverage that had been displaced by the truncated test edit.
+- The restored tests cover unified request validation, image/video input handling, video/audio input ordering, unified FFmpeg argument construction, and legacy video/audio mix argument coverage.
+- Corrected the restored missing_filter fixture so it includes its required video_inputs field.
+- Commit: 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
+- The GitHub branch is now structurally complete; local Rust/Tauri validation is still required. PR #85 remains Draft.
+
+## M3.71 — validation correction — 2026-09-24
+
+- User validation passed lint and all 33 frontend test files / 394 frontend tests.
+- Production Vite build passed.
+- Rust compilation and Tauri launch failed because the new unified AV renderer referenced `validate_native_export_settings` without importing it from the crate root.
+- The same compiler output reported two unused `width`/`height` parameters in the native FFmpeg argument helper and one unnecessary mutable test binding.
+- Corrected the missing import and warning-level issues in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
+- React `act(...)` messages remain existing non-fatal test warnings.
+- Fresh Rust/Tauri validation is required after this correction; PR #85 remains Draft.
+
+## M3.71 — Unified AV Export Foundation — in progress — 2026-09-24
+
+- M3.70 Text Overlay Export Rendering is complete, user-validated, and squash-merged as PR #84 at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
+- M3.71 starts from the post-M3.70 `main` state and focuses on removing the two-pass export path used when explicit Audio track clips are present.
+- Video graph and audio graph are now compiled as one native export request, with video inputs rebased to contiguous FFmpeg input indexes and audio inputs placed after the visual inputs.
+- The unified native renderer supports video and image visual inputs, keeps image looping metadata, maps `[vout]` and `[aout]`, and encodes the final MP4 in one FFmpeg invocation.
+- The existing no-audio video fast paths are unchanged.
+- The older native `render_video_with_audio_graph_to_mp4` command remains for compatibility but is no longer used by the TypeScript export pipeline in this milestone.
+- No project schema change.
+- Added regression coverage for unified routing, input-index rebasing, image inputs, request validation, and native argument construction.
+- PR for M3.71 should remain Draft until the full local validation and Tauri launch are reported clean.
+
 ## M3.70 — validation update — 2026-09-23
 
 - User reran the corrected M3.70 branch successfully: all 33 frontend test files passed and all 393 frontend tests passed.
