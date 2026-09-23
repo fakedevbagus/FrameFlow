@@ -2,6 +2,10 @@
 
 - M3.67 Animated Transform Export was user-validated and squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
 - M3.68 addresses the remaining export limitation for non-centered transform anchors already supported by the editor/Preview.
+- Validation on 2026-09-23 found two unused locals in the anchor-aware graph and one stale pipeline test that still expected non-centered anchors to be rejected; these were corrected.
+- The anchor composition math was simplified to mirror CSS transform-origin directly: the selected anchor is placed at the transparent surface center before rotation, then X/Y translation is applied in world space.
+- The transparent anchor surface now uses the full twice-radius extent required to contain the furthest scaled corner around the pivot.
+- The pipeline graph-required check was narrowed so neutral visual-effects metadata does not disable the existing direct renderer.
 - Static and animated transforms now have an anchor-aware graph path when scale or rotation makes the anchor visually significant.
 - The anchor-aware path keeps the source content in its contained bounds, preserves crop/effects ordering, scales around the selected pivot, compensates pre-rotation placement, rotates around the pivot, then applies world-space X/Y translation.
 - Animated anchor-aware transforms reuse the existing X/Y, Scale, Rotation, and Opacity keyframe expressions and easing rules without changing the project schema.
