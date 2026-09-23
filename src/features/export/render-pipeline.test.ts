@@ -530,7 +530,7 @@ describe("render video pipeline", () => {
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
-  it("does not call the native renderer when graph compilation rejects animated transforms", () => {
+  it("does not call the native renderer when graph compilation rejects an unsupported animated anchor", () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -552,6 +552,7 @@ describe("render video pipeline", () => {
           durationMs: 2000,
           isMuted: false,
           transform: { x: 10, y: 0, scale: 1, rotation: 0, opacity: 1 },
+          transformAnchor: { x: 0.4, y: 0.5 },
           transformKeyframes: [
             {
               timeMs: 0,
@@ -580,7 +581,7 @@ describe("render video pipeline", () => {
 
     expect(() =>
       renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4"),
-    ).toThrow("animated transform export is deferred");
+    ).toThrow("non-centered transform anchors");
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
