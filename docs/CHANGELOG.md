@@ -1,8 +1,9 @@
 ## 2026-09-23 — M3.70 crop-order test correction
 
 - User validation found one failing regression assertion in `render-graph.test.ts`.
-- The failure was caused by the test expecting `h=trunc(ih*0.85)`; the configured crop leaves 90% visible height, so the correct graph fragment is `h=trunc(ih*0.9)`.
-- Corrected only the test assertion; no production export code was changed for this failure.
+- The failure was caused by the test expecting a 0.85 visible crop width, while the fixture uses left/right crop values of 0.1 each, producing a 0.8 visible width. The configured top/bottom crop values produce a 0.9 visible height.
+- Corrected only the test assertion from `crop=w=trunc(iw*0.85):h=trunc(ih*0.9)` to `crop=w=trunc(iw*0.8):h=trunc(ih*0.9)`.
+- Commit: `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.
 - The same validation run had lint, production build, and all 39 Rust tests passing.
 - Existing React `act(...)` warnings remain non-fatal.
 - Fresh frontend test/build validation is required before M3.70 can be considered clean; PR #84 remains Draft.
