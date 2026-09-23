@@ -944,6 +944,17 @@ fn format_number(value: f64) -> String {
     .to_string()
 }
 
+fn format_number(value: f64) -> String {
+  if value.fract().abs() < f64::EPSILON {
+    return format!("{value:.0}");
+  }
+
+  format!("{value:.6}")
+    .trim_end_matches('0')
+    .trim_end_matches('.')
+    .to_string()
+}
+
 fn same_path(first: &Path, second: &Path) -> bool {
   let first_canonical = fs::canonicalize(first).ok();
   let second_canonical = fs::canonicalize(second)
