@@ -1,3 +1,22 @@
+## 2026-09-23 — M3.69 Multi-Track Video Compositing Foundation — implementation
+
+Branch: `feat/m3-69-multi-track-video-compositing`
+
+Implemented:
+- Added multi-video-track graph compilation while preserving the existing single-track graph path.
+- Composed tracks from lower to higher project track order onto a transparent project canvas.
+- Kept per-track gaps and clip letterboxing transparent for correct layer compositing.
+- Reused existing transform, crop/effects, anchor-aware transform, keyframe, and same-track transition compilation.
+- Added stable per-track graph label namespaces.
+- Preserved video-track mute semantics for the multi-track compositor.
+- Corrected native `inputMediaTypes` ordering to match graph input order.
+- No project schema change; audio mixing remains separate.
+
+Validation:
+- Pending user local validation and CI.
+- PR will remain Draft.
+
+
 ## 2026-09-23 — M3.68 merged / M3.69 started
 
 - PR #82 (M3.68 Non-Centered Transform Anchor Export) was marked ready and squash-merged at `ba34a0aed73f56b85217f0c4c9584299f4544ff8`.
