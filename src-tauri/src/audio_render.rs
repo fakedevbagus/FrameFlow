@@ -1387,6 +1387,8 @@ mod tests {
       source_start_ms: 250,
       timeline_start_ms: 1_000,
       duration_ms: 4_000,
+      track_volume: 0.65,
+      track_pan: -0.25,
       has_audio: true,
     }];
 
