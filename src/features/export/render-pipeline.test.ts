@@ -546,6 +546,8 @@ describe("render video pipeline", () => {
           sourceEndMs: 5000,
           durationMs: 5000,
           isMuted: false,
+          trackVolume: 0.65,
+          trackPan: -0.25,
         },
         {
           inputIndex: 1,
@@ -628,6 +630,8 @@ describe("render video pipeline", () => {
           sourceEndMs: 4250,
           durationMs: 4000,
           isMuted: false,
+          trackVolume: 0.8,
+          trackPan: 0.2,
         },
         {
           inputIndex: 9,
