@@ -1,6 +1,7 @@
 export const M3_38_DIRECT_GRAPH_MARKER = "m3.38-direct-graph-v2";
 
 import { buildVisualEffectsFfmpegFilters } from "../effects/visual-effects";
+import { buildTextOverlayFfmpegFilter } from "../effects/text-overlay";
 import {
   getClipCrop,
   getClipCropPosition,
@@ -775,6 +776,9 @@ function buildSegmentFilter(
     buildVisualEffectsFfmpegFilters(segment.visualEffects)
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
       : []),
+    ...(segment.textOverlay && buildTextOverlayFfmpegFilter(segment.textOverlay)
+      ? [buildTextOverlayFfmpegFilter(segment.textOverlay)]
+      : []),
     ...(includeOutputNormalization
       ? [
           "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
@@ -903,6 +907,9 @@ function buildAnimatedCompositedSegmentFilter(
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
       : []),
     ...cropFilters,
+    ...(segment.textOverlay && buildTextOverlayFfmpegFilter(segment.textOverlay)
+      ? [buildTextOverlayFfmpegFilter(segment.textOverlay)]
+      : []),
     ...(hasDynamicScale
       ? [
           "scale=w='iw*" +
@@ -1181,6 +1188,9 @@ function buildCompositedSegmentFilter(
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
       : []),
     ...cropFilters,
+    ...(segment.textOverlay && buildTextOverlayFfmpegFilter(segment.textOverlay)
+      ? [buildTextOverlayFfmpegFilter(segment.textOverlay)]
+      : []),
     transform.scale !== 1
       ? "scale=w=iw*" +
         formatNumber(transform.scale) +
@@ -1410,6 +1420,9 @@ function buildAnchorAwareCompositedSegmentFilter(
       ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
       : []),
     ...cropFilters,
+    ...(segment.textOverlay && buildTextOverlayFfmpegFilter(segment.textOverlay)
+      ? [buildTextOverlayFfmpegFilter(segment.textOverlay)]
+      : []),
     ...(hasDynamicScale || transform.scale !== 1
       ? [
           "scale=w='iw*" +
