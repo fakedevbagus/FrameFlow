@@ -12,12 +12,13 @@ Merge status: not merged; keep Draft until the user reports PASS.
 - Font selection uses the explicit renderer-owned `DejaVu Sans` policy.
 - Preview and export keep normalized X/Y, font size, color, and left/center/right alignment semantics aligned.
 - Live Inspector state is stored outside committed project/history state in a synchronous external React edit-session store using `useSyncExternalStore`.
-- The Linux/Tauri WebView live-input path also has a direct DOM-value fallback: the selected visual clip's Text/X/Y/Size controls are read every 50 ms and compared against the current edit session, without relying on `document.activeElement` or delivery of `input`/`change`/keyboard events.
-- Normal `input`/`change` handlers remain the immediate path when the WebView delivers them; DOM polling is the fallback for environments where native control values change without an observable React/browser input event.
-- The edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes no longer discard an in-progress Text Overlay edit.
+- The Linux/Tauri WebView live-input fallback now does two things: it reads Text/X/Y/Size DOM values directly every 50 ms, and it applies any detected change directly to the already-mounted Preview overlay DOM.
+- The direct DOM Preview patch updates text content, X/Y, font size, color, alignment transform, and visibility without waiting for a React render.
+- The selected visual clip keeps a hidden Text Overlay DOM target mounted even when its committed overlay is empty, so WebView DOM changes always have a concrete Preview element to update.
+- Normal `input`/`change` handlers remain the fast path. The 50 ms polling + direct Preview patch is the fallback for the observed WebView behavior where the control value changes but React does not receive the event until blur.
+- The transient edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes no longer discard an in-progress Text Overlay edit.
 - Commit handlers read the current external session at commit time. Blur/direct Text Overlay actions commit through the existing project history engine; the existing 400 ms idle autosave remains.
-- Added regression coverage for synchronous live Text/X/Y/Size updates, no per-keystroke history entry, one-entry commit + Undo/Redo, Reset, external-store behavior, and direct DOM-value changes without dispatched input events.
-- The direct DOM polling regression intentionally mirrors the observed Linux/Tauri failure mode and must remain green.
+- Regression coverage now explicitly mirrors the WebView failure mode by changing control `.value` without dispatching input/change/keyup and requiring the Preview DOM to update.
 - Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
