@@ -1,7 +1,7 @@
 ### M3.73 — Preserve Source Audio in Unified AV Export — in progress — 2026-09-24
 
 Branch: `feat/m3-73-source-audio-unified-export`
-PR: Draft
+PR #87 — Draft
 
 Scope:
 - Preserve embedded audio from non-muted video clips when explicit Audio tracks use the unified AV export path.
