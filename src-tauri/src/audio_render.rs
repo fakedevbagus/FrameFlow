@@ -376,8 +376,7 @@ fn build_ffmpeg_video_audio_graph_args(
     } else {
       let explicit_audio_map = "[frameflow_explicit_audio]";
       let explicit_audio_filter =
-        rename_audio_graph_output(audio_filter_complex, audio_map, explicit_audio_map)
-          .expect("validated audio graph must contain exactly one [aout] output");
+        rename_audio_graph_output(audio_filter_complex, audio_map, explicit_audio_map)?;
 
       let source_labels = source_audio_filter.labels.concat();
       let mix_input_count = source_audio_filter.labels.len() + 1;
