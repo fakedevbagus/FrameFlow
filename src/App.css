@@ -139,7 +139,7 @@ button:focus-visible {
   display: grid;
   min-height: 0;
   overflow: hidden;
-  grid-template-columns: 250px minmax(480px, 1fr) 250px;
+  grid-template-columns: minmax(220px, 250px) minmax(420px, 1fr) minmax(270px, 300px);
 }
 
 .panel {
@@ -170,6 +170,14 @@ button:focus-visible {
   align-items: center;
 }
 
+.panel-heading {
+  gap: 8px;
+}
+
+.panel-heading > div {
+  min-width: 0;
+}
+
 .panel-heading,
 .editor-toolbar,
 .timeline-toolbar {
@@ -177,6 +185,7 @@ button:focus-visible {
 }
 
 .inspector-quick-button {
+  flex: 0 0 auto;
   min-height: 28px;
   padding: 0 10px;
   border: 1px solid #403b63;
@@ -1579,12 +1588,14 @@ button:disabled {
 
 .inspector-content {
   display: grid;
+  min-width: 0;
   gap: 16px;
   padding-top: 20px;
 }
 
 .inspector-summary {
   display: grid;
+  min-width: 0;
   gap: 7px;
   padding: 12px;
   border: 1px solid #2c333f;
@@ -1615,7 +1626,8 @@ button:disabled {
 
 .inspector-fields {
   display: grid;
-  grid-template-columns: 1fr auto;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
   gap: 8px 12px;
   padding: 0 2px;
   color: #8490a1;
@@ -1623,6 +1635,8 @@ button:disabled {
 }
 
 .inspector-fields strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: #d4d9e2;
   font-size: 11px;
   font-weight: 600;
@@ -1765,6 +1779,7 @@ button:disabled {
 
 .inspector-section-header {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -1780,6 +1795,7 @@ button:disabled {
 .inspector-section-title-group,
 .inspector-section-actions {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 6px;
 }
@@ -1910,7 +1926,8 @@ button:disabled {
 
 .inspector-crop-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1956,7 +1973,8 @@ button:disabled {
 
 .inspector-transform-input-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
