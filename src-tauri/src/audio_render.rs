@@ -369,13 +369,39 @@ fn build_ffmpeg_video_audio_graph_args(
     args.push(audio_path.as_os_str().to_os_string());
   }
 
+  let source_audio_filter = build_source_audio_filter(source_audio_segments);
+  let (resolved_audio_filter_complex, resolved_audio_map) =
+    if source_audio_filter.labels.is_empty() {
+      (audio_filter_complex.to_string(), audio_map.to_string())
+    } else {
+      let explicit_audio_map = "[frameflow_explicit_audio]";
+      let explicit_audio_filter =
+        rename_audio_graph_output(audio_filter_complex, audio_map, explicit_audio_map)
+          .expect("validated audio graph must contain exactly one [aout] output");
+
+      let source_labels = source_audio_filter.labels.concat();
+      let mix_input_count = source_audio_filter.labels.len() + 1;
+      (
+        format!(
+          "{};{};{}{}amix=inputs={}:duration=longest:dropout_transition=0{}",
+          explicit_audio_filter,
+          source_audio_filter.filter_complex,
+          explicit_audio_map,
+          source_labels,
+          mix_input_count,
+          audio_map,
+        ),
+        audio_map.to_string(),
+      )
+    };
+
   args.extend([
     "-filter_complex".into(),
-    format!("{};{}", video_filter_complex, audio_filter_complex).into(),
+    format!("{};{}", video_filter_complex, resolved_audio_filter_complex).into(),
     "-map".into(),
     video_map.into(),
     "-map".into(),
-    audio_map.into(),
+    resolved_audio_map.into(),
     "-t".into(),
     ((duration_ms as f64) / 1000.0).to_string().into(),
     "-r".into(),
