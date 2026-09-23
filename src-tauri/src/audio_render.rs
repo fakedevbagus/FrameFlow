@@ -35,7 +35,6 @@ pub struct NativeVideoWithAudioGraphRenderRequest {
   pub duration_ms: u64,
   pub output_path: String,
 }
-
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeVideoAudioGraphRenderRequest {
@@ -72,7 +71,9 @@ pub fn render_video_audio_graph_to_mp4(
       let path = PathBuf::from(value);
 
       if !path.is_absolute() {
-        return Err("Native unified AV graph video inputs must use absolute paths.".to_string());
+        return Err(
+          "Native unified AV graph video inputs must use absolute paths.".to_string()
+        );
       }
 
       if !path.is_file() {
@@ -97,12 +98,14 @@ pub fn render_video_audio_graph_to_mp4(
 
       if actual_type != "video" && actual_type != "image" {
         return Err(
-          "Native unified AV graph video inputs must be video or image sources.".to_string(),
+          "Native unified AV graph video inputs must be video or image sources.".to_string()
         );
       }
 
       if same_path(&path, &output_path) {
-        return Err("Export output must differ from every unified AV graph video input.".to_string());
+        return Err(
+          "Export output must differ from every unified AV graph video input.".to_string()
+        );
       }
 
       Ok(path)
@@ -116,7 +119,9 @@ pub fn render_video_audio_graph_to_mp4(
       let path = PathBuf::from(value);
 
       if !path.is_absolute() {
-        return Err("Native unified AV graph audio inputs must use absolute paths.".to_string());
+        return Err(
+          "Native unified AV graph audio inputs must use absolute paths.".to_string()
+        );
       }
 
       if !path.is_file() {
@@ -128,12 +133,14 @@ pub fn render_video_audio_graph_to_mp4(
 
       if media_type(&path)? != "audio" {
         return Err(
-          "Native unified AV graph audio inputs must be audio sources only.".to_string(),
+          "Native unified AV graph audio inputs must be audio sources only.".to_string()
         );
       }
 
       if same_path(&path, &output_path) {
-        return Err("Export output must differ from every unified AV graph audio input.".to_string());
+        return Err(
+          "Export output must differ from every unified AV graph audio input.".to_string()
+        );
       }
 
       Ok(path)
@@ -263,11 +270,7 @@ fn build_ffmpeg_video_audio_graph_args(
   ];
 
   for (index, video_path) in video_paths.iter().enumerate() {
-    if video_input_media_types
-      .get(index)
-      .map(String::as_str)
-      == Some("image")
-    {
+    if video_input_media_types.get(index).map(String::as_str) == Some("image") {
       args.extend([
         "-loop".into(),
         "1".into(),
@@ -287,11 +290,7 @@ fn build_ffmpeg_video_audio_graph_args(
 
   args.extend([
     "-filter_complex".into(),
-    format!(
-      "{};{}",
-      video_filter_complex,
-      audio_filter_complex,
-    ).into(),
+    format!("{};{}", video_filter_complex, audio_filter_complex).into(),
     "-map".into(),
     video_map.into(),
     "-map".into(),
@@ -325,7 +324,6 @@ fn build_ffmpeg_video_audio_graph_args(
 
   args
 }
-
 #[tauri::command]
 pub fn render_video_with_audio_graph_to_mp4(
   app: tauri::AppHandle,
@@ -926,9 +924,22 @@ mod tests {
 
     assert!(validate_video_audio_graph_request(&valid).is_ok());
 
-    let mut missing_video = valid;
-    missing_video.video_inputs.clear();
+    let mut missing_video = NativeVideoAudioGraphRenderRequest {
+      video_inputs: Vec::new(),
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
     assert!(validate_video_audio_graph_request(&missing_video).is_err());
+    missing_video.video_inputs = vec!["/media/video.mp4".to_string()];
 
     let mut mismatched_types = NativeVideoAudioGraphRenderRequest {
       video_inputs: vec!["/media/video.mp4".to_string()],
@@ -988,6 +999,10 @@ mod tests {
     missing_filter.audio_filter_complex = "[1:a:0]anull[aout]".to_string();
     missing_filter.audio_map = "[wrong]".to_string();
     assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.audio_map = "[aout]".to_string();
+    missing_filter.output_path = "/tmp/final.mov".to_string();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
   }
 
   #[test]
@@ -1031,8 +1046,6 @@ mod tests {
     assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
     assert!(values.iter().any(|value| value == "/tmp/final.mp4"));
   }
-  }
-
   #[test]
   fn builds_ffmpeg_video_with_audio_graph_arguments() {
     let args = build_ffmpeg_video_with_audio_graph_args(
