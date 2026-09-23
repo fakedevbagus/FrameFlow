@@ -1,51 +1,10 @@
-- M3.71 follow-up correction: inspection of the validation failure found src-tauri/src/audio_render.rs truncated inside the unified AV native test module, leaving an unclosed missing_filter initializer.
-- Restored the truncated test body, restored legacy native argument coverage, and fixed the missing_filter fixture's required video_inputs field in commit 5ae42b2dc3d01408e30c9451e1a0926ad749b137.
-- GitHub branch head is now 5ae42b2dc3d01408e30c9451e1a0926ad749b137; local Rust/Tauri validation is still required.
-- PR #85 remains Draft until the user reports PASS.
-
-- M3.71 validation correction: user validation passed lint, 33/33 frontend test files, 394/394 frontend tests, and the frontend production build.
-- The remaining failure was Rust compilation because `validate_native_export_settings` was not imported by the new unified AV native renderer; Tauri launch failed on the same compiler error.
-- Corrected the import and warning-level issues in commit `4e76e8490b1044eb3cfe1876572a0709e314526a`.
-- Fresh `cargo test` and `npm run tauri dev` validation is required before M3.71 can be marked PASS.
-- M3.71 is the active milestone on `feat/m3-71-unified-av-export`: Unified AV Export Foundation.
-- M3.70 is complete and merged in PR #84 at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
-- M3.71 routes projects with explicit Audio track clips through one native FFmpeg invocation containing the existing visual graph and audio graph.
-- Visual inputs are rebased to contiguous native indexes before the audio graph is offset, preventing mixed RenderPlan input indexes from pointing at the wrong FFmpeg input.
-- Keep the existing video-only fast paths unchanged.
-- The previous `render_video_with_audio_graph_to_mp4` command remains as compatibility code but is no longer called by the active frontend export pipeline.
+- M3.72 is the active milestone on `feat/m3-72-multitrack-audio-export`: Multi-Track + Audio Export Integration.
+- M3.71 is complete and squash-merged as PR #85 at `3ae70e91ad5ff0dc2a11bcde59c32a39cab3ab89`.
+- M3.72 removes the visual graph compiler's obsolete rejection of explicit Audio track segments.
+- Regression coverage includes single-track + audio, multi-track + audio graph compilation, and unified pipeline routing for multiple video tracks plus explicit audio.
+- Keep PR #86 Draft until I report PASS.
+- PR #76 remains parked and must not be merged or revived wholesale.
 - No project schema change.
-- Regression coverage exists for unified routing, index rebasing, image input handling, native validation, and argument construction.
-- PR for M3.71 remains Draft until clean local validation and user PASS.
-
-- M3.70 validation update: the latest user run had 392/393 frontend tests passing, with the sole failure in the new text-overlay crop/effects/transform ordering assertion.
-- Root cause was a stale test expectation: the fixture uses left/right crop values of 0.1 each, so visible width is 0.8; top/bottom crop values leave 0.9 visible height.
-- The assertion is corrected on `feat/m3-70-text-overlay-export` in commit `273dce5e8f0acc041b14fa462a48345c7e5ae3cb`.
-- Lint, production build, and 39 Rust tests passed in the user run. Tauri dev launched successfully. React `act(...)` messages are warnings only.
-- PR #84 stays Draft until a clean rerun and user `PASS`.
-
-- M3.70 progress update: PR #84 on `feat/m3-70-text-overlay-export` now includes resolution-aware text scaling and expanded regression coverage for image clips, drawtext escaping, transform ordering, and dissolve/fade-through-black transitions.
-- The latest test fix corrected the crop-order assertion to use the actual `ih` expression.
-- Latest M3.70 changes are not yet user-validated; keep PR #84 Draft until the user reports `PASS`.
-- PR #76 remains parked, unmerged, and must not be revived wholesale.
-
-- M3.68 currently includes a UI/layout validation correction for Inspector clipping on narrower desktop widths. The workspace now gives the Inspector a flexible 270–300px column, and Inspector two-column grids use minmax(0, 1fr) so controls stay inside the panel.
-
-- M3.68 also includes a follow-up Inspector layout correction: the Inspector workspace column is now 300–320px, section headers/actions wrap when needed, and anchor headers avoid horizontal overflow.
-- M3.68's Inspector layout refinement now also adds extra right padding so the panel content has visible breathing room from the application edge.
-
-- M3.68 is merged at `ba34a0aed73f56b85217f0c4c9584299f4544ff8`.
-- M3.69 is the next focused milestone: Multi-Track Video Compositing Foundation in the existing FFmpeg visual graph, preserving current clip transforms/crop/effects/anchors and keeping audio mixing separate.
-
-- M3.69 is active in Draft PR #83 on branch `feat/m3-69-multi-track-video-compositing`: multi-track visual export is being added in the existing FFmpeg graph while audio remains separate.
-- M3.69 is the active milestone on branch `feat/m3-69-multi-track-video-compositing`: multi-track visual export is being added in the existing FFmpeg graph while audio remains separate.
-- M3.69 adds transparent multi-track visual compositing, stable per-track graph labels, and input-media-type ordering that follows FFmpeg input order.
-
-- M3.69 is merged at `5bac39d156aae38f2ab3c6a61d3851e816535128`; GitHub CI run #207 passed.
-- M3.70 is the next milestone: deterministic Text Overlay Export Rendering on current `main`. Reimplement only the export-relevant behavior from parked PR #76; do not merge the parked branch wholesale or couple this milestone to the Linux/WebKitGTK repaint investigation.
-
-- M3.70 validation correction: the multi-track upper text test was fixed to expect `track_1_sequence`, matching the actual second video track index. PR #84 remains Draft pending clean validation.
-- M3.70 is the active milestone on branch `feat/m3-70-text-overlay-export`: deterministic Text Overlay Export Rendering is being implemented against current `main`; parked PR #76 is not merged wholesale.
-
 
 # FrameFlow — New Chat Continuation Prompt
 
