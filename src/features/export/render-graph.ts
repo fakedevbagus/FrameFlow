@@ -29,6 +29,130 @@ export interface VideoRenderGraph {
   videoMap: string;
 }
 
+export function compileVideoTracksGraph(plan: RenderPlan): VideoRenderGraph {
+  const videoSegments = plan.segments.filter(
+    (segment) => segment.trackType === "video",
+  );
+
+  if (videoSegments.length === 0) {
+    throw new Error("Render plan has no video clips.");
+  }
+
+  const trackIds = new Set(videoSegments.map((segment) => segment.trackId));
+
+  if (trackIds.size === 1) {
+    return compileSingleVideoTrackGraph(plan);
+  }
+
+  if (
+    plan.segments.some(
+      (segment) => segment.trackType === "audio" && segment.durationMs > 0,
+    )
+  ) {
+    throw new Error(
+      "Video render graph compilation does not include audio mixing yet.",
+    );
+  }
+
+  if (
+    videoSegments.some(
+      (segment) =>
+        segment.mediaType !== "video" && segment.mediaType !== "image",
+    )
+  ) {
+    throw new Error(
+      "Video render graph supports video and image visual assets only.",
+    );
+  }
+
+  const inputs = [...videoSegments]
+    .sort((left, right) => left.inputIndex - right.inputIndex)
+    .map((segment) => ({
+      inputIndex: segment.inputIndex,
+      sourcePath: segment.sourcePath,
+    }));
+
+  const tracks = [...new Set(videoSegments.map((segment) => segment.trackId))]
+    .map((trackId) => {
+      const segments = videoSegments.filter(
+        (segment) => segment.trackId === trackId,
+      );
+      return {
+        trackId,
+        trackIndex: Math.min(...segments.map((segment) => segment.trackIndex)),
+        segments,
+      };
+    })
+    .sort((left, right) => left.trackIndex - right.trackIndex);
+
+  const graphParts: string[] = [];
+  const trackLabels: string[] = [];
+
+  tracks.forEach((track) => {
+    if (track.segments.every((segment) => segment.isMuted)) {
+      return;
+    }
+
+    track.segments.forEach(assertSupportedVisualMetadataForMultiTrack);
+
+    const label = "track_" + track.trackIndex + "_sequence";
+    graphParts.push(
+      buildVideoTrackSequenceGraph(
+        plan,
+        track.segments,
+        label,
+        "track_" + track.trackIndex,
+      ),
+    );
+    trackLabels.push("[" + label + "]");
+  });
+
+  const backgroundLabel = "multitrack_bg";
+  graphParts.push(
+    "color=c=black@0.0:s=" +
+      plan.width +
+      "x" +
+      plan.height +
+      ":r=" +
+      formatNumber(plan.frameRate) +
+      ":d=" +
+      formatSeconds(plan.durationMs) +
+      ",format=rgba[" +
+      backgroundLabel +
+      "]",
+  );
+
+  let compositeLabel = backgroundLabel;
+
+  trackLabels.forEach((trackLabel, index) => {
+    const nextLabel = "multitrack_composite_" + index;
+    graphParts.push(
+      "[" +
+        compositeLabel +
+        "]" +
+        trackLabel +
+        "overlay=x=0:y=0:eof_action=pass:shortest=0,format=rgba[" +
+        nextLabel +
+        "]",
+    );
+    compositeLabel = nextLabel;
+  });
+
+  graphParts.push(
+    "[" +
+      compositeLabel +
+      "]format=yuv420p,fps=fps=" +
+      formatNumber(plan.frameRate) +
+      ":round=near,setsar=1[vout]",
+  );
+
+  return {
+    inputs,
+    filterComplex: graphParts.join(";"),
+    videoMap: "[vout]",
+  };
+}
+
 export function compileSingleVideoTrackGraph(
   plan: RenderPlan,
 ): VideoRenderGraph {
