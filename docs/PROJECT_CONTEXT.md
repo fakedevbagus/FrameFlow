@@ -26,6 +26,10 @@
 - Inspector section headers and action groups now wrap when necessary instead of forcing horizontal overflow; anchor headers use the same safe behavior.
 - This remains a layout-only correction; export/editor data models are unchanged. Fresh local validation is still required.
 
+- Final visual follow-up from the latest screenshot adds a small right-side breathing room to the Inspector so its content does not sit against the application edge.
+- The Inspector panel now uses explicit extra right padding; this is a layout-only refinement after the clipping issue was resolved.
+- M3.68 remains awaiting the user's final validation after this last CSS adjustment.
+
 ## M3.67 — Animated Transform Export — merged — 2026-09-23
 
 - PR #81 was user-validated and squash-merged into `main` at `783885376209ec56013612147b217a13c8bf1ef7`.
