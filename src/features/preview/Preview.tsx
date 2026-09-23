@@ -1502,18 +1502,21 @@ function PreviewVisualLayer({
   }
 
   function renderTextOverlay() {
-    if (!textOverlay && !isSelected) {
+    const liveSession = getTextOverlayEditSession();
+    const liveOverlay =
+      liveSession?.clipId === layer.clip.id ? liveSession.overlay : null;
+    const renderedOverlay = liveOverlay ?? textOverlay;
+
+    if (!renderedOverlay) {
       return null;
     }
 
-    const activeText = isSelected ? "" : textOverlay?.text ?? "";
-    const activeX = isSelected ? 0.5 : textOverlay?.x ?? 0.5;
-    const activeY = isSelected ? 0.5 : textOverlay?.y ?? 0.5;
-    const activeFontSize = isSelected ? 56 : textOverlay?.fontSize ?? 56;
-    const activeColor = isSelected ? "#ffffff" : textOverlay?.color ?? "#ffffff";
-    const activeAlignment = isSelected
-      ? "center"
-      : textOverlay?.alignment ?? "center";
+    const activeText = renderedOverlay.text;
+    const activeX = renderedOverlay.x;
+    const activeY = renderedOverlay.y;
+    const activeFontSize = renderedOverlay.fontSize;
+    const activeColor = renderedOverlay.color;
+    const activeAlignment = renderedOverlay.alignment;
     const horizontalTransform =
       activeAlignment === "left"
         ? "translate(0, -50%)"
@@ -1535,11 +1538,7 @@ function PreviewVisualLayer({
           fontSize: activeFontSize + "px",
           textAlign: activeAlignment,
           transform: horizontalTransform,
-          visibility: isSelected
-            ? "hidden"
-            : activeText.trim()
-              ? "visible"
-              : "hidden",
+          visibility: activeText.trim() ? "visible" : "hidden",
         }}
       >
         {activeText}
