@@ -1,4 +1,17 @@
-## M3.69 — Multi-Track Video Compositing Foundation — in progress — 2026-09-23
+## M3.70 — Text Overlay Export Rendering — next — 2026-09-23
+
+- M3.69 Multi-Track Video Compositing Foundation was user-validated, CI-validated, and squash-merged in PR #83 at `5bac39d156aae38f2ab3c6a61d3851e816535128`.
+- GitHub CI run #207 passed the frontend lint/tests, production build, and Rust tests for the M3.69 head.
+- M3.70 is the next focused export gap: Text Overlay Export Rendering.
+- The editor and Preview already support per-clip text overlays; parked PR #76 contains a prior renderer attempt but also bundled a Linux/Tauri/WebKitGTK repaint investigation that should remain separate from export rendering.
+- M3.70 will add deterministic text-overlay data to RenderPlan and compile it into the existing visual FFmpeg graph without changing the project schema.
+- Text rendering will use an explicit renderer-owned font family policy, preserve normalized X/Y placement and left/center/right alignment, and escape drawtext content safely.
+- Text overlays must remain coupled to the clip's existing transform/crop/effects/transition graph ordering.
+- Multi-track visual compositing from M3.69 must continue to render text on the correct video track.
+- The parked PR #76 remains unmerged and must not be merged wholesale; only relevant export behavior should be reimplemented against current main.
+- The Linux/Tauri Preview repaint timing issue remains a separate investigation and is not a prerequisite for completing text export.
+
+## M3.69 — Multi-Track Video Compositing Foundation — merged — 2026-09-23
 
 - PR #83 is the active Draft PR for this milestone.
 
