@@ -168,10 +168,46 @@ pub fn render_video_audio_graph_to_mp4(
     })
     .collect::<Result<Vec<_>, String>>()?;
 
+  let source_audio_segments = request
+    .source_audio_segments
+    .iter()
+    .map(|segment| {
+      let Some(video_path) = video_paths.get(segment.input_index) else {
+        return Err(format!(
+          "Native unified AV graph source audio segment references invalid video input index {}.",
+          segment.input_index
+        ));
+      };
+
+      if request
+        .video_input_media_types
+        .get(segment.input_index)
+        .map(String::as_str)
+        != Some("video")
+      {
+        return Err(format!(
+          "Native unified AV graph source audio segment at input index {} requires a video input.",
+          segment.input_index
+        ));
+      }
+
+      let has_audio = probe_has_audio(video_path)?;
+
+      Ok(ResolvedSourceAudioSegment {
+        input_index: segment.input_index,
+        source_start_ms: segment.source_start_ms,
+        timeline_start_ms: segment.timeline_start_ms,
+        duration_ms: segment.duration_ms,
+        has_audio,
+      })
+    })
+    .collect::<Result<Vec<_>, String>>()?;
+
   let args = build_ffmpeg_video_audio_graph_args(
     &video_paths,
     &request.video_input_media_types,
     &audio_paths,
+    &source_audio_segments,
     &request.video_filter_complex,
     &request.video_map,
     &request.audio_filter_complex,
