@@ -1,3 +1,27 @@
+## 2026-09-24 — M3.71 Unified AV Export Foundation — implementation
+
+Branch: `feat/m3-71-unified-av-export`
+
+Implemented:
+- Added a native unified video+audio graph render contract.
+- Routed exports containing explicit Audio track clips through one FFmpeg invocation instead of rendering an intermediate video and then performing a second audio-mix pass.
+- Rebased visual graph input indexes to contiguous native input slots before combining them with the offset audio graph.
+- Preserved image-input looping metadata and the existing video/audio encoding settings.
+- Kept no-audio video fast paths unchanged.
+- Retained the previous native video-with-audio command for compatibility but removed it from the active TypeScript pipeline path.
+- Added frontend and Rust regression coverage for unified routing, index rebasing, image input handling, validation, and FFmpeg argument construction.
+- No project schema change.
+
+Validation:
+- Pending fresh CI/local validation for M3.71.
+- PR should remain Draft until the user reports PASS.
+
+## 2026-09-24 — M3.70 Text Overlay Export Rendering — completed
+
+- PR #84 was user-validated and squash-merged at `c78f23e6108d557f1dd3b84c38f2650a609c76c3`.
+- Final user validation passed 33/33 frontend test files and 393/393 frontend tests, plus production build and 39/39 Rust tests.
+- M3.70 preserved the parked PR #76 boundary; Linux/Tauri/WebKitGTK repaint investigation remains separate.
+
 ## 2026-09-23 — M3.70 crop-order test correction
 
 - User validation found one failing regression assertion in `render-graph.test.ts`.
