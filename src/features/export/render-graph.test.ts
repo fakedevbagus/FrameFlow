@@ -219,14 +219,60 @@ describe("single video render graph", () => {
     );
   });
 
-  it("rejects audio mixing until the audio graph exists", () => {
+  it("allows audio segments alongside the single video track graph", () => {
     let project = createVideoProject();
     project = addAssetToTimeline(project, "video-a");
     project = addAssetToTrack(project, "audio-a", "audio-1", 0);
 
     const plan = createRenderPlan(project, createDefaultExportSettings(project));
+    const graph = compileSingleVideoTrackGraph(plan);
 
-    expect(() => compileSingleVideoTrackGraph(plan)).toThrow("audio mixing yet");
+    expect(graph.inputs).toEqual([
+      {
+        inputIndex: 0,
+        sourcePath: "/media/a.mp4",
+      },
+    ]);
+    expect(graph.videoMap).toBe("[vout]");
+    expect(graph.filterComplex).toContain("[0:v:0]");
+  });
+
+  it("compiles multiple video tracks when explicit audio tracks are present", () => {
+    let project = createVideoProject();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: [
+        ...project.tracks,
+        {
+          id: "video-2",
+          name: "Video 2",
+          type: "video",
+          isLocked: false,
+          isMuted: false,
+          clips: [],
+        },
+      ],
+    };
+    project = addAssetToTrack(project, "video-b", "video-2", 0);
+    project = addAssetToTrack(project, "audio-a", "audio-1", 0);
+
+    const plan = createRenderPlan(project, createDefaultExportSettings(project));
+    const graph = compileVideoTracksGraph(plan);
+
+    expect(graph.inputs).toEqual([
+      {
+        inputIndex: 0,
+        sourcePath: "/media/a.mp4",
+      },
+      {
+        inputIndex: 2,
+        sourcePath: "/media/b.mp4",
+      },
+    ]);
+    expect(graph.filterComplex).toContain("track_0_sequence");
+    expect(graph.filterComplex).toContain("track_1_sequence");
+    expect(graph.videoMap).toBe("[vout]");
   });
 
   it("compiles static X/Y/scale/rotation/opacity into the FFmpeg graph", () => {
