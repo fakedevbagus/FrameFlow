@@ -73,11 +73,15 @@ function renderVideoOnlyPlanToMp4(
     (segment) => segment.trackType === "video",
   );
   const graph = compileSingleVideoTrackGraph(plan);
+  const hasAnimatedTransforms = videoSegments.some(
+    (segment) => Boolean(segment.transformKeyframes?.length),
+  );
 
   if (
     videoSegments.length === 1 &&
     videoSegments[0].timelineStartMs === 0 &&
-    videoSegments[0].mediaType === "video"
+    videoSegments[0].mediaType === "video" &&
+    !hasAnimatedTransforms
   ) {
     const segment = videoSegments[0];
 
@@ -107,7 +111,8 @@ function renderVideoOnlyPlanToMp4(
     videoSegments.length > 0 &&
     videoTrackIds.size === 1 &&
     videoSegments.every((segment) => segment.mediaType === "video") &&
-    !hasVisualTransitions
+    !hasVisualTransitions &&
+    !hasAnimatedTransforms
   ) {
     const ordered = [...videoSegments].sort(
       (left, right) => left.timelineStartMs - right.timelineStartMs,

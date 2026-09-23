@@ -1,3 +1,46 @@
+## 2026-09-23 — M3.67 Animated Transform Export — implementation
+## 2026-09-23 — M3.67 validation correction
+## 2026-09-23 — M3.67 final test fixture correction
+
+- Latest user validation reached 373/374 frontend tests; the remaining failure was a stale assertion expecting the `2*(` term even though the test fixture only exercised ease-in and ease-out interpolation. fileciteturn836file0L139-L154 fileciteturn836file0L277-L299
+- Updated the final animated-transform keyframe fixture to use ease-in-out, so the existing `2*(` assertion now verifies actual easing output instead of testing an absent condition.
+- The same validation run passed production build, 39/39 Rust tests, and Tauri dev startup. fileciteturn836file0L302-L312 fileciteturn836file0L313-L370 fileciteturn836file0L372-L387
+- PR #81 remains Draft until the user reruns the frontend test suite and reports PASS.
+
+
+Branch: `feat/m3-67-animated-transform-export`
+PR #81 — Draft
+
+User-supplied validation exposed five stale/implementation-level failures before local acceptance:
+- ESLint rejected the FFmpeg expression helper because the source used unnecessary JavaScript escapes; the helper was corrected to emit the intended literal `\\,` sequence.
+- The render pipeline could still route an animated single video through the legacy single-source or segment renderer, bypassing the compiled animation graph; animated segments are now forced through the graph path.
+- The old graph test still expected animated transforms to be rejected even though M3.67 implements them.
+- The animated crop fixture expected `0.85` width while its left/right crop values produce `0.8` visible width.
+- The old pipeline rejection test was updated to cover the still-supported failure boundary: non-centered animated transform anchors.
+
+Validation status:
+- The supplied run showed the frontend build and Rust tests passing, but the frontend lint/test suite was not green, so M3.67 remains unvalidated and PR #81 remains Draft.
+
+
+Branch: `feat/m3-67-animated-transform-export`
+PR #81 — Draft
+
+Implemented:
+- Added FFmpeg graph compilation for animated X/Y, Scale, Rotation, and Opacity keyframes.
+- Reused the existing normalized keyframe model and easing semantics from Preview.
+- Added project-frame-rate normalization before animated transform evaluation.
+- Used time-based expressions for scale, rotation, and position plus a frame-index-based alpha expression for opacity.
+- Preserved crop and visual-effects ordering before animated transforms.
+- Kept centered transform-anchor export as the supported boundary; non-centered anchors remain explicitly deferred.
+- Routed animated transform clips through the native graph renderer.
+- Added render-graph and pipeline regression coverage.
+- No project schema change.
+
+Validation:
+- User local validation of the M3.67 implementation is pending.
+- CI validation is pending.
+- PR #81 remains Draft.
+
 ## 2026-09-23 — M3.66 Transition Export — merged
 
 - PR #80 was user-validated and squash-merged into `main` at `a3bf59055b76de1c485c8d410e2adb13862925d6`.

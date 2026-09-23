@@ -6,6 +6,7 @@ import {
   getClipCropPosition,
   getClipTransform,
   normalizeClipTransform,
+  normalizeTransformKeyframes,
 } from "../transform/transform";
 import type { ClipTransform } from "../transform/transform";
 import {
@@ -14,6 +15,7 @@ import {
   MIN_DISSOLVE_DURATION_MS,
   getClipTransition,
 } from "../transition/transition";
+import type { TransformKeyframe } from "../project/domain";
 import type { RenderPlan, RenderSegment } from "./render-plan";
 
 export interface VideoRenderInput {
@@ -364,6 +366,18 @@ function buildSegmentFilter(
   includeOutputNormalization: boolean,
 ): string {
   const transform = getClipTransform(segment.transform);
+  const transformKeyframes = normalizeTransformKeyframes(segment.transformKeyframes);
+
+  if (transformKeyframes.length > 0) {
+    return buildAnimatedCompositedSegmentFilter(
+      segment,
+      plan,
+      label,
+      includeOutputNormalization,
+      transformKeyframes,
+    );
+  }
+
   const crop = getClipCrop(segment.crop);
   const cropPosition = getClipCropPosition(crop, segment.cropPosition);
   const staticTransformRequired = !isDefaultTransform(transform);
@@ -409,6 +423,326 @@ function buildSegmentFilter(
         ]
       : []),
   ].join(",") + "[" + label + "]";
+}
+
+function buildAnimatedCompositedSegmentFilter(
+  segment: RenderSegment,
+  plan: RenderPlan,
+  label: string,
+  includeOutputNormalization: boolean,
+  keyframes: ReturnType<typeof normalizeTransformKeyframes>,
+): string {
+  const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
+
+  if (anchor.x !== 0.5 || anchor.y !== 0.5) {
+    throw new Error(
+      "M3.63 does not compile non-centered transform anchors yet; anchor export is deferred.",
+    );
+  }
+
+  const crop = getClipCrop(segment.crop);
+  const cropPosition = getClipCropPosition(crop, segment.cropPosition);
+  const visibleWidth = Math.max(
+    0.001,
+    1 - crop.left - crop.right,
+  );
+  const visibleHeight = Math.max(
+    0.001,
+    1 - crop.top - crop.bottom,
+  );
+
+  const cropFilters = isDefaultCrop(crop)
+    ? []
+    : [
+        "format=rgba",
+        "crop=w=trunc(iw*" +
+          formatNumber(visibleWidth) +
+          "):h=trunc(ih*" +
+          formatNumber(visibleHeight) +
+          "):x=trunc(iw*(" +
+          formatNumber(cropPosition.x) +
+          "-" +
+          formatNumber(visibleWidth / 2) +
+          ")):y=trunc(ih*(" +
+          formatNumber(cropPosition.y) +
+          "-" +
+          formatNumber(visibleHeight / 2) +
+          "))",
+        "pad=w=iw/" +
+          formatNumber(visibleWidth) +
+          ":h=ih/" +
+          formatNumber(visibleHeight) +
+          ":x=(iw/" +
+          formatNumber(visibleWidth) +
+          ")*" +
+          formatNumber(crop.left) +
+          ":y=(ih/" +
+          formatNumber(visibleHeight) +
+          ")*" +
+          formatNumber(crop.top) +
+          ":color=black@0",
+      ];
+
+  const scaleExpression = buildTransformKeyframeExpression(
+    keyframes,
+    (transform) => transform.scale,
+    "t",
+  );
+  const rotationExpression = buildTransformKeyframeExpression(
+    keyframes,
+    (transform) => transform.rotation,
+    "t",
+    (from, to) => shortestRotationDeltaDegrees(from, to),
+  );
+  const xExpression = buildTransformKeyframeExpression(
+    keyframes,
+    (transform) => transform.x,
+    "t",
+  );
+  const yExpression = buildTransformKeyframeExpression(
+    keyframes,
+    (transform) => transform.y,
+    "t",
+  );
+  const opacityExpression = buildTransformKeyframeExpression(
+    keyframes,
+    (transform) => transform.opacity,
+    "N/" + formatNumber(plan.frameRate),
+  );
+
+  const scales = keyframes.map((keyframe) => keyframe.transform.scale);
+  const rotations = keyframes.map((keyframe) => keyframe.transform.rotation);
+  const hasDynamicScale = !allValuesEqual(scales) || scales[0] !== 1;
+  const hasDynamicRotation = rotations.some((rotation) => rotation !== 0);
+  const opacities = keyframes.map((keyframe) => keyframe.transform.opacity);
+  const hasDynamicOpacity = !allValuesEqual(opacities) || opacities[0] !== 1;
+
+  const maxScale = Math.max(...scales, 1);
+  const rotatedExtent = Math.max(
+    2,
+    Math.ceil(
+      Math.hypot(plan.width * maxScale, plan.height * maxScale) / 2,
+    ) * 2,
+  );
+
+  const foregroundFilters = [
+    "[" +
+      segment.inputIndex +
+      ":v:0]trim=start=" +
+      formatSeconds(segment.sourceStartMs) +
+      ":end=" +
+      formatSeconds(segment.sourceEndMs),
+    "setpts=PTS-STARTPTS",
+    "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
+    "scale=w=" +
+      plan.width +
+      ":h=" +
+      plan.height +
+      ":force_original_aspect_ratio=decrease",
+    "pad=w=" +
+      plan.width +
+      ":h=" +
+      plan.height +
+      ":x=(ow-iw)/2:y=(oh-ih)/2",
+    ...(segment.visualEffects &&
+    buildVisualEffectsFfmpegFilters(segment.visualEffects)
+      ? [buildVisualEffectsFfmpegFilters(segment.visualEffects)]
+      : []),
+    ...cropFilters,
+    ...(hasDynamicScale
+      ? [
+          "scale=w='iw*" +
+            scaleExpression +
+            "':h='ih*" +
+            scaleExpression +
+            "':eval=frame",
+        ]
+      : scaleExpression !== "1"
+        ? [
+            "scale=w=iw*" +
+              formatNumber(scales[0]) +
+              ":h=ih*" +
+              formatNumber(scales[0]),
+          ]
+        : []),
+    ...(hasDynamicRotation
+      ? [
+          "format=rgba",
+          "rotate='" +
+            radiansExpression(rotationExpression) +
+            "':c=none:ow=" +
+            rotatedExtent +
+            ":oh=" +
+            rotatedExtent,
+        ]
+      : []),
+    ...(hasDynamicOpacity
+      ? [
+          "format=rgba",
+          "geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*" +
+            opacityExpression +
+            "'",
+        ]
+      : opacities[0] !== 1
+        ? [
+            "format=rgba",
+            "colorchannelmixer=aa=" + formatNumber(opacities[0]),
+          ]
+        : []),
+  ];
+
+  const backgroundLabel = "transform_bg_" + segment.inputIndex;
+  const foregroundLabel = "transform_fg_" + segment.inputIndex;
+
+  const backgroundFilter =
+    "color=c=black@0.0:s=" +
+    plan.width +
+    "x" +
+    plan.height +
+    ":r=" +
+    formatNumber(plan.frameRate) +
+    ":d=" +
+    formatSeconds(segment.durationMs) +
+    ",format=rgba[" +
+    backgroundLabel +
+    "]";
+
+  const overlayFilter =
+    "[" +
+    backgroundLabel +
+    "][" +
+    foregroundLabel +
+    "]overlay=x='" +
+    "(W-w)/2+" +
+    "(" +
+    xExpression +
+    ")*" +
+    formatNumber(plan.width / 100) +
+    "':y='" +
+    "(H-h)/2+" +
+    "(" +
+    yExpression +
+    ")*" +
+    formatNumber(plan.height / 100) +
+    "':shortest=1";
+
+  const normalization = includeOutputNormalization
+    ? ",format=yuv420p,fps=fps=" +
+      formatNumber(plan.frameRate) +
+      ":round=near,setsar=1"
+    : ",format=yuv420p";
+
+  return (
+    foregroundFilters.join(",") +
+    "[" +
+    foregroundLabel +
+    "];" +
+    backgroundFilter +
+    ";" +
+    overlayFilter +
+    normalization +
+    "[" +
+    label +
+    "]"
+  );
+}
+
+function buildTransformKeyframeExpression(
+  keyframes: ReturnType<typeof normalizeTransformKeyframes>,
+  selector: (transform: ClipTransform) => number,
+  timeExpression: string,
+  interpolation?: (from: number, to: number) => number,
+): string {
+  const first = keyframes[0];
+  if (!first) {
+    return "0";
+  }
+
+  const getValue = selector;
+  let expression = formatNumber(getValue(keyframes[keyframes.length - 1].transform));
+
+  for (let index = keyframes.length - 2; index >= 0; index -= 1) {
+    const current = keyframes[index];
+    const next = keyframes[index + 1];
+    const startSeconds = current.timeMs / 1000;
+    const endSeconds = next.timeMs / 1000;
+    const rangeSeconds = endSeconds - startSeconds;
+    const fromValue = getValue(current.transform);
+    const toValue = getValue(next.transform);
+    const delta = interpolation
+      ? interpolation(fromValue, toValue)
+      : toValue - fromValue;
+    const progress =
+      "(" +
+      timeExpression +
+      "-" +
+      formatNumber(startSeconds) +
+      ")/" +
+      formatNumber(rangeSeconds);
+    const easedProgress = buildEasedProgress(progress, next.easing);
+    const interpolated =
+      formatNumber(fromValue) +
+      "+(" +
+      formatNumber(delta) +
+      ")*(" +
+      easedProgress +
+      ")";
+    expression = ffmpegIf(
+      "lt(" +
+        timeExpression +
+        "," +
+        formatNumber(endSeconds) +
+        ")",
+      interpolated,
+      expression,
+    );
+  }
+
+  return ffmpegIf(
+    "lt(" +
+      timeExpression +
+      "," +
+      formatNumber(first.timeMs / 1000) +
+      ")",
+    formatNumber(getValue(first.transform)),
+    expression,
+  );
+}
+
+function buildEasedProgress(
+  progress: string,
+  easing: TransformKeyframe["easing"],
+): string {
+  switch (easing) {
+    case "ease-in":
+      return "(" + progress + ")*(" + progress + ")";
+    case "ease-out":
+      return "1-(1-(" + progress + "))*(1-(" + progress + "))";
+    case "ease-in-out":
+      return ffmpegIf(
+        "lt(" + progress + ",0.5)",
+        "2*(" + progress + ")*(" + progress + ")",
+        "1-pow(-2*(" + progress + ")+2,2)/2",
+      );
+    default:
+      return progress;
+  }
+}
+
+function ffmpegIf(condition: string, whenTrue: string, whenFalse: string): string {
+  return "if(" + condition + "\\," + whenTrue + "\\," + whenFalse + ")";
+}
+
+function radiansExpression(degreesExpression: string): string {
+  return "(" + degreesExpression + ")*PI/180";
+}
+
+function allValuesEqual(values: number[]): boolean {
+  return values.every((value) => value === values[0]);
+}
+
+function shortestRotationDeltaDegrees(from: number, to: number): number {
+  return ((to - from + 180) % 360 + 360) % 360 - 180;
 }
 
 function buildCompositedSegmentFilter(
@@ -590,18 +924,6 @@ function isDefaultCrop(
 }
 
 function assertSupportedVisualMetadata(segment: RenderSegment): void {
-  if (segment.transformKeyframes && segment.transformKeyframes.length > 0) {
-    throw new Error(
-      "M3.63 does not compile transform keyframes yet; animated transform export is deferred.",
-    );
-  }
-
-  if (segment.transformKeyframes && segment.transformKeyframes.length > 0) {
-    throw new Error(
-      "M3.36 does not compile transform keyframes yet; animated filter support is deferred.",
-    );
-  }
-
   if (segment.isMuted) {
     throw new Error(
       "M3.36 does not compile track mute state yet; audio/video graph policy is deferred.",
