@@ -759,7 +759,6 @@ function buildSegmentFilter(
       ":end=" +
       formatSeconds(segment.sourceEndMs),
     "setpts=PTS-STARTPTS",
-    ...(preserveAlpha ? ["format=rgba"] : []),
     "scale=w=" +
       plan.width +
       ":h=" +
