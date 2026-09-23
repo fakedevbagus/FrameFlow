@@ -758,6 +758,7 @@ function buildSegmentFilter(
       ":end=" +
       formatSeconds(segment.sourceEndMs),
     "setpts=PTS-STARTPTS",
+    ...(preserveAlpha ? ["format=rgba"] : []),
     "scale=w=" +
       plan.width +
       ":h=" +
@@ -885,6 +886,7 @@ function buildAnimatedCompositedSegmentFilter(
       formatSeconds(segment.sourceEndMs),
     "setpts=PTS-STARTPTS",
     "fps=fps=" + formatNumber(plan.frameRate) + ":round=near",
+    ...(preserveAlpha ? ["format=rgba"] : []),
     "scale=w=" +
       plan.width +
       ":h=" +
