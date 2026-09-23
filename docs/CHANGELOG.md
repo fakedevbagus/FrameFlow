@@ -1,3 +1,10 @@
+## 2026-09-23 — M3.69 merged / M3.70 started
+
+- PR #83 was user-validated and squash-merged at `5bac39d156aae38f2ab3c6a61d3851e816535128`.
+- GitHub CI run #207 completed successfully.
+- M3.70 starts from the updated `main` and focuses on deterministic Text Overlay Export Rendering.
+- Parked PR #76 remains separate because it contains both export work and the previously investigated Linux/Tauri/WebKitGTK Preview repaint issue; it will not be merged wholesale.
+
 ## 2026-09-23 — M3.69 Multi-Track Video Compositing Foundation — implementation
 
 Branch: `feat/m3-69-multi-track-video-compositing`
