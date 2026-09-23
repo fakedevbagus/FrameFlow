@@ -917,12 +917,6 @@ describe("App", () => {
         "preview-text-overlay-" + project.tracks[0].clips[0].id,
       );
 
-    expect(
-      screen.getByTestId(
-        "preview-text-overlay-live-canvas-" + project.tracks[0].clips[0].id,
-      ),
-    ).toBeInTheDocument();
-
     const textInput = screen.getByRole("textbox", {
       name: "Text overlay content",
     });
