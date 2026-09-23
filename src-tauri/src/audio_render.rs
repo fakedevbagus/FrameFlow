@@ -1114,6 +1114,72 @@ mod tests {
     assert!(validate_video_audio_graph_request(&missing_video).is_err());
     missing_video.video_inputs = vec!["/media/video.mp4".to_string()];
 
+    let invalid_source_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![NativeSourceAudioSegment {
+        input_index: 1,
+        source_start_ms: 0,
+        timeline_start_ms: 0,
+        duration_ms: 5_000,
+      }],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&invalid_source_audio).is_err());
+
+    let invalid_image_source_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/cover.png".to_string()],
+      video_input_media_types: vec!["image".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![NativeSourceAudioSegment {
+        input_index: 0,
+        source_start_ms: 0,
+        timeline_start_ms: 0,
+        duration_ms: 5_000,
+      }],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&invalid_image_source_audio).is_err());
+
+    let invalid_zero_duration_source_audio = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![NativeSourceAudioSegment {
+        input_index: 0,
+        source_start_ms: 0,
+        timeline_start_ms: 0,
+        duration_ms: 0,
+      }],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&invalid_zero_duration_source_audio).is_err());
+
     let mut mismatched_types = NativeVideoAudioGraphRenderRequest {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: Vec::new(),
