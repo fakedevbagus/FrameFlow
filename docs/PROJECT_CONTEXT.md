@@ -11,16 +11,11 @@ Merge status: not merged; keep Draft until the user reports PASS.
 - The export slice reuses the existing optional per-clip text overlay model and keeps rendering deterministic without introducing a new project schema version.
 - Font selection uses the explicit renderer-owned `DejaVu Sans` policy.
 - Preview and export keep normalized X/Y, font size, color, and left/center/right alignment semantics aligned.
-- The transient live Inspector state remains in a synchronous external React edit-session store, separate from committed project/history state.
-- The latest WebView live-preview implementation deliberately separates live rendering from React reconciliation: PreviewVisualLayer owns one permanently mounted text overlay DOM element for the selected clip.
-- For Text/X/Y/Size, Preview installs native `beforeinput` and `keydown` intent listeners plus paste/cut handling, then computes the next value before delayed WebView value delivery and imperatively patches the existing overlay DOM.
-- Preview also keeps a `requestAnimationFrame` readback as a fallback for direct DOM value changes that arrive without a usable input event.
-- The selected overlay's React render is intentionally inert: while selected, React keeps a hidden placeholder geometry/value so a transient store update cannot reconcile stale text/style back over the imperative live DOM owner.
-- The live overlay DOM is therefore not recreated or visually controlled by each external-store update.
-- The external edit session remains decoupled from `project.updatedAt`, so unrelated committed project changes do not discard an in-progress Text Overlay edit.
-- Commit handlers read the current external session snapshot; blur/direct Text Overlay actions and the existing 400 ms idle autosave commit through the existing project history engine.
-- Regression coverage explicitly reproduces the reported sequence `Text → X → Y → Size` and requires each previous value to appear before the next field is edited.
-- Additional coverage includes direct DOM value changes without dispatched input/change/keyup, synchronous beforeinput rendering, no per-keystroke history, one-entry commit + Undo/Redo + Reset, external-store behavior, and selected overlay mounting.
+- The target runtime is Linux/Tauri/WebKitGTK. Current symptoms match a broader WebKitGTK/GTK repaint issue where valid web content changes can remain visually stale until a focus/resize/Expose-style native event triggers a redraw.
+- A native Linux repaint watchdog now runs on the GTK main loop every 50 ms and calls `queue_draw()` on the Tauri GTK window plus the default GTK container subtree. It does not resize, move, reload, or navigate the window.
+- GTK bindings are target-gated to Linux and use the same gtk 0.18 generation already used transitively by current Tauri 2.x on Linux.
+- The frontend live Text Overlay fallback remains temporarily in place for this validation checkpoint. It is not considered the root-cause fix; the native watchdog is the new platform-level mitigation.
+- After native validation PASS, clean-up should remove redundant frontend workarounds and retain only the simplest React live-state path needed for normal browsers.
 - Current repository validation is pending. Do not mark PR #76 ready or merge until the user reports local PASS and the final CI head is green.
 - Known M3.62 export limitation remains the existing single-video/image-export architecture.
 
