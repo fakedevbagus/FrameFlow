@@ -2657,6 +2657,7 @@ function App() {
                     </div>
                     <textarea
                       aria-label="Text overlay content"
+                      data-text-overlay-control="text"
                       className="inspector-textarea"
                       defaultValue={activeTextOverlay?.text ?? ""}
                       key={
@@ -2686,6 +2687,7 @@ function App() {
                         <div className="inspector-transform-input-wrap">
                           <input
                             aria-label="Text overlay X position"
+                            data-text-overlay-control="x"
                             className="inspector-transform-input"
                             defaultValue={Math.round(
                               (activeTextOverlay?.x ?? DEFAULT_TEXT_OVERLAY_X) * 100,
@@ -2735,6 +2737,7 @@ function App() {
                         <div className="inspector-transform-input-wrap">
                           <input
                             aria-label="Text overlay Y position"
+                            data-text-overlay-control="y"
                             className="inspector-transform-input"
                             defaultValue={Math.round(
                               (activeTextOverlay?.y ?? DEFAULT_TEXT_OVERLAY_Y) * 100,
@@ -2784,6 +2787,7 @@ function App() {
                         <div className="inspector-transform-input-wrap">
                           <input
                             aria-label="Text overlay font size"
+                            data-text-overlay-control="size"
                             className="inspector-transform-input"
                             defaultValue={
                               activeTextOverlay?.fontSize ??
