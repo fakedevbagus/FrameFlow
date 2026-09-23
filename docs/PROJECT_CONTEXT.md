@@ -1,22 +1,15 @@
-## M3.65 — Static Image Clip Export — in progress — 2026-09-23
+## M3.66 — Transition Export — in progress — 2026-09-23
 
-- M3.64 Static Crop Export is complete and merged into `main` at `fd9d889c3975fdd076a87235913f3b37d1cbc50a`.
+- M3.65 Static Image Clip Export was completed, user-validated, and squash-merged into `main` at `0136c1e6d13fd8cdb838dc2bbee8e5792fa86d31`.
 - M3.62 Text Overlay Export Rendering remains parked in PR #76 Draft because the user's Linux/Tauri/WebKitGTK Preview timing issue is unresolved.
-- Image assets are already accepted on video tracks and rendered in Preview, but the native export graph previously rejected non-video visual assets and the single-source pipeline bypassed the graph for any clip at timeline zero.
-- M3.65 adds media-type metadata to native graph requests so FFmpeg can distinguish image inputs from video inputs.
-- Image inputs are opened with a looped image demuxer at the project frame rate; duration is controlled by the existing RenderGraph trim/timeline segment duration.
-- The TypeScript export pipeline routes image-containing video plans through the graph renderer instead of the direct single-source/segment video renderer.
-- The RenderGraph accepts both video and image visual assets while preserving the existing one-video-track architecture.
-- No project schema change is introduced.
-- Animated transforms, non-centered transform anchors, transitions, multi-track compositing, and audio mixing remain deferred.
-- Added regression coverage for image RenderGraph compilation, pipeline routing, and native media-type request metadata.
-- Supplied local validation reached the frontend suite with 366/368 tests passing; the two failures were stale trim-duration assertions in `render-graph.test.ts`: the video fixture expected 3 seconds instead of its 5-second duration, while the image fixture expected 5 seconds instead of its 3-second default duration. fileciteturn621file0L234-L261
-- The same validation reported a successful production build, 39/39 Rust tests passing, and a successful Tauri dev startup; the frontend suite is the remaining automated failure. fileciteturn621file0L273-L285 fileciteturn621file0L288-L329 fileciteturn621file0L344-L360
-- Commit `f85e56a19e622005ab501707cf12ce90369384e0` corrects those two test expectations: video 5 seconds, image 3 seconds.
-- Fresh `npm run test` and final CI are still required. Keep PR #79 Draft until the user reports PASS.
-- `src-tauri/src/lib.rs` was restored from `main` and the M3.65 native graph media-type/image-loop changes were reapplied in full.
-- The stale image assertion was corrected from 5 seconds to the fixture's 3-second default duration.
-- A fresh validation run is required after these corrections. Keep PR #79 Draft until the user reports PASS.
+- M3.66 targets the next concrete export gap already represented in the editor: visual transitions between directly adjacent clips.
+- The existing project model already supports `dissolve` and `fade-through-black` transition metadata and Preview renders both transition types.
+- M3.66 will keep the existing single-video-track architecture and compile transition timing without changing the project schema.
+- Transition export will preserve the existing timeline-duration semantics used by Preview: the outgoing clip's transition window uses the incoming clip's first frame, then the incoming clip starts from source time zero at its original timeline boundary.
+- Static crop, static transforms, visual effects, and image/video visual inputs should remain composable with the transition path.
+- Multi-track compositing, audio mixing, transform keyframes, non-centered transform anchors, and text overlay export remain outside this focused slice unless the repository evidence requires otherwise.
+- Regression coverage is required for transition graph compilation and pipeline routing.
+- PR for M3.66 must remain Draft until the user reports successful local validation.
 
 ## M3.64 — Static Crop Export — merged — 2026-09-23
 
