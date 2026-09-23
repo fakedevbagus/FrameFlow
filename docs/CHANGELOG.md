@@ -16,6 +16,12 @@
 - No project schema or export behavior changed.
 - Fresh local validation remains required; PR #82 stays Draft.
 
+## 2026-09-23 — M3.68 Inspector spacing refinement
+
+- Added a small extra right inset to the Inspector panel after the latest Linux screenshot showed the content was fixed but still visually too close to the application edge.
+- This is a CSS-only visual refinement; no editor state, export graph, or project schema behavior changed.
+- A fresh local validation is required after this final UI adjustment before M3.68 can be marked ready and merged.
+
 ## 2026-09-23 — M3.68 validation correction
 
 - User validation found two unused locals in `render-graph.ts` and a stale pipeline test that still expected non-centered animated anchors to be rejected. fileciteturn920file0L24-L35 fileciteturn920file0L129-L140 fileciteturn920file0L263-L280
