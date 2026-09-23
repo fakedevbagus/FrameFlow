@@ -53,7 +53,7 @@ describe("single video render graph", () => {
       },
     ]);
     expect(graph.filterComplex).toContain(
-      "[0:v:0]trim=start=0:end=3,setpts=PTS-STARTPTS",
+      "[0:v:0]trim=start=0:end=5,setpts=PTS-STARTPTS",
     );
     expect(graph.filterComplex).toContain(
       "scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
@@ -95,7 +95,7 @@ describe("single video render graph", () => {
       },
     ]);
     expect(graph.filterComplex).toContain(
-      "[0:v:0]trim=start=0:end=5,setpts=PTS-STARTPTS",
+      "[0:v:0]trim=start=0:end=3,setpts=PTS-STARTPTS",
     );
     expect(graph.filterComplex).toContain(
       "scale=w=1080:h=1920:force_original_aspect_ratio=decrease",
