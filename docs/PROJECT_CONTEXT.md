@@ -1,3 +1,18 @@
+## M3.70 — Text Overlay Export Rendering — in progress — 2026-09-23
+
+- PR for M3.70 is being prepared from the updated `main`.
+- RenderPlan now carries the existing optional per-clip `TextOverlay` metadata using the domain normalizer.
+- The existing renderer-owned `DejaVu Sans` FFmpeg drawtext helper is used to compile overlay content, normalized X/Y position, font size, color, and left/center/right alignment.
+- Drawtext text is escaped for FFmpeg delimiters and multiline content while preserving the existing project schema.
+- Text rendering is placed after visual effects and crop preparation but before the existing transform stage so text remains coupled to the clip's transform/opacity semantics like Preview.
+- Text overlays participate in the M3.69 multi-track compositor and remain visible on the correct video track layer.
+- Export pipeline routing explicitly sends clips with a text overlay through the graph instead of direct-source or legacy segment renderers.
+- Parked PR #76 was not merged or reused wholesale; only the export-relevant renderer pattern was reimplemented on current main.
+- The Linux/Tauri/WebKitGTK repaint timing issue from PR #76 remains separate and is not touched by this milestone.
+- Added text-overlay renderer, RenderPlan, render-graph, pipeline, and multi-track regression coverage.
+- Local validation is pending; PR will remain Draft until user PASS.
+
+
 ## M3.70 — Text Overlay Export Rendering — next — 2026-09-23
 
 - M3.69 Multi-Track Video Compositing Foundation was user-validated, CI-validated, and squash-merged in PR #83 at `5bac39d156aae38f2ab3c6a61d3851e816535128`.
