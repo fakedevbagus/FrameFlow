@@ -10,6 +10,9 @@
 - Video inputs are normalized to the project frame rate before animated transform evaluation so frame-based opacity expressions stay aligned with the export timeline.
 - Animated transforms are rendered on a project-sized transparent composition surface; crop and visual effects remain before the animated transform stage.
 - The pipeline routes animated transform clips through the graph renderer instead of the direct single-source or legacy segment renderers.
+- Validation follow-up on 2026-09-23 found stale pre-M3.67 assertions plus one routing gap: animated clips could still enter the direct/legacy native render paths, the crop fixture expected the wrong normalized width, and the FFmpeg expression helper was not actually emitting escaped commas.
+- Corrected the pipeline so any segment with transform keyframes is forced through the compiled graph, corrected the graph-expression escaping, removed the obsolete deferred-keyframe assertions, and updated crop expectations.
+- No user PASS is recorded yet; local validation must be rerun from the updated branch before PR #81 can be marked ready.
 
 
 ## M3.66 — Transition Export — merged — 2026-09-23
