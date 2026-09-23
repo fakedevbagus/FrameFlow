@@ -88,6 +88,7 @@ function renderVideoOnlyPlanToMp4(
             segment.visualEffects.contrast !== 0 ||
             segment.visualEffects.saturation !== 0),
       ) ||
+      Boolean(segment.textOverlay) ||
       transform.x !== 0 ||
       transform.y !== 0 ||
       transform.scale !== 1 ||
