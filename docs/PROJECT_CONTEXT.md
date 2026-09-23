@@ -1,13 +1,16 @@
-## M3.68 — Non-Centered Transform Anchor Export — next
+## M3.68 — Non-Centered Transform Anchor Export — in progress — 2026-09-23
 
-- M3.67 Animated Transform Export was user-validated and CI-validated, then squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
-- The current export graph supports centered transform anchors only and explicitly rejects non-centered anchors.
-- The editor already models normalized transform anchors and uses anchor-aware transform-origin semantics in Preview; changing the anchor compensates translation so the visual position remains stable.
-- M3.68 will extend the existing static and animated transform export paths to honor non-centered anchors without changing the project schema.
-- The implementation must preserve the existing anchor compensation semantics, crop/effects ordering, keyframe easing, image/video support, and transparent composition strategy.
-- Anchor behavior must be validated for both static transforms and animated transform keyframes, including rotation and scale around the selected pivot.
-- Multi-track compositing, audio mixing, and Text Overlay Export remain separate deferred work; PR #76 stays parked.
-- Add domain-level/graph-level regression coverage and at least one pipeline coverage case for anchored animated export.
+- M3.67 Animated Transform Export was user-validated and squash-merged in PR #81 at `783885376209ec56013612147b217a13c8bf1ef7`.
+- M3.68 addresses the remaining export limitation for non-centered transform anchors already supported by the editor/Preview.
+- Static and animated transforms now have an anchor-aware graph path when scale or rotation makes the anchor visually significant.
+- The anchor-aware path keeps the source content in its contained bounds, preserves crop/effects ordering, scales around the selected pivot, compensates pre-rotation placement, rotates around the pivot, then applies world-space X/Y translation.
+- Animated anchor-aware transforms reuse the existing X/Y, Scale, Rotation, and Opacity keyframe expressions and easing rules without changing the project schema.
+- The graph uses a conservative transparent composition surface sized from the project bounds, maximum animated scale, and anchor offset so rotation can occur without clipping transformed content.
+- The export pipeline now routes any graph-required visual metadata through the graph renderer; this also prevents single-source or legacy segment rendering from silently dropping static transforms, crops, visual effects, or keyframes.
+- Centered-anchor behavior remains on the existing optimized graph path; anchor-sensitive work is isolated to non-centered scale/rotation cases.
+- Added render-graph coverage for static and animated off-center anchors plus pipeline coverage proving static transforms use the graph.
+- Local and CI validation are pending for M3.68; PR will remain Draft until user PASS.
+- M3.67 merged above; Text Overlay Export remains parked in PR #76; multi-track compositing and audio mixing remain deferred.
 
 ## M3.67 — Animated Transform Export — merged — 2026-09-23
 
