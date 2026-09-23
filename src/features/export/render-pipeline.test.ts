@@ -347,6 +347,14 @@ describe("render video pipeline", () => {
           sourceEndMs: 5000,
           durationMs: 5000,
           isMuted: false,
+          textOverlay: {
+            text: "Image",
+            x: 0.5,
+            y: 0.5,
+            fontSize: 48,
+            color: "#ffffff",
+            alignment: "center",
+          },
         },
       ],
     };
@@ -369,6 +377,7 @@ describe("render video pipeline", () => {
         width: 1080,
         height: 1920,
         frameRate: 30,
+        filterComplex: expect.stringContaining("drawtext=font='DejaVu Sans'"),
       }),
     );
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
