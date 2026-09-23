@@ -1,3 +1,20 @@
+## M3.69 — Multi-Track Video Compositing Foundation — in progress — 2026-09-23
+
+- M3.69 extends export from one video track to multiple visual tracks while keeping the existing single-track graph as the compatibility path.
+- Added `compileVideoTracksGraph` and routed export pipeline graph rendering through it.
+- Multiple video tracks are grouped by project track order and each active track is compiled to a project-duration RGBA sequence.
+- Track gaps and letterbox regions remain transparent so lower tracks remain visible beneath upper tracks.
+- Existing per-clip source fit, crop/effects, static/animated transforms, and non-centered transform anchors are reused for each track.
+- Existing dissolve and fade-through-black transitions remain scoped to adjacent clips on their owning track; transition labels are namespaced per track to avoid graph collisions.
+- Muted video tracks are omitted from the visual composite while their input slots remain stable for native FFmpeg indexing.
+- Final track sequences are composited in project track order onto a transparent project canvas and converted to the existing MP4-compatible output format at the end.
+- Fixed `inputMediaTypes` ordering in the export pipeline to follow native graph input order rather than timeline order, which is required when clips on different tracks have different start times.
+- No project schema change.
+- Audio mixing remains separate and continues through the existing audio graph path.
+- Added render-graph and render-pipeline regression coverage for multi-track routing, transparent gaps, mute handling, and transformed upper tracks.
+- Local validation is pending; PR will remain Draft until user PASS.
+
+
 ## M3.69 — Multi-Track Video Compositing Foundation — next
 
 - M3.68 Non-Centered Transform Anchor Export was completed and squash-merged in PR #82 at `ba34a0aed73f56b85217f0c4c9584299f4544ff8`.
