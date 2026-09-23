@@ -271,7 +271,7 @@ describe("single video render graph", () => {
       },
     ]);
     expect(graph.filterComplex).toContain("track_0_sequence");
-    expect(graph.filterComplex).toContain("track_1_sequence");
+    expect(graph.filterComplex).toContain("track_2_sequence");
     expect(graph.videoMap).toBe("[vout]");
   });
 
