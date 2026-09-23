@@ -10,7 +10,10 @@
 - No project schema change is introduced.
 - Animated transforms, non-centered transform anchors, transitions, multi-track compositing, and audio mixing remain deferred.
 - Added regression coverage for image RenderGraph compilation, pipeline routing, and native media-type request metadata.
-- Local validation is pending. Keep PR #79 Draft until the user reports PASS.
+- Supplied local validation reached the frontend suite with 367/368 tests passing; the single failure was an image render-graph assertion expecting 5 seconds while the fixture's default image duration is 3 seconds. The same run then exposed a corrupted `src-tauri/src/lib.rs` beginning with an unexpected `}`. fileciteturn601file0L243-L261 fileciteturn601file0L277-L307
+- `src-tauri/src/lib.rs` was restored from `main` and the M3.65 native graph media-type/image-loop changes were reapplied in full.
+- The stale image assertion was corrected from 5 seconds to the fixture's 3-second default duration.
+- A fresh validation run is required after these corrections. Keep PR #79 Draft until the user reports PASS.
 
 ## M3.64 — Static Crop Export — merged — 2026-09-23
 
