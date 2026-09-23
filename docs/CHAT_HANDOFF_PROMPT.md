@@ -1,3 +1,13 @@
+## M3.73 — completed — 2026-09-24
+
+- PR #87 was user-validated, marked ready, and squash-merged.
+- Merge SHA: `8c7292f1b4484c9a2156484c2d06f4980760c468`.
+- User reported PASS for lint, 33/33 frontend test files, 397/397 frontend tests, production build, Rust tests, Tauri development startup, and manual source-audio export verification.
+- M3.73 now preserves embedded audio from non-muted video clips in the unified AV export path, trims/delays it to clip timing, and mixes it with explicit Audio tracks.
+- Known next gap: video-track volume/pan controls are not yet applied to preserved embedded source audio during unified export.
+- M3.74 is the next focused milestone: preserve video-track volume/pan for embedded source audio.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
 ## M3.73 — validation correction — 2026-09-24
 
 - User run passed lint, the full frontend suite (33/33 files, 397/397 tests), and production build.
