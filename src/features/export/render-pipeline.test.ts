@@ -595,7 +595,7 @@ describe("render video pipeline", () => {
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
-  it("does not call the native renderer when graph compilation rejects multiple video tracks", () => {
+  it("routes multiple video tracks through the native graph renderer", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -635,13 +635,30 @@ describe("render video pipeline", () => {
       ],
     };
 
-    expect(() =>
-      renderVideoPlanToMp4(plan, "/tmp/timeline-export.mp4"),
-    ).toThrow("multi-track compositing is deferred");
+    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/multitrack-export.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/multitrack-export.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/multitrack-export.mp4",
+    });
+
+    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
+      inputs: ["/media/a.mp4", "/media/b.mp4"],
+      inputMediaTypes: ["video", "video"],
+      outputPath: "/tmp/multitrack-export.mp4",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      filterComplex: expect.stringContaining("multitrack_composite_1"),
+      videoMap: "[vout]",
+    });
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
-    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
+
 
   it("compiles the graph before invoking native rendering", () => {
     expect(typeof compileSingleVideoTrackGraph).toBe("function");
