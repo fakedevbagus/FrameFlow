@@ -20,21 +20,23 @@ Validation:
 Branch: feat/m3-62-text-overlay-export-rendering
 PR: #76
 
-Problem:
-- On the Linux/Tauri WebView, Text Overlay Inspector values could change visually inside the native control while Preview remained stale until blur/outside click.
-- The underlying issue is an input-delivery path where the DOM value can change without React receiving the expected input/change/keyboard event.
+Observed WebView behavior:
+- The Text/X/Y/Size control values visibly changed while editing, but Preview did not update until blur/outside click.
+- This means the DOM value path can advance even when React event delivery is delayed or absent.
 
-Fix:
-- Keep the transient Text Overlay edit session outside committed project/history state through a synchronous `useSyncExternalStore` store.
-- Retain normal `input`/`change` handlers as the fast path.
-- Add a direct 50 ms DOM-value polling fallback for Text/X/Y/Size while a visual clip is selected.
-- The fallback reads the actual Inspector DOM elements directly and does not depend on `document.activeElement`.
-- Polling merges only real DOM-value changes into the external edit session, so it does not create history entries per poll.
-- Removed the previous requirement for native listener registration, active-field detection, keyboard-only fallback, and `flushSync`.
+Current fix:
+- Keep the transient edit session outside committed project/history state through a synchronous `useSyncExternalStore` store.
+- Use normal `input`/`change` handlers as the fast path.
+- Poll the actual Text/X/Y/Size DOM controls every 50 ms while a visual clip is selected.
+- When polling detects a difference, update the external edit session and imperatively update the matching Preview overlay DOM element in the same poll cycle.
+- Keep a hidden Preview overlay target mounted for the selected visual clip even when there is no committed text, so the imperative fallback never depends on React creating the node first.
+- The imperative patch updates `textContent`, left/top, font size, color, text alignment transform, and visibility.
+- No polling path uses `document.activeElement`; no blur is required to display the live value.
+- The earlier native listener / keyboard fallback / `flushSync` chain is removed.
 
 Regression coverage:
-- Live Text/X/Y/Size Preview updates before blur.
-- Direct DOM value mutation without a dispatched input/change/keyup event.
+- Standard event-driven live Text/X/Y/Size changes.
+- Direct DOM value changes without input/change/keyup.
 - No Undo history entry while an edit remains uncommitted.
 - Single history entry on commit with Undo/Redo and Reset.
 - External edit-session publish/deduplication/replacement/clear behavior.
