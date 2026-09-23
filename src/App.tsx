@@ -581,6 +581,33 @@ function App() {
 
     const clipId = selectedClipId;
 
+    const applyLiveTextOverlayToPreviewDom = (overlay: TextOverlay) => {
+      const previewOverlay = document.getElementById(
+        "preview-text-overlay-" + clipId,
+      );
+
+      if (!previewOverlay) {
+        return;
+      }
+
+      const element = previewOverlay as HTMLDivElement;
+      const horizontalTransform =
+        overlay.alignment === "left"
+          ? "translate(0, -50%)"
+          : overlay.alignment === "right"
+            ? "translate(-100%, -50%)"
+            : "translate(-50%, -50%)";
+
+      element.textContent = overlay.text;
+      element.style.left = overlay.x * 100 + "%";
+      element.style.top = overlay.y * 100 + "%";
+      element.style.color = overlay.color;
+      element.style.fontSize = overlay.fontSize + "px";
+      element.style.textAlign = overlay.alignment;
+      element.style.transform = horizontalTransform;
+      element.style.visibility = overlay.text.trim() ? "visible" : "hidden";
+    };
+
     const pollTextOverlayInputs = () => {
       const textInput = textOverlayTextInputRef.current;
       const xInput = textOverlayXInputRef.current;
@@ -645,6 +672,8 @@ function App() {
         nextOverlay.fontSize = Math.round(sizeValue);
         changed = true;
       }
+
+      applyLiveTextOverlayToPreviewDom(changed ? nextOverlay : currentOverlay);
 
       if (changed) {
         setTextOverlayEditSession({
