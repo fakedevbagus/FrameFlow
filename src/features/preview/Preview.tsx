@@ -346,6 +346,11 @@ function PreviewVisualLayer({
     textOverlayOverride?.clipId === layer.clip.id
       ? textOverlayOverride.overlay
       : getTextOverlay(layer.clip);
+  const committedTextOverlay = getTextOverlay(layer.clip);
+  const committedTextOverlayRef = useRef<TextOverlay | undefined>(
+    committedTextOverlay,
+  );
+  committedTextOverlayRef.current = committedTextOverlay;
   const cropMediaStyle = {
     position: "absolute" as const,
     left: `${50 - (cropPosition.x / visibleWidth) * 100}%`,
@@ -448,7 +453,7 @@ function PreviewVisualLayer({
       const currentOverlay =
         currentSession?.clipId === layer.clip.id
           ? currentSession.overlay
-          : committedOverlay;
+          : committedTextOverlayRef.current ?? committedOverlay;
       const nextOverlay = { ...currentOverlay };
 
       if (control === "text") {
@@ -623,17 +628,7 @@ function PreviewVisualLayer({
         cleanup();
       }
     };
-  }, [
-    isSelected,
-    isPlaying,
-    layer.clip.id,
-    textOverlay?.text,
-    textOverlay?.x,
-    textOverlay?.y,
-    textOverlay?.fontSize,
-    textOverlay?.color,
-    textOverlay?.alignment,
-  ]);
+  }, [isSelected, isPlaying, layer.clip.id]);
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
@@ -1375,12 +1370,14 @@ function PreviewVisualLayer({
       return null;
     }
 
-    const activeText = textOverlay?.text ?? "";
-    const activeX = textOverlay?.x ?? 0.5;
-    const activeY = textOverlay?.y ?? 0.5;
-    const activeFontSize = textOverlay?.fontSize ?? 56;
-    const activeColor = textOverlay?.color ?? "#ffffff";
-    const activeAlignment = textOverlay?.alignment ?? "center";
+    const activeText = isSelected ? "" : textOverlay?.text ?? "";
+    const activeX = isSelected ? 0.5 : textOverlay?.x ?? 0.5;
+    const activeY = isSelected ? 0.5 : textOverlay?.y ?? 0.5;
+    const activeFontSize = isSelected ? 56 : textOverlay?.fontSize ?? 56;
+    const activeColor = isSelected ? "#ffffff" : textOverlay?.color ?? "#ffffff";
+    const activeAlignment = isSelected
+      ? "center"
+      : textOverlay?.alignment ?? "center";
     const horizontalTransform =
       activeAlignment === "left"
         ? "translate(0, -50%)"
@@ -1402,12 +1399,11 @@ function PreviewVisualLayer({
           fontSize: activeFontSize + "px",
           textAlign: activeAlignment,
           transform: horizontalTransform,
-          visibility:
-            isSelected
-              ? "hidden"
-              : activeText.trim()
-                ? "visible"
-                : "hidden",
+          visibility: isSelected
+            ? "hidden"
+            : activeText.trim()
+              ? "visible"
+              : "hidden",
         }}
       >
         {activeText}
