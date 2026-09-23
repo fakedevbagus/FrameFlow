@@ -754,7 +754,7 @@ describe("App", () => {
     expect(screen.getByTestId("preview-video")).toHaveStyle({ filter: "" });
   });
 
-  it("keeps text overlay edits live before commit and undoes them as one history entry", async () => {
+  it("keeps Text/X/Y/Size preview updates live in sequence before commit", async () => {
     let project = createProject({ id: "text-overlay-ui" });
 
     project = {
@@ -786,48 +786,60 @@ describe("App", () => {
       screen.getByRole("button", { name: "Select text-ui.mp4 clip" }),
     );
 
-    expect(screen.getByTestId("text-overlay")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Show text overlay" }),
-    ).toBeInTheDocument();
-
+    const clipId = project.tracks[0].clips[0].id;
     const previewOverlay = () =>
-      screen.getByTestId(
-        "preview-text-overlay-" + project.tracks[0].clips[0].id,
-      );
+      screen.getByTestId("preview-text-overlay-" + clipId);
 
     const textInput = screen.getByRole("textbox", {
       name: "Text overlay content",
+    }) as HTMLTextAreaElement;
+
+    textInput.value = "hello";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
     });
-
-    fireEvent.input(textInput, { target: { value: "H" } });
-    expect(previewOverlay()).toHaveTextContent("H");
-    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
-
-    fireEvent.input(textInput, { target: { value: "He" } });
-    expect(previewOverlay()).toHaveTextContent("He");
-    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
 
     const xInput = screen.getByRole("spinbutton", {
       name: "Text overlay X position",
+    }) as HTMLInputElement;
+    xInput.value = "20";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({ left: "20%" });
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
     });
-    fireEvent.input(xInput, { target: { value: "49" } });
-    expect(previewOverlay()).toHaveStyle({ left: "49%" });
-    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
 
     const yInput = screen.getByRole("spinbutton", {
       name: "Text overlay Y position",
+    }) as HTMLInputElement;
+    yInput.value = "80";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({
+        left: "20%",
+        top: "80%",
+      });
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
     });
-    fireEvent.input(yInput, { target: { value: "40" } });
-    expect(previewOverlay()).toHaveStyle({ top: "40%" });
-    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
 
     const sizeInput = screen.getByRole("spinbutton", {
       name: "Text overlay font size",
+    }) as HTMLInputElement;
+    sizeInput.value = "72";
+
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({
+        left: "20%",
+        top: "80%",
+        fontSize: "72px",
+      });
+      expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
     });
-    fireEvent.input(sizeInput, { target: { value: "72" } });
-    expect(previewOverlay()).toHaveStyle({ fontSize: "72px" });
-    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
 
     fireEvent.blur(sizeInput);
 
@@ -835,45 +847,31 @@ describe("App", () => {
       expect(screen.getByRole("button", { name: "Undo" })).not.toBeDisabled(),
     );
 
-    expect(previewOverlay()).toHaveTextContent("He");
-    expect(previewOverlay()).toHaveStyle({
-      left: "49%",
-      top: "40%",
-      fontSize: "72px",
-    });
-
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
 
-    await waitFor(() =>
-      expect(
-        screen.queryByTestId(
-          "preview-text-overlay-" + project.tracks[0].clips[0].id,
-        ),
-      ).not.toBeInTheDocument(),
-    );
-    expect(screen.getByRole("button", { name: "Redo" })).not.toBeDisabled();
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("");
+      expect(previewOverlay()).toHaveStyle({ visibility: "hidden" });
+      expect(screen.getByRole("button", { name: "Redo" })).not.toBeDisabled();
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Redo" }));
 
     await waitFor(() => {
-      const overlay = previewOverlay();
-      expect(overlay).toHaveTextContent("He");
-      expect(overlay).toHaveStyle({
-        left: "49%",
-        top: "40%",
+      expect(previewOverlay()).toHaveTextContent("hello");
+      expect(previewOverlay()).toHaveStyle({
+        left: "20%",
+        top: "80%",
         fontSize: "72px",
       });
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Reset text overlay" }));
 
-    await waitFor(() =>
-      expect(
-        screen.queryByTestId(
-          "preview-text-overlay-" + project.tracks[0].clips[0].id,
-        ),
-      ).not.toBeInTheDocument(),
-    );
+    await waitFor(() => {
+      expect(previewOverlay()).toHaveTextContent("");
+      expect(previewOverlay()).toHaveStyle({ visibility: "hidden" });
+    });
   });
 
   it("updates the preview when the WebView changes a DOM value without dispatching an input event", async () => {
