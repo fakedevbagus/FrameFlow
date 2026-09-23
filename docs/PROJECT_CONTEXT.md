@@ -10,7 +10,7 @@
 - Non-centered transform anchors remain deferred and are rejected explicitly rather than silently misrendered.
 - Transform keyframes, crop, crop position, transitions, images, multi-track compositing, and audio mixing remain outside this focused slice.
 - Added RenderPlan coverage for transform-anchor propagation and render-graph coverage for static transform compilation, default-graph preservation, non-centered-anchor rejection, transform-keyframe rejection, and crop-guard preservation.
-- Local validation is pending. Keep PR #77 Draft until the user reports PASS.
+- Supplied local validation reached the full suite and found one stale regression assertion: `render-pipeline.test.ts` still expected static transforms to be rejected. The assertion was corrected to use transform keyframes, which remain intentionally deferred. The same supplied run showed 362/363 frontend tests passing, production build passing, and 38/38 Rust tests passing. A fresh validation run is required after the test correction. Keep PR #77 Draft until the user reports PASS.
 - Do not close or merge PR #76 as part of M3.63; it remains the parked Text Overlay Export work item.
 
 ## M3.62 — Text Overlay Export Rendering — in progress — 2026-09-22
