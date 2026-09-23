@@ -977,4 +977,261 @@ mod tests {
     assert!(validate_video_audio_graph_request(&missing_audio).is_err());
 
     let mut missing_filter = NativeVideoAudioGraphRenderRequest {
-      video_inputs: vec!["/media/video.mp4".to_string()],
+
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      video_filter_complex: String::new(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.video_filter_complex = "[0:v:0]null[vout]".to_string();
+    missing_filter.video_map = "[other]".to_string();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.video_map = "[vout]".to_string();
+    missing_filter.audio_filter_complex = String::new();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.audio_filter_complex = "[1:a:0]anull[aout]".to_string();
+    missing_filter.audio_map = "[other]".to_string();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.audio_map = "[aout]".to_string();
+    missing_filter.duration_ms = 0;
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.duration_ms = 5_000;
+    missing_filter.video_input_media_types = vec!["audio".to_string()];
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+
+    missing_filter.video_input_media_types = vec!["video".to_string()];
+    missing_filter.output_path = "relative/final.mp4".to_string();
+    assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_video_audio_graph_arguments() {
+    let video_paths = vec![
+      PathBuf::from("/media/Video Track.mp4"),
+      PathBuf::from("/media/title card.png"),
+    ];
+    let video_media_types = vec!["video".to_string(), "image".to_string()];
+    let audio_paths = vec![PathBuf::from("/media/Music Track.mp3")];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &audio_paths,
+      "[0:v:0]null[video0];[1:v:0]null[video1];[video0][video1]overlay[outvideo][vout]",
+      "[vout]",
+      "[2:a:0]anull[aout]",
+      "[aout]",
+      5_000,
+      1_280,
+      720,
+      29.97,
+      Path::new("/tmp/FrameFlow final.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == [
+      "-loop".to_string(),
+      "1".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-framerate".to_string(),
+      "29.97".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Video Track.mp4".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/title card.png".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Music Track.mp3".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-filter_complex".to_string(),
+      "[0:v:0]null[video0];[1:v:0]null[video1];[video0][video1]overlay[outvideo][vout];[2:a:0]anull[aout]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[vout]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[aout]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-t".to_string(),
+      "5".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-r".to_string(),
+      "29.97".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:v".to_string(),
+      "libx264".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:a".to_string(),
+      "aac".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-b:a".to_string(),
+      "192k".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-ar".to_string(),
+      "48000".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-ac".to_string(),
+      "2".to_string()
+    ]));
+    assert!(values.iter().any(|value| value == "/tmp/FrameFlow final.mp4"));
+  }
+
+  #[test]
+  fn preserves_unified_video_audio_input_order() {
+    let video_paths = vec![
+      PathBuf::from("/media/first.mp4"),
+      PathBuf::from("/media/second.mp4"),
+    ];
+    let video_media_types = vec!["video".to_string(), "video".to_string()];
+    let audio_paths = vec![
+      PathBuf::from("/media/first.mp3"),
+      PathBuf::from("/media/second.wav"),
+    ];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &audio_paths,
+      "[0:v:0]null[v0];[1:v:0]null[vout]",
+      "[vout]",
+      "[2:a:0]anull[aout0];[3:a:0]anull[aout]",
+      "[aout]",
+      4_000,
+      1_920,
+      1_080,
+      30.0,
+      Path::new("/tmp/final.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    let input_positions: Vec<usize> = values
+      .iter()
+      .enumerate()
+      .filter_map(|(index, value)| (value == "-i").then_some(index + 1))
+      .collect();
+
+    assert_eq!(
+      input_positions
+        .iter()
+        .map(|index| &values[*index])
+        .collect::<Vec<_>>(),
+      vec![
+        &"/media/first.mp4".to_string(),
+        &"/media/second.mp4".to_string(),
+        &"/media/first.mp3".to_string(),
+        &"/media/second.wav".to_string(),
+      ]
+    );
+  }
+
+  #[test]
+  fn retains_legacy_video_audio_graph_argument_coverage() {
+    let args = build_ffmpeg_video_with_audio_graph_args(
+      Path::new("/media/base video.mp4"),
+      &[
+        PathBuf::from("/media/Music Track.mp3"),
+        PathBuf::from("/media/Voice.wav"),
+      ],
+      "[1:a:0]atrim=start=0:end=2[audio0];[2:a:0]adelay=1500:all=1[audio1];[audio0][audio1]amix=inputs=2[aout]",
+      "[aout]",
+      5_000,
+      true,
+      Path::new("/tmp/final.mix.tmp.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/base video.mp4".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Music Track.mp3".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-i".to_string(),
+      "/media/Voice.wav".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "0:v:0".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[amixed]".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:v".to_string(),
+      "copy".to_string()
+    ]));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-c:a".to_string(),
+      "aac".to_string()
+    ]));
+    assert!(values.iter().any(|value| value.contains("[baseaudio]")));
+    assert!(values.iter().any(|value| value.contains("[aout]amix=inputs=2")));
+    assert!(values.iter().any(|value| value == "-shortest"));
+  }
+
+  #[test]
+  fn builds_silence_when_base_video_has_no_audio() {
+    let args = build_ffmpeg_video_with_audio_graph_args(
+      Path::new("/media/base.mp4"),
+      &[PathBuf::from("/media/music.mp3")],
+      "[1:a:0]anull[aout]",
+      "[aout]",
+      4_000,
+      false,
+      Path::new("/tmp/final.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.iter().any(|value| value.contains("anullsrc=r=48000:cl=stereo")));
+    assert!(values.iter().any(|value| value.contains("atrim=duration=4")));
+  }
+}
