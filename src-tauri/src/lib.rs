@@ -1,3 +1,1480 @@
+mod media_server;
+mod audio_render;
+mod audio_waveform;
+mod export_process;
+
+use std::{
+  fs,
+  path::{Path, PathBuf},
+  process::Command,
+};
+
+use serde::{Deserialize, Serialize};
+use tauri::Manager;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct MediaProbe {
+  media_type: String,
+  duration_ms: Option<u64>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeExportRenderRequest {
+  source_path: String,
+  output_path: String,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  #[serde(default)]
+  source_start_ms: Option<u64>,
+  #[serde(default)]
+  source_duration_ms: Option<u64>,
+  #[serde(default)]
+  include_audio: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeVideoSegment {
+  source_path: Option<String>,
+  source_start_ms: Option<u64>,
+  duration_ms: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeVideoSegmentsRenderRequest {
+  segments: Vec<NativeVideoSegment>,
+  output_path: String,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  #[serde(default)]
+  include_audio: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeVideoGraphRenderRequest {
+  inputs: Vec<String>,
+  #[serde(default)]
+  input_media_types: Vec<String>,
+  output_path: String,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  filter_complex: String,
+  video_map: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NativeExportRenderResult {
+  output_path: String,
+}
+
+#[tauri::command]
+fn inspect_media(path: String) -> Result<MediaProbe, String> {
+  let media_path = media_path(&path)?;
+  let media_type = media_type(&media_path)?;
+  let duration_ms = match media_type.as_str() {
+    "image" => None,
+    _ => Some(probe_duration_ms(&media_path)?),
+  };
+
+  Ok(MediaProbe {
+    media_type,
+    duration_ms,
+  })
+}
+
+#[tauri::command]
+fn prepare_media_preview(
+  app: tauri::AppHandle,
+  path: String,
+) -> Result<String, String> {
+  let source_path = media_path(&path)?;
+  let metadata = fs::metadata(&source_path)
+    .map_err(|error| format!("Could not inspect media metadata: {error}"))?;
+
+  let cache_root = app
+    .path()
+    .app_cache_dir()
+    .map_err(|error| format!("Could not resolve the FrameFlow app cache directory: {error}"))?
+    .join("previews-v4");
+
+  fs::create_dir_all(&cache_root).map_err(|error| {
+    format!(
+      "Could not create preview cache directory '{}': {error}",
+      cache_root.display()
+    )
+  })?;
+
+  let cache_key = preview_cache_key(&source_path, metadata.len(), metadata.modified().ok());
+  let output_path = cache_root.join(format!("{cache_key}.mp4"));
+  let temporary_path = cache_root.join(format!("{cache_key}.partial.mp4"));
+
+  if output_path.is_file() {
+    return Ok(output_path.to_string_lossy().into_owned());
+  }
+
+  let output = Command::new("ffmpeg")
+    .args([
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+    ])
+    .arg(&source_path)
+    .args([
+      "-map",
+      "0:v:0",
+      "-map",
+      "0:a:0?",
+      "-sn",
+      "-dn",
+      "-vf",
+      "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-profile:v",
+      "main",
+      "-pix_fmt",
+      "yuv420p",
+      "-crf",
+      "28",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-movflags",
+      "+faststart",
+      "-f",
+      "mp4",
+    ])
+    .arg(&temporary_path)
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg for preview generation: {error}"))?;
+
+  if !output.status.success() {
+    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let _ = fs::remove_file(&temporary_path);
+
+    return Err(if detail.is_empty() {
+      "FFmpeg could not create a browser-compatible preview.".to_string()
+    } else {
+      format!("FFmpeg could not create a browser-compatible preview: {detail}")
+    });
+  }
+
+  let metadata = fs::metadata(&temporary_path).map_err(|error| {
+    let _ = fs::remove_file(&temporary_path);
+    format!("Generated preview file could not be inspected: {error}")
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&temporary_path);
+    return Err("Generated preview file is empty.".to_string());
+  }
+
+  fs::rename(&temporary_path, &output_path).map_err(|error| {
+    let _ = fs::remove_file(&temporary_path);
+    format!(
+      "Could not finalize preview cache file '{}': {error}",
+      output_path.display()
+    )
+  })?;
+
+  Ok(output_path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+fn render_single_source_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
+  request: NativeExportRenderRequest,
+) -> Result<NativeExportRenderResult, String> {
+  let source_path = media_path(&request.source_path)?;
+
+  if media_type(&source_path)? != "video" {
+    return Err("Native export currently requires a video source.".to_string());
+  }
+
+  validate_native_export_settings(
+    request.width,
+    request.height,
+    request.frame_rate,
+  )?;
+
+  let output_path = PathBuf::from(&request.output_path);
+  validate_export_output_path(&output_path)?;
+
+  if same_path(&source_path, &output_path) {
+    return Err("Export output must differ from the source media.".to_string());
+  }
+
+  let args = build_ffmpeg_export_args(
+    &source_path,
+    &output_path,
+    request.width,
+    request.height,
+    request.frame_rate,
+    request.source_start_ms,
+    request.source_duration_ms,
+    request.include_audio,
+  );
+
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    &app,
+    state.inner(),
+    args,
+    job_id.as_deref(),
+    "video",
+    request.source_duration_ms,
+    0,
+    None,
+    "the requested export",
+  ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
+  }
+
+  let metadata = fs::metadata(&output_path)
+    .map_err(|error| format!("FFmpeg completed but the export file could not be inspected: {error}"))?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&output_path);
+    return Err("FFmpeg completed but produced an empty export file.".to_string());
+  }
+
+  Ok(NativeExportRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+#[tauri::command]
+fn render_video_segments_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
+  request: NativeVideoSegmentsRenderRequest,
+) -> Result<NativeExportRenderResult, String> {
+  validate_native_video_segments_request_metadata(&request)?;
+
+  let output_path = PathBuf::from(&request.output_path);
+  validate_export_output_path(&output_path)?;
+
+  for segment in &request.segments {
+    if let Some(source_path) = &segment.source_path {
+      let source = media_path(source_path)?;
+      if same_path(&source, &output_path) {
+        return Err("Export output must differ from every segment source.".to_string());
+      }
+    }
+  }
+
+  let temp_root = create_video_segments_temp_dir(&output_path)?;
+  let result = render_video_segments_to_output(
+    &app,
+    state.inner(),
+    &request,
+    &output_path,
+    &temp_root,
+    job_id.as_deref(),
+  );
+
+  let _ = fs::remove_dir_all(&temp_root);
+
+  result
+}
+
+#[tauri::command]
+fn render_video_graph_to_mp4(
+  app: tauri::AppHandle,
+  state: tauri::State<'_, export_process::ExportProcessState>,
+  job_id: Option<String>,
+  duration_ms: Option<u64>,
+  request: NativeVideoGraphRenderRequest,
+) -> Result<NativeExportRenderResult, String> {
+  validate_native_video_graph_request_metadata(&request)?;
+
+  if !request.input_media_types.is_empty()
+    && request.input_media_types.len() != request.inputs.len()
+  {
+    return Err("Native video graph input media types must match the input count.".to_string());
+  }
+
+  let output_path = PathBuf::from(&request.output_path);
+  validate_export_output_path(&output_path)?;
+
+  let input_paths = request
+    .inputs
+    .iter()
+    .map(|value| {
+      let path = media_path(value)?;
+
+      if !path.is_absolute() {
+        return Err("Native video graph inputs must use absolute paths.".to_string());
+      }
+
+      let source_type = media_type(&path)?;
+      if source_type != "video" && source_type != "image" {
+        return Err(
+          "Native video graph render supports video and image inputs only."
+            .to_string(),
+        );
+      }
+
+      if same_path(&path, &output_path) {
+        return Err("Export output must differ from every graph input.".to_string());
+      }
+
+      Ok(path)
+    })
+    .collect::<Result<Vec<_>, String>>()?;
+
+  let args = build_ffmpeg_video_graph_args(
+    &input_paths,
+    &request.input_media_types,
+    &request.filter_complex,
+    &request.video_map,
+    request.frame_rate,
+    &output_path,
+  );
+
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    &app,
+    state.inner(),
+    args,
+    job_id.as_deref(),
+    "video",
+    duration_ms,
+    0,
+    None,
+    "the requested video graph",
+  ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
+  }
+
+  let metadata = fs::metadata(&output_path).map_err(|error| {
+    format!(
+      "FFmpeg completed but the video graph export file could not be inspected: {error}"
+    )
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(&output_path);
+    return Err("FFmpeg completed but produced an empty video graph export.".to_string());
+  }
+
+  Ok(NativeExportRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+#[tauri::command]
+fn get_media_http_url(
+  state: tauri::State<'_, media_server::MediaServerState>,
+  path: String,
+) -> Result<String, String> {
+  state.url_for_path(&path)
+}
+
+#[tauri::command]
+fn open_project(path: String) -> Result<String, String> {
+  let project_path = project_path(&path)?;
+
+  fs::read_to_string(&project_path)
+    .map_err(|error| format!("Could not open project '{}': {error}", project_path.display()))
+}
+
+#[tauri::command]
+fn save_project(path: String, content: String) -> Result<(), String> {
+  let project_path = project_path(&path)?;
+  let parent = project_path
+    .parent()
+    .ok_or_else(|| "Project path must have a parent directory.".to_string())?;
+
+  fs::create_dir_all(parent)
+    .map_err(|error| format!("Could not create project directory '{}': {error}", parent.display()))?;
+
+  let temporary_path = temporary_path(&project_path);
+
+  fs::write(&temporary_path, content).map_err(|error| {
+    format!(
+      "Could not write temporary project '{}': {error}",
+      temporary_path.display()
+    )
+  })?;
+
+  if let Err(error) = fs::rename(&temporary_path, &project_path) {
+    let _ = fs::remove_file(&temporary_path);
+    return Err(format!(
+      "Could not finalize project '{}': {error}",
+      project_path.display()
+    ));
+  }
+
+  Ok(())
+}
+
+fn validate_native_export_settings(width: u32, height: u32, frame_rate: f64) -> Result<(), String> {
+  if width < 2 || width % 2 != 0 {
+    return Err("Export width must be a positive even number.".to_string());
+  }
+
+  if height < 2 || height % 2 != 0 {
+    return Err("Export height must be a positive even number.".to_string());
+  }
+
+  if !frame_rate.is_finite() || frame_rate <= 0.0 || frame_rate > 240.0 {
+    return Err("Export frame rate must be between 0 and 240 fps.".to_string());
+  }
+
+  Ok(())
+}
+
+fn validate_export_output_path(path: &Path) -> Result<(), String> {
+  if !path.is_absolute() {
+    return Err("Export output path must be absolute.".to_string());
+  }
+
+  let extension = path
+    .extension()
+    .and_then(|value| value.to_str())
+    .map(str::to_ascii_lowercase);
+
+  if extension.as_deref() != Some("mp4") {
+    return Err("Export output path must use the .mp4 extension.".to_string());
+  }
+
+  let parent = path
+    .parent()
+    .filter(|parent| !parent.as_os_str().is_empty())
+    .ok_or_else(|| "Export output path must have a parent directory.".to_string())?;
+
+  if !parent.is_dir() {
+    return Err("Export output directory does not exist.".to_string());
+  }
+
+  Ok(())
+}
+
+fn same_path(first: &Path, second: &Path) -> bool {
+  let first_canonical = fs::canonicalize(first).ok();
+  let second_canonical = fs::canonicalize(second)
+    .ok()
+    .or_else(|| {
+      second
+        .parent()
+        .and_then(|parent| fs::canonicalize(parent).ok())
+        .map(|parent| parent.join(second.file_name().unwrap_or_default()))
+    });
+
+  first_canonical.is_some() && first_canonical == second_canonical
+}
+
+fn validate_native_video_segments_request_metadata(
+  request: &NativeVideoSegmentsRenderRequest,
+) -> Result<(), String> {
+  validate_native_export_settings(request.width, request.height, request.frame_rate)?;
+
+  if request.segments.is_empty() {
+    return Err("Native multi-segment render requires at least one segment.".to_string());
+  }
+
+  for segment in &request.segments {
+    if segment.duration_ms == 0 {
+      return Err("Native multi-segment render requires positive segment durations.".to_string());
+    }
+
+    if let Some(source_path) = &segment.source_path {
+      let path = media_path(source_path)?;
+
+      if !path.is_absolute() {
+        return Err("Native multi-segment inputs must use absolute paths.".to_string());
+      }
+
+      if media_type(&path)? != "video" {
+        return Err("Native multi-segment render supports video sources only.".to_string());
+      }
+    }
+  }
+
+  Ok(())
+}
+
+fn create_video_segments_temp_dir(output_path: &Path) -> Result<PathBuf, String> {
+  let parent = output_path
+    .parent()
+    .ok_or_else(|| "Export output path must have a parent directory.".to_string())?;
+  let stamp = std::time::SystemTime::now()
+    .duration_since(std::time::UNIX_EPOCH)
+    .map(|value| value.as_nanos())
+    .unwrap_or_default();
+  let temp_root = parent.join(format!(".frameflow-render-{stamp}"));
+
+  fs::create_dir(&temp_root).map_err(|error| {
+    format!(
+      "Could not create temporary render directory '{}': {error}",
+      temp_root.display()
+    )
+  })?;
+
+  Ok(temp_root)
+}
+
+fn render_video_segments_to_output(
+  app: &tauri::AppHandle,
+  state: &export_process::ExportProcessState,
+  request: &NativeVideoSegmentsRenderRequest,
+  output_path: &Path,
+  temp_root: &Path,
+  job_id: Option<&str>,
+) -> Result<NativeExportRenderResult, String> {
+  let mut segment_files = Vec::with_capacity(request.segments.len());
+  let total_duration_ms = request
+    .segments
+    .iter()
+    .fold(0u64, |total, segment| total.saturating_add(segment.duration_ms));
+  let mut completed_duration_ms = 0u64;
+
+  for (index, segment) in request.segments.iter().enumerate() {
+    let segment_path = temp_root.join(format!("segment-{index:04}.mp4"));
+    let args = match &segment.source_path {
+      Some(source_path) => {
+        if request.include_audio {
+          let source_path = Path::new(source_path);
+          let has_audio = probe_has_audio(source_path)?;
+          build_ffmpeg_av_segment_args(
+            source_path,
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.source_start_ms,
+            segment.duration_ms,
+            has_audio,
+          )
+        } else {
+          build_ffmpeg_export_args(
+            Path::new(source_path),
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.source_start_ms,
+            Some(segment.duration_ms),
+            false,
+          )
+        }
+      }
+      None => {
+        if request.include_audio {
+          build_ffmpeg_black_av_segment_args(
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.duration_ms,
+          )
+        } else {
+          build_ffmpeg_black_segment_args(
+            &segment_path,
+            request.width,
+            request.height,
+            request.frame_rate,
+            segment.duration_ms,
+          )
+        }
+      },
+    };
+
+    if let Err(error) = export_process::run_ffmpeg_with_progress(
+      app,
+      state,
+      args,
+      job_id,
+      "video",
+      Some(segment.duration_ms),
+      completed_duration_ms,
+      Some(total_duration_ms),
+      &format!("video segment {index}"),
+    ) {
+      let _ = fs::remove_file(&segment_path);
+      return Err(error);
+    }
+
+    let metadata = fs::metadata(&segment_path).map_err(|error| {
+      format!(
+        "Rendered video segment {} could not be inspected: {error}",
+        index
+      )
+    })?;
+
+    if metadata.len() == 0 {
+      return Err(format!("Rendered video segment {index} is empty."));
+    }
+
+    segment_files.push(segment_path);
+    completed_duration_ms = completed_duration_ms.saturating_add(segment.duration_ms);
+  }
+
+  let concat_list_path = temp_root.join("concat.txt");
+  let concat_contents = segment_files
+    .iter()
+    .map(|path| format!("file '{}'", path.file_name().unwrap_or_default().to_string_lossy()))
+    .collect::<Vec<_>>()
+    .join("\n");
+  fs::write(&concat_list_path, concat_contents)
+    .map_err(|error| format!("Could not write temporary concat list: {error}"))?;
+
+  let concat_args = build_ffmpeg_concat_args(
+    &concat_list_path,
+    request.frame_rate,
+    output_path,
+    request.include_audio,
+  );
+
+  if let Err(error) = export_process::run_ffmpeg_with_progress(
+    app,
+    state,
+    concat_args,
+    job_id,
+    "video",
+    Some(total_duration_ms),
+    total_duration_ms,
+    Some(total_duration_ms),
+    "video segment concatenation",
+  ) {
+    let _ = fs::remove_file(output_path);
+    return Err(error);
+  }
+
+  let metadata = fs::metadata(output_path).map_err(|error| {
+    format!(
+      "FFmpeg completed but the multi-segment export file could not be inspected: {error}"
+    )
+  })?;
+
+  if metadata.len() == 0 {
+    let _ = fs::remove_file(output_path);
+    return Err("FFmpeg completed but produced an empty multi-segment export.".to_string());
+  }
+
+  Ok(NativeExportRenderResult {
+    output_path: output_path.to_string_lossy().into_owned(),
+  })
+}
+
+fn build_ffmpeg_av_segment_args(
+  source_path: &Path,
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  source_start_ms: Option<u64>,
+  duration_ms: u64,
+  has_audio: bool,
+) -> Vec<std::ffi::OsString> {
+  let duration_seconds = duration_ms as f64 / 1000.0;
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+  ];
+
+  if let Some(source_start_ms) = source_start_ms.filter(|value| *value > 0) {
+    args.push("-ss".into());
+    args.push((source_start_ms as f64 / 1000.0).to_string().into());
+  }
+
+  args.push("-t".into());
+  args.push(duration_seconds.to_string().into());
+  args.push("-i".into());
+  args.push(source_path.as_os_str().to_os_string());
+
+  if !has_audio {
+    args.extend([
+      "-f".into(),
+      "lavfi".into(),
+      "-i".into(),
+      "anullsrc=channel_layout=stereo:sample_rate=48000".into(),
+    ]);
+  }
+
+  args.extend([
+    "-map".into(),
+    "0:v:0".into(),
+    "-map".into(),
+    if has_audio { "0:a:0".into() } else { "1:a:0".into() },
+    "-vf".into(),
+    format!(
+      "scale=w={width}:h={height}:force_original_aspect_ratio=decrease,pad=w={width}:h={height}:x=(ow-iw)/2:y=(oh-ih)/2"
+    ).into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-c:a".into(),
+    "aac".into(),
+    "-b:a".into(),
+    "192k".into(),
+    "-ar".into(),
+    "48000".into(),
+    "-ac".into(),
+    "2".into(),
+    "-shortest".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
+}
+
+fn build_ffmpeg_black_av_segment_args(
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  duration_ms: u64,
+) -> Vec<std::ffi::OsString> {
+  let duration_seconds = duration_ms as f64 / 1000.0;
+
+  vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-f".into(),
+    "lavfi".into(),
+    "-i".into(),
+    format!(
+      "color=c=black:s={width}x{height}:r={frame_rate}:d={duration_seconds}"
+    ).into(),
+    "-f".into(),
+    "lavfi".into(),
+    "-i".into(),
+    "anullsrc=channel_layout=stereo:sample_rate=48000".into(),
+    "-map".into(),
+    "0:v:0".into(),
+    "-map".into(),
+    "1:a:0".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-c:a".into(),
+    "aac".into(),
+    "-b:a".into(),
+    "192k".into(),
+    "-ar".into(),
+    "48000".into(),
+    "-ac".into(),
+    "2".into(),
+    "-shortest".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]
+}
+
+fn build_ffmpeg_black_segment_args(
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  duration_ms: u64,
+) -> Vec<std::ffi::OsString> {
+  vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-f".into(),
+    "lavfi".into(),
+    "-i".into(),
+    format!(
+      "color=c=black:s={width}x{height}:r={frame_rate}:d={}",
+      duration_ms as f64 / 1000.0
+    )
+    .into(),
+    "-an".into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-crf".into(),
+    "18".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]
+}
+
+fn build_ffmpeg_concat_args(
+  concat_list_path: &Path,
+  frame_rate: f64,
+  output_path: &Path,
+  include_audio: bool,
+) -> Vec<std::ffi::OsString> {
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+    "-f".into(),
+    "concat".into(),
+    "-safe".into(),
+    "0".into(),
+    "-i".into(),
+    concat_list_path.as_os_str().to_os_string(),
+    "-map".into(),
+    "0:v:0".into(),
+  ];
+
+  if include_audio {
+    args.extend([
+      "-map".into(),
+      "0:a:0".into(),
+      "-r".into(),
+      frame_rate.to_string().into(),
+      "-c:v".into(),
+      "copy".into(),
+      "-c:a".into(),
+      "copy".into(),
+    ]);
+  } else {
+    args.extend([
+      "-an".into(),
+      "-r".into(),
+      frame_rate.to_string().into(),
+      "-c:v".into(),
+      "copy".into(),
+    ]);
+  }
+
+  args.extend([
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
+}
+
+fn validate_native_video_graph_request_metadata(
+  request: &NativeVideoGraphRenderRequest,
+) -> Result<(), String> {
+  validate_native_export_settings(request.width, request.height, request.frame_rate)?;
+
+  if request.inputs.is_empty() {
+    return Err("Native video graph render requires at least one input.".to_string());
+  }
+
+  if request.filter_complex.trim().is_empty() {
+    return Err("Native video graph render requires a filter graph.".to_string());
+  }
+
+  if request.video_map != "[vout]" {
+    return Err("Native video graph render requires the [vout] output map.".to_string());
+  }
+
+  Ok(())
+}
+
+fn build_ffmpeg_video_graph_args(
+  input_paths: &[PathBuf],
+  input_media_types: &[String],
+  filter_complex: &str,
+  video_map: &str,
+  frame_rate: f64,
+  output_path: &Path,
+) -> Vec<std::ffi::OsString> {
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+  ];
+
+  for (index, input_path) in input_paths.iter().enumerate() {
+    let media_type = input_media_types
+      .get(index)
+      .map(String::as_str)
+      .unwrap_or("video");
+
+    if media_type == "image" {
+      args.push("-loop".into());
+      args.push("1".into());
+      args.push("-framerate".into());
+      args.push(frame_rate.to_string().into());
+    }
+
+    args.push("-i".into());
+    args.push(input_path.as_os_str().to_os_string());
+  }
+
+  args.extend([
+    "-filter_complex".into(),
+    filter_complex.into(),
+    "-map".into(),
+    video_map.into(),
+    "-an".into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
+}
+
+fn build_ffmpeg_export_args(
+  source_path: &Path,
+  output_path: &Path,
+  width: u32,
+  height: u32,
+  frame_rate: f64,
+  source_start_ms: Option<u64>,
+  source_duration_ms: Option<u64>,
+  include_audio: bool,
+) -> Vec<std::ffi::OsString> {
+  let mut args = vec![
+    "-hide_banner".into(),
+    "-loglevel".into(),
+    "error".into(),
+    "-y".into(),
+  ];
+
+  if let Some(source_start_ms) = source_start_ms.filter(|value| *value > 0) {
+    args.push("-ss".into());
+    args.push((source_start_ms as f64 / 1000.0).to_string().into());
+  }
+
+  if let Some(source_duration_ms) = source_duration_ms.filter(|value| *value > 0) {
+    args.push("-t".into());
+    args.push((source_duration_ms as f64 / 1000.0).to_string().into());
+  }
+
+  args.extend([
+    "-i".into(),
+    source_path.as_os_str().to_os_string(),
+    "-map".into(),
+    "0:v:0".into(),
+    "-sn".into(),
+    "-dn".into(),
+    "-vf".into(),
+    format!(
+      "scale=w={width}:h={height}:force_original_aspect_ratio=decrease,pad=w={width}:h={height}:x=(ow-iw)/2:y=(oh-ih)/2"
+    ).into(),
+    "-r".into(),
+    frame_rate.to_string().into(),
+  ]);
+
+  if include_audio {
+    args.extend([
+      "-map".into(),
+      "0:a:0?".into(),
+      "-c:a".into(),
+      "aac".into(),
+      "-b:a".into(),
+      "192k".into(),
+    ]);
+  } else {
+    args.push("-an".into());
+  }
+
+  args.extend([
+    "-c:v".into(),
+    "libx264".into(),
+    "-preset".into(),
+    "veryfast".into(),
+    "-pix_fmt".into(),
+    "yuv420p".into(),
+    "-crf".into(),
+    "18".into(),
+    "-movflags".into(),
+    "+faststart".into(),
+    "-f".into(),
+    "mp4".into(),
+    output_path.as_os_str().to_os_string(),
+  ]);
+
+  args
+}
+
+fn media_path(value: &str) -> Result<PathBuf, String> {
+  let path = PathBuf::from(value);
+
+  if !path.is_file() {
+    return Err("Selected media file does not exist.".to_string());
+  }
+
+  Ok(path)
+}
+
+fn media_type(path: &Path) -> Result<String, String> {
+  let extension = path
+    .extension()
+    .and_then(|value| value.to_str())
+    .map(str::to_ascii_lowercase)
+    .ok_or_else(|| "Selected media file has no extension.".to_string())?;
+
+  let media_type = match extension.as_str() {
+    "aac" | "flac" | "m4a" | "mp3" | "ogg" | "opus" | "wav" => "audio",
+    "avif" | "bmp" | "gif" | "jpeg" | "jpg" | "png" | "webp" => "image",
+    "avi" | "mkv" | "mov" | "mp4" | "mpeg" | "mpg" | "webm" => "video",
+    _ => return Err("Selected file type is not supported.".to_string()),
+  };
+
+  Ok(media_type.to_string())
+}
+
+fn probe_has_audio(path: &Path) -> Result<bool, String> {
+  let output = run_ffprobe(
+    path,
+    &[
+      "-select_streams",
+      "a:0",
+      "-show_entries",
+      "stream=index",
+      "-of",
+      "csv=p=0",
+    ],
+  )?;
+
+  if !output.status.success() {
+    let detail = ffprobe_detail(&output.stderr, &output.stdout);
+    return Err(if detail.is_empty() {
+      "ffprobe could not determine whether the source has an audio stream.".to_string()
+    } else {
+      format!("ffprobe could not determine whether the source has an audio stream: {detail}")
+    });
+  }
+
+  Ok(String::from_utf8_lossy(&output.stdout)
+    .lines()
+    .any(|line| !line.trim().is_empty()))
+}
+
+fn probe_duration_ms(path: &Path) -> Result<u64, String> {
+  let format_output = run_ffprobe(path, &[
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "default=noprint_wrappers=1:nokey=1",
+  ])?;
+
+  if let Some(duration_ms) = parse_duration_ms(&format_output.stdout) {
+    return Ok(duration_ms);
+  }
+
+  let stream_output = run_ffprobe(path, &[
+    "-show_entries",
+    "stream=duration",
+    "-of",
+    "default=noprint_wrappers=1:nokey=1",
+  ])?;
+
+  if let Some(duration_ms) = parse_duration_ms(&stream_output.stdout) {
+    return Ok(duration_ms);
+  }
+
+  if let Some(duration_ms) = probe_duration_from_audio_packets(path)? {
+    return Ok(duration_ms);
+  }
+
+  if let Some(duration_ms) = probe_duration_with_ffmpeg(path)? {
+    return Ok(duration_ms);
+  }
+
+  let format_detail = ffprobe_detail(&format_output.stderr, &format_output.stdout);
+  let stream_detail = ffprobe_detail(&stream_output.stderr, &stream_output.stdout);
+
+  Err(if !format_detail.is_empty() {
+    format!("ffprobe could not determine the selected media duration: {format_detail}")
+  } else if !stream_detail.is_empty() {
+    format!("ffprobe could not determine the selected media duration: {stream_detail}")
+  } else {
+    "ffprobe could not determine the selected media duration.".to_string()
+  })
+}
+
+fn run_ffprobe(path: &Path, args: &[&str]) -> Result<std::process::Output, String> {
+  Command::new("ffprobe")
+    .args(["-v", "error"])
+    .args(args)
+    .arg(path)
+    .output()
+    .map_err(|error| format!("Could not run ffprobe: {error}"))
+}
+
+fn probe_duration_from_audio_packets(path: &Path) -> Result<Option<u64>, String> {
+  let output = run_ffprobe(
+    path,
+    &[
+      "-select_streams",
+      "a:0",
+      "-show_entries",
+      "packet=pts_time,duration_time",
+      "-of",
+      "csv=p=0",
+    ],
+  )?;
+
+  if !output.status.success() {
+    return Ok(None);
+  }
+
+  let mut latest_end_ms = None;
+
+  for line in String::from_utf8_lossy(&output.stdout).lines() {
+    let mut values = line.split(',').map(str::trim);
+    let Some(pts_text) = values.next() else {
+      continue;
+    };
+
+    let Some(pts_seconds) = pts_text.parse::<f64>().ok() else {
+      continue;
+    };
+
+    if !pts_seconds.is_finite() || pts_seconds < 0.0 {
+      continue;
+    }
+
+    let duration_seconds = values
+      .next()
+      .and_then(|value| value.parse::<f64>().ok())
+      .filter(|value| value.is_finite() && *value >= 0.0)
+      .unwrap_or(0.0);
+
+    let end_seconds = pts_seconds + duration_seconds;
+
+    if end_seconds.is_finite() && end_seconds >= 0.0 {
+      let end_ms = (end_seconds * 1000.0).round() as u64;
+      latest_end_ms = Some(latest_end_ms.map_or(end_ms, |current: u64| current.max(end_ms)));
+    }
+  }
+
+  Ok(latest_end_ms)
+}
+
+fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
+  let output = Command::new("ffmpeg")
+    .args(["-hide_banner", "-nostats", "-i"])
+    .arg(path)
+    .args(["-map", "0:0", "-f", "null", "-", "-progress", "pipe:1"])
+    .output()
+    .map_err(|error| format!("Could not run ffmpeg: {error}"))?;
+
+  if let Some(duration_ms) = parse_ffmpeg_duration(&output.stderr) {
+    return Ok(Some(duration_ms));
+  }
+
+  Ok(parse_ffmpeg_progress(&output.stdout))
+}
+
+fn parse_ffmpeg_duration(output: &[u8]) -> Option<u64> {
+  let text = String::from_utf8_lossy(output);
+  let mut last_progress_time_ms = None;
+
+  for line in text.lines() {
+    if let Some(marker_index) = line.find("Duration:") {
+      let value = line[marker_index + "Duration:".len()..]
+        .split(',')
+        .next()
+        .unwrap_or_default()
+        .trim();
+
+      if let Some(duration_ms) = parse_timestamp_ms(value) {
+        return Some(duration_ms);
+      }
+    }
+
+    if let Some(marker_index) = line.rfind("time=") {
+      let value = line[marker_index + "time=".len()..]
+        .split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .trim();
+
+      if let Some(duration_ms) = parse_timestamp_ms(value) {
+        last_progress_time_ms = Some(duration_ms);
+      }
+    }
+  }
+
+  last_progress_time_ms
+}
+
+fn parse_ffmpeg_progress(output: &[u8]) -> Option<u64> {
+  let text = String::from_utf8_lossy(output);
+  let mut last_out_time_ms = None;
+
+  for line in text.lines() {
+    let Some(value) = line.strip_prefix("out_time_ms=") else {
+      continue;
+    };
+
+    if let Ok(out_time_us) = value.trim().parse::<u64>() {
+      last_out_time_ms = Some(out_time_us / 1000);
+    }
+  }
+
+  last_out_time_ms
+}
+
+fn parse_timestamp_ms(value: &str) -> Option<u64> {
+  let mut parts = value.split(':');
+
+  let hours = parts.next()?.trim().parse::<u64>().ok()?;
+  let minutes = parts.next()?.trim().parse::<u64>().ok()?;
+  let seconds = parts.next()?.trim().parse::<f64>().ok()?;
+
+  if hours > 23 || minutes > 59 || !seconds.is_finite() || seconds < 0.0 {
+    return None;
+  }
+
+  Some(
+    (hours * 3_600_000)
+      .saturating_add(minutes * 60_000)
+      .saturating_add((seconds * 1000.0).round() as u64),
+  )
+}
+
+fn ffprobe_detail(stderr: &[u8], stdout: &[u8]) -> String {
+  let stderr = String::from_utf8_lossy(stderr).trim().to_string();
+
+  if !stderr.is_empty() {
+    return stderr;
+  }
+
+  String::from_utf8_lossy(stdout).trim().to_string()
+}
+
+fn parse_duration_ms(output: &[u8]) -> Option<u64> {
+  String::from_utf8_lossy(output)
+    .lines()
+    .filter_map(|line| line.trim().parse::<f64>().ok())
+    .find_map(|duration| {
+      if duration.is_finite() && duration >= 0.0 {
+        Some((duration * 1000.0).round() as u64)
+      } else {
+        None
+      }
+    })
+}
+
+fn preview_cache_key(path: &Path, size: u64, modified: Option<std::time::SystemTime>) -> String {
+  let mut hash = 0xcbf29ce484222325u64;
+
+  for byte in path.to_string_lossy().as_bytes() {
+    hash ^= *byte as u64;
+    hash = hash.wrapping_mul(0x100000001b3);
+  }
+
+  for byte in size.to_le_bytes() {
+    hash ^= byte as u64;
+    hash = hash.wrapping_mul(0x100000001b3);
+  }
+
+  if let Some(modified) = modified {
+    if let Ok(duration) = modified.duration_since(std::time::UNIX_EPOCH) {
+      for byte in duration.as_nanos().to_le_bytes() {
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+      }
+    }
+  }
+
+  format!("{hash:016x}")
+}
+
+fn project_path(value: &str) -> Result<PathBuf, String> {
+  let path = PathBuf::from(value);
+
+  if value.trim().is_empty() || !path.is_absolute() || path.file_name().is_none() {
+    return Err("Project path must be an absolute file path.".to_string());
+  }
+
+  let file_name = path
+    .file_name()
+    .and_then(|name| name.to_str())
+    .map(str::to_ascii_lowercase)
+    .ok_or_else(|| "Project path must use a valid UTF-8 filename.".to_string())?;
+
+  if !file_name.ends_with(".frameflow.json") {
+    return Err("Project path must use the .frameflow.json extension.".to_string());
+  }
+
+  Ok(path)
+}
+
+fn temporary_path(project_path: &Path) -> PathBuf {
+  let mut temporary_path = project_path.as_os_str().to_os_string();
+  temporary_path.push(".tmp");
+  PathBuf::from(temporary_path)
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+  tauri::Builder::default()
+    .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_opener::init())
+    .manage(media_server::MediaServerState::start().expect("could not start local media server"))
+    .manage(export_process::ExportProcessState::default())
+    .invoke_handler(tauri::generate_handler![
+      inspect_media,
+      prepare_media_preview,
+      render_single_source_to_mp4,
+      render_video_graph_to_mp4,
+      render_video_segments_to_mp4,
+      audio_render::render_audio_graph_to_mp4,
+      audio_waveform::get_audio_waveform_source_fingerprint,
+      audio_waveform::generate_audio_waveform,
+      audio_render::render_video_with_audio_graph_to_mp4,
+      export_process::cancel_export_job,
+      get_media_http_url,
+      open_project,
+      save_project
+    ])
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+}
+
+
+#[cfg(test)]
+mod tests {
+  use super::{media_type, parse_duration_ms, preview_cache_key};
+  use std::path::Path;
+
+  #[test]
+  fn recognizes_mp3_as_audio() {
+    assert_eq!(media_type(Path::new("music.MP3")).unwrap(), "audio");
+  }
+
+  #[test]
+  fn parses_first_valid_duration_value() {
+    assert_eq!(parse_duration_ms(b"N/A\n42.125\n"), Some(42_125));
+  }
+
+  #[test]
+  fn parses_ffmpeg_progress_duration() {
+    assert_eq!(
+      super::parse_ffmpeg_progress(b"out_time_ms=1234567\nprogress=end\n"),
+      Some(1_234),
+    );
+  }
+
+  #[test]
+  fn ignores_unknown_ffmpeg_progress_duration() {
+    assert_eq!(
+      super::parse_ffmpeg_progress(b"out_time_ms=N/A\nprogress=end\n"),
+      None,
+    );
+  }
+
+
+  #[test]
+  fn validates_native_export_settings() {
+    assert!(super::validate_native_export_settings(1280, 720, 30.0).is_ok());
+    assert!(super::validate_native_export_settings(1279, 720, 30.0).is_err());
+    assert!(super::validate_native_export_settings(1280, 719, 30.0).is_err());
+    assert!(super::validate_native_export_settings(1280, 720, 0.0).is_err());
+    assert!(super::validate_native_export_settings(1280, 720, 241.0).is_err());
+  }
+
+  #[test]
+  fn validates_native_mp4_output_paths() {
+    assert!(super::validate_export_output_path(Path::new("/tmp/output.mp4")).is_ok());
+    assert!(super::validate_export_output_path(Path::new("relative/output.mp4")).is_err());
+    assert!(super::validate_export_output_path(Path::new("/tmp/output.mov")).is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_export_arguments_without_shell_interpolation() {
+    let args = super::build_ffmpeg_export_args(
+      Path::new("/media/My Video; clip.mp4"),
+      Path::new("/tmp/My Export.mp4"),
+      1280,
+      720,
+      29.97,
+      Some(1_250),
+      Some(4_500),
+      true,
+    );
+
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "/media/My Video; clip.mp4"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "/tmp/My Export.mp4"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "scale=w=1280:h=720:force_original_aspect_ratio=decrease,pad=w=1280:h=720:x=(ow-iw)/2:y=(oh-ih)/2"));
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "29.97"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-ss" && pair[1].to_string_lossy() == "1.25"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-t" && pair[1].to_string_lossy() == "4.5"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-map" && pair[1].to_string_lossy() == "0:a:0?"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-c:a" && pair[1].to_string_lossy() == "aac"));
+    assert!(args.windows(2).any(|pair| pair[0].to_string_lossy() == "-b:a" && pair[1].to_string_lossy() == "192k"));
+  }
+
+  #[test]
+  fn keeps_audio_explicitly_disabled_when_requested() {
+    let args = super::build_ffmpeg_export_args(
+      Path::new("/media/source.mp4"),
+      Path::new("/tmp/output.mp4"),
+      1280,
+      720,
+      30.0,
+      None,
+      None,
+      false,
+    );
+
+    assert!(args.iter().any(|arg| arg.to_string_lossy() == "-an"));
+    assert!(!args.windows(2).any(|pair| pair[0].to_string_lossy() == "-map" && pair[1].to_string_lossy() == "0:a:0?"));
   }
 
   #[test]
@@ -41,3 +1518,228 @@
     let args = super::build_ffmpeg_video_graph_args(
       &[
         Path::new("/media/First Video.mp4").to_path_buf(),
+        Path::new("/media/Second; Video.mp4").to_path_buf(),
+      ],
+      &["video".to_string(), "video".to_string()],
+      "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
+      "[vout]",
+      30.0,
+      Path::new("/tmp/FrameFlow Export.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert_eq!(values[values.iter().position(|value| value == "-i").unwrap() + 1], "/media/First Video.mp4");
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/Second; Video.mp4".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-filter_complex".to_string(), "[0:v:0]trim=start=0:end=1[clip0];[1:v:0]trim=start=0:end=2[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "[vout]".to_string()]));
+    assert!(values.iter().any(|value| value == "-an"));
+    assert!(values.iter().any(|value| value == "/tmp/FrameFlow Export.mp4"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_black_segment_arguments() {
+    let args = super::build_ffmpeg_black_segment_args(
+      Path::new("/tmp/segment-black.mp4"),
+      406,
+      720,
+      30.0,
+      2_500,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-f".to_string(), "lavfi".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "color=c=black:s=406x720:r=30:d=2.5".to_string()]));
+    assert!(values.iter().any(|value| value == "-an"));
+    assert!(values.iter().any(|value| value == "/tmp/segment-black.mp4"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_concat_arguments_with_audio_stream() {
+    let args = super::build_ffmpeg_concat_args(
+      Path::new("/tmp/concat.txt"),
+      30.0,
+      Path::new("/tmp/final.mp4"),
+      true,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-f".to_string(), "concat".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-safe".to_string(), "0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/tmp/concat.txt".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:v".to_string(), "copy".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "copy".to_string()]));
+    assert!(!values.iter().any(|value| value == "-an"));
+    assert!(values.iter().any(|value| value == "/tmp/final.mp4"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_av_segment_arguments_with_source_audio() {
+    let args = super::build_ffmpeg_av_segment_args(
+      Path::new("/media/source.mp4"),
+      Path::new("/tmp/segment.mp4"),
+      406,
+      720,
+      30.0,
+      Some(500),
+      2_000,
+      true,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-ss".to_string(), "0.5".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-t".to_string(), "2".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-ar".to_string(), "48000".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-ac".to_string(), "2".to_string()]));
+    assert!(!values.iter().any(|value| value == "-an"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_av_segment_arguments_with_silent_fallback() {
+    let args = super::build_ffmpeg_av_segment_args(
+      Path::new("/media/no-audio.mp4"),
+      Path::new("/tmp/segment-silent.mp4"),
+      406,
+      720,
+      30.0,
+      None,
+      1_500,
+      false,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-f".to_string(), "lavfi".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "anullsrc=channel_layout=stereo:sample_rate=48000".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "1:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
+    assert!(!values.iter().any(|value| value == "-an"));
+  }
+
+  #[test]
+  fn builds_ffmpeg_black_av_segment_arguments() {
+    let args = super::build_ffmpeg_black_av_segment_args(
+      Path::new("/tmp/gap.mp4"),
+      406,
+      720,
+      30.0,
+      2_500,
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "color=c=black:s=406x720:r=30:d=2.5".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "anullsrc=channel_layout=stereo:sample_rate=48000".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "1:a:0".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
+  }
+
+  #[test]
+  fn validates_native_video_segments_request_metadata() {
+    let valid = super::NativeVideoSegmentsRenderRequest {
+      segments: vec![
+        super::NativeVideoSegment {
+          source_path: None,
+          source_start_ms: None,
+          duration_ms: 2_000,
+        },
+        super::NativeVideoSegment {
+          source_path: None,
+          source_start_ms: None,
+          duration_ms: 1_000,
+        },
+      ],
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      include_audio: true,
+    };
+
+    assert!(super::validate_native_video_segments_request_metadata(&valid).is_ok());
+
+    let mut missing_segments = valid;
+    missing_segments.segments.clear();
+    assert!(super::validate_native_video_segments_request_metadata(&missing_segments).is_err());
+  }
+
+  #[test]
+  fn validates_frameflow_project_paths() {
+    assert!(super::project_path("/tmp/first-edit.frameflow.json").is_ok());
+    assert!(super::project_path("/tmp/FIRST-EDIT.FRAMEFLOW.JSON").is_ok());
+
+    assert!(super::project_path("").is_err());
+    assert!(super::project_path("relative/first-edit.frameflow.json").is_err());
+    assert!(super::project_path("/tmp/first-edit.json").is_err());
+    assert!(super::project_path("/tmp/first-edit.mp4").is_err());
+    assert!(super::project_path("/tmp").is_err());
+  }
+
+  #[test]
+  fn builds_ffmpeg_video_graph_arguments_with_looped_image_inputs() {
+    let args = super::build_ffmpeg_video_graph_args(
+      &[
+        Path::new("/media/title.png").to_path_buf(),
+        Path::new("/media/video.mp4").to_path_buf(),
+      ],
+      &["image".to_string(), "video".to_string()],
+      "[0:v:0]trim=start=0:end=2[clip0];[1:v:0]trim=start=0:end=3[clip1];[clip0][clip1]concat=n=2:v=1:a=0[vout]",
+      "[vout]",
+      30.0,
+      Path::new("/tmp/image-export.mp4"),
+    );
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+
+    assert!(values.windows(2).any(|pair| pair == ["-loop".to_string(), "1".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-framerate".to_string(), "30".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/title.png".to_string()]));
+    assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/video.mp4".to_string()]));
+  }
+
+  #[test]
+  fn preview_cache_key_changes_when_media_changes() {
+    let first = preview_cache_key(
+      Path::new("/media/video.mp4"),
+      10,
+      Some(std::time::UNIX_EPOCH),
+    );
+    let second = preview_cache_key(
+      Path::new("/media/video.mp4"),
+      20,
+      Some(std::time::UNIX_EPOCH),
+    );
+
+    assert_ne!(first, second);
+  }
+}
