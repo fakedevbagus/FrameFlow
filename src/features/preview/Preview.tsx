@@ -513,7 +513,99 @@ function PreviewVisualLayer({
       },
     ];
 
-    const beforeInputCleanups = controls.map(({ control, element }) => {
+    const getNextKeyboardValue = (
+      input: HTMLInputElement | HTMLTextAreaElement,
+      event: KeyboardEvent,
+    ): string | null => {
+      const currentValue = input.value;
+      const selectionStart = input.selectionStart;
+      const selectionEnd = input.selectionEnd;
+      const start = selectionStart ?? currentValue.length;
+      const end = selectionEnd ?? start;
+
+      if (input instanceof HTMLTextAreaElement) {
+        if (event.key === "Backspace") {
+          if (start !== end) {
+            return currentValue.slice(0, start) + currentValue.slice(end);
+          }
+          return start > 0
+            ? currentValue.slice(0, start - 1) + currentValue.slice(end)
+            : currentValue;
+        }
+
+        if (event.key === "Delete") {
+          if (start !== end) {
+            return currentValue.slice(0, start) + currentValue.slice(end);
+          }
+          return end < currentValue.length
+            ? currentValue.slice(0, start) + currentValue.slice(end + 1)
+            : currentValue;
+        }
+
+        if (event.key === "Enter") {
+          return currentValue.slice(0, start) + "\n" + currentValue.slice(end);
+        }
+
+        if (
+          event.key.length === 1 &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.altKey
+        ) {
+          return currentValue.slice(0, start) + event.key + currentValue.slice(end);
+        }
+
+        return null;
+      }
+
+      if (input.type === "number") {
+        const currentNumber = Number(currentValue);
+
+        if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+          const fallback = Number.isFinite(currentNumber) ? currentNumber : 0;
+          const step = Number(input.step) > 0 ? Number(input.step) : 1;
+          return String(
+            event.key === "ArrowUp" ? fallback + step : fallback - step,
+          );
+        }
+
+        if (
+          event.key.length === 1 &&
+          /[0-9.-]/.test(event.key) &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.altKey
+        ) {
+          return currentValue.slice(0, start) + event.key + currentValue.slice(end);
+        }
+
+        if (event.key === "Backspace" || event.key === "Delete") {
+          if (start !== end) {
+            return currentValue.slice(0, start) + currentValue.slice(end);
+          }
+          if (event.key === "Backspace" && start > 0) {
+            return currentValue.slice(0, start - 1) + currentValue.slice(end);
+          }
+          if (event.key === "Delete" && end < currentValue.length) {
+            return currentValue.slice(0, start) + currentValue.slice(end + 1);
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const getNextClipboardValue = (
+      input: HTMLInputElement | HTMLTextAreaElement,
+      replacement: string,
+    ) => {
+      const currentValue = input.value;
+      const start = input.selectionStart ?? currentValue.length;
+      const end = input.selectionEnd ?? start;
+      return currentValue.slice(0, start) + replacement + currentValue.slice(end);
+    };
+
+    const nativeEventCleanups = controls.map(({ control, element }) => {
       if (!element) {
         return () => {};
       }
@@ -532,10 +624,63 @@ function PreviewVisualLayer({
         }
       };
 
+      const handleKeyDown = (event: Event) => {
+        const keyboardEvent = event as KeyboardEvent;
+
+        if (keyboardEvent.isComposing) {
+          return;
+        }
+
+        const nextValue = getNextKeyboardValue(element, keyboardEvent);
+
+        if (nextValue !== null) {
+          updateOverlayFromInputIntent(control, nextValue);
+        }
+      };
+
+      const handlePaste = (event: Event) => {
+        const clipboardEvent = event as ClipboardEvent;
+        const pasted =
+          clipboardEvent.clipboardData?.getData("text/plain") ??
+          clipboardEvent.clipboardData?.getData("text") ??
+          "";
+
+        if (pasted) {
+          event.preventDefault();
+          updateOverlayFromInputIntent(
+            control,
+            getNextClipboardValue(element, pasted),
+          );
+        }
+      };
+
+      const handleCut = (event: Event) => {
+        const clipboardEvent = event as ClipboardEvent;
+        const start = element.selectionStart ?? element.value.length;
+        const end = element.selectionEnd ?? start;
+
+        if (start !== end) {
+          clipboardEvent.clipboardData?.setData(
+            "text/plain",
+            element.value.slice(start, end),
+          );
+          updateOverlayFromInputIntent(
+            control,
+            element.value.slice(0, start) + element.value.slice(end),
+          );
+        }
+      };
+
       element.addEventListener("beforeinput", handleBeforeInput);
+      element.addEventListener("keydown", handleKeyDown);
+      element.addEventListener("paste", handlePaste);
+      element.addEventListener("cut", handleCut);
 
       return () => {
         element.removeEventListener("beforeinput", handleBeforeInput);
+        element.removeEventListener("keydown", handleKeyDown);
+        element.removeEventListener("paste", handlePaste);
+        element.removeEventListener("cut", handleCut);
       };
     });
 
@@ -624,7 +769,7 @@ function PreviewVisualLayer({
       disposed = true;
       window.cancelAnimationFrame(animationFrameId);
 
-      for (const cleanup of beforeInputCleanups) {
+      for (const cleanup of nativeEventCleanups) {
         cleanup();
       }
     };
