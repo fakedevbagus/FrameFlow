@@ -1101,6 +1101,7 @@ function buildCompositedSegmentFilter(
   transform: ClipTransform,
   crop: ReturnType<typeof getClipCrop>,
   cropPosition: ReturnType<typeof getClipCropPosition>,
+  preserveAlpha = false,
 ): string {
   const foregroundLabel = "transform_fg_" + segment.inputIndex;
   const backgroundLabel = "transform_bg_" + segment.inputIndex;
@@ -1232,7 +1233,7 @@ function buildCompositedSegmentFilter(
     backgroundFilter +
     ";" +
     overlayFilter +
-    ",format=yuv420p" +
+    (preserveAlpha ? ",format=rgba" : ",format=yuv420p") +
     normalization +
     "[" +
     label +
@@ -1271,6 +1272,7 @@ function buildAnchorAwareCompositedSegmentFilter(
   includeOutputNormalization: boolean,
   transform: ClipTransform,
   keyframes: ReturnType<typeof normalizeTransformKeyframes> = [],
+  preserveAlpha = false,
 ): string {
   const anchor = segment.transformAnchor ?? { x: 0.5, y: 0.5 };
   const isAnimated = keyframes.length > 0;
@@ -1518,10 +1520,16 @@ function buildAnchorAwareCompositedSegmentFilter(
     "':shortest=1";
 
   const normalization = includeOutputNormalization
-    ? ",format=yuv420p,fps=fps=" +
-      formatNumber(plan.frameRate) +
-      ":round=near,setsar=1"
-    : ",format=yuv420p";
+    ? (preserveAlpha
+        ? ",format=rgba,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1"
+        : ",format=yuv420p,fps=fps=" +
+          formatNumber(plan.frameRate) +
+          ":round=near,setsar=1")
+    : preserveAlpha
+      ? ",format=rgba"
+      : ",format=yuv420p";
 
   const filterParts = [
     foregroundFilters.slice(0, -1).join(",") + "[" + anchorScaledLabel + "]",
