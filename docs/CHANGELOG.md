@@ -20,29 +20,23 @@ Validation:
 Branch: feat/m3-62-text-overlay-export-rendering
 PR: #76
 
-Observed runtime behavior:
-- Inspector Text/X/Y/Size values changed while the Preview stayed stale until another interaction.
-- Subsequent edits could appear in sequence, indicating that live values were being observed later than the user's edit moment.
+Observed runtime failure:
+- The Inspector displayed new Text/X/Y/Size values immediately, while Preview updated one interaction later and appeared to process the previous edit when the next field changed.
 
-Current architecture:
-- Normal Inspector input/change handlers remain the fast path.
-- Transient values remain in a synchronous external edit-session store, separate from committed project/history state.
-- The live fallback is now hosted inside `PreviewVisualLayer`.
-- While the visual clip is selected and paused, Preview runs a `requestAnimationFrame` loop that reads the actual Inspector DOM values directly.
-- The fallback does not use `document.activeElement`.
-- A live canvas is mounted inside the same transformed content layer as the media. The rAF loop redraws the text overlay directly on that canvas from the current DOM values.
-- The loop also patches the hidden compatibility DOM text node, but the canvas is the visible renderer for the selected clip.
-- The selected clip keeps a concrete canvas target even when the committed overlay is empty, avoiding React overlay creation as a prerequisite for live Preview.
-- Canvas rendering preserves text, X/Y, font size, color, alignment, and multiline behavior.
-- Previous App-level interval polling, native listener registration, keyboard-only fallback, and `flushSync` workaround chains are not used by the current live path.
+Current fix:
+- Keep transient Text Overlay editing in the external edit-session store.
+- Remove React `onInput`/`onChange` live-update handlers for Text/X/Y/Size to prevent delayed WebView events from overwriting newer state.
+- Native `beforeinput` listeners on the Preview side derive the next value from the edit intent and immediately patch the Preview overlay DOM.
+- PreviewVisualLayer also uses a continuous `requestAnimationFrame` readback of the actual Inspector DOM values as a fallback.
+- The live Preview target is one permanently mounted `preview-text-overlay` DOM element for the selected visual clip; it is hidden only when text is empty.
+- No App-level polling, `document.activeElement`, keyboard-only fallback, `flushSync`, or live canvas renderer is used.
 
 Regression coverage:
-- Standard input/change live Text/X/Y/Size updates.
-- Direct DOM value changes without dispatching input/change/keyup.
-- Live canvas target is mounted for the selected visual clip.
-- No Undo history entry while edits remain uncommitted.
-- Single history entry on commit with Undo/Redo and Reset.
-- External edit-session publish/deduplication/replacement/clear.
+- Direct DOM value changes without input/change/keyup.
+- Live Text/X/Y/Size Preview updates before blur.
+- No per-keystroke history entry.
+- Single-entry commit with Undo/Redo and Reset.
+- External edit-session store behavior.
 
 Validation:
 - Local Linux/Tauri validation pending user verification.
