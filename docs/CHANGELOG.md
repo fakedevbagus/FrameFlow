@@ -20,26 +20,26 @@ Validation:
 Branch: feat/m3-62-text-overlay-export-rendering
 PR: #76
 
-Observed WebView behavior:
-- The Text/X/Y/Size control values visibly changed while editing, but Preview did not update until blur/outside click.
-- This means the DOM value path can advance even when React event delivery is delayed or absent.
+Observed runtime failure:
+- Inspector Text/X/Y/Size values visibly changed while editing.
+- Preview remained stale until the field lost focus.
+- The earlier App-level DOM polling + direct DOM patch was not sufficient in the target Tauri WebView.
 
 Current fix:
-- Keep the transient edit session outside committed project/history state through a synchronous `useSyncExternalStore` store.
-- Use normal `input`/`change` handlers as the fast path.
-- Poll the actual Text/X/Y/Size DOM controls every 50 ms while a visual clip is selected.
-- When polling detects a difference, update the external edit session and imperatively update the matching Preview overlay DOM element in the same poll cycle.
-- Keep a hidden Preview overlay target mounted for the selected visual clip even when there is no committed text, so the imperative fallback never depends on React creating the node first.
-- The imperative patch updates `textContent`, left/top, font size, color, text alignment transform, and visibility.
-- No polling path uses `document.activeElement`; no blur is required to display the live value.
-- The earlier native listener / keyboard fallback / `flushSync` chain is removed.
+- Move the WebView live-preview bridge into `PreviewVisualLayer` itself.
+- While the visual clip is selected, Preview schedules a continuous `requestAnimationFrame` loop.
+- The loop reads the Text/X/Y/Size Inspector DOM controls directly, independent of React event delivery and `document.activeElement`.
+- A changed DOM value updates the external edit session and imperatively updates the matching Preview overlay DOM element in the same animation frame.
+- A hidden overlay DOM target remains mounted for the selected visual clip even when committed text is empty.
+- App-level polling was removed so there is one source of truth for the live Preview fallback.
+- Effect dependencies use Text Overlay primitive fields instead of the normalized object identity, avoiding unnecessary bridge teardown/restart on unrelated renders.
 
 Regression coverage:
-- Standard event-driven live Text/X/Y/Size changes.
-- Direct DOM value changes without input/change/keyup.
+- Standard input/change live Text/X/Y/Size updates.
+- Direct DOM value changes without dispatching input/change/keyup.
 - No Undo history entry while an edit remains uncommitted.
 - Single history entry on commit with Undo/Redo and Reset.
-- External edit-session publish/deduplication/replacement/clear behavior.
+- External edit-session store publish/deduplication/replacement/clear.
 
 Validation:
 - Local Linux/Tauri validation pending user verification.
