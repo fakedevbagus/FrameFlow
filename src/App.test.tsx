@@ -2533,7 +2533,7 @@ describe("App", () => {
       }),
     );
 
-    expect(screen.getByText("Audio Fade")).toBeInTheDocument();
+    expect(screen.getByText("Audio fades")).toBeInTheDocument();
     expect(screen.getByText("Audio EQ")).toBeInTheDocument();
     expect(screen.getByText("Audio Compressor")).toBeInTheDocument();
 
