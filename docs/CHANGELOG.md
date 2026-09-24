@@ -1,19 +1,21 @@
-### M3.89 — Waveform Selection Lifecycle Hardening — in progress — 2026-09-25
+### M3.90 — Project Persistence Validation Hardening — in progress — 2026-09-25
 
-Branch: `fix/m3-89-waveform-selection-lifecycle`
-PR: #104 — Draft
+- Branch: `feat/m3-90-project-validation-hardening`.
+- Scope: harden the persisted project JSON validation boundary without changing schema version 1.
+- `validateProject()` now validates asset metadata and unique IDs, track identity/type/controls, clip asset references, clip source/timeline ranges, known asset duration bounds, and media/track compatibility.
+- Persisted Audio Fade, EQ, and Volume Automation data now receives focused shape/range validation.
+- Added regression coverage for valid media round-tripping plus duplicate IDs, missing assets, media/track mismatch, invalid source ranges, invalid track volume/pan, and missing source-end fields.
+- User local validation is pending.
+- Native media existence/decodeability and transition/advanced visual-effect validation remain outside this milestone.
 
-Scope:
-- Clear stale Timeline waveform selections when a clip's source range changes after trim.
-- Preserve waveform generation, caching, range alignment, seek behavior, project schema, and export behavior.
 
-Implementation:
-- Clear local selection state when source path, source start, source end, or clip duration changes.
-- Added a Timeline regression covering waveform selection followed by a source-end trim.
-- Selection remains transient UI state; no project schema or history mutation is introduced.
+### M3.89 — Waveform Selection Lifecycle Hardening — completed — 2026-09-25
 
-Validation:
-- Pending user local validation.
+- Branch: `fix/m3-89-waveform-selection-lifecycle`.
+- PR #104; merge SHA `fbdd60f45508c577046331255e024eea93b5960b`.
+- Clears stale Timeline waveform selection when source path, source start/end, or clip duration changes.
+- Added regression coverage for waveform selection followed by a source-end trim.
+- User reported PASS.
 
 
 ### M3.86 — Waveform Trim-Range Alignment — completed — 2026-09-25
