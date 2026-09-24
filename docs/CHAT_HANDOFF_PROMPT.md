@@ -1,33 +1,29 @@
-## M3.88 — active — 2026-09-25
+## M3.89 — active — 2026-09-25
+
+- Branch: not created yet.
+- Scope: prevent stale Timeline waveform selections from surviving clip source-range changes after trim.
+- Audit finding: `AudioWaveformPreview` stores selection locally and clears it on source-path lifecycle changes, but M3.86 allows the visible source range/duration to change without remounting that component.
+- The focused fix should clear selection when the clip source range changes; do not change waveform generation, caching, seeking, range resampling, project schema, history, export DSP, or UI layout.
+- Add regression coverage for a selected waveform region followed by a trim/source-range update.
+- PR #76 remains parked; PR #22 remains unrelated and untouched.
+- M3.88 was user-validated and squash-merged as PR #103 at `06b21e5f28650889d78be09c5bf86380877001fb`.
+- Local M3.89 validation will be pending after implementation.
+
+## M3.88 — completed — 2026-09-25
 
 - Branch: `feat/m3-88-video-volume-automation-command-parity`.
-- PR #103 — Draft.
-- Scope: close the remaining embedded Video volume-automation gap across Inspector set/update, Timeline keyframe move, and Timeline keyframe delete.
-- Audit on merged `main` found that Timeline already rendered Video volume-automation markers and `updateAudioClipVolumeAtTime` already accepted Video clips, but the App selected-volume handler rejected Video clips.
-- The volume-keyframe move/remove commands still rejected Video-track Video clips even though Timeline already exposed those interactions.
-- Implementation now uses the same audio-bearing eligibility for App selected-volume updates and command move/remove operations.
-- Added command regressions for Video keyframe move/remove and an App integration regression for Video Timeline move/delete.
-- Preserve the existing keyframe model, interpolation, history engine, project schema, preview, export, waveform behavior, and layout.
-- PR #76 remains parked; PR #22 remains unrelated and untouched.
-- M3.87 was user-validated and squash-merged as PR #102 at `c94322aab8f4862512893f1ab58d3764d34e681a`.
-- Local M3.88 validation is pending.
+- PR #103; merge SHA `06b21e5f28650889d78be09c5bf86380877001fb`.
+- Video embedded-audio Volume Automation now supports Inspector set/update, Timeline keyframe move, and Timeline keyframe delete consistently.
+- Added command and App regression coverage.
+- User reported PASS.
 
 ## M3.87 — completed — 2026-09-25
 
 - Branch: `fix/m3-87-waveform-load-state`.
 - PR #102; merge SHA `c94322aab8f4862512893f1ab58d3764d34e681a`.
-- Corrected the waveform rejection path after the M3.86 state-shape refactor.
-- Added regression coverage for native waveform-load failure and loading-placeholder cleanup.
+- Corrected the waveform load-failure state shape and added rejection-path regression coverage.
 - User reported PASS.
 
-
-## M3.87 — completed — 2026-09-25
-
-- Branch: `fix/m3-87-waveform-load-state`.
-- PR #102; merge SHA `c94322aab8f4862512893f1ab58d3764d34e681a`.
-- Corrected the waveform rejection path after the M3.86 state-shape refactor.
-- Added regression coverage for native waveform-load failure and loading-placeholder cleanup.
-- User reported PASS.
 
 ## M3.85 — active — 2026-09-25
 
