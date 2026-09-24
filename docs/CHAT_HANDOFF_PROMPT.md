@@ -1,15 +1,13 @@
-## M3.89 — active — 2026-09-25
+## M3.90 — active — 2026-09-25
 
-- Branch: `fix/m3-89-waveform-selection-lifecycle`.
-- PR #104 — Draft.
-- Scope: clear stale Timeline waveform selections when clip source range/duration changes after trim.
-- Audit finding: waveform selection is local state and its component stays mounted across trim updates, so a selection can outlive the source range it was created against.
-- Implementation clears selection on source path, source start, source end, or clip duration changes.
-- Added regression coverage for selection followed by source-end trim.
-- Preserve waveform generation, caching, source-range alignment, seek behavior, project schema, history, export DSP, and layout.
+- Branch: `feat/m3-90-project-validation-hardening`.
+- Scope: harden persisted project JSON validation at the parse boundary without changing schema version 1.
+- Validate asset metadata and IDs, track identity/type/controls, clip references and ranges, known source-duration bounds, media/track compatibility, and persisted audio field ranges.
+- Added domain regression coverage for valid media round-trip plus malformed persisted project cases.
+- PR is not opened yet; local validation is pending after implementation.
+- M3.89 completed and squash-merged as PR #104 at `fbdd60f45508c577046331255e024eea93b5960b`.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
-- M3.88 was user-validated and squash-merged as PR #103 at `06b21e5f28650889d78be09c5bf86380877001fb`.
-- Local M3.89 validation is pending.
+
 
 
 ## M3.88 — completed — 2026-09-25
