@@ -5,7 +5,8 @@
 - Timeline now renders V/P controls for both video and audio tracks.
 - Unified source-audio metadata carries track volume/pan; native FFmpeg applies clamped volume and constant-power stereo panning.
 - No project schema change.
-- Supplied local validation exposed Timeline JSX/test/native fixture issues; corrections are applied and a fresh rerun is pending.
+- Supplied local validation reached 399/400 frontend tests; the remaining App failure traced to updateTrackPan() rejecting Video tracks. That guard is now removed, with command-level regression coverage added.
+- Rust also exposed a duplicate format_number() definition; the duplicate is now removed. A fresh rerun is pending.
 - Intended PR: #88 Draft.
 - M3.73 is complete and merged at `8c7292f1b4484c9a2156484c2d06f4980760c468`.
 - PR #76 remains parked and must not be merged or revived wholesale.
