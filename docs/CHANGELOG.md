@@ -1,4 +1,4 @@
-### M3.77 — Per-Clip Volume Automation for Embedded Video Audio — in progress — 2026-09-24
+### M3.77 — Per-Clip Volume Automation for Embedded Video Audio — completed — 2026-09-24
 
 Branch: `feat/m3-77-video-clip-volume-automation`
 
@@ -18,7 +18,8 @@ Implementation completed in the branch:
 - Preserved the existing audio-track workflow and project schema.
 
 Validation:
-- Pending user local validation.
+- User reported PASS after local validation of Video clip volume automation.
+- PR #91 was marked ready and squash-merged at `f5ae54f3deb5b2ba265736aec1a2aefd951bfdb2`.
 ### M3.76 — Video-Only Embedded Source Audio — completed — 2026-09-24
 
 Branch: `feat/m3-76-video-only-source-audio`
