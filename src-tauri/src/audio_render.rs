@@ -1368,6 +1368,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
+      audio_compressor: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1396,6 +1397,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
+      audio_compressor: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1424,6 +1426,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
+      audio_compressor: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1489,6 +1492,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
+      audio_compressor: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1656,6 +1660,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
       audio_eq: None,
+      audio_compressor: None,
       audio_volume_keyframes: vec![
         NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 1.0 },
         NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.4 },
@@ -1718,6 +1723,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
       audio_eq: None,
+      audio_compressor: None,
       audio_volume_keyframes: Vec::new(),
       has_audio: true,
     }];
@@ -1781,6 +1787,7 @@ mod tests {
         mid_gain_db: -2.0,
         high_gain_db: 6.0,
       }),
+      audio_compressor: None,
       has_audio: true,
     }];
 
@@ -1819,6 +1826,68 @@ mod tests {
   }
 
   #[test]
+  fn builds_unified_graph_with_embedded_source_audio_compressor() {
+    let video_paths = vec![PathBuf::from("/media/video.mp4")];
+    let video_media_types = vec!["video".to_string()];
+    let source_audio_segments = vec![ResolvedSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 500,
+      timeline_start_ms: 250,
+      duration_ms: 4_000,
+      track_volume: 0.85,
+      track_pan: -0.25,
+      audio_fade_in_ms: 500,
+      audio_fade_out_ms: 0,
+      audio_volume_keyframes: Vec::new(),
+      audio_eq: Some(NativeSourceAudioEq {
+        enabled: true,
+        low_gain_db: 2.0,
+        mid_gain_db: -1.0,
+        high_gain_db: 3.0,
+      }),
+      audio_compressor: Some(NativeSourceAudioCompressor {
+        enabled: true,
+        threshold_db: -18.0,
+        ratio: 6.0,
+        attack_ms: 10.0,
+        release_ms: 300.0,
+      }),
+      has_audio: true,
+    }];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &[],
+      &source_audio_segments,
+      "[0:v:0]null[vout]",
+      "[vout]",
+      "anullsrc=r=48000:cl=stereo,atrim=duration=5.25,asetpts=PTS-STARTPTS[aout]",
+      "[aout]",
+      5_250,
+      1_280,
+      720,
+      30.0,
+      Path::new("/tmp/source-audio-compressor.mp4"),
+    )
+    .unwrap();
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+    let filter = values
+      .windows(2)
+      .find(|pair| pair[0] == "-filter_complex")
+      .map(|pair| pair[1].clone())
+      .expect("filter_complex argument should exist");
+
+    assert!(filter.contains(
+      "volume=0.85,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,equalizer=f=120:t=q:w=0.8:g=2,equalizer=f=1000:t=q:w=1:g=-1,equalizer=f=8000:t=q:w=0.8:g=3,acompressor=threshold=0.125893:ratio=6:attack=10:release=300,afade=t=in:st=0:d=0.5,adelay=250:all=1[frameflow_source_audio_0]"
+    ));
+  }
+
+  #[test]
   fn builds_unified_graph_with_embedded_source_audio_fades() {
     let video_paths = vec![PathBuf::from("/media/video.mp4")];
     let video_media_types = vec!["video".to_string()];
@@ -1832,6 +1901,7 @@ mod tests {
       audio_fade_in_ms: 500,
       audio_fade_out_ms: 1_000,
       audio_eq: None,
+      audio_compressor: None,
       audio_volume_keyframes: Vec::new(),
       has_audio: true,
     }];
@@ -1882,6 +1952,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
       audio_eq: None,
+      audio_compressor: None,
       audio_volume_keyframes: vec![
         NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 0.2 },
         NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.8 },
