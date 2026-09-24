@@ -5,25 +5,29 @@ Branch:
 
 Scope:
 - Ensure embedded Video source audio respects the existing Video-track Volume and Pan controls even when export would otherwise use the direct single-source or sequential-segment fast paths.
+- Respect Video-track mute state on the direct/segment fast paths.
 - Preserve the existing unified AV behavior for graph-required Video exports.
 - Keep the project schema unchanged.
 
-Implementation target:
-- Detect non-default Video-track Volume/Pan as source-audio processing requirements.
-- Route affected Video-only exports through the unified AV renderer so the existing native source-audio mix applies Track Volume/Pan.
-- Preserve direct/segment fast paths for Video clips whose source audio needs no track-level processing.
-- Keep Audio-track behavior unchanged.
+Implementation completed on branch:
+- Added a shared export-pipeline check for non-default Video-track Volume/Pan on unmuted video segments.
+- Affected Video-only exports now bypass the direct single-source and sequential-segment fast paths and use the unified AV renderer, which already applies Track Volume/Pan to embedded source audio.
+- Direct single-source exports now pass `includeAudio: false` when the Video track is muted.
+- Sequential single-track Video exports now disable audio when the track is muted.
+- Default unmuted Video-track settings continue using the existing fast paths.
+- Added regression coverage for single-clip Volume, sequential-clip Pan, and muted single-clip routing.
+- No native schema or project model change.
 
 Validation:
 - Pending user local validation.
 
 Known limitations:
-- Scope is limited to Video-track Volume/Pan consistency for embedded source audio.
+- Scope is limited to Video-track Volume/Pan and mute consistency across export fast paths.
 - Video source-audio EQ/compressor export remains future work.
 - No new project schema or Video-specific audio Inspector controls are introduced.
 
 Next step:
-- Implement focused pipeline routing/tests, then hand off local validation.
+- Run focused local lint, frontend tests, production build, Rust tests, Tauri development startup, and manual exports covering Video-track Volume/Pan/mute on both fast and graph paths.
 
 ## M3.79 — Embedded Video Source-Audio Fade Export — completed — 2026-09-24
 
