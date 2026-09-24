@@ -266,7 +266,7 @@ describe("render video pipeline", () => {
   });
 
 
-  it("routes a static transform clip through the native graph renderer", async () => {
+  it("routes a static transform clip through unified AV source-audio rendering", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -302,7 +302,7 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
       outputPath: "/tmp/anchored-static-export.mp4",
     });
 
@@ -312,16 +312,18 @@ describe("render video pipeline", () => {
       outputPath: "/tmp/anchored-static-export.mp4",
     });
 
-    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
-      inputs: ["/media/a.mp4"],
-      inputMediaTypes: ["video"],
-      outputPath: "/tmp/anchored-static-export.mp4",
-      width: 1080,
-      height: 1920,
-      frameRate: 30,
-      filterComplex: expect.stringContaining("anchor_pivot_0"),
-      videoMap: "[vout]",
-    });
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4"],
+        videoInputMediaTypes: ["video"],
+        audioInputs: [],
+        sourceAudioSegments: [{"inputIndex":0,"sourceStartMs":0,"timelineStartMs":0,"durationMs":2000,"trackVolume":1,"trackPan":0}],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/anchored-static-export.mp4",
+        videoFilterComplex: expect.stringContaining("anchor_pivot_0"),
+      }),
+    );
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
@@ -383,7 +385,7 @@ describe("render video pipeline", () => {
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
   });
 
-  it("routes transitioned video sequences through the native graph renderer", async () => {
+  it("routes transitioned video sequences through unified AV source-audio rendering", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -427,7 +429,7 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
       outputPath: "/tmp/transition-export.mp4",
     });
 
@@ -435,22 +437,23 @@ describe("render video pipeline", () => {
       renderVideoPlanToMp4(plan, "/tmp/transition-export.mp4"),
     ).resolves.toEqual({ outputPath: "/tmp/transition-export.mp4" });
 
-    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
-      inputs: ["/media/a.mp4", "/media/b.mp4"],
-      inputMediaTypes: ["video", "video"],
-      outputPath: "/tmp/transition-export.mp4",
-      width: 1080,
-      height: 1920,
-      frameRate: 30,
-      filterComplex: expect.stringContaining("transition_0_dissolve"),
-      videoMap: "[vout]",
-    });
-    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4","/media/b.mp4"],
+        videoInputMediaTypes: ["video","video"],
+        audioInputs: [],
+        sourceAudioSegments: [{"inputIndex":0,"sourceStartMs":0,"timelineStartMs":0,"durationMs":5000,"trackVolume":1,"trackPan":0},{"inputIndex":1,"sourceStartMs":0,"timelineStartMs":5000,"durationMs":3000,"trackVolume":1,"trackPan":0}],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/transition-export.mp4",
+        videoFilterComplex: expect.stringContaining("transition_0_dissolve"),
+      }),
+    );
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
   });
 
 
-  it("routes animated transform clips through the native graph renderer", async () => {
+  it("routes animated transform clips through unified AV source-audio rendering", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -497,7 +500,7 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
       outputPath: "/tmp/animated-transform-export.mp4",
     });
 
@@ -510,16 +513,18 @@ describe("render video pipeline", () => {
       outputPath: "/tmp/animated-transform-export.mp4",
     });
 
-    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
-      inputs: ["/media/a.mp4"],
-      inputMediaTypes: ["video"],
-      outputPath: "/tmp/animated-transform-export.mp4",
-      width: 1080,
-      height: 1920,
-      frameRate: 30,
-      filterComplex: expect.stringContaining("eval=frame"),
-      videoMap: "[vout]",
-    });
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4"],
+        videoInputMediaTypes: ["video"],
+        audioInputs: [],
+        sourceAudioSegments: [{"inputIndex":0,"sourceStartMs":0,"timelineStartMs":0,"durationMs":2000,"trackVolume":1,"trackPan":0}],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/animated-transform-export.mp4",
+        videoFilterComplex: expect.stringContaining("eval=frame"),
+      }),
+    );
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
@@ -782,7 +787,7 @@ describe("render video pipeline", () => {
   });
 
 
-  it("routes a text overlay clip through the native graph renderer", async () => {
+  it("routes a text overlay clip through unified AV source-audio rendering", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -815,7 +820,7 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
       outputPath: "/tmp/text-overlay-export.mp4",
     });
 
@@ -825,21 +830,23 @@ describe("render video pipeline", () => {
       outputPath: "/tmp/text-overlay-export.mp4",
     });
 
-    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
-      inputs: ["/media/a.mp4"],
-      inputMediaTypes: ["video"],
-      outputPath: "/tmp/text-overlay-export.mp4",
-      width: 1080,
-      height: 1920,
-      frameRate: 30,
-      filterComplex: expect.stringContaining("drawtext=font='DejaVu Sans'"),
-      videoMap: "[vout]",
-    });
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4"],
+        videoInputMediaTypes: ["video"],
+        audioInputs: [],
+        sourceAudioSegments: [{"inputIndex":0,"sourceStartMs":0,"timelineStartMs":0,"durationMs":2000,"trackVolume":1,"trackPan":0}],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/text-overlay-export.mp4",
+        videoFilterComplex: expect.stringContaining("drawtext=font='DejaVu Sans'"),
+      }),
+    );
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
-  it("routes multiple video tracks through the native graph renderer", async () => {
+  it("routes multiple video tracks through unified AV source-audio rendering", async () => {
     const plan: RenderPlan = {
       width: 1080,
       height: 1920,
@@ -879,7 +886,7 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderVideoGraphToMp4).mockResolvedValueOnce({
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
       outputPath: "/tmp/multitrack-export.mp4",
     });
 
@@ -889,16 +896,18 @@ describe("render video pipeline", () => {
       outputPath: "/tmp/multitrack-export.mp4",
     });
 
-    expect(renderVideoGraphToMp4).toHaveBeenCalledWith({
-      inputs: ["/media/a.mp4", "/media/b.mp4"],
-      inputMediaTypes: ["video", "video"],
-      outputPath: "/tmp/multitrack-export.mp4",
-      width: 1080,
-      height: 1920,
-      frameRate: 30,
-      filterComplex: expect.stringContaining("multitrack_composite_1"),
-      videoMap: "[vout]",
-    });
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4","/media/b.mp4"],
+        videoInputMediaTypes: ["video","video"],
+        audioInputs: [],
+        sourceAudioSegments: [{"inputIndex":0,"sourceStartMs":0,"timelineStartMs":0,"durationMs":2000,"trackVolume":1,"trackPan":0},{"inputIndex":1,"sourceStartMs":0,"timelineStartMs":0,"durationMs":2000,"trackVolume":1,"trackPan":0}],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/multitrack-export.mp4",
+        videoFilterComplex: expect.stringContaining("multitrack_composite_1"),
+      }),
+    );
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
