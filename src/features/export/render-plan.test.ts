@@ -542,6 +542,42 @@ describe("render plan", () => {
     });
   });
 
+  it("carries Video clip audio EQ settings into render segments", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioEq: {
+                  enabled: true,
+                  lowGainDb: 3,
+                  midGainDb: -1.5,
+                  highGainDb: 5,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(plan.segments[0].audioEq).toEqual({
+      enabled: true,
+      lowGainDb: 3,
+      midGainDb: -1.5,
+      highGainDb: 5,
+    });
+  });
+
   it("resolves quality dimensions from the project aspect ratio", () => {
     const project = projectWithAssets();
     const settings = {
