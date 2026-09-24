@@ -1,3 +1,39 @@
+## M3.81 — Embedded Video Source-Audio EQ Export — in progress — 2026-09-24
+
+Branch:
+`feat/m3-81-video-source-audio-eq-export`
+
+PR:
+#95
+
+Scope:
+- Make exported embedded Video source audio honor the existing per-clip 3-band EQ already supported by the project model and Video preview.
+- Reuse the existing Audio-track EQ semantics and avoid introducing duplicate audio models or project schema fields.
+- Preserve Track Volume, Track Pan, clip Volume Automation, and clip Fade ordering for embedded Video source audio.
+- Preserve direct/segment fast paths unless effective Video source-audio EQ requires graph rendering.
+
+Implementation:
+- RenderPlan now carries normalized `audioEq` metadata for clips on both Audio tracks and Video tracks when the asset/media pairing is audio-capable.
+- `NativeSourceAudioSegment` now carries optional `audioEq` metadata without changing the project schema.
+- Effective non-zero Video clip EQ now forces Video-only export through the unified AV renderer instead of direct/segment fast paths.
+- Unified Video + Audio exports carry active Video source-audio EQ through the existing source-audio metadata path.
+- Native source-audio filtering applies the existing three-band EQ semantics after Track Volume/Pan and before clip Fade/timeline delay.
+- EQ uses the same 120 Hz / 1 kHz / 8 kHz bands and Q values as the existing Audio-track export graph; disabled or zero-gain bands are omitted.
+- Added RenderPlan, export-pipeline, and native Rust regression coverage.
+- Audio-track EQ behavior is unchanged.
+- No project schema change.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- This milestone covers embedded Video source-audio EQ export only.
+- Video source-audio compressor export remains a separate milestone.
+- No new project schema or Video-specific audio Inspector controls are introduced.
+
+Next step:
+- Run focused local validation covering lint, frontend tests, production build, Rust tests, Tauri development startup, and manual Video EQ export checks across fast-path and unified-graph scenarios.
+
 ## M3.80 — Video Source-Audio Fast-Path Track Controls — completed — 2026-09-24
 
 Branch:

@@ -1,18 +1,23 @@
 ## M3.81 — active — 2026-09-24
 
 - Branch: `feat/m3-81-video-source-audio-eq-export`.
+- PR: #95 — Draft.
 - Scope: make exported embedded Video source audio honor the existing per-clip 3-band EQ already used by Video preview.
-- Repository evidence after M3.80: `RenderSegment` already has `audioEq`, but RenderPlan currently populates it only for Audio-track audio clips; `NativeSourceAudioSegment` carries Volume/Pan, Volume Automation, and Fade metadata but no EQ; native embedded source-audio filtering has no EQ stage.
-- Reuse the existing Audio-track EQ semantics: 120 Hz low shelf, 1 kHz peaking/mid band, and 8 kHz high shelf, with inactive/zero-gain bands omitted.
-- Active Video source-audio EQ must bypass direct/segment fast paths and use the unified AV renderer.
-- Preserve the existing source-audio processing order established by M3.73–M3.80: trim/reset/normalize → Track Volume → clip Volume Automation → Track Pan → clip EQ → clip Fade → timeline delay.
-- Keep Audio-track EQ behavior unchanged and do not add schema fields or a second audio model.
-- Add focused RenderPlan, export-pipeline, native contract, and Rust regression coverage.
+- Repository evidence: `RenderSegment` already exposes `audioEq`, but the implementation previously populated it only for Audio-track audio clips; the native embedded source-audio contract had no EQ field or native EQ filter stage.
+- Implemented Video EQ metadata propagation through RenderPlan and the native unified source-audio request without changing the project schema.
+- Effective non-zero Video EQ bypasses direct/segment fast paths and uses unified AV export so the processing cannot be silently omitted.
+- Native source-audio processing order is preserved: trim/reset/normalize → Track Volume → clip Volume Automation → Track Pan → clip EQ → clip Fade → timeline delay.
+- Native Video source-audio EQ matches the existing Audio-track export graph: 120 Hz Q 0.8, 1 kHz Q 1, and 8 kHz Q 0.8; inactive/zero-gain bands are omitted and active gains are clamped to -12 dB through +12 dB.
+- Added RenderPlan, pipeline-routing, source-audio contract, and Rust filter-generation regression coverage.
+- Keep Audio-track EQ behavior unchanged; do not introduce a second audio model or schema fields.
 - Validation is pending.
 - M3.80 completed and squash-merged as PR #94 at `6181359270552c82f6b4c4d557e41255b8f32bb4`.
 - M3.79 completed and squash-merged as PR #93 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
 - M3.78 completed and squash-merged as PR #92 at `bd583a3891cacf68ab827e31469008ce1f8e015`.
 - PR #76 remains parked and must not be merged or revived wholesale.
+
+
+
 
 
 ## M3.79 — completed — 2026-09-24

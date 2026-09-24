@@ -41,6 +41,15 @@ pub struct NativeSourceAudioVolumeKeyframe {
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct NativeSourceAudioEq {
+  pub enabled: bool,
+  pub low_gain_db: f64,
+  pub mid_gain_db: f64,
+  pub high_gain_db: f64,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct NativeSourceAudioSegment {
   pub input_index: usize,
   pub source_start_ms: u64,
@@ -54,6 +63,8 @@ pub struct NativeSourceAudioSegment {
   pub audio_fade_out_ms: u64,
   #[serde(default)]
   pub audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
+  #[serde(default)]
+  pub audio_eq: Option<NativeSourceAudioEq>,
 }
 
 struct ResolvedSourceAudioSegment {
@@ -66,6 +77,7 @@ struct ResolvedSourceAudioSegment {
   audio_fade_in_ms: u64,
   audio_fade_out_ms: u64,
   audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
+  audio_eq: Option<NativeSourceAudioEq>,
   has_audio: bool,
 }
 
@@ -217,7 +229,9 @@ pub fn render_video_audio_graph_to_mp4(
         track_pan: segment.track_pan,
         audio_fade_in_ms: segment.audio_fade_in_ms,
         audio_fade_out_ms: segment.audio_fade_out_ms,
+        audio_eq: None,
         audio_volume_keyframes: segment.audio_volume_keyframes.clone(),
+        audio_eq: segment.audio_eq.clone(),
         has_audio,
       })
     })
@@ -490,6 +504,7 @@ fn build_source_audio_filter(
       ));
     }
 
+    filters.push_str(&build_source_audio_eq_filters(segment.audio_eq.as_ref()));
     filters.push_str(&build_source_audio_fade_filters(segment));
 
     filters.push_str(&format!(
@@ -504,6 +519,45 @@ fn build_source_audio_filter(
   SourceAudioFilter {
     filter_complex: filter_parts.join(";"),
     labels,
+  }
+}
+
+fn build_source_audio_eq_filters(eq: Option<&NativeSourceAudioEq>) -> String {
+  let Some(eq) = eq else {
+    return String::new();
+  };
+
+  if !eq.enabled {
+    return String::new();
+  }
+
+  let bands = [
+    (120_u32, 0.8_f64, eq.low_gain_db),
+    (1_000_u32, 1.0_f64, eq.mid_gain_db),
+    (8_000_u32, 0.8_f64, eq.high_gain_db),
+  ];
+
+  let mut filters = Vec::new();
+
+  for (frequency, q, gain_db) in bands {
+    let gain_db = gain_db.clamp(-12.0, 12.0);
+
+    if gain_db.abs() < 0.000001 {
+      continue;
+    }
+
+    filters.push(format!(
+      "equalizer=f={}:t=q:w={}:g={}",
+      frequency,
+      format_number(q),
+      format_number(gain_db),
+    ));
+  }
+
+  if filters.is_empty() {
+    String::new()
+  } else {
+    format!(",{}", filters.join(","))
   }
 }
 
@@ -1072,7 +1126,7 @@ mod tests {
     build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
     build_ffmpeg_video_with_audio_graph_args, media_type,
     validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
-    NativeAudioGraphRenderRequest, NativeSourceAudioSegment,
+    NativeAudioGraphRenderRequest, NativeSourceAudioEq, NativeSourceAudioSegment,
     NativeSourceAudioVolumeKeyframe, NativeVideoAudioGraphRenderRequest,
     NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
@@ -1271,6 +1325,7 @@ mod tests {
         track_pan: 0.0,
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
+        audio_eq: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1298,6 +1353,7 @@ mod tests {
         track_pan: 0.0,
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
+        audio_eq: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1325,6 +1381,7 @@ mod tests {
         track_pan: 0.0,
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
+        audio_eq: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1389,6 +1446,7 @@ mod tests {
         track_pan: 0.0,
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
+        audio_eq: None,
         audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
@@ -1555,6 +1613,7 @@ mod tests {
       track_pan: -0.25,
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
+      audio_eq: None,
       audio_volume_keyframes: vec![
         NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 1.0 },
         NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.4 },
@@ -1616,6 +1675,7 @@ mod tests {
       track_pan: 0.0,
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
+      audio_eq: None,
       audio_volume_keyframes: Vec::new(),
       has_audio: true,
     }];
@@ -1660,6 +1720,63 @@ mod tests {
   }
 
   #[test]
+  fn builds_unified_graph_with_embedded_source_audio_eq() {
+    let video_paths = vec![PathBuf::from("/media/video.mp4")];
+    let video_media_types = vec!["video".to_string()];
+    let source_audio_segments = vec![ResolvedSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 0,
+      timeline_start_ms: 250,
+      duration_ms: 4_000,
+      track_volume: 0.85,
+      track_pan: -0.25,
+      audio_fade_in_ms: 0,
+      audio_fade_out_ms: 0,
+      audio_volume_keyframes: Vec::new(),
+      audio_eq: Some(NativeSourceAudioEq {
+        enabled: true,
+        low_gain_db: 4.0,
+        mid_gain_db: -2.0,
+        high_gain_db: 6.0,
+      }),
+      has_audio: true,
+    }];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &[],
+      &source_audio_segments,
+      "[0:v:0]null[vout]",
+      "[vout]",
+      "anullsrc=r=48000:cl=stereo,atrim=duration=4.25,asetpts=PTS-STARTPTS[aout]",
+      "[aout]",
+      4_250,
+      1_280,
+      720,
+      30.0,
+      Path::new("/tmp/source-audio-eq.mp4"),
+    )
+    .unwrap();
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+    let filter = values
+      .windows(2)
+      .find(|pair| pair[0] == "-filter_complex")
+      .map(|pair| pair[1].clone())
+      .expect("filter_complex argument should exist");
+
+    assert!(filter.contains("volume=0.85,pan=stereo|c0=0.83147*c0|c1=0.55557*c1"));
+    assert!(filter.contains("equalizer=f=120:t=q:w=0.8:g=4"));
+    assert!(filter.contains("equalizer=f=1000:t=q:w=1:g=-2"));
+    assert!(filter.contains("equalizer=f=8000:t=q:w=0.8:g=6"));
+    assert!(filter.contains(",adelay=250:all=1"));
+  }
+
+  #[test]
   fn builds_unified_graph_with_embedded_source_audio_fades() {
     let video_paths = vec![PathBuf::from("/media/video.mp4")];
     let video_media_types = vec!["video".to_string()];
@@ -1672,6 +1789,7 @@ mod tests {
       track_pan: 0.0,
       audio_fade_in_ms: 500,
       audio_fade_out_ms: 1_000,
+      audio_eq: None,
       audio_volume_keyframes: Vec::new(),
       has_audio: true,
     }];
@@ -1721,6 +1839,7 @@ mod tests {
       track_pan: 0.0,
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
+      audio_eq: None,
       audio_volume_keyframes: vec![
         NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 0.2 },
         NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.8 },

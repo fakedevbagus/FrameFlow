@@ -179,9 +179,16 @@ export function createRenderPlan(
               })()
             : {}
         ),
-        ...(track.type === "audio" && asset.mediaType === "audio"
+        ...((
+          (track.type === "audio" && asset.mediaType === "audio") ||
+          (track.type === "video" && asset.mediaType === "video")
+        )
           ? {
               audioEq: getAudioEq(clip),
+            }
+          : {}),
+        ...(track.type === "audio" && asset.mediaType === "audio"
+          ? {
               audioCompressor: getAudioCompressor(clip),
             }
           : {}),

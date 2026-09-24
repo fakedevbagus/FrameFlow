@@ -75,6 +75,9 @@ export function renderVideoPlanToMp4(
         ...(segment.audioFadeOutMs && segment.audioFadeOutMs > 0
           ? { audioFadeOutMs: Math.max(0, Math.floor(segment.audioFadeOutMs)) }
           : {}),
+        ...(hasVideoSourceAudioEqProcessing(segment)
+          ? { audioEq: segment.audioEq }
+          : {}),
       })),
     videoFilterComplex: videoGraph.filterComplex,
     videoMap: videoGraph.videoMap,
@@ -135,6 +138,24 @@ function hasVideoSourceAudioTrackProcessing(
   );
 }
 
+function hasVideoSourceAudioEqProcessing(
+  segment: RenderPlan["segments"][number],
+): boolean {
+  if (segment.mediaType !== "video" || segment.isMuted) {
+    return false;
+  }
+
+  const eq = segment.audioEq;
+
+  return Boolean(
+    eq?.enabled &&
+      (Math.abs(eq.lowGainDb) > 0.000001 ||
+        Math.abs(eq.midGainDb) > 0.000001 ||
+        Math.abs(eq.highGainDb) > 0.000001),
+  );
+}
+
+
 function renderVideoOnlyPlanToMp4(
   plan: RenderPlan,
   outputPath: string,
@@ -167,6 +188,7 @@ function renderVideoOnlyPlanToMp4(
             (segment.audioFadeOutMs ?? 0) > 0),
       ) ||
       hasVideoSourceAudioTrackProcessing(segment) ||
+      hasVideoSourceAudioEqProcessing(segment) ||
       transform.x !== 0 ||
       transform.y !== 0 ||
       transform.scale !== 1 ||
