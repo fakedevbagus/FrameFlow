@@ -42,15 +42,16 @@ Scope:
 - Keep the project schema unchanged.
 
 Implementation completed:
-- RenderPlan now carries normalized Video clip audio fade durations for Video assets.
+- RenderPlan carries normalized Video clip audio fade durations for Video assets using the existing `getAudioFadeDurations` helper.
 - Unified source-audio metadata carries non-zero Video fade durations.
-- Video-only exports with active Video source-audio fades route through the unified AV renderer instead of direct/segment fast paths that cannot represent the fades.
-- Native source-audio rendering accepts backward-compatible optional fade fields and applies duration-clamped FFmpeg `afade` filters before timeline delay.
+- Video-only exports with active Video source-audio fades bypass direct/segment fast paths and use the unified AV renderer.
+- Native source-audio rendering accepts backward-compatible optional fade fields.
+- Native FFmpeg applies duration-clamped `afade` filters before timeline delay.
 - Added RenderPlan, export-pipeline, and Rust regression coverage.
 - Updated project context, changelog, and handoff documentation.
 
 Validation:
-- User reported PASS after local validation of the M3.79 embedded Video source-audio fade export scope.
+- User reported PASS after local validation of M3.79, including the requested embedded Video source-audio fade export checks.
 
 Known limitations:
 - This milestone covers embedded Video source-audio Fade In/Fade Out only.
@@ -58,7 +59,8 @@ Known limitations:
 - No project schema or Video-specific audio Inspector controls were introduced.
 
 Next step:
-- Start M3.80 from updated `main`, focusing on Video-track Volume/Pan consistency across export fast paths.
+- In a new session, re-inspect updated `main`, open PRs/branches, and repository documentation before selecting the next focused milestone.
+
 ## M3.78 — Embedded Video Audio Preview Consistency — completed — 2026-09-24
 
 Branch:
