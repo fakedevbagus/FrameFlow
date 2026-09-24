@@ -66,6 +66,7 @@ export function renderVideoPlanToMp4(
         durationMs: segment.durationMs,
         trackVolume: segment.trackVolume ?? 1,
         trackPan: segment.trackPan ?? 0,
+        audioVolumeKeyframes: segment.audioVolumeKeyframes,
       })),
     videoFilterComplex: videoGraph.filterComplex,
     videoMap: videoGraph.videoMap,
@@ -134,6 +135,7 @@ function renderVideoOnlyPlanToMp4(
             segment.visualEffects.saturation !== 0),
       ) ||
       Boolean(segment.textOverlay) ||
+      Boolean(segment.audioVolumeKeyframes?.length) ||
       transform.x !== 0 ||
       transform.y !== 0 ||
       transform.scale !== 1 ||
@@ -232,6 +234,7 @@ function renderVideoOnlyPlanToMp4(
       durationMs: segment.durationMs,
       trackVolume: segment.trackVolume ?? 1,
       trackPan: segment.trackPan ?? 0,
+      audioVolumeKeyframes: segment.audioVolumeKeyframes,
     }));
 
   if (sourceAudioSegments.length > 0) {
