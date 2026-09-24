@@ -334,7 +334,7 @@ describe("project domain", () => {
       ),
     };
 
-    expect(() => serializeProject(invalidProject)).toThrow(
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "references missing asset: missing.",
     );
   });
@@ -369,7 +369,7 @@ describe("project domain", () => {
       ),
     };
 
-    expect(() => serializeProject(invalidProject)).toThrow(
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "uses media type video on a audio track.",
     );
   });
@@ -404,7 +404,7 @@ describe("project domain", () => {
       ),
     };
 
-    expect(() => serializeProject(invalidProject)).toThrow(
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "sourceEndMs cannot exceed asset duration.",
     );
   });
@@ -413,18 +413,22 @@ describe("project domain", () => {
     const project = createProject({ id: "track-controls" });
 
     expect(() =>
-      serializeProject({
+      parseProject(
+      JSON.stringify({
         ...project,
         tracks: project.tracks.map((track) => ({ ...track, volume: 2 })),
       }),
-    ).toThrow("volume must be between 0 and 1.");
+    ),
+  ).toThrow("volume must be between 0 and 1.");
 
     expect(() =>
-      serializeProject({
+      parseProject(
+      JSON.stringify({
         ...project,
         tracks: project.tracks.map((track) => ({ ...track, pan: -2 })),
       }),
-    ).toThrow("pan must be between -1 and 1.");
+    ),
+  ).toThrow("pan must be between -1 and 1.");
   });
 
   it("rejects duplicate clip ids", () => {
@@ -452,8 +456,43 @@ describe("project domain", () => {
       ),
     };
 
-    expect(() => serializeProject(invalidProject)).toThrow(
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "Duplicate clip id: clip-1.",
+    );
+  });
+
+
+  it("rejects a clip with a missing source end field", () => {
+    const project = createProject({ id: "missing-source-end" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 1000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "sourceEndMs must be a number or null.",
     );
   });
 
