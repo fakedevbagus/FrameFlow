@@ -119,6 +119,22 @@ function orderedMediaTypes(
     .map((segment) => segment.mediaType);
 }
 
+function hasVideoSourceAudioTrackProcessing(
+  segment: RenderPlan["segments"][number],
+): boolean {
+  if (segment.mediaType !== "video" || segment.isMuted) {
+    return false;
+  }
+
+  const volume = segment.trackVolume ?? 1;
+  const pan = segment.trackPan ?? 0;
+
+  return (
+    Math.abs(volume - 1) > 0.000001 ||
+    Math.abs(pan) > 0.000001
+  );
+}
+
 function renderVideoOnlyPlanToMp4(
   plan: RenderPlan,
   outputPath: string,
@@ -150,6 +166,7 @@ function renderVideoOnlyPlanToMp4(
           ((segment.audioFadeInMs ?? 0) > 0 ||
             (segment.audioFadeOutMs ?? 0) > 0),
       ) ||
+      hasVideoSourceAudioTrackProcessing(segment) ||
       transform.x !== 0 ||
       transform.y !== 0 ||
       transform.scale !== 1 ||
@@ -174,7 +191,7 @@ function renderVideoOnlyPlanToMp4(
       frameRate: plan.frameRate,
       sourceStartMs: segment.sourceStartMs,
       sourceDurationMs: segment.durationMs,
-      includeAudio: true,
+      includeAudio: !segment.isMuted,
     };
 
     return jobId
@@ -226,7 +243,7 @@ function renderVideoOnlyPlanToMp4(
       width: plan.width,
       height: plan.height,
       frameRate: plan.frameRate,
-      includeAudio: true,
+      includeAudio: !videoSegments.every((segment) => segment.isMuted),
     };
 
     return jobId
