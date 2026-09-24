@@ -1,41 +1,42 @@
 ## M3.84 — Embedded Video Source-Audio Timeline Parity — in progress — 2026-09-24
 
 Branch:
-Not created yet.
+`feat/m3-84-video-source-audio-timeline-parity`
 
 PR:
-Not opened yet.
+Not opened yet; implementation branch only.
 
 Base:
 `5f52dfca80d3c453252c59dd1428a64b58be6d6c` (M3.83 merge)
 
-Repository evidence:
-- Video clips now expose shared Audio Fade, EQ, and Compressor controls in the Inspector after M3.83.
-- Video clip source audio already supports Volume Automation and Track Volume/Pan across preview/export.
-- Timeline audio fade handles and related direct interaction paths still use Audio-clip-specific presentation/eligibility in the current UI.
-- The next focused gap is to make timeline audio interactions consistent for embedded Video source audio without changing DSP or project schema.
-
 Scope:
-- Audit and align Video clip audio timeline interactions with existing Audio clip interactions, starting with Fade handles and any directly related audio affordances.
-- Reuse the existing Timeline components, commands, and history engine.
-- Preserve Image clips as non-audio.
-- Avoid introducing duplicate Video-specific audio models or interaction systems.
+- Align Timeline audio Fade interactions for Video clips with embedded source audio to the existing Audio clip interaction.
+- Reuse existing fade interaction, command, and history paths.
+- Keep waveform rendering Audio-only, keep Image clips audio-free, and avoid schema/DSP changes.
 
-Implementation target:
-- Make Video clips carrying embedded source audio expose the same relevant Timeline audio fade interaction already available to Audio clips.
-- Ensure drag/commit paths call the shared audio fade command and preserve history behavior.
-- Add focused Timeline/App regression coverage for Video fade-handle visibility and editing.
-- Keep existing Video Volume Automation keyframe behavior unchanged unless the audit finds a concrete blocking inconsistency in the same interaction surface.
-- No project schema change and no export DSP redesign.
+Repository evidence:
+- M3.83 exposed Fade/EQ/Compressor in the Video Inspector.
+- Video Volume Automation Timeline interaction already exists.
+- Timeline currently classified Fade handles under Audio-track Audio-asset clips only, so Video clips could not directly drag/nudge their Fade controls even though the shared command/export path supports them.
+
+Implementation:
+- Timeline now distinguishes Audio-track Audio clips from audio-bearing Video clips.
+- Existing Audio Fade handles and fade regions are shown for both audio-bearing Video clips and Audio clips.
+- Existing pointer drag, pointer cancel, pointer release, and keyboard nudge paths are reused unchanged.
+- Audio waveform preview remains restricted to Audio assets.
+- Image clips remain without audio Fade handles.
+- Added Timeline regression coverage for Video fade-handle drag/commit and Image exclusion.
+- No project schema change and no export DSP change.
 
 Validation:
-- Pending implementation and user local validation.
+- Pending user local validation of M3.84.
 
 Known limitations:
-- Scope is Timeline interaction parity, not a new audio editing subsystem.
+- The Timeline does not inspect the physical source stream before showing Video audio controls; actual embedded audio availability continues to be determined by the existing media/preview/export paths.
 
 Next step:
-- Inspect current Timeline fade-handle rendering/guards, implement the smallest parity change, add regressions, update docs, open Draft PR, and hand off local validation.
+- Open Draft PR after diff audit and hand off local validation.
+
 
 ## M3.83 — Embedded Video Source-Audio Inspector Parity — completed — 2026-09-24
 
