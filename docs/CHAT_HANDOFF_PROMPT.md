@@ -4,6 +4,7 @@
 - Base: M3.86 squash merge `afd49629d25bef4f399f2886f494d97dc6e9abdd`.
 - Audit finding: M3.86 `AudioWaveformPreview` stores `peaks/sourceDurationMs`, but its waveform-request `catch` branch still writes the removed `path` field.
 - Scope: correct only this waveform load-failure state shape and add rejection-path regression coverage.
+- Implementation: the rejection branch now writes the current `peaks/sourceDurationMs/isLoading` state shape; no waveform/render/export behavior was otherwise changed.
 - Preserve M3.86 trim-range alignment, Video embedded-audio waveform parity, cache behavior, project schema, and export DSP unchanged.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 - M3.86 was user-validated and squash-merged as PR #101 at `afd49629d25bef4f399f2886f494d97dc6e9abdd`.

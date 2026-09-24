@@ -6,9 +6,9 @@ Scope:
 - Fix the M3.86 waveform load failure state after the component state model changed from rendered `path` to raw peaks/source duration.
 - Preserve existing waveform rendering and trim-range behavior.
 
-Implementation target:
-- Replace the stale `path` field in the waveform generation error state with the current state shape.
-- Add regression coverage for a rejected native waveform request.
+Implementation:
+- Replaced the stale `path` field in the waveform generation error state with the current `peaks/sourceDurationMs` shape.
+- Added regression coverage for a rejected native waveform request and loading-state cleanup.
 - No project schema, export DSP, or native waveform-generation change.
 
 Validation:
