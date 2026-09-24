@@ -78,6 +78,9 @@ export function renderVideoPlanToMp4(
         ...(hasVideoSourceAudioEqProcessing(segment)
           ? { audioEq: segment.audioEq }
           : {}),
+        ...(hasVideoSourceAudioCompressorProcessing(segment)
+          ? { audioCompressor: segment.audioCompressor }
+          : {}),
       })),
     videoFilterComplex: videoGraph.filterComplex,
     videoMap: videoGraph.videoMap,
@@ -155,6 +158,15 @@ function hasVideoSourceAudioEqProcessing(
   );
 }
 
+function hasVideoSourceAudioCompressorProcessing(
+  segment: RenderPlan["segments"][number],
+): boolean {
+  return (
+    segment.mediaType === "video" &&
+    !segment.isMuted &&
+    segment.audioCompressor?.enabled === true
+  );
+}
 
 function renderVideoOnlyPlanToMp4(
   plan: RenderPlan,
@@ -189,6 +201,7 @@ function renderVideoOnlyPlanToMp4(
       ) ||
       hasVideoSourceAudioTrackProcessing(segment) ||
       hasVideoSourceAudioEqProcessing(segment) ||
+      hasVideoSourceAudioCompressorProcessing(segment) ||
       transform.x !== 0 ||
       transform.y !== 0 ||
       transform.scale !== 1 ||
@@ -298,6 +311,9 @@ function renderVideoOnlyPlanToMp4(
         : {}),
       ...(hasVideoSourceAudioEqProcessing(segment)
         ? { audioEq: segment.audioEq }
+        : {}),
+      ...(hasVideoSourceAudioCompressorProcessing(segment)
+        ? { audioCompressor: segment.audioCompressor }
         : {}),
     }));
 
