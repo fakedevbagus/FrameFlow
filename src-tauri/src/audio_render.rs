@@ -34,6 +34,13 @@ pub struct NativeVideoWithAudioGraphRenderRequest {
 }
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct NativeSourceAudioVolumeKeyframe {
+  pub time_ms: u64,
+  pub volume: f64,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct NativeSourceAudioSegment {
   pub input_index: usize,
   pub source_start_ms: u64,
@@ -41,6 +48,8 @@ pub struct NativeSourceAudioSegment {
   pub duration_ms: u64,
   pub track_volume: f64,
   pub track_pan: f64,
+  #[serde(default)]
+  pub audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
 }
 
 struct ResolvedSourceAudioSegment {
@@ -50,6 +59,7 @@ struct ResolvedSourceAudioSegment {
   duration_ms: u64,
   track_volume: f64,
   track_pan: f64,
+  audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
   has_audio: bool,
 }
 
@@ -199,6 +209,7 @@ pub fn render_video_audio_graph_to_mp4(
         duration_ms: segment.duration_ms,
         track_volume: segment.track_volume,
         track_pan: segment.track_pan,
+        audio_volume_keyframes: segment.audio_volume_keyframes.clone(),
         has_audio,
       })
     })
@@ -453,11 +464,11 @@ fn build_source_audio_filter(
     let volume = segment.track_volume.clamp(0.0, 1.0);
     let pan = segment.track_pan.clamp(-1.0, 1.0);
     let mut filters = format!(
-      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume={}",
+      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo{}",
       segment.input_index,
       format_seconds(segment.source_start_ms),
       format_seconds(source_end_ms),
-      format_number(volume),
+      build_source_audio_volume_filter(volume, &segment.audio_volume_keyframes),
     );
 
     if pan.abs() >= 0.000001 {
@@ -484,6 +495,60 @@ fn build_source_audio_filter(
     filter_complex: filter_parts.join(";"),
     labels,
   }
+}
+
+fn build_source_audio_volume_filter(
+  track_volume: f64,
+  keyframes: &[NativeSourceAudioVolumeKeyframe],
+) -> String {
+  if keyframes.is_empty() {
+    return format!(",volume={}", format_number(track_volume));
+  }
+
+  let mut normalized = keyframes
+    .iter()
+    .filter(|keyframe| keyframe.volume.is_finite())
+    .cloned()
+    .collect::<Vec<_>>();
+
+  normalized.sort_by_key(|keyframe| keyframe.time_ms);
+  normalized.dedup_by_key(|keyframe| keyframe.time_ms);
+
+  if normalized.is_empty() {
+    return format!(",volume={}", format_number(track_volume));
+  }
+
+  let mut expression =
+    format_number(normalized.last().map(|keyframe| keyframe.volume.clamp(0.0, 1.0)).unwrap_or(1.0));
+
+  for index in (0..normalized.len().saturating_sub(1)).rev() {
+    let current = &normalized[index];
+    let next = &normalized[index + 1];
+
+    if next.time_ms <= current.time_ms {
+      continue;
+    }
+
+    let current_volume = current.volume.clamp(0.0, 1.0);
+    let next_volume = next.volume.clamp(0.0, 1.0);
+    let delta = next_volume - current_volume;
+
+    expression = format!(
+      "if(lt(t,{}),{}+({})*((t-{})/{}),{})",
+      format_seconds(next.time_ms),
+      format_number(current_volume),
+      format_number(delta),
+      format_seconds(current.time_ms),
+      format_seconds(next.time_ms - current.time_ms),
+      expression,
+    );
+  }
+
+  format!(
+    ",volume='{}*{}':eval=frame",
+    format_number(track_volume.clamp(0.0, 1.0)),
+    expression,
+  )
 }
 
 fn rename_audio_graph_output(
