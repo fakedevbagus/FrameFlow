@@ -51,6 +51,7 @@ Known limitations:
 - No new project schema or Video-specific audio Inspector controls are introduced.
 
 Post-merge correction:
+- PR #96 — Draft tracks the focused correction.
 - Repository audit found that the merged Video export pipeline omitted `audioEq` from the `sourceAudioSegments` payload even though RenderPlan and native filtering supported it.
 - Restored the missing propagation and added a focused pipeline regression test.
 - Local validation of this correction is pending.
