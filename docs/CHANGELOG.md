@@ -1,7 +1,8 @@
-### M3.80 — Video Source-Audio Fast-Path Track Controls — in progress — 2026-09-24
+### M3.80 — Video Source-Audio Fast-Path Track Controls — completed — 2026-09-24
 
 Branch: `feat/m3-80-video-source-audio-fast-path-controls`
-PR: Draft
+PR #94
+Merge SHA: `6181359270552c82f6b4c4d557e41255b8f32bb4`
 
 Scope:
 - Ensure embedded Video source audio respects existing Video-track Volume and Pan controls on direct and sequential fast-path exports.
@@ -11,16 +12,44 @@ Scope:
 Implementation:
 - Non-default Video-track Volume/Pan now force the unified AV source-audio renderer for Video-only plans.
 - Default unmuted Video-track settings retain the existing direct/segment fast paths.
-- Muted single-source exports now pass `includeAudio: false`; muted sequential single-track exports likewise disable audio.
+- Muted single-source exports pass `includeAudio: false`; muted sequential single-track exports likewise disable audio.
 - Added pipeline regression coverage for Video Volume, Video Pan, and muted routing.
+- No project schema change.
+
+Validation:
+- User reported PASS after local validation of M3.80, including Video-track Volume/Pan and mute behavior across fast and graph export paths.
+
+Known limitations:
+- Scope is limited to Video-track Volume/Pan and mute consistency across export paths.
+- Embedded Video source-audio EQ export remains a separate follow-up milestone.
+- Video source-audio compressor export remains a later follow-up milestone.
+
+### M3.81 — Embedded Video Source-Audio EQ Export — active — 2026-09-24
+
+Branch: `feat/m3-81-video-source-audio-eq-export`
+
+Scope:
+- Make exported embedded Video source audio honor the existing per-clip 3-band EQ already supported by the project model and Video preview.
+- Reuse the existing Audio-track EQ semantics and avoid introducing duplicate audio models or project schema fields.
+- Preserve Track Volume, Track Pan, clip Volume Automation, and clip Fade ordering for embedded Video source audio.
+- Preserve direct/segment fast paths unless Video source-audio EQ requires graph rendering.
+
+Implementation target:
+- Carry normalized Video clip EQ metadata through RenderPlan and the native unified source-audio request.
+- Route active Video source-audio EQ cases through the unified AV renderer so fast paths cannot silently omit EQ.
+- Apply the same 120 Hz / 1 kHz / 8 kHz FFmpeg equalizer semantics used by the existing Audio-track export graph.
+- Add focused RenderPlan, pipeline, frontend/native contract, and Rust filter-generation regression coverage.
+- Keep Audio-track EQ behavior unchanged.
 - No project schema change.
 
 Validation:
 - Pending user local validation.
 
 Known limitations:
-- Scope is limited to Video-track Volume/Pan and mute consistency across fast export paths.
-- Video source-audio EQ/compressor export remains future work.
+- This milestone covers embedded Video source-audio EQ export only.
+- Video source-audio compressor export remains a separate milestone.
+- No new project schema or Video-specific audio Inspector controls are introduced.
+
 
 ### M3.79 — Embedded Video Source-Audio Fade Export — completed — 2026-09-24
 
