@@ -3,6 +3,9 @@
 Branch:
 `feat/m3-81-video-source-audio-eq-export`
 
+PR:
+#95
+
 Scope:
 - Make exported embedded Video source audio honor the existing per-clip 3-band EQ already supported by the project model and Video preview.
 - Reuse the existing Audio-track EQ semantics and avoid introducing duplicate audio models or project schema fields.
