@@ -1,18 +1,20 @@
 ### M3.84 — Embedded Video Source-Audio Timeline Parity — in progress — 2026-09-24
 
-Branch: not created yet
+Branch: `feat/m3-84-video-source-audio-timeline-parity`
 
 Scope:
-- Align Timeline audio interactions for Video clips with embedded source audio, beginning with existing Fade handles and related direct interaction.
-- Reuse current Timeline components/commands/history; keep Image clips audio-free and avoid schema changes.
+- Align existing Timeline Audio Fade handles with embedded Video source audio.
+- Reuse shared interaction/command/history paths.
+- Keep Audio waveform rendering Audio-only; no schema or DSP changes.
 
-Repository evidence:
-- M3.83 completed Inspector parity for Video clip Audio Fade/EQ/Compressor.
-- Video Volume Automation is already present for Video clips.
-- Current Timeline fade-handle rendering still needs an evidence-driven audit for Video clip eligibility.
+Implementation:
+- Timeline now exposes the existing Fade regions/handles for both Audio-track Audio clips and Video-track Video clips.
+- Existing pointer drag and keyboard nudge behavior is reused for Video clips.
+- Added Video fade-handle commit coverage and Image exclusion coverage.
+- No project schema or export DSP change.
 
 Validation:
-- Pending implementation and user validation.
+- Pending user local validation.
 
 ### M3.83 — Embedded Video Source-Audio Inspector Parity — completed — 2026-09-24
 
@@ -22,7 +24,7 @@ Merge SHA: `5f52dfca80d3c453252c59dd1428a64b58be6d6c`
 
 Implementation:
 - Exposed shared Audio Fade/EQ/Compressor Inspector controls to embedded-audio Video clips.
-- Extended existing Fade/EQ/Compressor commands to Video-track Video clips.
+- Extended existing commands to Video-track Video clips.
 - Preserved Image exclusion, Audio-track behavior, validation, normalization, and history.
 - Added command and App regression coverage.
 - User reported PASS.
