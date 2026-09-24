@@ -1,32 +1,53 @@
-## M3.89 — Waveform Selection Lifecycle Hardening — in progress — 2026-09-25
+## M3.90 — Project Persistence Validation Hardening — in progress — 2026-09-25
+
+Branch:
+`feat/m3-90-project-validation-hardening`
+
+Scope:
+- Harden persisted project validation at the JSON parsing boundary.
+- Detect malformed asset metadata, duplicate IDs, invalid track controls, missing asset references, media/track mismatches, and invalid clip source ranges before a project enters the editor.
+- Preserve schema version 1, existing optional media fields, history semantics, export behavior, and runtime UI behavior.
+
+Implementation:
+- `validateProject()` now validates asset identity/metadata and known source durations.
+- Track validation now covers identity, type, lock/mute flags, volume/pan ranges, and clip arrays.
+- Clip validation now covers identity, asset references, timeline/source boundaries, known asset duration bounds, and media/track compatibility.
+- Persisted audio fade, EQ, and volume-automation data receives range/shape validation.
+- Added regression tests for valid media round-tripping, duplicate asset/clip IDs, missing asset references, media/track mismatches, source ranges beyond known duration, invalid track volume/pan, and missing clip source-end fields.
+- No project schema change.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- Native media-file existence/decodeability is intentionally outside this boundary validation.
+- Transition adjacency and advanced visual-effect payload validation remain outside this focused milestone.
+
+Previous milestone:
+- M3.89 completed and squash-merged as PR #104 at `fbdd60f45508c577046331255e024eea93b5960b`.
+
+Next step:
+- Open a Draft PR for M3.90 and hand off focused local validation.
+
+
+## M3.89 — Waveform Selection Lifecycle Hardening — completed — 2026-09-25
 
 Branch:
 `fix/m3-89-waveform-selection-lifecycle`
 
 PR:
-#104 — Draft.
+#104
 
-Base:
-`main` after M3.88 merge.
+Merge SHA:
+`fbdd60f45508c577046331255e024eea93b5960b`
 
-Scope:
-- Prevent stale Timeline waveform selections from surviving clip source-range changes caused by trimming.
-- Keep waveform generation, persistent caching, source-range resampling, seek behavior, project schema, history semantics, and export DSP unchanged.
-
-Implementation:
-- Clear the local waveform selection whenever the waveform component's source path, source start, source end, or clip duration changes.
-- Added Timeline regression coverage that selects an audio waveform region, trims the clip source end, rerenders with the trimmed project, and verifies the stale selection is cleared.
-- The same shared component behavior applies to Audio-track Audio clips and Video-track Video clips with embedded source audio.
-- No project schema or export change.
-
-Validation:
-- Pending user local validation.
-
-Known limitation:
-- Waveform selection remains transient Timeline UI state and does not create a project history edit.
-
-Next step:
-- Open a Draft PR and hand off focused local validation.
+Implementation reconciled:
+- Clear the local waveform selection whenever source path, source start, source end, or clip duration changes.
+- Added Timeline regression coverage for selecting an Audio waveform region, trimming the source end, rerendering, and verifying the stale selection is cleared.
+- The shared behavior applies to Audio-track Audio clips and Video-track Video clips with embedded source audio.
+- Waveform generation, persistent caching, source-range alignment, seeking, project schema, history semantics, and export DSP remain unchanged.
+- User reported PASS.
+- PR #104 was marked ready and squash-merged at the SHA above.
 
 
 ## M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
