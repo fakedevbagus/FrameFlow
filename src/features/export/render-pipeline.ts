@@ -296,6 +296,9 @@ function renderVideoOnlyPlanToMp4(
       ...(segment.audioFadeOutMs && segment.audioFadeOutMs > 0
         ? { audioFadeOutMs: Math.max(0, Math.floor(segment.audioFadeOutMs)) }
         : {}),
+      ...(hasVideoSourceAudioEqProcessing(segment)
+        ? { audioEq: segment.audioEq }
+        : {}),
     }));
 
   if (sourceAudioSegments.length > 0) {
