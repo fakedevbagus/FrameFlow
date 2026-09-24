@@ -2314,7 +2314,8 @@ function AudioWaveformPreview({
         if (!cancelled) {
           setWaveformState({
             sourcePath,
-            path: "",
+            peaks: [],
+            sourceDurationMs: 0,
             isLoading: false,
           });
         }
