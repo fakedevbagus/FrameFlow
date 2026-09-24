@@ -1,22 +1,46 @@
-### M3.88 — Embedded Video Volume Automation Command Parity — in progress — 2026-09-25
+### M3.89 — Waveform Selection Lifecycle Hardening — active — 2026-09-25
 
-Branch: `feat/m3-88-video-volume-automation-command-parity`
-PR #103 — Draft
+Branch: Not created yet
 
 Scope:
-- Close the remaining embedded Video volume-automation command/handler gap across Inspector set/update, Timeline keyframe move, and Timeline keyframe delete.
-- Reuse the existing audio-bearing clip eligibility without changing the project schema or DSP behavior.
+- Clear stale Timeline waveform selections when a clip's source range changes after trim.
+- Preserve existing waveform generation, caching, range alignment, seek behavior, and project schema.
+
+Repository evidence:
+- Waveform selection is local component state.
+- The M3.86 source-range alignment changed the visible waveform without changing the waveform component's source-path identity.
+- Selection can therefore outlive the clip range it was created against.
+
+Validation:
+- Pending implementation and user local validation.
+
+### M3.88 — Embedded Video Volume Automation Command Parity — completed — 2026-09-25
+
+Branch: `feat/m3-88-video-volume-automation-command-parity`
+PR #103
+Merge SHA: `06b21e5f28650889d78be09c5bf86380877001fb`
 
 Implementation:
 - App selected-volume updates now accept Video-track Video clips.
-- Volume-keyframe move/remove commands now accept Video-track Video clips with the same eligibility rule already used by set/update, Fade, EQ, and Compressor.
-- Added focused command tests for Video keyframe move/remove.
-- Added an App regression covering Video Timeline keyframe move and delete.
-- Existing Video Inspector set/update coverage remains in place.
-- Image clips remain excluded.
+- Volume-keyframe move/remove commands now accept Video-track Video clips using the same audio-bearing eligibility rule.
+- Added command regressions for Video keyframe move/remove and an App integration regression for Video Timeline move/delete.
+- Preserved Image exclusion, existing automation model/interpolation, history, schema, preview, export DSP, waveform behavior, and layout.
+- User reported PASS and PR #103 was squash-merged.
 
-Validation:
-- Pending user local validation.
+Post-merge audit:
+- Main audio/timeline command parity is now consistent.
+- The next concrete gap is waveform selection lifecycle after clip trim/source-range changes.
+
+### M3.87 — Waveform Load-State Correction — completed — 2026-09-25
+
+Branch: `fix/m3-87-waveform-load-state`
+PR #102
+Merge SHA: `c94322aab8f4862512893f1ab58d3764d34e681a`
+
+Implementation:
+- Corrected the waveform rejection state to the current `peaks/sourceDurationMs/isLoading` shape.
+- Added Timeline regression coverage for native waveform-load rejection and loading-placeholder cleanup.
+- User reported PASS.
 
 
 ### M3.86 — Waveform Trim-Range Alignment — completed — 2026-09-25
