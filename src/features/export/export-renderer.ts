@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  AudioCompressor,
   AudioEq,
   AudioVolumeKeyframe,
   MediaType,
@@ -62,6 +63,7 @@ export interface NativeSourceAudioSegment {
   trackPan: number;
   audioVolumeKeyframes?: AudioVolumeKeyframe[];
   audioEq?: AudioEq;
+  audioCompressor?: AudioCompressor;
 }
 
 export interface NativeVideoAudioGraphRenderRequest {
