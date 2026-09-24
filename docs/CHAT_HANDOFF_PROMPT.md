@@ -1,11 +1,12 @@
 ## M3.80 — active — 2026-09-24
 
 - Branch: `feat/m3-80-video-source-audio-fast-path-controls`.
-- Scope: ensure embedded Video source audio respects existing Video-track Volume and Pan controls on direct and sequential fast-path exports.
-- Root repository gap identified after M3.79: fast-path Video exports call native direct/segment renderers that preserve source audio but do not receive Track Volume/Pan metadata.
-- M3.80 should route affected non-default Video-track Volume/Pan cases through the unified AV source-audio renderer while preserving fast paths for default track audio settings.
+- Scope: ensure embedded Video source audio respects existing Video-track Volume and Pan controls on direct and sequential fast-path exports, and respect Video-track mute state on those fast paths.
+- Root repository gap: direct/segment Video exports preserve source audio but do not receive Track Volume/Pan metadata; the direct single-source path also previously kept audio enabled for muted Video tracks.
+- M3.80 routes affected non-default Video-track Volume/Pan cases through the unified AV source-audio renderer while preserving fast paths for default track audio settings.
+- Muted single-source and sequential single-track Video exports now disable audio.
 - Keep Audio-track behavior unchanged; no project schema change.
-- Add focused pipeline regression coverage and preserve current native source-audio implementation.
+- Add focused pipeline regression coverage and preserve the current native source-audio implementation.
 - Validation is pending.
 - M3.79 completed and squash-merged as PR #93 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
 - M3.78 completed and squash-merged as PR #92 at `bd583a3891c9acf68ab827e31469008ce1f8e015`.
