@@ -1,20 +1,35 @@
-### M3.84 — Embedded Video Source-Audio Timeline Parity — in progress — 2026-09-24
+### M3.85 — Embedded Video Source-Audio Waveform Parity — in progress — 2026-09-25
 
-Branch: `feat/m3-84-video-source-audio-timeline-parity`
+Branch: `feat/m3-85-video-source-audio-waveform`
 
 Scope:
-- Align existing Timeline Audio Fade handles with embedded Video source audio.
-- Reuse shared interaction/command/history paths.
-- Keep Audio waveform rendering Audio-only; no schema or DSP changes.
+- Render the existing Timeline audio waveform for Video clips with embedded source audio.
+- Keep existing Audio-track waveform behavior, seek/selection interaction, cache semantics, and project schema unchanged.
+- Keep Image clips audio-free.
 
 Implementation:
-- Timeline now exposes the existing Fade regions/handles for both Audio-track Audio clips and Video-track Video clips.
-- Existing pointer drag and keyboard nudge behavior is reused for Video clips.
-- Added Video fade-handle commit coverage and Image exclusion coverage.
+- Native waveform source validation accepts both Audio and Video media types.
+- Video waveform generation still probes `a:0`, so files without audio produce no waveform rather than a fake signal.
+- Timeline reuses `AudioWaveformPreview` for audio-bearing Video clips.
+- Added Rust validator coverage and Timeline Video/Image regression tests.
 - No project schema or export DSP change.
 
 Validation:
 - Pending user local validation.
+
+### M3.84 — Embedded Video Source-Audio Timeline Parity — completed — 2026-09-25
+
+Branch: `feat/m3-84-video-source-audio-timeline-parity`
+PR #99
+Merge SHA: `01bf4c2301afc0bdba40d4afcae443d12d6079e0`
+
+Implementation:
+- Exposed existing Audio Fade regions/handles for Video-track Video clips.
+- Reused pointer drag/cancel/release and keyboard nudge behavior.
+- Kept Audio waveform rendering Audio-only and Image clips audio-free.
+- Added Video fade-handle commit and Image exclusion regression coverage.
+- User reported PASS.
+- No project schema or export DSP change.
 
 ### M3.83 — Embedded Video Source-Audio Inspector Parity — completed — 2026-09-24
 
