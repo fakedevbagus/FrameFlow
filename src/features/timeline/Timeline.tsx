@@ -1664,7 +1664,7 @@ function TimelineTrack({
                   {asset?.name ?? "Missing media"}
                 </span>
                 <small>{formatTimecode(durationMs)}</small>
-                {isAudioClip && asset ? (
+                {(isAudioClip || isAudioBearingVideoClip) && asset ? (
                   <AudioWaveformPreview
                     sourcePath={asset.sourcePath}
                     durationMs={durationMs}
