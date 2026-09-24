@@ -50,6 +50,16 @@ pub struct NativeSourceAudioEq {
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct NativeSourceAudioCompressor {
+  pub enabled: bool,
+  pub threshold_db: f64,
+  pub ratio: f64,
+  pub attack_ms: f64,
+  pub release_ms: f64,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct NativeSourceAudioSegment {
   pub input_index: usize,
   pub source_start_ms: u64,
@@ -65,6 +75,8 @@ pub struct NativeSourceAudioSegment {
   pub audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
   #[serde(default)]
   pub audio_eq: Option<NativeSourceAudioEq>,
+  #[serde(default)]
+  pub audio_compressor: Option<NativeSourceAudioCompressor>,
 }
 
 struct ResolvedSourceAudioSegment {
@@ -78,6 +90,7 @@ struct ResolvedSourceAudioSegment {
   audio_fade_out_ms: u64,
   audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
   audio_eq: Option<NativeSourceAudioEq>,
+  audio_compressor: Option<NativeSourceAudioCompressor>,
   has_audio: bool,
 }
 
@@ -229,9 +242,9 @@ pub fn render_video_audio_graph_to_mp4(
         track_pan: segment.track_pan,
         audio_fade_in_ms: segment.audio_fade_in_ms,
         audio_fade_out_ms: segment.audio_fade_out_ms,
-        audio_eq: None,
         audio_volume_keyframes: segment.audio_volume_keyframes.clone(),
         audio_eq: segment.audio_eq.clone(),
+        audio_compressor: segment.audio_compressor.clone(),
         has_audio,
       })
     })
@@ -505,6 +518,9 @@ fn build_source_audio_filter(
     }
 
     filters.push_str(&build_source_audio_eq_filters(segment.audio_eq.as_ref()));
+    filters.push_str(&build_source_audio_compressor_filter(
+      segment.audio_compressor.as_ref(),
+    ));
     filters.push_str(&build_source_audio_fade_filters(segment));
 
     filters.push_str(&format!(
@@ -559,6 +575,32 @@ fn build_source_audio_eq_filters(eq: Option<&NativeSourceAudioEq>) -> String {
   } else {
     format!(",{}", filters.join(","))
   }
+}
+
+fn build_source_audio_compressor_filter(
+  compressor: Option<&NativeSourceAudioCompressor>,
+) -> String {
+  let Some(compressor) = compressor else {
+    return String::new();
+  };
+
+  if !compressor.enabled {
+    return String::new();
+  }
+
+  let threshold_db = compressor.threshold_db.clamp(-60.0, 0.0);
+  let threshold = 10.0_f64.powf(threshold_db / 20.0);
+  let ratio = compressor.ratio.clamp(1.0, 20.0);
+  let attack_ms = compressor.attack_ms.clamp(0.01, 2000.0);
+  let release_ms = compressor.release_ms.clamp(0.01, 9000.0);
+
+  format!(
+    ",acompressor=threshold={}:ratio={}:attack={}:release={}",
+    format_number(threshold),
+    format_number(ratio),
+    format_number(attack_ms),
+    format_number(release_ms),
+  )
 }
 
 fn build_source_audio_fade_filters(segment: &ResolvedSourceAudioSegment) -> String {
