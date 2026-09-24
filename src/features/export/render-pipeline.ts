@@ -69,6 +69,12 @@ export function renderVideoPlanToMp4(
         ...(segment.audioVolumeKeyframes?.length
           ? { audioVolumeKeyframes: segment.audioVolumeKeyframes }
           : {}),
+        ...(segment.audioFadeInMs && segment.audioFadeInMs > 0
+          ? { audioFadeInMs: Math.max(0, Math.floor(segment.audioFadeInMs)) }
+          : {}),
+        ...(segment.audioFadeOutMs && segment.audioFadeOutMs > 0
+          ? { audioFadeOutMs: Math.max(0, Math.floor(segment.audioFadeOutMs)) }
+          : {}),
       })),
     videoFilterComplex: videoGraph.filterComplex,
     videoMap: videoGraph.videoMap,
@@ -138,6 +144,12 @@ function renderVideoOnlyPlanToMp4(
       ) ||
       Boolean(segment.textOverlay) ||
       Boolean(segment.audioVolumeKeyframes?.length) ||
+      Boolean(
+        segment.mediaType === "video" &&
+          !segment.isMuted &&
+          ((segment.audioFadeInMs ?? 0) > 0 ||
+            (segment.audioFadeOutMs ?? 0) > 0),
+      ) ||
       transform.x !== 0 ||
       transform.y !== 0 ||
       transform.scale !== 1 ||
@@ -238,6 +250,12 @@ function renderVideoOnlyPlanToMp4(
       trackPan: segment.trackPan ?? 0,
       ...(segment.audioVolumeKeyframes?.length
         ? { audioVolumeKeyframes: segment.audioVolumeKeyframes }
+        : {}),
+      ...(segment.audioFadeInMs && segment.audioFadeInMs > 0
+        ? { audioFadeInMs: Math.max(0, Math.floor(segment.audioFadeInMs)) }
+        : {}),
+      ...(segment.audioFadeOutMs && segment.audioFadeOutMs > 0
+        ? { audioFadeOutMs: Math.max(0, Math.floor(segment.audioFadeOutMs)) }
         : {}),
     }));
 
