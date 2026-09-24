@@ -237,6 +237,7 @@ function PreviewVisualLayer({
   onError,
 }: PreviewVisualLayerProps) {
   const mediaRef = useRef<HTMLVideoElement | null>(null);
+  const audioRoutingRef = useRef<AudioPreviewRouting | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const interactionRef = useRef<HTMLDivElement | null>(null);
   const mediaUrl = tryConvertFileSrc(layer.asset.sourcePath);
@@ -258,6 +259,10 @@ function PreviewVisualLayer({
   const onErrorRef = useRef(onError);
 
   const localTimeMs = getClipLocalTimeMs(layer.clip, currentTimeMs);
+  const clipLocalTimeMs = Math.max(
+    0,
+    currentTimeMs - layer.clip.timelineStartMs,
+  );
   const transformTimeMs = Math.min(
     Math.max(currentTimeMs - layer.clip.timelineStartMs, 0),
     getClipDurationMsForTransform(layer.clip),
@@ -448,6 +453,26 @@ function PreviewVisualLayer({
     isPlaying,
     localTimeMs,
   ]);
+
+  useEffect(() => {
+    if (layer.asset.mediaType !== "video") {
+      return;
+    }
+
+    const media = mediaRef.current;
+    if (!media) {
+      return;
+    }
+
+    audioRoutingRef.current = getAudioPreviewRouting(media);
+    applyAudioPreviewState(
+      media,
+      audioRoutingRef.current,
+      layer.track,
+      layer.clip,
+      clipLocalTimeMs,
+    );
+  }, [clipLocalTimeMs, layer.asset.mediaType, layer.clip, layer.track]);
 
   const localTimeMsRef = useRef(localTimeMs);
 
@@ -1310,12 +1335,12 @@ interface AudioPreviewRouting {
 }
 
 const audioPreviewRoutingCache = new WeakMap<
-  HTMLAudioElement,
+  HTMLMediaElement,
   AudioPreviewRouting
 >();
 
 function getAudioPreviewRouting(
-  media: HTMLAudioElement,
+  media: HTMLMediaElement,
 ): AudioPreviewRouting | null {
   const cached = audioPreviewRoutingCache.get(media);
 
@@ -1365,6 +1390,23 @@ function getAudioPreviewRouting(
     return routing;
   } catch {
     return null;
+  }
+}
+
+function applyAudioPreviewState(
+  media: HTMLMediaElement,
+  routing: AudioPreviewRouting | null,
+  track: Project["tracks"][number],
+  clip: ActivePreviewClip["clip"],
+  clipLocalTimeMs: number,
+) {
+  media.volume =
+    getTrackVolume(track) *
+    getAudioVolumeAtTime(clip, clipLocalTimeMs) *
+    getAudioFadeGain(clip, clipLocalTimeMs);
+
+  if (routing) {
+    applyAudioPreviewProcessing(routing, track, clip);
   }
 }
 
@@ -1465,10 +1507,13 @@ function PreviewAudioLayer({
       return;
     }
 
-    media.volume =
-      getTrackVolume(layer.track) *
-      getAudioVolumeAtTime(layer.clip, clipLocalTimeMs) *
-      getAudioFadeGain(layer.clip, clipLocalTimeMs);
+    applyAudioPreviewState(
+      media,
+      audioRoutingRef.current,
+      layer.track,
+      layer.clip,
+      clipLocalTimeMs,
+    );
   }, [
     clipLocalTimeMs,
     layer.clip,
@@ -1561,13 +1606,13 @@ function PreviewAudioLayer({
         if (element) {
           const routing = getAudioPreviewRouting(element);
           audioRoutingRef.current = routing;
-          if (routing) {
-            applyAudioPreviewProcessing(routing, layer.track, layer.clip);
-          }
-          element.volume =
-            getTrackVolume(layer.track) *
-            getAudioVolumeAtTime(layer.clip, clipLocalTimeMs) *
-            getAudioFadeGain(layer.clip, clipLocalTimeMs);
+          applyAudioPreviewState(
+            element,
+            routing,
+            layer.track,
+            layer.clip,
+            clipLocalTimeMs,
+          );
         }
       }}
       data-clip-id={layer.clip.id}
