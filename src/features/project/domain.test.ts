@@ -231,6 +231,232 @@ describe("project domain", () => {
     });
   });
 
+  it("round-trips a project with valid assets, tracks, and clips", () => {
+    const project = createProject({
+      id: "validated-project",
+      now: new Date("2026-09-19T12:00:00.000Z"),
+    });
+    const videoAsset = {
+      id: "video-asset",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 8000,
+    };
+
+    const audioAsset = {
+      id: "audio-asset",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 6000,
+    };
+
+    const projectWithMedia = {
+      ...project,
+      assets: [videoAsset, audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "video-clip",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 500,
+                  sourceEndMs: 7000,
+                  audioFadeInMs: 500,
+                  audioVolumeKeyframes: [{ timeMs: 1000, volume: 0.7 }],
+                },
+              ],
+            }
+          : {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 5000,
+                  audioFadeOutMs: 300,
+                },
+              ],
+            },
+      ),
+    };
+
+    expect(parseProject(serializeProject(projectWithMedia))).toEqual(
+      projectWithMedia,
+    );
+  });
+
+  it("rejects duplicate asset ids", () => {
+    const project = createProject({ id: "duplicate-assets" });
+    const asset = {
+      id: "asset-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 1000,
+    };
+
+    expect(() =>
+      parseProject(
+        serializeProject({
+          ...project,
+          assets: [asset, asset],
+        }),
+      ),
+    ).toThrow("Duplicate asset id: asset-1.");
+  });
+
+  it("rejects clips that reference missing assets", () => {
+    const project = createProject({ id: "missing-asset" });
+    const invalidProject = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: "missing",
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1000,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => serializeProject(invalidProject)).toThrow(
+      "references missing asset: missing.",
+    );
+  });
+
+  it("rejects a video asset on an audio track", () => {
+    const project = createProject({ id: "track-mismatch" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 1000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1000,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => serializeProject(invalidProject)).toThrow(
+      "uses media type video on a audio track.",
+    );
+  });
+
+  it("rejects a clip source range beyond known asset duration", () => {
+    const project = createProject({ id: "source-range" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 1000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1001,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => serializeProject(invalidProject)).toThrow(
+      "sourceEndMs cannot exceed asset duration.",
+    );
+  });
+
+  it("rejects invalid track volume and pan values", () => {
+    const project = createProject({ id: "track-controls" });
+
+    expect(() =>
+      serializeProject({
+        ...project,
+        tracks: project.tracks.map((track) => ({ ...track, volume: 2 })),
+      }),
+    ).toThrow("volume must be between 0 and 1.");
+
+    expect(() =>
+      serializeProject({
+        ...project,
+        tracks: project.tracks.map((track) => ({ ...track, pan: -2 })),
+      }),
+    ).toThrow("pan must be between -1 and 1.");
+  });
+
+  it("rejects duplicate clip ids", () => {
+    const project = createProject({ id: "duplicate-clips" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 2000,
+    };
+    const clip = {
+      id: "clip-1",
+      assetId: audioAsset.id,
+      timelineStartMs: 0,
+      sourceStartMs: 0,
+      sourceEndMs: 1000,
+    };
+
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio" ? { ...track, clips: [clip, clip] } : track,
+      ),
+    };
+
+    expect(() => serializeProject(invalidProject)).toThrow(
+      "Duplicate clip id: clip-1.",
+    );
+  });
+
   it("rejects invalid JSON and unsupported schemas", () => {
     expect(() => parseProject("not json")).toThrow(ProjectValidationError);
     expect(() => parseProject('{"schemaVersion":999}')).toThrow(
