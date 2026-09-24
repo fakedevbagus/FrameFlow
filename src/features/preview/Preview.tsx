@@ -472,7 +472,13 @@ function PreviewVisualLayer({
       layer.clip,
       clipLocalTimeMs,
     );
-  }, [clipLocalTimeMs, layer.asset.mediaType, layer.clip, layer.track]);
+  }, [
+    clipLocalTimeMs,
+    layer.asset.mediaType,
+    layer.clip,
+    layer.track,
+    videoSourceUrl,
+  ]);
 
   const localTimeMsRef = useRef(localTimeMs);
 
