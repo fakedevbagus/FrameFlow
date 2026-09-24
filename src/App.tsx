@@ -693,11 +693,12 @@ function App() {
   ) {
     const clipContext = findClipContext(project, clipId);
 
-    const isAudioBearingClip =
-      (clipContext.track.type === "audio" &&
-        clipContext.asset?.mediaType === "audio") ||
-      (clipContext.track.type === "video" &&
-        clipContext.asset?.mediaType === "video");
+    const isAudioBearingClip = clipContext
+      ? (clipContext.track.type === "audio" &&
+          clipContext.asset?.mediaType === "audio") ||
+        (clipContext.track.type === "video" &&
+          clipContext.asset?.mediaType === "video")
+      : false;
 
     if (!clipContext || !isAudioBearingClip) {
       return;
@@ -805,11 +806,12 @@ function App() {
   ) {
     const clipContext = findClipContext(project, clipId);
 
-    const isAudioBearingClip =
-      (clipContext.track.type === "audio" &&
-        clipContext.asset?.mediaType === "audio") ||
-      (clipContext.track.type === "video" &&
-        clipContext.asset?.mediaType === "video");
+    const isAudioBearingClip = clipContext
+      ? (clipContext.track.type === "audio" &&
+          clipContext.asset?.mediaType === "audio") ||
+        (clipContext.track.type === "video" &&
+          clipContext.asset?.mediaType === "video")
+      : false;
 
     if (!clipContext || !isAudioBearingClip) {
       return;
