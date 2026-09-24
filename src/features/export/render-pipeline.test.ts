@@ -1605,6 +1605,88 @@ describe("render video pipeline", () => {
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
 
+  it("propagates active Video compressor into mixed unified source-audio metadata", async () => {
+    const plan: RenderPlan = {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+          audioCompressor: {
+            enabled: true,
+            thresholdDb: -24,
+            ratio: 4,
+            attackMs: 20,
+            releaseMs: 250,
+          },
+        },
+        {
+          inputIndex: 1,
+          assetId: "audio-a",
+          sourcePath: "/media/music.mp3",
+          mediaType: "audio",
+          trackId: "audio-1",
+          trackType: "audio",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/mixed-video-compressor.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/mixed-video-compressor.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/mixed-video-compressor.mp4",
+    });
+
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audioInputs: ["/media/music.mp3"],
+        sourceAudioSegments: [
+          {
+            inputIndex: 0,
+            sourceStartMs: 0,
+            timelineStartMs: 0,
+            durationMs: 4000,
+            trackVolume: 1,
+            trackPan: 0,
+            audioCompressor: {
+              enabled: true,
+              thresholdDb: -24,
+              ratio: 4,
+              attackMs: 20,
+              releaseMs: 250,
+            },
+          },
+        ],
+        outputPath: "/tmp/mixed-video-compressor.mp4",
+      }),
+    );
+  });
+
   it("compiles the graph before invoking native rendering", () => {
     expect(typeof compileSingleVideoTrackGraph).toBe("function");
   });
