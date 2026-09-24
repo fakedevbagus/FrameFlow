@@ -1,16 +1,13 @@
-## M3.86 — active — 2026-09-25
+## M3.87 — active — 2026-09-25
 
-- Branch: `feat/m3-86-waveform-trim-range-alignment`.
-- Base: M3.85 squash merge `c631fce74963d3c89fff8bf6246ccf95685ecd8e`.
-- Scope: make Timeline waveform geometry follow the clip source range after trimming.
-- Repository evidence: waveform generation/caching is source-wide, while Timeline previously stretched full-source peaks across a trimmed clip's visible duration.
-- Implementation stores native peaks/source duration in `AudioWaveformPreview` and derives visible peaks with `getWaveformPeaksForSourceRange` using the current `sourceStartMs`/`sourceEndMs`.
-- Explicit Audio clips and embedded-audio Video clips use the same path; Image clips remain excluded.
-- Added unit regressions for range cropping/resampling and safe clamping.
-- No project schema or export DSP change.
-- M3.85 completed and squash-merged as PR #100 at `c631fce74963d3c89fff8bf6246ccf95685ecd8e`.
+- Branch: `fix/m3-87-waveform-load-state`.
+- Base: M3.86 squash merge `afd49629d25bef4f399f2886f494d97dc6e9abdd`.
+- Audit finding: M3.86 `AudioWaveformPreview` stores `peaks/sourceDurationMs`, but its waveform-request `catch` branch still writes the removed `path` field.
+- Scope: correct only this waveform load-failure state shape and add rejection-path regression coverage.
+- Preserve M3.86 trim-range alignment, Video embedded-audio waveform parity, cache behavior, project schema, and export DSP unchanged.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
-- Local M3.86 validation is pending.
+- M3.86 was user-validated and squash-merged as PR #101 at `afd49629d25bef4f399f2886f494d97dc6e9abdd`.
+- Local M3.87 validation is pending.
 
 ## M3.85 — active — 2026-09-25
 
