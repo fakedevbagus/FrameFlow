@@ -4,7 +4,7 @@ Branch:
 `fix/m3-89-waveform-selection-lifecycle`
 
 PR:
-Not opened yet; implementation branch only.
+#104 — Draft.
 
 Base:
 `main` after M3.88 merge.
