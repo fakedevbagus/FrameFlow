@@ -1,3 +1,17 @@
+## M3.74 — active — 2026-09-24
+
+- Branch: `feat/m3-74-source-audio-track-controls`.
+- Scope: expose existing Video-track Volume/Pan controls and apply them to embedded video source audio in unified AV export.
+- Timeline now renders V/P controls for both video and audio tracks.
+- Unified source-audio metadata carries track volume/pan; native FFmpeg applies clamped volume and constant-power stereo panning.
+- No project schema change.
+- A follow-up local run exposed a parse failure because `src/features/timeline/commands.test.ts` had been accidentally truncated in the branch; the complete test file was restored from `main` and the M3.74 pan-test correction was retained in commit `9ab4a029a1760eeee43bc347a0271516dad755df`.
+- Earlier local validation passed lint, production build, all 43 Rust tests, and Tauri development startup; the only frontend failure was the stale command test expecting Video-track Pan to be rejected.
+- Corrected that stale test; fresh frontend validation and manual export verification are pending.
+- Intended PR: #88 Draft.
+- M3.73 is complete and merged at `8c7292f1b4484c9a2156484c2d06f4980760c468`.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
 ## M3.73 — completed — 2026-09-24
 
 - PR #87 was user-validated, marked ready, and squash-merged.

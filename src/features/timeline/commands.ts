@@ -529,10 +529,6 @@ export function updateTrackPan(
     throw new Error("Track does not exist in this project.");
   }
 
-  if (project.tracks[trackIndex].type !== "audio") {
-    throw new Error("Track pan is only available for audio tracks.");
-  }
-
   const tracks = [...project.tracks];
   tracks[trackIndex] = {
     ...tracks[trackIndex],

@@ -1,3 +1,26 @@
+### M3.74 — Video Track Volume/Pan for Embedded Source Audio — in progress — 2026-09-24
+
+Branch: `feat/m3-74-source-audio-track-controls`
+PR: Draft
+
+Implemented:
+- Exposed Volume/Pan controls on video tracks using the existing track update callbacks and history commands.
+- Routed video-track Volume/Pan into unified source-audio export metadata.
+- Applied clamped Volume and constant-power stereo Pan to embedded video source audio in native FFmpeg.
+- Added Timeline, App, pipeline, and Rust regression coverage.
+- No project schema change.
+
+Validation:
+- A follow-up local run exposed a parse failure in `commands.test.ts`; the branch copy had been accidentally truncated to a fragment. Restored the complete test file from `main` while retaining the M3.74 pan-test correction in commit `9ab4a029a1760eeee43bc347a0271516dad755df`.
+- The earlier local rerun passed lint, production build, and all 43 Rust tests; Tauri development startup also completed successfully.
+- Frontend tests reached 400/401 tests with one stale command test still expecting Video-track Pan to be rejected.
+- The failing assertion was in the test named "rejects invalid pan values and non-audio tracks"; M3.74 intentionally permits Pan on Video tracks.
+- Updated that stale test to validate invalid values and unknown tracks only. The existing positive Video-track Volume/Pan command coverage remains.
+- Fresh frontend test rerun and manual export verification are still required.
+
+Next step:
+- Rerun lint, frontend tests, production build, Rust tests, Tauri startup, and the manual export check.
+
 ### M3.73 — Preserve Source Audio in Unified AV Export — merged — 2026-09-24
 
 Branch: `feat/m3-73-source-audio-unified-export`

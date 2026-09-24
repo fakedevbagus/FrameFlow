@@ -1006,7 +1006,7 @@ describe("updateTrackPan", () => {
     expect(updated.updatedAt).toBe("2026-09-20T00:00:01.000Z");
   });
 
-  it("rejects invalid pan values and non-audio tracks", () => {
+  it("rejects invalid pan values and unknown tracks", () => {
     const project = createProject({ id: "pan-command-errors" });
 
     expect(() => updateTrackPan(project, "audio-1", -1.01)).toThrow(
@@ -1017,9 +1017,6 @@ describe("updateTrackPan", () => {
     );
     expect(() => updateTrackPan(project, "missing-track", 0)).toThrow(
       "Track does not exist in this project.",
-    );
-    expect(() => updateTrackPan(project, "video-1", 0.5)).toThrow(
-      "Track pan is only available for audio tracks.",
     );
   });
 

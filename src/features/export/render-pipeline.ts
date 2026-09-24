@@ -64,6 +64,8 @@ export function renderVideoPlanToMp4(
         sourceStartMs: segment.sourceStartMs,
         timelineStartMs: segment.timelineStartMs,
         durationMs: segment.durationMs,
+        trackVolume: segment.trackVolume ?? 1,
+        trackPan: segment.trackPan ?? 0,
       })),
     videoFilterComplex: videoGraph.filterComplex,
     videoMap: videoGraph.videoMap,

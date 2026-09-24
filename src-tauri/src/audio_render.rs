@@ -39,6 +39,8 @@ pub struct NativeSourceAudioSegment {
   pub source_start_ms: u64,
   pub timeline_start_ms: u64,
   pub duration_ms: u64,
+  pub track_volume: f64,
+  pub track_pan: f64,
 }
 
 struct ResolvedSourceAudioSegment {
@@ -46,6 +48,8 @@ struct ResolvedSourceAudioSegment {
   source_start_ms: u64,
   timeline_start_ms: u64,
   duration_ms: u64,
+  track_volume: f64,
+  track_pan: f64,
   has_audio: bool,
 }
 
@@ -193,6 +197,8 @@ pub fn render_video_audio_graph_to_mp4(
         source_start_ms: segment.source_start_ms,
         timeline_start_ms: segment.timeline_start_ms,
         duration_ms: segment.duration_ms,
+        track_volume: segment.track_volume,
+        track_pan: segment.track_pan,
         has_audio,
       })
     })
@@ -442,14 +448,33 @@ fn build_source_audio_filter(
       .source_start_ms
       .saturating_add(segment.duration_ms);
     let label = format!("[frameflow_source_audio_{}]", segment.input_index);
-    filter_parts.push(format!(
-      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay={}:all=1{}",
+    let volume = segment.track_volume.clamp(0.0, 1.0);
+    let pan = segment.track_pan.clamp(-1.0, 1.0);
+    let mut filters = format!(
+      "[{}:a:0]atrim=start={}:end={},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume={}",
       segment.input_index,
       format_seconds(segment.source_start_ms),
       format_seconds(source_end_ms),
+      format_number(volume),
+    );
+
+    if pan.abs() >= 0.000001 {
+      let normalized = (pan + 1.0) * std::f64::consts::PI / 4.0;
+      let left_gain = normalized.cos();
+      let right_gain = normalized.sin();
+      filters.push_str(&format!(
+        ",pan=stereo|c0={}*c0|c1={}*c1",
+        format_number(left_gain),
+        format_number(right_gain),
+      ));
+    }
+
+    filters.push_str(&format!(
+      ",adelay={}:all=1{}",
       segment.timeline_start_ms,
       label,
     ));
+    filter_parts.push(filters);
     labels.push(label);
   }
 
@@ -908,6 +933,17 @@ fn format_seconds(milliseconds: u64) -> String {
   )
 }
 
+fn format_number(value: f64) -> String {
+  if value.fract().abs() < f64::EPSILON {
+    return format!("{value:.0}");
+  }
+
+  format!("{value:.6}")
+    .trim_end_matches('0')
+    .trim_end_matches('.')
+    .to_string()
+}
+
 fn same_path(first: &Path, second: &Path) -> bool {
   let first_canonical = fs::canonicalize(first).ok();
   let second_canonical = fs::canonicalize(second)
@@ -1122,6 +1158,8 @@ mod tests {
         source_start_ms: 0,
         timeline_start_ms: 0,
         duration_ms: 5_000,
+        track_volume: 1.0,
+        track_pan: 0.0,
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1144,6 +1182,8 @@ mod tests {
         source_start_ms: 0,
         timeline_start_ms: 0,
         duration_ms: 5_000,
+        track_volume: 1.0,
+        track_pan: 0.0,
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1166,6 +1206,8 @@ mod tests {
         source_start_ms: 0,
         timeline_start_ms: 0,
         duration_ms: 0,
+        track_volume: 1.0,
+        track_pan: 0.0,
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1362,6 +1404,8 @@ mod tests {
       source_start_ms: 250,
       timeline_start_ms: 1_000,
       duration_ms: 4_000,
+      track_volume: 0.65,
+      track_pan: -0.25,
       has_audio: true,
     }];
 
@@ -1394,7 +1438,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,adelay=1000:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=0.65,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
     ));
     assert!(filter.contains("[frameflow_explicit_audio]"));
     assert!(filter.contains(

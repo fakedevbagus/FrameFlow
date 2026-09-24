@@ -858,6 +858,32 @@ describe("Timeline", () => {
     expect(onUpdateTrackVolume).toHaveBeenCalledWith("audio-1", 0.35);
   });
 
+  it("shows video track volume and pan sliders and reports changes", () => {
+    const project = createVideoProject();
+    const onUpdateTrackVolume = vi.fn();
+    const onUpdateTrackPan = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onUpdateTrackVolume={onUpdateTrackVolume}
+        onUpdateTrackPan={onUpdateTrackPan}
+      />,
+    );
+
+    const volume = screen.getByRole("slider", { name: "Volume Video 1" });
+    const pan = screen.getByRole("slider", { name: "Pan Video 1" });
+
+    expect(volume).toHaveValue("1");
+    expect(pan).toHaveValue("0");
+
+    fireEvent.change(volume, { target: { value: "0.4" } });
+    fireEvent.change(pan, { target: { value: "-0.25" } });
+
+    expect(onUpdateTrackVolume).toHaveBeenCalledWith("video-1", 0.4);
+    expect(onUpdateTrackPan).toHaveBeenCalledWith("video-1", -0.25);
+  });
+
   it("adds video and audio tracks through timeline controls", () => {
     const project = createVideoProject();
     const onAddTrack = vi.fn();
