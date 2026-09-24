@@ -2,8 +2,13 @@
 
 - Branch: `feat/m3-79-video-source-audio-fade-export`.
 - Scope: make exported embedded Video source audio honor the existing clip Fade In/Fade Out metadata consistently with Video preview.
-- Reuse the existing audio fade model and native FFmpeg filter architecture; do not add schema fields.
-- Keep Audio-track fade behavior unchanged.
+- RenderPlan carries normalized Video fade durations for Video assets.
+- Unified source-audio metadata carries non-zero Video fade durations.
+- Video-only exports with active Video source-audio fades now route through the unified AV renderer instead of direct/segment fast paths.
+- Native source-audio rendering applies duration-clamped FFmpeg `afade` filters before timeline delay.
+- Added RenderPlan, pipeline, and Rust regression coverage.
+- No project schema change.
+- Validation is pending.
 - M3.78 completed and squash-merged as PR #92 at `bd583a3891c9acf68ab827e31469008ce1f8e015`.
 - PR #76 remains parked and must not be merged or revived wholesale.
 
