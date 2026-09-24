@@ -1021,15 +1021,21 @@ describe("Timeline", () => {
     );
     const clipId = populated.tracks[1].clips[0].id;
 
-    const { rerender } = render(<Timeline project={populated} />);
+    const { container, rerender } = render(<Timeline project={populated} />);
 
-    const waveform = await screen.findAllByTestId("timeline-audio-waveform").then(
-      (waveforms) => waveforms.find((candidate) =>
-        candidate.getAttribute("aria-label")?.includes("Seek audio waveform"),
-      ),
+    await waitFor(() =>
+      expect(
+        container.querySelector(
+          ".timeline-clip-audio .timeline-audio-waveform",
+        ),
+      ).not.toBeNull(),
     );
 
-    expect(waveform).toBeDefined();
+    const waveform = container.querySelector(
+      ".timeline-clip-audio .timeline-audio-waveform",
+    );
+
+    expect(waveform).not.toBeNull();
     if (!waveform) {
       throw new Error("Audio waveform was not rendered.");
     }
