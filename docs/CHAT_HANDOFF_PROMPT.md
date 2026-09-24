@@ -1,6 +1,7 @@
 ## M3.81 — active — 2026-09-24
 
 - Branch: `feat/m3-81-video-source-audio-eq-export`.
+- PR: #95 — Draft.
 - Scope: make exported embedded Video source audio honor the existing per-clip 3-band EQ already used by Video preview.
 - Repository evidence: `RenderSegment` already exposes `audioEq`, but the implementation previously populated it only for Audio-track audio clips; the native embedded source-audio contract had no EQ field or native EQ filter stage.
 - Implemented Video EQ metadata propagation through RenderPlan and the native unified source-audio request without changing the project schema.
