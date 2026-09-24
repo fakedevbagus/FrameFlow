@@ -1,29 +1,48 @@
-### M3.82 — Embedded Video Source-Audio Compressor Export — in progress — 2026-09-24
+### M3.83 — Embedded Video Source-Audio Inspector Parity — in progress — 2026-09-24
 
-Branch: `feat/m3-82-video-source-audio-compressor-export`
+Branch: `feat/m3-83-video-source-audio-inspector-parity`
 
 Scope:
-- Export embedded Video source audio with the existing per-clip AudioCompressor model.
-- Reuse Audio-track compressor semantics without changing the project schema.
-- Preserve Track Volume/Pan → clip Volume Automation → clip EQ → clip Compressor → clip Fade → timeline delay ordering.
-- Preserve direct/segment fast paths when Video source-audio compression is disabled.
+- Expose the existing Audio Fade, EQ, and Compressor Inspector controls for Video clips that contain embedded source audio.
+- Reuse the existing commands, models, validation, history, preview routing, and export paths.
+- Keep images audio-free and keep Audio-track behavior unchanged.
+- No project schema change.
+
+Repository evidence:
+- Video embedded audio already uses the shared preview DSP path, including EQ and compressor support.
+- Video embedded audio export already supports Fade/EQ/Compressor plus Volume Automation and Track Volume/Pan.
+- App Inspector JSX currently renders Fade/EQ/Compressor only for Audio assets on Audio tracks.
+- EQ and Compressor command handlers currently reject Video clips, while Fade already has Video-aware handler logic but its Inspector is still not exposed for Video.
+- Video Volume Automation Inspector is already available.
 
 Implementation:
-- RenderPlan propagates normalized `audioCompressor` for Video clips.
-- Native source-audio request/resolve types accept optional compressor metadata.
-- Unified Video export payloads carry active Video compressor metadata for both Video-only and mixed Video + explicit Audio paths.
-- Active Video compressor forces unified AV rendering; disabled compressor remains fast-path eligible.
-- Native FFmpeg uses `acompressor` with the same threshold/ratio/attack/release ranges already used by the Audio-track export graph.
-- Inherited duplicate `audio_eq` assignment in the native resolver was removed during baseline audit.
-- Added RenderPlan, pipeline, and Rust regression coverage.
-- No schema change.
+- Extend command eligibility for EQ and Compressor to Video-track Video clips while retaining the same parameter ranges and normalization.
+- Expose the shared Fade/EQ/Compressor Inspector controls for Video clips with embedded audio.
+- Keep all mutations inside the existing history engine.
+- Add focused command/UI regression coverage.
+- No DSP redesign and no schema changes.
 
 Validation:
 - Pending user local validation.
 
 Known limitations:
-- Video-specific compressor Inspector controls are not part of this milestone.
-- Audio-track compressor behavior remains unchanged.
+- This milestone adds Inspector parity only; it does not introduce new effect types or Video-specific DSP controls.
+- Image clips remain without audio controls.
+
+### M3.82 — Embedded Video Source-Audio Compressor Export — completed — 2026-09-24
+
+Branch: `feat/m3-82-video-source-audio-compressor-export`
+PR #97
+Merge SHA: `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`
+
+Implementation:
+- Extended the existing per-clip AudioCompressor path to embedded Video source audio.
+- Enabled Video compression routes through unified AV export; disabled compression keeps fast paths.
+- Native filtering reuses Audio-track compressor semantics and preserves Track Volume/Pan → Volume Automation → EQ → Compressor → Fade → Delay ordering.
+- Added RenderPlan, pipeline, mixed-payload, fast-path, and Rust regression coverage.
+- User reported PASS.
+- No project schema change.
+
 
 ### M3.81 — Embedded Video Source-Audio EQ Export — completed — 2026-09-24
 
