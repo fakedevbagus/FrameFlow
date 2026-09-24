@@ -1,3 +1,20 @@
+### M3.86 — Waveform Trim-Range Alignment — in progress — 2026-09-25
+
+Branch: `feat/m3-86-waveform-trim-range-alignment`
+
+Scope:
+- Align the Timeline waveform with the clip's actual `sourceStartMs`/`sourceEndMs` range for trimmed Audio and Video clips.
+- Reuse existing waveform generation/caching and preserve Video embedded-audio parity.
+- No project schema or export DSP change.
+
+Implementation:
+- Added source-range peak cropping/resampling in the existing waveform helper.
+- Timeline derives the visible waveform from stored full-source peaks and the current trim range, so trim interaction updates the waveform without a second FFmpeg decode.
+- Added waveform range/resampling regression coverage.
+- Validation pending user local run.
+
+### M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
+
 ### M3.85 — Embedded Video Source-Audio Waveform Parity — in progress — 2026-09-25
 
 Branch: `feat/m3-85-video-source-audio-waveform`
