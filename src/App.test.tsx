@@ -1794,6 +1794,76 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("1 keyframe")).toBeInTheDocument());
   });
 
+  it("edits video clip audio volume automation from the inspector", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-video-volume-automation",
+        name: "video-volume-automation.mp4",
+        mediaType: "video",
+        sourcePath: "/media/video-volume-automation.mp4",
+        durationMs: 6000,
+      },
+    ]);
+
+    const { container } = render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("video-volume-automation.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add video-volume-automation.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select video-volume-automation.mp4 clip",
+      }),
+    );
+
+    const volumeInput = screen.getByRole("spinbutton", {
+      name: "Audio volume automation",
+    });
+
+    expect(volumeInput).toHaveValue(100);
+
+    fireEvent.change(volumeInput, { target: { value: "40" } });
+    fireEvent.blur(volumeInput);
+
+    await waitFor(() => {
+      expect(screen.getByText("1 keyframe")).toBeInTheDocument();
+      expect(volumeInput).toHaveValue(40);
+    });
+
+    const ruler = container.querySelector(".timeline-ruler-scale");
+    expect(ruler).not.toBeNull();
+
+    Object.defineProperty(ruler, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({
+        bottom: 0,
+        height: 28,
+        left: 0,
+        right: 800,
+        top: 0,
+        width: 800,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    fireEvent.click(ruler as HTMLDivElement, { clientX: 80 });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Playhead at 00:02")).toBeInTheDocument();
+    });
+
+    expect(volumeInput).toHaveValue(70);
+  });
+
   it("splits the selected clip at the playhead", async () => {
     importMediaFilesMock.mockResolvedValueOnce([
       {
