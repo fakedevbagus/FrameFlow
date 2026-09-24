@@ -1,6 +1,7 @@
 ## M3.89 — active — 2026-09-25
 
 - Branch: `fix/m3-89-waveform-selection-lifecycle`.
+- PR #104 — Draft.
 - Scope: clear stale Timeline waveform selections when clip source range/duration changes after trim.
 - Audit finding: waveform selection is local state and its component stays mounted across trim updates, so a selection can outlive the source range it was created against.
 - Implementation clears selection on source path, source start, source end, or clip duration changes.
