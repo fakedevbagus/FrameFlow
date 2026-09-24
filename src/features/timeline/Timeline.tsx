@@ -22,6 +22,7 @@ import {
   buildWaveformPath,
   getAudioWaveform,
   getWaveformLocalTimeMs,
+  getWaveformPeaksForSourceRange,
   getWaveformSelectionRangeMs,
 } from "../audio/waveform";
 import {
@@ -1668,6 +1669,8 @@ function TimelineTrack({
                   <AudioWaveformPreview
                     sourcePath={asset.sourcePath}
                     durationMs={durationMs}
+                    sourceStartMs={clip.sourceStartMs}
+                    sourceEndMs={clip.sourceEndMs}
                     onSeek={(localTimeMs) => {
                       onSelectClip?.(clip.id);
                       onCurrentTimeChange?.(
@@ -2244,19 +2247,25 @@ function TimelineTrack({
 function AudioWaveformPreview({
   sourcePath,
   durationMs,
+  sourceStartMs,
+  sourceEndMs,
   onSeek,
 }: {
   sourcePath: string;
   durationMs: number;
+  sourceStartMs: number;
+  sourceEndMs: number | null;
   onSeek: (localTimeMs: number) => void;
 }) {
   const [waveformState, setWaveformState] = useState<{
     sourcePath: string;
-    path: string;
+    peaks: number[];
+    sourceDurationMs: number;
     isLoading: boolean;
   }>(() => ({
     sourcePath,
-    path: "",
+    peaks: [],
+    sourceDurationMs: 0,
     isLoading: true,
   }));
   const [selectionState, setSelectionState] = useState<{
@@ -2272,7 +2281,18 @@ function AudioWaveformPreview({
   const selectionMovedRef = useRef(false);
 
   const isCurrentSource = waveformState.sourcePath === sourcePath;
-  const waveformPath = isCurrentSource ? waveformState.path : "";
+  const visiblePeaks = isCurrentSource
+    ? getWaveformPeaksForSourceRange(
+        waveformState.peaks,
+        waveformState.sourceDurationMs,
+        sourceStartMs,
+        sourceEndMs,
+        AUDIO_WAVEFORM_PEAK_COUNT,
+      )
+    : [];
+  const waveformPath = visiblePeaks.length
+    ? buildWaveformPath(visiblePeaks, AUDIO_WAVEFORM_PEAK_COUNT, 20)
+    : "";
   const isLoading = !isCurrentSource || waveformState.isLoading;
 
   useEffect(() => {
@@ -2285,11 +2305,8 @@ function AudioWaveformPreview({
 
         setWaveformState({
           sourcePath,
-          path: buildWaveformPath(
-            waveform.peaks,
-            AUDIO_WAVEFORM_PEAK_COUNT,
-            20,
-          ),
+          peaks: waveform.peaks,
+          sourceDurationMs: waveform.durationMs,
           isLoading: false,
         });
       })

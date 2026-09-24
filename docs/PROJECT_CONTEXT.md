@@ -1,3 +1,41 @@
+## M3.86 — Waveform Trim-Range Alignment — in progress — 2026-09-25
+
+Branch:
+`feat/m3-86-waveform-trim-range-alignment`
+
+PR:
+Not opened yet; implementation branch only.
+
+Base:
+`c631fce74963d3c89fff8bf6246ccf95685ecd8e` (M3.85 squash merge)
+
+Scope:
+- Make the existing Timeline waveform represent the source range actually used by a trimmed clip.
+- Apply the same alignment to explicit Audio clips and embedded-audio Video clips.
+- Reuse the existing waveform cache/native generation; do not add project schema fields or change export DSP.
+
+Repository evidence:
+- M3.85 added waveform rendering for embedded-audio Video clips.
+- `getAudioWaveform` returns peaks for the full source file and caches them by source/fingerprint/peak count.
+- `AudioWaveformPreview` previously plotted those full-source peaks across the visible clip width, even when `sourceStartMs` or `sourceEndMs` trimmed the clip.
+
+Implementation:
+- Added `getWaveformPeaksForSourceRange` to safely crop/resample full-source peaks into the clip's source range.
+- Timeline stores the native waveform peaks and source duration, then derives the visible waveform from the current clip source range at render time.
+- Trim interactions therefore update the visible waveform immediately without regenerating native waveform data.
+- Added unit coverage for trimmed ranges, full-range behavior, invalid/out-of-range windows, and resampling.
+- No project schema or export DSP change.
+
+Validation:
+- Pending user local validation of M3.86.
+
+Known limitations:
+- Waveform resolution remains bounded by the existing native peak count; very short trim ranges can only reflect the resolution available in the cached source waveform.
+
+Next step:
+- Open Draft PR after diff audit and hand off focused local validation.
+
+
 ## M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
 
 Branch:

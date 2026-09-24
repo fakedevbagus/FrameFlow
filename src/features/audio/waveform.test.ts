@@ -9,6 +9,7 @@ import {
   clearAudioWaveformCache,
   getAudioWaveform,
   getWaveformLocalTimeMs,
+  getWaveformPeaksForSourceRange,
   getWaveformSelectionRangeMs,
 } from "./waveform";
 import { invoke } from "@tauri-apps/api/core";
@@ -36,6 +37,50 @@ describe("audio waveform", () => {
       startMs: 0,
       endMs: 5000,
     });
+  });
+
+  it("resamples a trimmed source range into the visible waveform", () => {
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0, 1, 1],
+        10_000,
+        2_500,
+        7_500,
+        4,
+      ),
+    ).toEqual([0, 0.5, 1, 1]);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1, 0.5],
+        10_000,
+        0,
+        null,
+        4,
+      ),
+    ).toEqual([0, 0.5, 1, 0.5]);
+  });
+
+  it("clamps an out-of-range source window safely", () => {
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        10_000,
+        -500,
+        12_000,
+        3,
+      ),
+    ).toEqual([0, 0.5, 1]);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0.25, 0.5, 0.75],
+        10_000,
+        6_000,
+        4_000,
+        3,
+      ),
+    ).toEqual([0, 0, 0]);
   });
 
   it("builds a closed SVG waveform path", () => {

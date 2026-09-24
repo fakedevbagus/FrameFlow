@@ -1,3 +1,17 @@
+## M3.86 — active — 2026-09-25
+
+- Branch: `feat/m3-86-waveform-trim-range-alignment`.
+- Base: M3.85 squash merge `c631fce74963d3c89fff8bf6246ccf95685ecd8e`.
+- Scope: make Timeline waveform geometry follow the clip source range after trimming.
+- Repository evidence: waveform generation/caching is source-wide, while Timeline previously stretched full-source peaks across a trimmed clip's visible duration.
+- Implementation stores native peaks/source duration in `AudioWaveformPreview` and derives visible peaks with `getWaveformPeaksForSourceRange` using the current `sourceStartMs`/`sourceEndMs`.
+- Explicit Audio clips and embedded-audio Video clips use the same path; Image clips remain excluded.
+- Added unit regressions for range cropping/resampling and safe clamping.
+- No project schema or export DSP change.
+- M3.85 completed and squash-merged as PR #100 at `c631fce74963d3c89fff8bf6246ccf95685ecd8e`.
+- PR #76 remains parked; PR #22 remains unrelated and untouched.
+- Local M3.86 validation is pending.
+
 ## M3.85 — active — 2026-09-25
 
 - Branch: `feat/m3-85-video-source-audio-waveform`.
