@@ -55,6 +55,63 @@ beforeEach(() => {
 });
 
 describe("Preview", () => {
+  it("applies video embedded-audio volume and fade gain in preview", async () => {
+    let project = createProject({ id: "video-audio-preview-controls" });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-audio",
+          name: "video-audio.mp4",
+          mediaType: "video",
+          sourcePath: "/media/video-audio.mp4",
+          durationMs: 6000,
+        },
+      ],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [],
+              volume: 0.5,
+            }
+          : track,
+      ),
+    };
+
+    project = addAssetToTimeline(project, "video-audio");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioVolumeKeyframes: [
+                  { timeMs: 0, volume: 0.5 },
+                  { timeMs: 4000, volume: 1 },
+                ],
+                audioFadeInMs: 2000,
+              })),
+            }
+          : track,
+      ),
+    };
+
+    await renderPreview(
+      <Preview
+        project={project}
+        currentTimeMs={1000}
+        isPlaying={false}
+      />,
+    );
+
+    const video = screen.getByTestId("preview-video") as HTMLVideoElement;
+    expect(video.volume).toBeCloseTo(0.125, 5);
+  });
+
   it("renders the active local video asset", async () => {
     let project = createProject({ id: "video-preview" });
 
