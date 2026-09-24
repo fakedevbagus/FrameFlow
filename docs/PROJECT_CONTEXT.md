@@ -1,3 +1,36 @@
+## M3.79 — Embedded Video Source-Audio Fade Export — in progress — 2026-09-24
+
+Branch:
+`feat/m3-79-video-source-audio-fade-export`
+
+Scope:
+- Make exported embedded Video source audio honor the existing clip Fade In/Fade Out metadata consistently with Video preview.
+- Keep Audio-track fade behavior unchanged.
+- Keep the project schema unchanged.
+
+Implementation target:
+- Carry normalized Video clip audio fade durations into RenderPlan and the unified source-audio request.
+- Force graph-based export for Video-only clips whose embedded source audio fade would otherwise be skipped by direct/segment fast paths.
+- Apply source-audio fades in native FFmpeg before timeline delay, using the existing duration-clamping semantics.
+
+Implementation in progress:
+- RenderPlan now carries `audioFadeInMs` and `audioFadeOutMs` for Video clips with Video assets, reusing `getAudioFadeDurations`.
+- Unified export source-audio metadata now carries non-zero Video fade durations.
+- Video-only graph routing now treats an active Video source-audio fade as a reason to use the unified AV renderer.
+- Native source-audio rendering accepts backward-compatible optional fade fields and applies FFmpeg `afade` filters before timeline delay.
+- Added RenderPlan, pipeline, and native regression coverage.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- This milestone covers embedded Video source-audio Fade In/Fade Out only.
+- Video source-audio EQ/compressor export remains future work.
+- No project schema or Video-specific audio Inspector controls are introduced.
+
+Next step:
+- Run focused local validation covering lint, frontend tests, production build, Rust tests, Tauri development startup, and actual Video source-audio fade exports.
+
 ## M3.78 — Embedded Video Audio Preview Consistency — completed — 2026-09-24
 
 Branch:
