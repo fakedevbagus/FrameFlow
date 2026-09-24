@@ -1,15 +1,22 @@
-## M3.78 — active — 2026-09-24
+## M3.79 — active — 2026-09-24
+
+- Branch: `feat/m3-79-video-source-audio-fade-export`.
+- Scope: make exported embedded Video source audio honor the existing clip Fade In/Fade Out metadata consistently with Video preview.
+- Reuse the existing audio fade model and native FFmpeg filter architecture; do not add schema fields.
+- Keep Audio-track fade behavior unchanged.
+- M3.78 completed and squash-merged as PR #92 at `bd583a3891c9acf68ab827e31469008ce1f8e015`.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
+## M3.78 — completed — 2026-09-24
 
 - Branch: `feat/m3-78-video-source-audio-preview`.
-- Scope: make embedded Video source audio preview honor Track Volume, Track Pan, clip Volume Automation, and clip Fade gain.
-- Reuse existing Web Audio routing and audio automation helpers; do not add schema fields.
-- Keep export behavior unchanged in this milestone.
-- Validation is pending.
-- M3.77 completed and squash-merged at `f5ae54f3deb5b2ba265736aec1a2aefd951bfdb2`.
-- M3.76 completed and squash-merged at `11c3928ae79cb814c6e3eef7346bf00bff088242`.
-- M3.75 completed and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
-- M3.74 completed and squash-merged at `a93ea6764dfb363304385f206e6a2e7204e39fe1`.
-- PR #76 remains parked and must not be merged or revived wholesale.
+- Scope: align embedded Video source-audio preview with Track Volume, Track Pan, clip Volume Automation, and clip Fade gain.
+- Reused existing Web Audio routing and audio automation helpers; no schema change.
+- Video preview now combines Track Volume × clip Volume Automation × Fade gain and reuses the existing Track Pan/EQ/compressor routing.
+- Added regression coverage for the combined Video embedded-audio gain path.
+- User reported PASS after local validation.
+- PR #92 was marked ready and squash-merged at `bd583a3891c9acf68ab827e31469008ce1f8e015`.
+- Export behavior is intentionally unchanged; Video source-audio export fades are the next focused milestone.
 
 ## M3.77 — completed — 2026-09-24
 
