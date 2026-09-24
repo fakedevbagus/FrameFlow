@@ -1,23 +1,19 @@
 ## M3.83 — active — 2026-09-24
 
 - Branch: `feat/m3-83-video-source-audio-inspector-parity`.
+- PR: #98 — Draft.
 - Base: M3.82 merge `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
 - Scope: expose the existing Audio Fade, EQ, and Compressor Inspector controls for Video clips with embedded source audio.
-- Repository evidence: Video preview already uses the shared audio chain, and export already supports Video source-audio Fade/EQ/Compressor/Volume Automation/Track Volume/Pan.
-- Current gap: App Inspector JSX exposes Fade/EQ/Compressor only for Audio-track audio clips; EQ and Compressor command guards also reject Video-track Video clips.
-- Volume Automation Inspector is already available for Video clips and should remain unchanged.
-- M3.83 should reuse the existing AudioCompressor/AudioEq models, commands, Inspector components, history engine, and preview/export paths.
-- Extend EQ and Compressor command eligibility to Video-track Video clips using the same validation and normalization rules.
-- Expose Fade/EQ/Compressor Inspector UI for Video clips carrying embedded audio.
-- Keep images audio-free; preserve Audio-track behavior; do not add schema fields or new DSP architecture.
-- Add focused command/App regression coverage.
+- Repository evidence: Video embedded audio already supports preview/export for Volume Automation, Fade, EQ, Compressor, Track Volume, and Track Pan.
+- Current gap before M3.83: App Inspector exposed Fade/EQ/Compressor only for Audio-track audio clips, and the corresponding command guards rejected Video-track Video clips.
+- Implemented shared command/UI parity; no new models, schema fields, or DSP architecture.
+- Video-track Video clips now pass the existing Fade/EQ/Compressor commands with unchanged validation and normalization.
+- Existing Inspector components are reused for Video clips; Image clips remain excluded.
+- Added command regressions and App UI regressions; fixed null-context protection in App audio handlers.
 - M3.82 completed and squash-merged as PR #97 at `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
-- M3.81 fully reconciled via PR #95 and correction PR #96; final correction merge `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
-- M3.80 remains merged at `6181359270552c82f6b4c4d557e41255b8f32bb4`; M3.79 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
-- PR #76 remains parked and must not be touched, merged, or revived wholesale.
-- PR #22 remains an old unrelated Draft and is not part of M3.83.
+- M3.81 correction completed at `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
+- PR #76 remains parked and PR #22 remains unrelated/untouched.
 - Local M3.83 validation is pending.
-
 
 
 ## M3.79 — completed — 2026-09-24
