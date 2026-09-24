@@ -1,33 +1,41 @@
-## M3.80 — Video Source-Audio Fast-Path Track Controls — in progress — 2026-09-24
+## M3.80 — Video Source-Audio Fast-Path Track Controls — completed — 2026-09-24
 
 Branch:
 `feat/m3-80-video-source-audio-fast-path-controls`
 
+PR:
+#94
+
+Merge SHA:
+`6181359270552c82f6b4c4d557e41255b8f32bb4`
+
 Scope:
-- Ensure embedded Video source audio respects the existing Video-track Volume and Pan controls even when export would otherwise use the direct single-source or sequential-segment fast paths.
+- Ensure embedded Video source audio respects the existing Video-track Volume and Pan controls on direct and sequential fast-path exports.
 - Respect Video-track mute state on the direct/segment fast paths.
 - Preserve the existing unified AV behavior for graph-required Video exports.
 - Keep the project schema unchanged.
 
-Implementation completed on branch:
-- Added a shared export-pipeline check for non-default Video-track Volume/Pan on unmuted video segments.
-- Affected Video-only exports now bypass the direct single-source and sequential-segment fast paths and use the unified AV renderer, which already applies Track Volume/Pan to embedded source audio.
-- Direct single-source exports now pass `includeAudio: false` when the Video track is muted.
-- Sequential single-track Video exports now disable audio when the track is muted.
-- Default unmuted Video-track settings continue using the existing fast paths.
+Implementation:
+- Added a focused export-pipeline check for non-default Video-track Volume/Pan on unmuted video segments.
+- Affected Video-only exports bypass the direct single-source and sequential-segment fast paths and use the unified AV renderer, which already applies Track Volume/Pan to embedded source audio.
+- Direct single-source exports pass `includeAudio: false` when the Video track is muted.
+- Sequential single-track Video exports disable audio when every Video segment is muted.
+- Default unmuted Video-track settings retain the existing fast paths.
 - Added regression coverage for single-clip Volume, sequential-clip Pan, and muted single-clip routing.
 - No native schema or project model change.
 
 Validation:
-- Pending user local validation.
+- User reported PASS after local validation of M3.80, including Video-track Volume/Pan and mute behavior across fast and graph export paths.
 
 Known limitations:
-- Scope is limited to Video-track Volume/Pan and mute consistency across export fast paths.
-- Video source-audio EQ/compressor export remains future work.
+- Scope is limited to Video-track Volume/Pan and mute consistency across export paths.
+- Embedded Video source-audio EQ export remains a separate follow-up milestone.
+- Video source-audio compressor export remains a later follow-up milestone.
 - No new project schema or Video-specific audio Inspector controls are introduced.
 
 Next step:
-- Run focused local lint, frontend tests, production build, Rust tests, Tauri development startup, and manual exports covering Video-track Volume/Pan/mute on both fast and graph paths.
+- M3.81 — Embedded Video Source-Audio EQ Export: carry the existing per-clip EQ metadata into embedded Video source-audio export and reuse the established FFmpeg EQ semantics without changing the project schema.
+
 
 ## M3.79 — Embedded Video Source-Audio Fade Export — completed — 2026-09-24
 
