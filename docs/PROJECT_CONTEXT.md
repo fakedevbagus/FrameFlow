@@ -1,4 +1,4 @@
-## M3.76 — Video-Only Embedded Source Audio — in progress — 2026-09-24
+## M3.76 — Video-Only Embedded Source Audio — completed — 2026-09-24
 
 Branch:
 `feat/m3-76-video-only-source-audio`
@@ -15,16 +15,17 @@ Implementation target:
 - Continue respecting Video-track mute state and source/timeline placement.
 
 Validation:
-- Pending user local validation.
-- User must verify a graph-rendered video-only project retains its embedded source audio after export.
-- Existing automated lint, frontend, build, Rust, and Tauri validation must also pass.
+- User reported PASS after correcting two stale local Rust test fixture fields.
+- The local validation log showed lint passed, frontend tests passed 33/33 files and 400/400 tests, and the production build completed successfully.
+- The only failure in that run was Rust test compilation caused by two local-only `audio_volume_keyframes` fixture fields that do not exist on the M3.76 structs; the user removed those stale fields and then reported PASS.
+- Tauri development startup also completed successfully in the same validation run.
 
 Known limitations:
 - Video-only exports that use the existing direct/segment fast paths already preserve source audio and are intentionally unchanged.
 - Clip-level source-audio EQ/compressor/fade/automation remains a later milestone.
 
 Next step:
-- Complete the unified pipeline/native changes and regression coverage, then hand off exact local validation commands.
+- Start M3.77 from updated `main`, focusing on per-clip volume automation for embedded Video source audio so clip-level volume automation is consistent between preview and graph-based export.
 ## M3.75 — Timeline Track Header Layout — completed — 2026-09-24
 
 Branch:
