@@ -1,24 +1,48 @@
-### M3.79 — Embedded Video Source-Audio Fade Export — in progress — 2026-09-24
+### M3.80 — Video Source-Audio Fast-Path Track Controls — in progress — 2026-09-24
+
+Branch: `feat/m3-80-video-source-audio-fast-path-controls`
+PR: Draft
+
+Scope:
+- Ensure embedded Video source audio respects existing Video-track Volume and Pan controls on direct and sequential fast-path exports.
+- Preserve existing unified AV graph behavior and Audio-track processing.
+
+Implementation target:
+- Treat non-default Video-track Volume/Pan as a reason to use the unified AV source-audio path.
+- Preserve direct/segment fast paths when no Video source-audio processing is required.
+- Add focused pipeline regression coverage.
+- No project schema change.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- Scope is limited to Video-track Volume/Pan consistency across export paths.
+- Video source-audio EQ/compressor export remains future work.
+
+### M3.79 — Embedded Video Source-Audio Fade Export — completed — 2026-09-24
 
 Branch: `feat/m3-79-video-source-audio-fade-export`
-PR: Draft
+PR #93
+Merge SHA: `eb6e43e9d923e63c92f258fa378d6936924f07e1`
 
 Scope:
 - Make exported embedded Video source audio honor the existing clip Fade In/Fade Out metadata consistently with Video preview.
 - Preserve schema and existing Audio-track fade behavior.
 
 Implementation:
-- RenderPlan now carries normalized Video clip fade durations for Video assets.
-- Unified source-audio requests carry non-zero Video fade durations.
-- Video-only exports with active Video source-audio fades bypass the direct/segment fast paths and use the unified AV renderer.
-- Native source-audio filtering applies clamped FFmpeg `afade` filters before timeline delay.
+- RenderPlan carries normalized Video clip fade durations.
+- Unified source-audio metadata carries non-zero Video fade durations.
+- Video-only exports with active Video source-audio fades bypass direct/segment fast paths and use the unified AV renderer.
+- Native source-audio filtering applies duration-clamped FFmpeg `afade` before timeline delay.
 - Added RenderPlan, export-pipeline, and Rust regression coverage.
 
 Validation:
-- Pending user local validation.
+- User reported PASS after local validation of the M3.79 embedded Video source-audio fade export scope.
 
 Known limitations:
 - Embedded Video source-audio EQ/compressor export remains future work.
+
 ### M3.78 — Embedded Video Audio Preview Consistency — completed — 2026-09-24
 
 Branch: `feat/m3-78-video-source-audio-preview`
