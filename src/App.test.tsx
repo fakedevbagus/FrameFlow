@@ -1,7 +1,10 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import { addAssetToTimeline } from "./features/timeline/commands";
+import {
+  addAssetToTimeline,
+  updateAudioClipVolumeAtTime,
+} from "./features/timeline/commands";
 import { createProject, serializeProject } from "./features/project/domain";
 import { importMediaFiles } from "./features/media/import";
 
@@ -1763,6 +1766,69 @@ describe("App", () => {
     );
 
     expect(volumeInput).toHaveValue(40);
+  });
+
+  it("moves and removes video volume automation keyframes from the timeline", async () => {
+    let project = createProject({ id: "video-volume-keyframe-ui" });
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "video-volume-keyframe-ui",
+          name: "video-keyframe-ui.mp4",
+          mediaType: "video",
+          sourcePath: "/media/video-keyframe-ui.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+    project = addAssetToTimeline(project, "video-volume-keyframe-ui");
+    const clipId = project.tracks[0].clips[0].id;
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.4);
+
+    localStorage.setItem(
+      "frameflow.workspace-project",
+      serializeProject(project),
+    );
+
+    render(<App />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", {
+          name: "Go to audio volume keyframe for video-keyframe-ui.mp4 at 00:01.000 (40%)",
+        }),
+      ).toBeInTheDocument(),
+    );
+
+    const markerButton = screen.getByRole("button", {
+      name: "Go to audio volume keyframe for video-keyframe-ui.mp4 at 00:01.000 (40%)",
+    });
+
+    markerButton.focus();
+    fireEvent.keyDown(markerButton, { key: "ArrowRight" });
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", {
+          name: "Go to audio volume keyframe for video-keyframe-ui.mp4 at 00:01.033 (40%)",
+        }),
+      ).toBeInTheDocument(),
+    );
+
+    const movedMarker = screen.getByRole("button", {
+      name: "Go to audio volume keyframe for video-keyframe-ui.mp4 at 00:01.033 (40%)",
+    });
+
+    fireEvent.keyDown(movedMarker, { key: "Delete" });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", {
+          name: /Go to audio volume keyframe for video-keyframe-ui.mp4/,
+        }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("edits audio volume automation from the inspector", async () => {
