@@ -16,8 +16,9 @@ Implementation:
 - No project schema change.
 
 Validation:
-- Supplied local validation exposed Timeline JSX/test/native fixture issues; corrections are now applied.
-- Added a RenderPlan regression for Video-track Volume/Pan propagation.
+- Supplied local validation reached 399/400 frontend tests; the sole failure showed Video-track pan did not persist.
+- Root cause: updateTrackPan() still rejected non-Audio tracks. The guard is now removed and command-level regression coverage added.
+- Rust validation also exposed a duplicate format_number() definition; the duplicate is now removed.
 - Fresh local lint/tests/build/Rust/Tauri validation is still required.
 
 Known limitations:
