@@ -1,4 +1,4 @@
-## M3.74 — Video Track Volume/Pan for Embedded Source Audio — in progress — 2026-09-24
+## M3.74 — Video Track Volume/Pan for Embedded Source Audio — completed — 2026-09-24
 
 Branch:
 `feat/m3-74-source-audio-track-controls`
@@ -21,7 +21,10 @@ Validation:
 - Frontend reached 400/401 tests; the only failure was a stale command regression asserting that Video-track Pan must be rejected.
 - M3.74 intentionally supports Video-track Pan, and the positive command-level Video-track mix test already passes.
 - Corrected the stale rejection test to cover invalid pan values and unknown tracks only.
-- Fresh frontend test rerun and manual export verification remain required.
+- User reported PASS after the corrected frontend test rerun and manual export verification. PR #88 was marked ready and squash-merged as a93ea6764dfb363304385f206e6a2e7204e39fe1.
+
+Post-merge UI note:
+- The compact timeline track header is visually cramped/clipped when the Video-track Volume/Pan controls are visible; the next focused milestone should improve this layout without changing audio/export behavior.
 
 Known limitations:
 - Video-track Volume/Pan affect embedded source audio during unified export; clip-level source-audio EQ/compressor/fade controls remain separate audio-track functionality.
