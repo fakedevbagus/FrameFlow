@@ -4,7 +4,10 @@ Branch:
 `feat/m3-85-video-source-audio-waveform`
 
 PR:
-Not opened yet; implementation branch only.
+#100 — Draft
+
+Head after documentation sync:
+`cfea45ff765f293bc5cf85f7dc4812daa9d8b201`
 
 Base:
 `01bf4c2301afc0bdba40d4afcae443d12d6079e0` (M3.84 squash merge)
@@ -37,7 +40,7 @@ Known limitations:
 - Video clips without an audio stream intentionally show no waveform.
 
 Next step:
-- Open Draft PR after diff audit and hand off focused local validation.
+- User performs focused local validation; do not merge until explicit PASS.
 
 
 ## M3.83 — Embedded Video Source-Audio Inspector Parity — completed — 2026-09-24
