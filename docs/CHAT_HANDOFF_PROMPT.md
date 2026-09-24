@@ -1,14 +1,23 @@
-## M3.87 — active — 2026-09-25
+## M3.88 — active — 2026-09-25
+
+- Branch: `feat/m3-88-video-volume-automation-command-parity`.
+- Scope: close the remaining embedded Video volume-automation command gap across Inspector set/update, Timeline move, and Timeline delete.
+- Audit on merged `main` found that Timeline renders Volume Automation markers for Video clips and `updateAudioClipVolumeAtTime` already accepts Video clips, but App's selected-volume handler still rejects Video-track clips.
+- The `moveAudioClipVolumeKeyframe` and `removeAudioClipVolumeKeyframe` commands still accept only Audio-track Audio clips, so Video keyframe drag/delete are currently wired to commands that reject the operation.
+- M3.88 will unify all three command/handler eligibility checks around the existing audio-bearing clip rule used by Fade/EQ/Compressor and the set/update command.
+- Keep the existing keyframe model, interpolation, history engine, project schema, preview, export, waveform behavior, and UI layout unchanged except where required for regression coverage.
+- Add focused command and App regression tests proving Video-track Video clips can add/update, move, and remove volume keyframes, while Image clips remain rejected.
+- PR #76 remains parked; PR #22 remains unrelated and untouched.
+- M3.87 was user-validated and squash-merged as PR #102 at `c94322aab8f4862512893f1ab58d3764d34e681a`.
+- Local M3.88 validation is pending.
+
+## M3.87 — completed — 2026-09-25
 
 - Branch: `fix/m3-87-waveform-load-state`.
-- Base: M3.86 squash merge `afd49629d25bef4f399f2886f494d97dc6e9abdd`.
-- Audit finding: M3.86 `AudioWaveformPreview` stores `peaks/sourceDurationMs`, but its waveform-request `catch` branch still writes the removed `path` field.
-- Scope: correct only this waveform load-failure state shape and add rejection-path regression coverage.
-- Implementation: the rejection branch now writes the current `peaks/sourceDurationMs/isLoading` state shape; no waveform/render/export behavior was otherwise changed.
-- Preserve M3.86 trim-range alignment, Video embedded-audio waveform parity, cache behavior, project schema, and export DSP unchanged.
-- PR #76 remains parked; PR #22 remains unrelated and untouched.
-- M3.86 was user-validated and squash-merged as PR #101 at `afd49629d25bef4f399f2886f494d97dc6e9abdd`.
-- Local M3.87 validation is pending.
+- PR #102; merge SHA `c94322aab8f4862512893f1ab58d3764d34e681a`.
+- Corrected the waveform rejection path after the M3.86 state-shape refactor.
+- Added regression coverage for native waveform-load failure and loading-placeholder cleanup.
+- User reported PASS.
 
 ## M3.85 — active — 2026-09-25
 
