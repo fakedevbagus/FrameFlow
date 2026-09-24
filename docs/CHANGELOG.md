@@ -1,18 +1,21 @@
-### M3.87 — Waveform Load-State Correction — in progress — 2026-09-25
+### M3.87 — Waveform Load-State Correction — completed — 2026-09-25
 
 Branch: `fix/m3-87-waveform-load-state`
-
-Scope:
-- Fix the M3.86 waveform load failure state after the component state model changed from rendered `path` to raw peaks/source duration.
-- Preserve existing waveform rendering and trim-range behavior.
+PR #102
+Merge SHA: `c94322aab8f4862512893f1ab58d3764d34e681a`
 
 Implementation:
-- Replaced the stale `path` field in the waveform generation error state with the current `peaks/sourceDurationMs` shape.
-- Added regression coverage for a rejected native waveform request and loading-state cleanup.
-- No project schema, export DSP, or native waveform-generation change.
+- Corrected the waveform load rejection state to the current `peaks/sourceDurationMs/isLoading` shape.
+- Added a Timeline regression for native waveform-load rejection and loading-placeholder cleanup.
+- Preserved M3.86 trim-range waveform alignment, Video embedded-audio waveform parity, caching, schema, and export behavior.
 
 Validation:
-- Pending user local validation.
+- User reported PASS.
+- PR #102 was marked ready and squash-merged.
+
+Post-merge audit:
+- Found a remaining embedded Video volume-automation parity gap: App selected-volume updates reject Video clips, while move/remove command paths remain Audio-only.
+- Next focused milestone: M3.88, extending the existing audio-bearing eligibility rule across set/update, move, and remove operations.
 
 ### M3.86 — Waveform Trim-Range Alignment — completed — 2026-09-25
 
