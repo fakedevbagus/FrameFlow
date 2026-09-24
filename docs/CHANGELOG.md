@@ -3,7 +3,7 @@
 - Branch: `feat/m3-90-project-validation-hardening`.
 - Scope: harden the persisted project JSON validation boundary without changing schema version 1.
 - `validateProject()` now validates asset metadata and unique IDs, track identity/type/controls, clip asset references, clip source/timeline ranges, known asset duration bounds, and media/track compatibility.
-- Persisted Audio Fade, EQ, and Volume Automation data now receives focused shape/range validation.
+- Persisted Audio Fade, EQ, Compressor, and Volume Automation data now receives focused shape/range validation.
 - Added regression coverage for valid media round-tripping plus duplicate IDs, missing assets, media/track mismatch, invalid source ranges, invalid track volume/pan, and missing source-end fields.
 - User local validation is pending.
 - Native media existence/decodeability and transition/advanced visual-effect validation remain outside this milestone.
