@@ -1,4 +1,4 @@
-## M3.77 — active — 2026-09-24
+## M3.77 — completed — 2026-09-24
 
 - Branch: `feat/m3-77-video-clip-volume-automation`.
 - Scope: extend existing clip-level Audio Volume Automation to embedded source audio of Video clips.
@@ -7,7 +7,7 @@
 - Native FFmpeg source-audio filters must apply the same keyframe interpolation.
 - Video-only exports containing clip volume automation must use unified graph rendering rather than fast paths that would ignore the automation.
 - Audio-track behavior remains unchanged.
-- Implementation is complete; validation is pending.
+- User validated M3.77 successfully; PR #91 was squash-merged at `f5ae54f3deb5b2ba265736aec1a2aefd951bfdb2`.
 - Verify Video clip volume keyframe editing in Inspector and Timeline, preview interpolation, and export behavior for both video-only and mixed Video + Audio projects.
 - M3.76 completed and squash-merged at `11c3928ae79cb814c6e3eef7346bf00bff088242`.
 - M3.75 completed and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
