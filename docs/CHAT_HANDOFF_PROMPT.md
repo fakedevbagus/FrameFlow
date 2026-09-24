@@ -1,13 +1,16 @@
 ## M3.89 — active — 2026-09-25
 
-- Branch: not created yet.
-- Scope: prevent stale Timeline waveform selections from surviving clip source-range changes after trim.
-- Audit finding: `AudioWaveformPreview` stores selection locally and clears it on source-path lifecycle changes, but M3.86 allows the visible source range/duration to change without remounting that component.
-- The focused fix should clear selection when the clip source range changes; do not change waveform generation, caching, seeking, range resampling, project schema, history, export DSP, or UI layout.
-- Add regression coverage for a selected waveform region followed by a trim/source-range update.
+- Branch: `fix/m3-89-waveform-selection-lifecycle`.
+- PR #104 — Draft.
+- Scope: clear stale Timeline waveform selections when clip source range/duration changes after trim.
+- Audit finding: waveform selection is local state and its component stays mounted across trim updates, so a selection can outlive the source range it was created against.
+- Implementation clears selection on source path, source start, source end, or clip duration changes.
+- Added regression coverage for selection followed by source-end trim.
+- Preserve waveform generation, caching, source-range alignment, seek behavior, project schema, history, export DSP, and layout.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 - M3.88 was user-validated and squash-merged as PR #103 at `06b21e5f28650889d78be09c5bf86380877001fb`.
-- Local M3.89 validation will be pending after implementation.
+- Local M3.89 validation is pending.
+
 
 ## M3.88 — completed — 2026-09-25
 

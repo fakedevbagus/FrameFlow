@@ -2296,6 +2296,10 @@ function AudioWaveformPreview({
   const isLoading = !isCurrentSource || waveformState.isLoading;
 
   useEffect(() => {
+    setSelectionState(null);
+  }, [durationMs, sourceEndMs, sourcePath, sourceStartMs]);
+
+  useEffect(() => {
     let cancelled = false;
     void getAudioWaveform(sourcePath, AUDIO_WAVEFORM_PEAK_COUNT)
       .then((waveform) => {

@@ -31,6 +31,7 @@ import {
   addAssetToTimeline,
   addTransformKeyframe,
   addTrack,
+  trimClipEnd,
   updateAudioClipVolumeAtTime,
 } from "./commands";
 import { invoke } from "@tauri-apps/api/core";
@@ -1002,6 +1003,89 @@ describe("Timeline", () => {
       "aria-label",
       "Selected audio region from 1000 ms to 3500 ms",
     );
+  });
+
+  it("clears waveform selection when the clip source range changes", async () => {
+    const project = createVideoProject();
+    project.assets.push({
+      id: "audio-waveform-selection-trim",
+      name: "selection-trim.mp3",
+      mediaType: "audio",
+      sourcePath: "/media/selection-trim.mp3",
+      durationMs: 5000,
+    });
+
+    const populated = addAssetToTimeline(
+      project,
+      "audio-waveform-selection-trim",
+    );
+    const clipId = populated.tracks[1].clips[0].id;
+
+    const { container, rerender } = render(<Timeline project={populated} />);
+
+    await waitFor(() =>
+      expect(
+        container.querySelector(
+          ".timeline-clip-audio .timeline-audio-waveform",
+        ),
+      ).not.toBeNull(),
+    );
+
+    const waveform = container.querySelector(
+      ".timeline-clip-audio .timeline-audio-waveform",
+    );
+
+    expect(waveform).not.toBeNull();
+    if (!waveform) {
+      throw new Error("Audio waveform was not rendered.");
+    }
+
+    vi.spyOn(waveform, "getBoundingClientRect").mockReturnValue({
+      left: 10,
+      top: 0,
+      right: 210,
+      bottom: 20,
+      width: 200,
+      height: 20,
+      x: 10,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(waveform, {
+      button: 0,
+      clientX: 150,
+      pointerId: 91,
+    });
+    fireEvent.pointerMove(waveform, {
+      button: 0,
+      clientX: 50,
+      pointerId: 91,
+    });
+    fireEvent.pointerUp(waveform, {
+      button: 0,
+      clientX: 50,
+      pointerId: 91,
+    });
+
+    expect(waveform).toHaveAttribute("data-selection-start-ms", "1000");
+    expect(waveform).toHaveAttribute("data-selection-end-ms", "3500");
+
+    const trimmed = trimClipEnd(
+      populated,
+      clipId,
+      3000,
+    );
+    rerender(<Timeline project={trimmed} />);
+
+    await waitFor(() => {
+      expect(waveform).toHaveAttribute("data-selection-start-ms", "");
+      expect(waveform).toHaveAttribute("data-selection-end-ms", "");
+      expect(waveform).toHaveAttribute(
+        "aria-label",
+        "Seek audio waveform; drag to select an audio region",
+      );
+    });
   });
 
   it("shows an audio track volume slider and reports changes", () => {

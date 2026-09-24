@@ -1,24 +1,32 @@
-## M3.89 — Waveform Selection Lifecycle Hardening — active — 2026-09-25
+## M3.89 — Waveform Selection Lifecycle Hardening — in progress — 2026-09-25
 
 Branch:
-Not created yet.
+`fix/m3-89-waveform-selection-lifecycle`
+
+PR:
+#104 — Draft.
+
+Base:
+`main` after M3.88 merge.
 
 Scope:
-- Prevent stale Timeline waveform selections from surviving clip source-range changes caused by trim operations.
-- Keep waveform generation, persistent caching, waveform range alignment, seek behavior, project schema, history semantics, and export DSP unchanged.
+- Prevent stale Timeline waveform selections from surviving clip source-range changes caused by trimming.
+- Keep waveform generation, persistent caching, source-range resampling, seek behavior, project schema, history semantics, and export DSP unchanged.
 
-Repository evidence:
-- `AudioWaveformPreview` stores waveform selection locally by source path and only clears it when its source-path effect unmounts.
-- M3.86 changed visible waveform rendering to follow the clip source range, so trim updates can change the rendered duration/range without remounting the same waveform component.
-- A selection from the previous clip range can therefore remain visible with stale local start/end values after trim.
+Implementation:
+- Clear the local waveform selection whenever the waveform component's source path, source start, source end, or clip duration changes.
+- Added Timeline regression coverage that selects an audio waveform region, trims the clip source end, rerenders with the trimmed project, and verifies the stale selection is cleared.
+- The same shared component behavior applies to Audio-track Audio clips and Video-track Video clips with embedded source audio.
+- No project schema or export change.
 
-M3.88 completion:
-- PR #103 was user-validated and squash-merged at `06b21e5f28650889d78be09c5bf86380877001fb`.
-- Video embedded-audio Volume Automation Inspector set/update, Timeline move, and Timeline delete now share the same audio-bearing eligibility as the existing set/update command.
-- Regression coverage protects Video keyframe move/delete while Image clips remain excluded.
+Validation:
+- Pending user local validation.
+
+Known limitation:
+- Waveform selection remains transient Timeline UI state and does not create a project history edit.
 
 Next step:
-- Create a focused M3.89 branch from updated `main`, clear waveform selection when the clip source range changes, and add regression coverage for the stale-selection case.
+- Open a Draft PR and hand off focused local validation.
 
 
 ## M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
