@@ -1,39 +1,31 @@
-## M3.86 — Waveform Trim-Range Alignment — in progress — 2026-09-25
+## M3.87 — Waveform Load-State Correction — in progress — 2026-09-25
 
 Branch:
-`feat/m3-86-waveform-trim-range-alignment`
+`fix/m3-87-waveform-load-state`
 
 PR:
 Not opened yet; implementation branch only.
 
 Base:
-`c631fce74963d3c89fff8bf6246ccf95685ecd8e` (M3.85 squash merge)
+`afd49629d25bef4f399f2886f494d97dc6e9abdd` (M3.86 squash merge)
 
 Scope:
-- Make the existing Timeline waveform represent the source range actually used by a trimmed clip.
-- Apply the same alignment to explicit Audio clips and embedded-audio Video clips.
-- Reuse the existing waveform cache/native generation; do not add project schema fields or change export DSP.
+- Correct the waveform error path introduced by M3.86's state-shape refactor.
+- Preserve all M3.86 waveform trim-range behavior and avoid unrelated UI/export changes.
 
 Repository evidence:
-- M3.85 added waveform rendering for embedded-audio Video clips.
-- `getAudioWaveform` returns peaks for the full source file and caches them by source/fingerprint/peak count.
-- `AudioWaveformPreview` previously plotted those full-source peaks across the visible clip width, even when `sourceStartMs` or `sourceEndMs` trimmed the clip.
-
-Implementation:
-- Added `getWaveformPeaksForSourceRange` to safely crop/resample full-source peaks into the clip's source range.
-- Timeline stores the native waveform peaks and source duration, then derives the visible waveform from the current clip source range at render time.
-- Trim interactions therefore update the visible waveform immediately without regenerating native waveform data.
-- Added unit coverage for trimmed ranges, full-range behavior, invalid/out-of-range windows, and resampling.
-- No project schema or export DSP change.
+- M3.86 changed `AudioWaveformPreview` state from a rendered `path` string to raw `peaks` plus `sourceDurationMs`.
+- The success path uses the new state shape, but the `catch` path still writes a removed `path` property.
+- The type mismatch is confined to the waveform load failure state and should be corrected without changing waveform generation or caching.
 
 Validation:
-- Pending user local validation of M3.86.
+- Pending focused local validation of M3.87.
 
-Known limitations:
-- Waveform resolution remains bounded by the existing native peak count; very short trim ranges can only reflect the resolution available in the cached source waveform.
+Known limitation:
+- None beyond the existing M3.86 waveform resolution constraint.
 
 Next step:
-- Open Draft PR after diff audit and hand off focused local validation.
+- Implement the state-shape correction, add a rejection-path regression test, open a Draft PR, and hand off validation.
 
 
 ## M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
