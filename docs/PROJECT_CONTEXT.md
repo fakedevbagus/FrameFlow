@@ -1,4 +1,4 @@
-## M3.75 — Timeline Track Header Layout — in progress — 2026-09-24
+## M3.75 — Timeline Track Header Layout — completed — 2026-09-24
 
 Branch:
 `fix/m3-75-timeline-track-header-layout`
@@ -13,7 +13,11 @@ Implementation:
 - The fix targets a later duplicate CSS override that had reduced `.track` to 72px.
 
 Validation:
-- Awaiting user local validation and visual confirmation.
+- User confirmed visually that the canonical 156px track header is no longer cramped/clipped and that the resulting timeline layout is correct.
+- PR #89 was marked ready and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
+
+Known limitation:
+- This was a layout-only correction; the timeline still follows duration/zoom scaling for clip widths.
 
 ## M3.74 — Video Track Volume/Pan for Embedded Source Audio — completed — 2026-09-24
 
