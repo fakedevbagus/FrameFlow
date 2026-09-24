@@ -31,8 +31,12 @@ Known limitations:
 - Video source-audio compressor export remains a separate milestone.
 - No new project schema or Video-specific audio Inspector controls are introduced.
 
+Post-merge correction:
+- Repository audit found that the merged pipeline did not actually include `audioEq` in `sourceAudioSegments`, so EQ metadata could be dropped before native rendering.
+- This correction branch restores that propagation and adds an explicit pipeline regression test before the M3.81 result is treated as fully reconciled.
+
 Next step:
-- Run focused local validation covering lint, frontend tests, production build, Rust tests, Tauri development startup, and manual Video EQ export checks across fast-path and unified-graph scenarios.
+- Validate the correction locally, then merge the focused fix before starting M3.82.
 
 ## M3.80 — Video Source-Audio Fast-Path Track Controls — completed — 2026-09-24
 
