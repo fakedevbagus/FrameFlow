@@ -1,36 +1,64 @@
-## M3.79 — Embedded Video Source-Audio Fade Export — in progress — 2026-09-24
+## M3.80 — Video Source-Audio Fast-Path Track Controls — in progress — 2026-09-24
+
+Branch:
+`feat/m3-80-video-source-audio-fast-path-controls`
+
+Scope:
+- Ensure embedded Video source audio respects the existing Video-track Volume and Pan controls even when export would otherwise use the direct single-source or sequential-segment fast paths.
+- Preserve the existing unified AV behavior for graph-required Video exports.
+- Keep the project schema unchanged.
+
+Implementation target:
+- Detect non-default Video-track Volume/Pan as source-audio processing requirements.
+- Route affected Video-only exports through the unified AV renderer so the existing native source-audio mix applies Track Volume/Pan.
+- Preserve direct/segment fast paths for Video clips whose source audio needs no track-level processing.
+- Keep Audio-track behavior unchanged.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- Scope is limited to Video-track Volume/Pan consistency for embedded source audio.
+- Video source-audio EQ/compressor export remains future work.
+- No new project schema or Video-specific audio Inspector controls are introduced.
+
+Next step:
+- Implement focused pipeline routing/tests, then hand off local validation.
+
+## M3.79 — Embedded Video Source-Audio Fade Export — completed — 2026-09-24
 
 Branch:
 `feat/m3-79-video-source-audio-fade-export`
+
+PR:
+#93
+
+Merge SHA:
+`eb6e43e9d923e63c92f258fa378d6936924f07e1`
 
 Scope:
 - Make exported embedded Video source audio honor the existing clip Fade In/Fade Out metadata consistently with Video preview.
 - Keep Audio-track fade behavior unchanged.
 - Keep the project schema unchanged.
 
-Implementation target:
-- Carry normalized Video clip audio fade durations into RenderPlan and the unified source-audio request.
-- Force graph-based export for Video-only clips whose embedded source audio fade would otherwise be skipped by direct/segment fast paths.
-- Apply source-audio fades in native FFmpeg before timeline delay, using the existing duration-clamping semantics.
-
-Implementation in progress:
-- RenderPlan now carries `audioFadeInMs` and `audioFadeOutMs` for Video clips with Video assets, reusing `getAudioFadeDurations`.
-- Unified export source-audio metadata now carries non-zero Video fade durations.
-- Video-only graph routing now treats an active Video source-audio fade as a reason to use the unified AV renderer.
-- Native source-audio rendering accepts backward-compatible optional fade fields and applies FFmpeg `afade` filters before timeline delay.
-- Added RenderPlan, pipeline, and native regression coverage.
+Implementation completed:
+- RenderPlan now carries normalized Video clip audio fade durations for Video assets.
+- Unified source-audio metadata carries non-zero Video fade durations.
+- Video-only exports with active Video source-audio fades route through the unified AV renderer instead of direct/segment fast paths that cannot represent the fades.
+- Native source-audio rendering accepts backward-compatible optional fade fields and applies duration-clamped FFmpeg `afade` filters before timeline delay.
+- Added RenderPlan, export-pipeline, and Rust regression coverage.
+- Updated project context, changelog, and handoff documentation.
 
 Validation:
-- Pending user local validation.
+- User reported PASS after local validation of the M3.79 embedded Video source-audio fade export scope.
 
 Known limitations:
 - This milestone covers embedded Video source-audio Fade In/Fade Out only.
 - Video source-audio EQ/compressor export remains future work.
-- No project schema or Video-specific audio Inspector controls are introduced.
+- No project schema or Video-specific audio Inspector controls were introduced.
 
 Next step:
-- Run focused local validation covering lint, frontend tests, production build, Rust tests, Tauri development startup, and actual Video source-audio fade exports.
-
+- Start M3.80 from updated `main`, focusing on Video-track Volume/Pan consistency across export fast paths.
 ## M3.78 — Embedded Video Audio Preview Consistency — completed — 2026-09-24
 
 Branch:
