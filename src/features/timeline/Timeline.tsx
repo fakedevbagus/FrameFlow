@@ -1586,9 +1586,10 @@ function TimelineTrack({
           const isInteracting = interaction?.clipId === clip.id;
           const isAudioClip =
             track.type === "audio" && asset?.mediaType === "audio";
+          const isAudioBearingVideoClip =
+            track.type === "video" && asset?.mediaType === "video";
           const hasAudioVolumeAutomation =
-            isAudioClip ||
-            (track.type === "video" && asset?.mediaType === "video");
+            isAudioClip || isAudioBearingVideoClip;
           const audioFadeDurations = getAudioFadeDurations(clip);
           const displayAudioFadeDurations =
             audioFadeInteraction?.clipId === clip.id
@@ -1681,7 +1682,7 @@ function TimelineTrack({
                     }}
                   />
                 ) : null}
-                {isAudioClip ? (
+                {(isAudioClip || isAudioBearingVideoClip) ? (
                   <>
                     <span
                       aria-hidden="true"
