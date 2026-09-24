@@ -1,4 +1,4 @@
-## M3.76 — active — 2026-09-24
+## M3.76 — completed — 2026-09-24
 
 - Branch: `feat/m3-76-video-only-source-audio`.
 - Scope: preserve embedded audio from Video clips when video-only export requires the visual FFmpeg graph.
@@ -6,7 +6,8 @@
 - Direct single-source and sequential-segment fast paths remain unchanged.
 - Reuse the M3.73 unified source-audio mechanism; when there are no explicit Audio-track inputs, the native side should use a generated silent audio base for the unified mix.
 - No project schema change.
-- Validation is pending.
+- User reported PASS after removing two stale local Rust fixture fields; M3.76 was squash-merged at `11c3928ae79cb814c6e3eef7346bf00bff088242`.
+- Next milestone: M3.77 per-clip volume automation for embedded Video source audio.
 - M3.75 completed and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
 - M3.74 completed and squash-merged at `a93ea6764dfb363304385f206e6a2e7204e39fe1`.
 - PR #76 remains parked and must not be merged or revived wholesale.
