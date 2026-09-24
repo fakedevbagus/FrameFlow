@@ -7,7 +7,8 @@
 - Native FFmpeg source-audio filters must apply the same keyframe interpolation.
 - Video-only exports containing clip volume automation must use unified graph rendering rather than fast paths that would ignore the automation.
 - Audio-track behavior remains unchanged.
-- Validation is pending.
+- Implementation is complete; validation is pending.
+- Verify Video clip volume keyframe editing in Inspector and Timeline, preview interpolation, and export behavior for both video-only and mixed Video + Audio projects.
 - M3.76 completed and squash-merged at `11c3928ae79cb814c6e3eef7346bf00bff088242`.
 - M3.75 completed and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
 - M3.74 completed and squash-merged at `a93ea6764dfb363304385f206e6a2e7204e39fe1`.
