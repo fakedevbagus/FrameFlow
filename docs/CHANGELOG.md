@@ -1,3 +1,20 @@
+### M3.76 — Video-Only Embedded Source Audio — in progress — 2026-09-24
+
+Branch: `feat/m3-76-video-only-source-audio`
+
+Scope:
+- Preserve embedded Video source audio when a video-only project must use the native visual graph renderer.
+- Reuse the existing M3.73 source-audio mechanism instead of introducing a second audio pipeline.
+- Keep direct single-source and sequential-segment fast paths unchanged.
+
+Implementation target:
+- Route graph-required video-only plans through the unified AV native renderer.
+- Use a generated silent base audio graph when no explicit Audio-track inputs exist.
+- Preserve mute state and source/timeline timing through the existing source-audio metadata path.
+- No project schema change.
+
+Validation:
+- Pending user local validation.
 ### M3.75 — Timeline Track Header Layout — completed — 2026-09-24
 
 Branch: `fix/m3-75-timeline-track-header-layout`
