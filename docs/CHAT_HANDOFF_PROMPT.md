@@ -10,7 +10,9 @@
 - Native Video source-audio EQ matches the existing Audio-track export graph: 120 Hz Q 0.8, 1 kHz Q 1, and 8 kHz Q 0.8; inactive/zero-gain bands are omitted and active gains are clamped to -12 dB through +12 dB.
 - Added RenderPlan, pipeline-routing, source-audio contract, and Rust filter-generation regression coverage.
 - Keep Audio-track EQ behavior unchanged; do not introduce a second audio model or schema fields.
-- Validation is pending.
+- M3.81 initially received user PASS, but a repository audit after merge found a missing `audioEq` propagation step in the actual pipeline payload. A focused correction branch is now required before considering M3.81 fully reconciled.
+- The correction branch restores `audioEq` in `sourceAudioSegments` and adds a pipeline regression test.
+- Local validation of the correction is pending.
 - M3.80 completed and squash-merged as PR #94 at `6181359270552c82f6b4c4d557e41255b8f32bb4`.
 - M3.79 completed and squash-merged as PR #93 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
 - M3.78 completed and squash-merged as PR #92 at `bd583a3891cacf68ab827e31469008ce1f8e015`.
