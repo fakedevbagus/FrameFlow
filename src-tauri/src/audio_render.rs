@@ -76,8 +76,7 @@ struct ResolvedSourceAudioSegment {
   track_pan: f64,
   audio_fade_in_ms: u64,
   audio_fade_out_ms: u64,
-  audio_eq: None,
-audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
+  audio_volume_keyframes: Vec<NativeSourceAudioVolumeKeyframe>,
   audio_eq: Option<NativeSourceAudioEq>,
   has_audio: bool,
 }
@@ -231,7 +230,7 @@ pub fn render_video_audio_graph_to_mp4(
         audio_fade_in_ms: segment.audio_fade_in_ms,
         audio_fade_out_ms: segment.audio_fade_out_ms,
         audio_eq: None,
-audio_volume_keyframes: segment.audio_volume_keyframes.clone(),
+        audio_volume_keyframes: segment.audio_volume_keyframes.clone(),
         audio_eq: segment.audio_eq.clone(),
         has_audio,
       })
@@ -1327,7 +1326,7 @@ mod tests {
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
-audio_volume_keyframes: Vec::new(),
+        audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1355,7 +1354,7 @@ audio_volume_keyframes: Vec::new(),
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
-audio_volume_keyframes: Vec::new(),
+        audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1383,7 +1382,7 @@ audio_volume_keyframes: Vec::new(),
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
-audio_volume_keyframes: Vec::new(),
+        audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1448,7 +1447,7 @@ audio_volume_keyframes: Vec::new(),
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
         audio_eq: None,
-audio_volume_keyframes: Vec::new(),
+        audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1615,7 +1614,7 @@ audio_volume_keyframes: Vec::new(),
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
       audio_eq: None,
-audio_volume_keyframes: vec![
+      audio_volume_keyframes: vec![
         NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 1.0 },
         NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.4 },
       ],
@@ -1677,7 +1676,7 @@ audio_volume_keyframes: vec![
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
       audio_eq: None,
-audio_volume_keyframes: Vec::new(),
+      audio_volume_keyframes: Vec::new(),
       has_audio: true,
     }];
 
@@ -1770,9 +1769,7 @@ audio_volume_keyframes: Vec::new(),
       .map(|pair| pair[1].clone())
       .expect("filter_complex argument should exist");
 
-    assert!(filter.contains(
-      "volume=0.85,pan=stereo|c0=0.831469* c0"
-    ) || filter.contains("volume=0.85,pan=stereo|c0=0.831469*c0"));
+    assert!(filter.contains("volume=0.85,pan=stereo|c0=0.83147*c0|c1=0.55557*c1"));
     assert!(filter.contains("equalizer=f=120:t=q:w=0.8:g=4"));
     assert!(filter.contains("equalizer=f=1000:t=q:w=1:g=-2"));
     assert!(filter.contains("equalizer=f=8000:t=q:w=0.8:g=6"));
@@ -1793,7 +1790,7 @@ audio_volume_keyframes: Vec::new(),
       audio_fade_in_ms: 500,
       audio_fade_out_ms: 1_000,
       audio_eq: None,
-audio_volume_keyframes: Vec::new(),
+      audio_volume_keyframes: Vec::new(),
       has_audio: true,
     }];
 
@@ -1843,7 +1840,7 @@ audio_volume_keyframes: Vec::new(),
       audio_fade_in_ms: 0,
       audio_fade_out_ms: 0,
       audio_eq: None,
-audio_volume_keyframes: vec![
+      audio_volume_keyframes: vec![
         NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 0.2 },
         NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.8 },
       ],
