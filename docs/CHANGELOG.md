@@ -11,9 +11,10 @@ Implemented:
 - No project schema change.
 
 Validation:
-- Supplied local validation fixed the earlier Timeline/test fixture issues but exposed one remaining App regression and one Rust duplicate-definition error.
-- The App regression traced to updateTrackPan() still rejecting Video tracks; the command guard is now removed and command-level regression coverage was added.
-- The Rust duplicate format_number() definition is now removed.
+- The first post-correction local rerun passed lint and production build, and the frontend suite reached 399/400 tests before one App regression failed.
+- The failing App regression showed the Video-track pan slider returning to 0 after a sequential Volume then Pan change; command-level and direct Timeline coverage for Video-track Pan already pass.
+- The repository branch has a single format_number() definition in audio_render.rs; the local duplicate-definition report should be checked against the working tree after syncing.
+- Made the App regression assertion deterministic by waiting for the Volume state commit before changing Pan.
 - Fresh user local validation is still pending.
 
 Next step:
