@@ -11,8 +11,9 @@ Implemented:
 - No project schema change.
 
 Validation:
-- Supplied local validation exposed a Timeline JSX parse error, stale unified-export fixtures, a missing native numeric formatter, and missing native fixture fields.
-- Corrected those issues and added RenderPlan coverage for Video-track Volume/Pan propagation.
+- Supplied local validation fixed the earlier Timeline/test fixture issues but exposed one remaining App regression and one Rust duplicate-definition error.
+- The App regression traced to updateTrackPan() still rejecting Video tracks; the command guard is now removed and command-level regression coverage was added.
+- The Rust duplicate format_number() definition is now removed.
 - Fresh user local validation is still pending.
 
 Next step:
