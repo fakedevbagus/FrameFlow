@@ -5,19 +5,21 @@ PR: Draft
 
 Scope:
 - Ensure embedded Video source audio respects existing Video-track Volume and Pan controls on direct and sequential fast-path exports.
+- Respect Video-track mute state on those fast paths.
 - Preserve existing unified AV graph behavior and Audio-track processing.
 
-Implementation target:
-- Treat non-default Video-track Volume/Pan as a reason to use the unified AV source-audio path.
-- Preserve direct/segment fast paths when no Video source-audio processing is required.
-- Add focused pipeline regression coverage.
+Implementation:
+- Non-default Video-track Volume/Pan now force the unified AV source-audio renderer for Video-only plans.
+- Default unmuted Video-track settings retain the existing direct/segment fast paths.
+- Muted single-source exports now pass `includeAudio: false`; muted sequential single-track exports likewise disable audio.
+- Added pipeline regression coverage for Video Volume, Video Pan, and muted routing.
 - No project schema change.
 
 Validation:
 - Pending user local validation.
 
 Known limitations:
-- Scope is limited to Video-track Volume/Pan consistency across export paths.
+- Scope is limited to Video-track Volume/Pan and mute consistency across fast export paths.
 - Video source-audio EQ/compressor export remains future work.
 
 ### M3.79 — Embedded Video Source-Audio Fade Export — completed — 2026-09-24
