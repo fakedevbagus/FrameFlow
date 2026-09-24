@@ -11,11 +11,11 @@ Implemented:
 - No project schema change.
 
 Validation:
-- The first post-correction local rerun passed lint and production build, and the frontend suite reached 399/400 tests before one App regression failed.
-- The failing App regression showed the Video-track pan slider returning to 0 after a sequential Volume then Pan change; command-level and direct Timeline coverage for Video-track Pan already pass.
-- The repository branch has a single format_number() definition in audio_render.rs; the local duplicate-definition report should be checked against the working tree after syncing.
-- Made the App regression assertion deterministic by waiting for the Volume state commit before changing Pan.
-- Fresh user local validation is still pending.
+- The subsequent local rerun passed lint, production build, and all 43 Rust tests; Tauri development startup also completed successfully.
+- Frontend tests reached 400/401 tests with one stale command test still expecting Video-track Pan to be rejected.
+- The failing assertion was in the test named "rejects invalid pan values and non-audio tracks"; M3.74 intentionally permits Pan on Video tracks.
+- Updated that stale test to validate invalid values and unknown tracks only. The existing positive Video-track Volume/Pan command coverage remains.
+- Fresh frontend test rerun and manual export verification are still required.
 
 Next step:
 - Rerun lint, frontend tests, production build, Rust tests, Tauri startup, and the manual export check.
