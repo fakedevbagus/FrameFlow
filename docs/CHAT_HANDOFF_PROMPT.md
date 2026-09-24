@@ -2,7 +2,7 @@
 
 - Branch: `feat/m3-90-project-validation-hardening`.
 - Scope: harden persisted project JSON validation at the parse boundary without changing schema version 1.
-- Validate asset metadata and IDs, track identity/type/controls, clip references and ranges, known source-duration bounds, media/track compatibility, and persisted audio field ranges.
+- Validate asset metadata and IDs, track identity/type/controls, clip references and ranges, known source-duration bounds, media/track compatibility, and persisted audio field ranges including Fade/EQ/Compressor/Volume Automation.
 - Added domain regression coverage for valid media round-trip plus malformed persisted project cases.
 - PR is not opened yet; local validation is pending after implementation.
 - M3.89 completed and squash-merged as PR #104 at `fbdd60f45508c577046331255e024eea93b5960b`.
