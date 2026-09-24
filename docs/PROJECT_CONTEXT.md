@@ -16,10 +16,11 @@ Implementation:
 - No project schema change.
 
 Validation:
-- Supplied local validation reached 399/400 frontend tests; the sole failure showed Video-track pan did not persist.
-- Root cause: updateTrackPan() still rejected non-Audio tracks. The guard is now removed and command-level regression coverage added.
-- Rust validation also exposed a duplicate format_number() definition; the duplicate is now removed.
-- Fresh local lint/tests/build/Rust/Tauri validation is still required.
+- The latest local validation passed lint, production build, all 43 Rust tests, and Tauri development startup.
+- Frontend reached 400/401 tests; the only failure was a stale command regression asserting that Video-track Pan must be rejected.
+- M3.74 intentionally supports Video-track Pan, and the positive command-level Video-track mix test already passes.
+- Corrected the stale rejection test to cover invalid pan values and unknown tracks only.
+- Fresh frontend test rerun and manual export verification remain required.
 
 Known limitations:
 - Video-track Volume/Pan affect embedded source audio during unified export; clip-level source-audio EQ/compressor/fade controls remain separate audio-track functionality.
