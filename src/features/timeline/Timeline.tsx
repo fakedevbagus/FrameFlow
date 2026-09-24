@@ -1586,6 +1586,9 @@ function TimelineTrack({
           const isInteracting = interaction?.clipId === clip.id;
           const isAudioClip =
             track.type === "audio" && asset?.mediaType === "audio";
+          const hasAudioVolumeAutomation =
+            isAudioClip ||
+            (track.type === "video" && asset?.mediaType === "video");
           const audioFadeDurations = getAudioFadeDurations(clip);
           const displayAudioFadeDurations =
             audioFadeInteraction?.clipId === clip.id
