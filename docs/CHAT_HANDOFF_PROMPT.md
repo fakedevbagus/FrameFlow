@@ -11,6 +11,7 @@
 - No project schema or export DSP change.
 - M3.84 completed and squash-merged as PR #99 at `01bf4c2301afc0bdba40d4afcae443d12d6079e0`.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
+- PR #100 is Draft.
 - Local M3.85 validation is pending.
 
 ## M3.79 — completed — 2026-09-24
