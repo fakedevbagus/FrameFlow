@@ -1,3 +1,30 @@
+## M3.78 — Video Source Audio Fades — in progress — 2026-09-24
+
+Branch:
+`feat/m3-78-video-source-audio-fades`
+
+Scope:
+- Extend the existing per-clip Audio Fade In/Fade Out model to Video clips with embedded source audio.
+- Reuse the existing command, Inspector, Timeline fade-handle, validation, and project schema.
+- Ensure embedded Video source audio fades are applied during preview and native export.
+- Keep Audio-track behavior unchanged.
+
+Implementation target:
+- Permit `updateAudioClipFades` for audio-bearing Video clips.
+- Show the existing Audio Fades inspector for Video clips, while keeping EQ/compressor exclusive to Audio clips.
+- Reuse existing Timeline fade handles for Video clips with embedded source audio.
+- Carry `audioFadeInMs` / `audioFadeOutMs` into source-audio render metadata.
+- Apply `afade` to embedded source audio in the native unified renderer.
+- Force graph-based export when Video clip fades are present so fast paths cannot silently ignore them.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- This milestone is limited to clip-level Fade In/Fade Out for embedded Video source audio.
+- Video source audio EQ and compressor remain future work.
+- Track Volume/Pan and clip Volume Automation remain independent controls.
+
 ## M3.77 — Per-Clip Volume Automation for Embedded Video Audio — completed — 2026-09-24
 
 Branch:
