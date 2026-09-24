@@ -1478,6 +1478,133 @@ describe("render video pipeline", () => {
     expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
   });
 
+  it("routes active Video clip compressor through unified AV source-audio rendering", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+          audioCompressor: {
+            enabled: true,
+            thresholdDb: -18,
+            ratio: 6,
+            attackMs: 10,
+            releaseMs: 300,
+          },
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/video-compressor.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/video-compressor.mp4"),
+    ).resolves.toEqual({ outputPath: "/tmp/video-compressor.mp4" });
+
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4"],
+        videoInputMediaTypes: ["video"],
+        audioInputs: [],
+        sourceAudioSegments: [
+          {
+            inputIndex: 0,
+            sourceStartMs: 0,
+            timelineStartMs: 0,
+            durationMs: 4000,
+            trackVolume: 1,
+            trackPan: 0,
+            audioCompressor: {
+              enabled: true,
+              thresholdDb: -18,
+              ratio: 6,
+              attackMs: 10,
+              releaseMs: 300,
+            },
+          },
+        ],
+        outputPath: "/tmp/video-compressor.mp4",
+      }),
+    );
+
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+  });
+
+  it("does not force unified AV export for a disabled Video clip compressor", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+          audioCompressor: {
+            enabled: false,
+            thresholdDb: -18,
+            ratio: 6,
+            attackMs: 10,
+            releaseMs: 300,
+          },
+        },
+      ],
+    };
+
+    vi.mocked(renderSingleSourceToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/video-compressor-disabled.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/video-compressor-disabled.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/video-compressor-disabled.mp4",
+    });
+
+    expect(renderSingleSourceToMp4).toHaveBeenCalledWith({
+      sourcePath: "/media/a.mp4",
+      outputPath: "/tmp/video-compressor-disabled.mp4",
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      sourceStartMs: 0,
+      sourceDurationMs: 4000,
+      includeAudio: true,
+    });
+    expect(renderVideoAudioGraphToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+  });
+
   it("compiles the graph before invoking native rendering", () => {
     expect(typeof compileSingleVideoTrackGraph).toBe("function");
   });
