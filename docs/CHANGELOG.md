@@ -1,23 +1,33 @@
-### M3.83 — Embedded Video Source-Audio Inspector Parity — in progress — 2026-09-24
+### M3.84 — Embedded Video Source-Audio Timeline Parity — in progress — 2026-09-24
+
+Branch: not created yet
+
+Scope:
+- Align Timeline audio interactions for Video clips with embedded source audio, beginning with existing Fade handles and related direct interaction.
+- Reuse current Timeline components/commands/history; keep Image clips audio-free and avoid schema changes.
+
+Repository evidence:
+- M3.83 completed Inspector parity for Video clip Audio Fade/EQ/Compressor.
+- Video Volume Automation is already present for Video clips.
+- Current Timeline fade-handle rendering still needs an evidence-driven audit for Video clip eligibility.
+
+Validation:
+- Pending implementation and user validation.
+
+### M3.83 — Embedded Video Source-Audio Inspector Parity — completed — 2026-09-24
 
 Branch: `feat/m3-83-video-source-audio-inspector-parity`
 PR #98
-
-Scope:
-- Expose existing Audio Fade, EQ, and Compressor Inspector controls for Video clips with embedded source audio.
-- Reuse existing commands/models/history/preview/export paths.
-- Keep Image clips excluded from audio controls and keep the project schema unchanged.
+Merge SHA: `5f52dfca80d3c453252c59dd1428a64b58be6d6c`
 
 Implementation:
-- Video-track Video clips are now accepted by the existing Fade, EQ, and Compressor commands.
-- Existing Inspector components are shared with Video clips instead of introducing Video-specific controls.
-- Image clips remain without audio controls.
+- Exposed shared Audio Fade/EQ/Compressor Inspector controls to embedded-audio Video clips.
+- Extended existing Fade/EQ/Compressor commands to Video-track Video clips.
+- Preserved Image exclusion, Audio-track behavior, validation, normalization, and history.
 - Added command and App regression coverage.
-- Fixed null-context protection in the App audio handlers.
-- No DSP or schema changes.
+- User reported PASS.
+- No project schema change.
 
-Validation:
-- Pending user local validation.
 
 ### M3.82 — Embedded Video Source-Audio Compressor Export — completed — 2026-09-24
 
