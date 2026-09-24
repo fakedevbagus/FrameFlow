@@ -167,16 +167,23 @@ export function createRenderPlan(
                 : undefined,
             }
           : {}),
+        ...(
+          (track.type === "audio" && asset.mediaType === "audio") ||
+          (track.type === "video" && asset.mediaType === "video")
+            ? (() => {
+                const fades = getAudioFadeDurations(clip);
+                return {
+                  audioFadeInMs: fades.fadeInMs,
+                  audioFadeOutMs: fades.fadeOutMs,
+                };
+              })()
+            : {}
+        ),
         ...(track.type === "audio" && asset.mediaType === "audio"
-          ? (() => {
-              const fades = getAudioFadeDurations(clip);
-              return {
-                audioFadeInMs: fades.fadeInMs,
-                audioFadeOutMs: fades.fadeOutMs,
-                audioEq: getAudioEq(clip),
-                audioCompressor: getAudioCompressor(clip),
-              };
-            })()
+          ? {
+              audioEq: getAudioEq(clip),
+              audioCompressor: getAudioCompressor(clip),
+            }
           : {}),
         ...(track.type === "video"
           ? {
