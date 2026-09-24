@@ -164,6 +164,38 @@ describe("render plan", () => {
     );
   });
 
+  it("propagates audio fades for embedded video source audio", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioFadeInMs: 600,
+                audioFadeOutMs: 800,
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const segment = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    ).segments.find((item) => item.assetId === "video-a");
+
+    expect(segment).toEqual(
+      expect.objectContaining({
+        audioFadeInMs: 600,
+        audioFadeOutMs: 800,
+      }),
+    );
+  });
+
   it("propagates visual effects for visual clips", () => {
     let project = projectWithAssets();
     project = addAssetToTimeline(project, "video-a");
