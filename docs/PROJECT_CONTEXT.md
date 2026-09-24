@@ -1,39 +1,24 @@
-## M3.88 — Embedded Video Volume Automation Command Parity — in progress — 2026-09-25
+## M3.89 — Waveform Selection Lifecycle Hardening — active — 2026-09-25
 
 Branch:
-`feat/m3-88-video-volume-automation-command-parity`
-
-PR:
-#103 — Draft.
-
-Base:
-`d990aaac45245bc93ff94f208eb4d97e2704ab2e`
+Not created yet.
 
 Scope:
-- Close the remaining embedded Video volume automation parity gap across Inspector set/update, Timeline keyframe move, and Timeline keyframe delete.
-- Reuse the existing audio-bearing clip eligibility; no schema, automation-model, or DSP change.
+- Prevent stale Timeline waveform selections from surviving clip source-range changes caused by trim operations.
+- Keep waveform generation, persistent caching, waveform range alignment, seek behavior, project schema, history semantics, and export DSP unchanged.
 
 Repository evidence:
-- Timeline already renders Volume Automation markers for Video-track Video clips.
-- `updateAudioClipVolumeAtTime` already accepts Audio-track Audio and Video-track Video clips, but the App selected-volume handler was still Audio-only.
-- `moveAudioClipVolumeKeyframe` and `removeAudioClipVolumeKeyframe` were still restricted to Audio-track Audio clips.
+- `AudioWaveformPreview` stores waveform selection locally by source path and only clears it when its source-path effect unmounts.
+- M3.86 changed visible waveform rendering to follow the clip source range, so trim updates can change the rendered duration/range without remounting the same waveform component.
+- A selection from the previous clip range can therefore remain visible with stale local start/end values after trim.
 
-Implementation:
-- Updated the App selected-volume handler to accept Audio-track Audio and Video-track Video clips.
-- Updated volume-keyframe move/remove commands to use the same audio-bearing eligibility and reject Image/non-audio clips.
-- Added command regressions for Video source-audio keyframe move/remove.
-- Added an App integration regression covering Video Timeline keyframe move and delete.
-- Retained the existing Video Inspector set/update regression.
-- No project schema, keyframe interpolation, preview routing, export DSP, waveform, or UI layout changes.
-
-Validation:
-- Pending user local validation.
-
-Known limitation:
-- None introduced; Image clips remain excluded from audio volume automation.
+M3.88 completion:
+- PR #103 was user-validated and squash-merged at `06b21e5f28650889d78be09c5bf86380877001fb`.
+- Video embedded-audio Volume Automation Inspector set/update, Timeline move, and Timeline delete now share the same audio-bearing eligibility as the existing set/update command.
+- Regression coverage protects Video keyframe move/delete while Image clips remain excluded.
 
 Next step:
-- Open a Draft PR and hand off focused local validation.
+- Create a focused M3.89 branch from updated `main`, clear waveform selection when the clip source range changes, and add regression coverage for the stale-selection case.
 
 
 ## M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
