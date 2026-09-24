@@ -1,19 +1,18 @@
-## M3.83 — active — 2026-09-24
+## M3.84 — active — 2026-09-24
 
-- Branch: `feat/m3-83-video-source-audio-inspector-parity`.
-- PR: #98 — Draft.
-- Base: M3.82 merge `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
-- Scope: expose the existing Audio Fade, EQ, and Compressor Inspector controls for Video clips with embedded source audio.
-- Repository evidence: Video embedded audio already supports preview/export for Volume Automation, Fade, EQ, Compressor, Track Volume, and Track Pan.
-- Current gap before M3.83: App Inspector exposed Fade/EQ/Compressor only for Audio-track audio clips, and the corresponding command guards rejected Video-track Video clips.
-- Implemented shared command/UI parity; no new models, schema fields, or DSP architecture.
-- Video-track Video clips now pass the existing Fade/EQ/Compressor commands with unchanged validation and normalization.
-- Existing Inspector components are reused for Video clips; Image clips remain excluded.
-- Added command regressions and App UI regressions; fixed null-context protection in App audio handlers.
-- M3.82 completed and squash-merged as PR #97 at `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
+- Branch: not created yet; create from updated `main` at the current HEAD after documentation reconciliation.
+- Base: M3.83 merge `5f52dfca80d3c453252c59dd1428a64b58be6d6c`.
+- Scope: Timeline parity for embedded Video source audio, beginning with the existing Audio Fade handle/interaction surface.
+- Repository evidence: M3.83 now exposes Fade/EQ/Compressor in the Inspector, while Video Volume Automation already exists; Timeline fade-handle eligibility still requires a focused audit for Video clips.
+- Reuse the existing Timeline fade components, commands, and history engine.
+- Preserve Image clips as audio-free and Audio-track behavior unchanged.
+- Do not introduce schema fields, duplicate audio interaction models, or DSP/export redesign.
+- Add focused Timeline/App regressions for Video fade-handle visibility and editing.
+- M3.83 completed and squash-merged as PR #98 at `5f52dfca80d3c453252c59dd1428a64b58be6d6c`.
+- M3.82 completed and merged as PR #97 at `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
 - M3.81 correction completed at `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
-- PR #76 remains parked and PR #22 remains unrelated/untouched.
-- Local M3.83 validation is pending.
+- PR #76 remains parked; PR #22 remains unrelated and untouched.
+- Local M3.84 validation is pending.
 
 
 ## M3.79 — completed — 2026-09-24
