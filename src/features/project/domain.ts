@@ -408,7 +408,13 @@ function validateClip(
     fieldPrefix + " sourceStartMs",
   );
 
-  if (value.sourceEndMs !== null && value.sourceEndMs !== undefined) {
+  if (value.sourceEndMs === null) {
+    // Unknown source duration is allowed for persisted projects.
+  } else if (value.sourceEndMs === undefined) {
+    throw new ProjectValidationError(
+      fieldPrefix + " sourceEndMs must be a number or null.",
+    );
+  } else {
     assertFiniteNonNegativeNumber(
       value.sourceEndMs,
       fieldPrefix + " sourceEndMs",
