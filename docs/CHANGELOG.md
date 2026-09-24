@@ -1,6 +1,7 @@
 ### M3.85 — Embedded Video Source-Audio Waveform Parity — in progress — 2026-09-25
 
 Branch: `feat/m3-85-video-source-audio-waveform`
+PR #100 (Draft)
 
 Scope:
 - Render the existing Timeline audio waveform for Video clips with embedded source audio.
