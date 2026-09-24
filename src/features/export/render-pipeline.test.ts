@@ -90,6 +90,206 @@ describe("render video pipeline", () => {
     });
   });
 
+  it("routes a single Video clip with non-default track volume through unified AV source-audio rendering", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+          trackVolume: 0.5,
+          trackPan: 0,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/video-track-volume.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/video-track-volume.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/video-track-volume.mp4",
+    });
+
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4"],
+        videoInputMediaTypes: ["video"],
+        audioInputs: [],
+        sourceAudioSegments: [
+          {
+            inputIndex: 0,
+            sourceStartMs: 0,
+            timelineStartMs: 0,
+            durationMs: 4000,
+            trackVolume: 0.5,
+            trackPan: 0,
+          },
+        ],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/video-track-volume.mp4",
+      }),
+    );
+
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+  });
+
+  it("routes sequential Video clips with non-default track pan through unified AV source-audio rendering", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 6000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 3000,
+          sourceStartMs: 0,
+          sourceEndMs: 3000,
+          durationMs: 3000,
+          isMuted: false,
+          trackVolume: 1,
+          trackPan: -0.4,
+        },
+        {
+          inputIndex: 1,
+          assetId: "video-b",
+          sourcePath: "/media/b.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 3000,
+          timelineEndMs: 6000,
+          sourceStartMs: 500,
+          sourceEndMs: 3500,
+          durationMs: 3000,
+          isMuted: false,
+          trackVolume: 1,
+          trackPan: -0.4,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/video-track-pan.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/video-track-pan.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/video-track-pan.mp4",
+    });
+
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4", "/media/b.mp4"],
+        videoInputMediaTypes: ["video", "video"],
+        audioInputs: [],
+        sourceAudioSegments: [
+          {
+            inputIndex: 0,
+            sourceStartMs: 0,
+            timelineStartMs: 0,
+            durationMs: 3000,
+            trackVolume: 1,
+            trackPan: -0.4,
+          },
+          {
+            inputIndex: 1,
+            sourceStartMs: 500,
+            timelineStartMs: 3000,
+            durationMs: 3000,
+            trackVolume: 1,
+            trackPan: -0.4,
+          },
+        ],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/video-track-pan.mp4",
+      }),
+    );
+
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+  });
+
+  it("keeps a muted single Video clip on the direct renderer without audio", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: true,
+        },
+      ],
+    };
+
+    vi.mocked(renderSingleSourceToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/video-muted.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/video-muted.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/video-muted.mp4",
+    });
+
+    expect(renderSingleSourceToMp4).toHaveBeenCalledWith({
+      sourcePath: "/media/a.mp4",
+      outputPath: "/tmp/video-muted.mp4",
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      sourceStartMs: 0,
+      sourceDurationMs: 4000,
+      includeAudio: false,
+    });
+    expect(renderVideoAudioGraphToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+  });
+
   it("routes sequential clips on one video track through the native segment renderer", async () => {
     const plan: RenderPlan = {
       width: 406,
