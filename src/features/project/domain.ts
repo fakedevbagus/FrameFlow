@@ -239,13 +239,325 @@ export function validateProject(value: unknown): asserts value is Project {
   assertIsoTimestamp(value.updatedAt, "Project updatedAt");
   validateCanvas(value.canvas);
 
-  if (!Array.isArray(value.assets)) {
+  const assets = validateAssets(value.assets);
+  validateTracks(value.tracks, assets);
+}
+
+function validateAssets(value: unknown): MediaAsset[] {
+  if (!Array.isArray(value)) {
     throw new ProjectValidationError("Project assets must be an array.");
   }
 
-  if (!Array.isArray(value.tracks)) {
+  const assets: MediaAsset[] = [];
+  const assetIds = new Set<string>();
+
+  for (let index = 0; index < value.length; index += 1) {
+    const asset = value[index];
+    const fieldPrefix = "Asset " + index;
+
+    if (!isRecord(asset)) {
+      throw new ProjectValidationError(fieldPrefix + " must be an object.");
+    }
+
+    assertNonEmptyString(asset.id, fieldPrefix + " id");
+    if (assetIds.has(asset.id)) {
+      throw new ProjectValidationError(
+        "Duplicate asset id: " + asset.id + ".",
+      );
+    }
+    assetIds.add(asset.id);
+
+    assertNonEmptyString(asset.name, fieldPrefix + " name");
+    assertMediaType(asset.mediaType, fieldPrefix + " mediaType");
+    assertNonEmptyString(asset.sourcePath, fieldPrefix + " sourcePath");
+
+    if (
+      asset.durationMs !== null &&
+      (!isFiniteNumber(asset.durationMs) || asset.durationMs < 0)
+    ) {
+      throw new ProjectValidationError(
+        fieldPrefix + " durationMs must be null or a non-negative number.",
+      );
+    }
+
+    assets.push(asset as MediaAsset);
+  }
+
+  return assets;
+}
+
+function validateTracks(
+  value: unknown,
+  assets: MediaAsset[],
+): void {
+  if (!Array.isArray(value)) {
     throw new ProjectValidationError("Project tracks must be an array.");
   }
+
+  const assetById = new Map(assets.map((asset) => [asset.id, asset]));
+  const trackIds = new Set<string>();
+  const clipIds = new Set<string>();
+
+  for (let trackIndex = 0; trackIndex < value.length; trackIndex += 1) {
+    const track = value[trackIndex];
+    const fieldPrefix = "Track " + trackIndex;
+
+    if (!isRecord(track)) {
+      throw new ProjectValidationError(fieldPrefix + " must be an object.");
+    }
+
+    assertNonEmptyString(track.id, fieldPrefix + " id");
+    if (trackIds.has(track.id)) {
+      throw new ProjectValidationError(
+        "Duplicate track id: " + track.id + ".",
+      );
+    }
+    trackIds.add(track.id);
+
+    assertNonEmptyString(track.name, fieldPrefix + " name");
+
+    if (track.type !== "audio" && track.type !== "video") {
+      throw new ProjectValidationError(
+        fieldPrefix + " type must be audio or video.",
+      );
+    }
+
+    if (typeof track.isLocked !== "boolean") {
+      throw new ProjectValidationError(
+        fieldPrefix + " isLocked must be a boolean.",
+      );
+    }
+
+    if (typeof track.isMuted !== "boolean") {
+      throw new ProjectValidationError(
+        fieldPrefix + " isMuted must be a boolean.",
+      );
+    }
+
+    if (
+      track.volume !== undefined &&
+      (!isFiniteNumber(track.volume) || track.volume < 0 || track.volume > 1)
+    ) {
+      throw new ProjectValidationError(
+        fieldPrefix + " volume must be between 0 and 1.",
+      );
+    }
+
+    if (
+      track.pan !== undefined &&
+      (!isFiniteNumber(track.pan) || track.pan < -1 || track.pan > 1)
+    ) {
+      throw new ProjectValidationError(
+        fieldPrefix + " pan must be between -1 and 1.",
+      );
+    }
+
+    if (!Array.isArray(track.clips)) {
+      throw new ProjectValidationError(fieldPrefix + " clips must be an array.");
+    }
+
+    for (let clipIndex = 0; clipIndex < track.clips.length; clipIndex += 1) {
+      validateClip(
+        track.clips[clipIndex],
+        track,
+        trackIndex,
+        clipIndex,
+        assetById,
+        clipIds,
+      );
+    }
+  }
+}
+
+function validateClip(
+  value: unknown,
+  track: Record<string, unknown>,
+  trackIndex: number,
+  clipIndex: number,
+  assetById: Map<string, MediaAsset>,
+  clipIds: Set<string>,
+): void {
+  const fieldPrefix = "Clip " + trackIndex + "." + clipIndex;
+
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(fieldPrefix + " must be an object.");
+  }
+
+  assertNonEmptyString(value.id, fieldPrefix + " id");
+  if (clipIds.has(value.id)) {
+    throw new ProjectValidationError(
+      "Duplicate clip id: " + value.id + ".",
+    );
+  }
+  clipIds.add(value.id);
+
+  assertNonEmptyString(value.assetId, fieldPrefix + " assetId");
+  const asset = assetById.get(value.assetId);
+  if (!asset) {
+    throw new ProjectValidationError(
+      fieldPrefix + " references missing asset: " + value.assetId + ".",
+    );
+  }
+
+  assertFiniteNonNegativeNumber(
+    value.timelineStartMs,
+    fieldPrefix + " timelineStartMs",
+  );
+  assertFiniteNonNegativeNumber(
+    value.sourceStartMs,
+    fieldPrefix + " sourceStartMs",
+  );
+
+  if (value.sourceEndMs !== null && value.sourceEndMs !== undefined) {
+    assertFiniteNonNegativeNumber(
+      value.sourceEndMs,
+      fieldPrefix + " sourceEndMs",
+    );
+
+    if (value.sourceEndMs <= value.sourceStartMs) {
+      throw new ProjectValidationError(
+        fieldPrefix + " sourceEndMs must be greater than sourceStartMs.",
+      );
+    }
+
+    if (
+      asset.durationMs !== null &&
+      asset.durationMs !== undefined &&
+      value.sourceEndMs > asset.durationMs
+    ) {
+      throw new ProjectValidationError(
+        fieldPrefix + " sourceEndMs cannot exceed asset duration.",
+      );
+    }
+  }
+
+  if (
+    asset.durationMs !== null &&
+    asset.durationMs !== undefined &&
+    value.sourceStartMs > asset.durationMs
+  ) {
+    throw new ProjectValidationError(
+      fieldPrefix + " sourceStartMs cannot exceed asset duration.",
+    );
+  }
+
+  const expectedTrackType = asset.mediaType === "audio" ? "audio" : "video";
+  if (track.type !== expectedTrackType) {
+    throw new ProjectValidationError(
+      fieldPrefix +
+        " uses media type " +
+        asset.mediaType +
+        " on a " +
+        track.type +
+        " track.",
+    );
+  }
+
+  validateOptionalAudioFields(value, fieldPrefix);
+}
+
+function validateOptionalAudioFields(
+  clip: Record<string, unknown>,
+  fieldPrefix: string,
+): void {
+  for (const field of ["audioFadeInMs", "audioFadeOutMs"] as const) {
+    const value = clip[field];
+    if (
+      value !== undefined &&
+      (!isFiniteNumber(value) || value < 0 || !Number.isInteger(value))
+    ) {
+      throw new ProjectValidationError(
+        fieldPrefix + " " + field + " must be a non-negative integer.",
+      );
+    }
+  }
+
+  const audioEq = clip.audioEq;
+  if (audioEq !== undefined) {
+    if (!isRecord(audioEq)) {
+      throw new ProjectValidationError(fieldPrefix + " audioEq must be an object.");
+    }
+
+    if (typeof audioEq.enabled !== "boolean") {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioEq enabled must be a boolean.",
+      );
+    }
+
+    for (const field of ["lowGainDb", "midGainDb", "highGainDb"] as const) {
+      const value = audioEq[field];
+      if (!isFiniteNumber(value) || value < -12 || value > 12) {
+        throw new ProjectValidationError(
+          fieldPrefix + " audioEq " + field + " must be between -12 and 12.",
+        );
+      }
+    }
+  }
+
+  const audioVolumeKeyframes = clip.audioVolumeKeyframes;
+  if (audioVolumeKeyframes !== undefined) {
+    if (!Array.isArray(audioVolumeKeyframes)) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioVolumeKeyframes must be an array.",
+      );
+    }
+
+    const keyframeTimes = new Set<number>();
+    for (let index = 0; index < audioVolumeKeyframes.length; index += 1) {
+      const keyframe = audioVolumeKeyframes[index];
+      const keyframePrefix =
+        fieldPrefix + " audioVolumeKeyframes[" + index + "]";
+
+      if (!isRecord(keyframe)) {
+        throw new ProjectValidationError(keyframePrefix + " must be an object.");
+      }
+
+      assertFiniteNonNegativeNumber(
+        keyframe.timeMs,
+        keyframePrefix + " timeMs",
+      );
+      if (!isFiniteNumber(keyframe.volume) || keyframe.volume < 0 || keyframe.volume > 1) {
+        throw new ProjectValidationError(
+          keyframePrefix + " volume must be between 0 and 1.",
+        );
+      }
+
+      if (keyframeTimes.has(keyframe.timeMs)) {
+        throw new ProjectValidationError(
+          keyframePrefix + " duplicates a previous timeMs.",
+        );
+      }
+      keyframeTimes.add(keyframe.timeMs);
+
+      if (
+        clip.sourceEndMs !== null &&
+        clip.sourceEndMs !== undefined &&
+        keyframe.timeMs > Number(clip.sourceEndMs) - Number(clip.sourceStartMs)
+      ) {
+        throw new ProjectValidationError(
+          keyframePrefix + " timeMs must be inside the clip duration.",
+        );
+      }
+    }
+  }
+}
+
+function assertMediaType(value: unknown, field: string): asserts value is MediaType {
+  if (value !== "audio" && value !== "image" && value !== "video") {
+    throw new ProjectValidationError(
+      field + " must be audio, image, or video.",
+    );
+  }
+}
+
+function assertFiniteNonNegativeNumber(value: unknown, field: string): asserts value is number {
+  if (!isFiniteNumber(value) || value < 0) {
+    throw new ProjectValidationError(field + " must be a finite non-negative number.");
+  }
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
 }
 
 function createTrack(id: string, name: string, type: TrackType): Track {
