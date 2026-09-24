@@ -1,43 +1,67 @@
-## M3.81 — Embedded Video Source-Audio EQ Export — in progress — 2026-09-24
+## M3.82 — Embedded Video Source-Audio Compressor Export — in progress — 2026-09-24
+
+Branch:
+`feat/m3-82-video-source-audio-compressor-export`
+
+PR:
+Not opened yet; implementation branch only.
+
+Base:
+`8a2c8c285dcbb8ddf9df640fc089673b37baa4fb` (M3.81 correction merge)
+
+Scope:
+- Extend the existing per-clip `AudioCompressor` model from Audio-track export to embedded audio carried by Video clips.
+- Reuse the established Audio-track compressor semantics and processing order without introducing a new model or project schema fields.
+- Preserve existing Track Volume, Track Pan, clip Volume Automation, clip EQ, and clip Fade behavior.
+- Force Video-only exports to use unified AV rendering only when Video source-audio compression is enabled; preserve fast paths when compression is disabled.
+- Preserve explicit Audio-track compressor behavior unchanged.
+
+Implementation:
+- RenderPlan now carries normalized `audioCompressor` metadata for both Audio-track audio assets and Video-track video assets.
+- Native `NativeSourceAudioSegment` now accepts optional `audioCompressor` metadata.
+- The export pipeline propagates active Video compressor metadata in both Video-only and mixed Video + explicit Audio unified AV requests.
+- Effective enabled Video source-audio compression bypasses direct/segment fast paths so processing cannot be silently skipped.
+- Native FFmpeg source-audio filtering applies compressor processing after Track Volume/Pan and clip EQ, and before clip Fade/timeline delay.
+- Compressor semantics reuse the Audio-track export graph: threshold dB converted to linear amplitude, threshold clamped to -60..0 dB, ratio 1..20, attack 0.01..2000 ms, release 0.01..9000 ms.
+- Removed an inherited duplicate `audio_eq` assignment found during the post-M3.81 merge audit while extending the native source-audio resolver.
+- No project schema change.
+
+Regression coverage:
+- RenderPlan verifies Video clip compressor metadata propagation.
+- Export pipeline verifies enabled Video compressor routing/payload and disabled-compressor fast-path preservation.
+- Native Rust verifies compressor filter generation and ordering alongside existing EQ/fade behavior.
+
+Validation:
+- Pending user local validation of M3.82.
+
+Known limitations:
+- This milestone covers embedded Video source-audio compressor export only.
+- No new Video-specific audio Inspector controls are introduced.
+- Only the existing project `AudioCompressor` data path is reused.
+
+Next step:
+- Open a Draft PR from this branch after the implementation/doc diff is internally audited, then hand off local lint, frontend tests, production build, Rust tests, Tauri startup, and manual export validation.
+
+## M3.81 — Embedded Video Source-Audio EQ Export — completed — 2026-09-24
 
 Branch:
 `feat/m3-81-video-source-audio-eq-export`
 
 PR:
-#95
+#95, followed by focused post-merge correction PR #96
 
-Scope:
-- Make exported embedded Video source audio honor the existing per-clip 3-band EQ already supported by the project model and Video preview.
-- Reuse the existing Audio-track EQ semantics and avoid introducing duplicate audio models or project schema fields.
-- Preserve Track Volume, Track Pan, clip Volume Automation, and clip Fade ordering for embedded Video source audio.
-- Preserve direct/segment fast paths unless effective Video source-audio EQ requires graph rendering.
+Merge SHAs:
+- M3.81 main merge: `eae0f97a52343c794c337200ce8f3808feab2800`
+- Post-merge correction: `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`
 
-Implementation:
-- RenderPlan now carries normalized `audioEq` metadata for clips on both Audio tracks and Video tracks when the asset/media pairing is audio-capable.
-- `NativeSourceAudioSegment` now carries optional `audioEq` metadata without changing the project schema.
-- Effective non-zero Video clip EQ now forces Video-only export through the unified AV renderer instead of direct/segment fast paths.
-- Unified Video + Audio exports carry active Video source-audio EQ through the existing source-audio metadata path.
-- Native source-audio filtering applies the existing three-band EQ semantics after Track Volume/Pan and before clip Fade/timeline delay.
-- EQ uses the same 120 Hz / 1 kHz / 8 kHz bands and Q values as the existing Audio-track export graph; disabled or zero-gain bands are omitted.
-- Added RenderPlan, export-pipeline, and native Rust regression coverage.
-- Audio-track EQ behavior is unchanged.
-- No project schema change.
-
-Validation:
-- Pending user local validation.
-
-Known limitations:
-- This milestone covers embedded Video source-audio EQ export only.
-- Video source-audio compressor export remains a separate milestone.
-- No new project schema or Video-specific audio Inspector controls are introduced.
-
-Post-merge correction:
-- PR #96 — Draft tracks the focused correction.
-- Repository audit found that the merged pipeline did not actually include `audioEq` in `sourceAudioSegments`, so EQ metadata could be dropped before native rendering.
-- This correction branch restores that propagation and adds an explicit pipeline regression test before the M3.81 result is treated as fully reconciled.
-
-Next step:
-- Validate the correction locally, then merge the focused fix before starting M3.82.
+Implementation reconciled:
+- RenderPlan carries normalized Video clip `audioEq`.
+- Unified AV export carries active Video source-audio EQ into native rendering.
+- Effective non-zero Video EQ bypasses direct/segment fast paths.
+- Native filtering reuses the existing 120 Hz / 1 kHz / 8 kHz EQ semantics after Track Volume/Pan and before Fade/timeline delay.
+- PR #96 restored the missing `audioEq` propagation in `sourceAudioSegments` and added a focused pipeline regression test.
+- User reported PASS for the correction validation.
+- Audio-track EQ behavior and the project schema remain unchanged.
 
 ## M3.80 — Video Source-Audio Fast-Path Track Controls — completed — 2026-09-24
 

@@ -1,60 +1,43 @@
-### M3.80 — Video Source-Audio Fast-Path Track Controls — completed — 2026-09-24
+### M3.82 — Embedded Video Source-Audio Compressor Export — in progress — 2026-09-24
 
-Branch: `feat/m3-80-video-source-audio-fast-path-controls`
-PR #94
-Merge SHA: `6181359270552c82f6b4c4d557e41255b8f32bb4`
+Branch: `feat/m3-82-video-source-audio-compressor-export`
 
 Scope:
-- Ensure embedded Video source audio respects existing Video-track Volume and Pan controls on direct and sequential fast-path exports.
-- Respect Video-track mute state on those fast paths.
-- Preserve existing unified AV graph behavior and Audio-track processing.
+- Export embedded Video source audio with the existing per-clip AudioCompressor model.
+- Reuse Audio-track compressor semantics without changing the project schema.
+- Preserve Track Volume/Pan → clip Volume Automation → clip EQ → clip Compressor → clip Fade → timeline delay ordering.
+- Preserve direct/segment fast paths when Video source-audio compression is disabled.
 
 Implementation:
-- Non-default Video-track Volume/Pan now force the unified AV source-audio renderer for Video-only plans.
-- Default unmuted Video-track settings retain the existing direct/segment fast paths.
-- Muted single-source exports pass `includeAudio: false`; muted sequential single-track exports likewise disable audio.
-- Added pipeline regression coverage for Video Volume, Video Pan, and muted routing.
-- No project schema change.
-
-Validation:
-- User reported PASS after local validation of M3.80, including Video-track Volume/Pan and mute behavior across fast and graph export paths.
-
-Known limitations:
-- Scope is limited to Video-track Volume/Pan and mute consistency across export paths.
-- Embedded Video source-audio EQ export remains a separate follow-up milestone.
-- Video source-audio compressor export remains a later follow-up milestone.
-
-### M3.81 — Embedded Video Source-Audio EQ Export — in progress — 2026-09-24
-
-Branch: `feat/m3-81-video-source-audio-eq-export`
-PR: #95
-
-Scope:
-- Export embedded Video source audio with the existing per-clip 3-band EQ used by Video preview.
-- Reuse the existing Audio-track EQ semantics and keep the project schema unchanged.
-- Preserve the established Track Volume/Pan → clip Volume Automation → clip EQ → clip Fade → timeline delay ordering for embedded Video source audio.
-
-Implementation:
-- RenderPlan now carries normalized `audioEq` metadata for Video clip segments.
-- The native source-audio contract accepts optional `audioEq` metadata.
-- Effective Video source-audio EQ prevents direct and sequential fast paths from silently omitting the processing and routes those cases through unified AV export.
-- Native source-audio filtering reuses the existing 120 Hz / 1 kHz / 8 kHz equalizer configuration from the Audio-track export graph.
-- Disabled and zero-gain EQ bands emit no filter; active gains are clamped to the existing -12 dB to +12 dB domain.
+- RenderPlan propagates normalized `audioCompressor` for Video clips.
+- Native source-audio request/resolve types accept optional compressor metadata.
+- Unified Video export payloads carry active Video compressor metadata for both Video-only and mixed Video + explicit Audio paths.
+- Active Video compressor forces unified AV rendering; disabled compressor remains fast-path eligible.
+- Native FFmpeg uses `acompressor` with the same threshold/ratio/attack/release ranges already used by the Audio-track export graph.
+- Inherited duplicate `audio_eq` assignment in the native resolver was removed during baseline audit.
 - Added RenderPlan, pipeline, and Rust regression coverage.
-- Audio-track EQ behavior and the project schema remain unchanged.
+- No schema change.
 
 Validation:
 - Pending user local validation.
 
 Known limitations:
-- Video source-audio compressor export remains a separate milestone.
-- No new project schema or Video-specific audio Inspector controls are introduced.
+- Video-specific compressor Inspector controls are not part of this milestone.
+- Audio-track compressor behavior remains unchanged.
 
-Post-merge correction:
-- PR #96 — Draft tracks the focused correction.
-- Repository audit found that the merged Video export pipeline omitted `audioEq` from the `sourceAudioSegments` payload even though RenderPlan and native filtering supported it.
-- Restored the missing propagation and added a focused pipeline regression test.
-- Local validation of this correction is pending.
+### M3.81 — Embedded Video Source-Audio EQ Export — completed — 2026-09-24
+
+Branch: `feat/m3-81-video-source-audio-eq-export`
+
+PR #95; post-merge correction PR #96  
+Merge SHAs: `eae0f97a52343c794c337200ce8f3808feab2800`, then `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`
+
+Implementation:
+- Extended RenderPlan/native/source-audio pipeline coverage for embedded Video clip EQ.
+- Reused existing three-band EQ semantics and preserved existing processing order.
+- PR #96 restored missing `audioEq` propagation into the unified source-audio payload and added a focused regression test.
+- User reported PASS for the correction validation.
+- No project schema change.
 
 ### M3.79 — Embedded Video Source-Audio Fade Export — completed — 2026-09-24
 

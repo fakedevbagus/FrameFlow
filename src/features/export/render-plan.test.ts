@@ -578,6 +578,45 @@ describe("render plan", () => {
     });
   });
 
+  it("carries Video clip audio compressor settings into render segments", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioCompressor: {
+                  enabled: true,
+                  thresholdDb: -18,
+                  ratio: 6,
+                  attackMs: 10,
+                  releaseMs: 300,
+                },
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(plan.segments[0].audioCompressor).toEqual({
+      enabled: true,
+      thresholdDb: -18,
+      ratio: 6,
+      attackMs: 10,
+      releaseMs: 300,
+    });
+  });
+
   it("resolves quality dimensions from the project aspect ratio", () => {
     const project = projectWithAssets();
     const settings = {

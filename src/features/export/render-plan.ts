@@ -187,7 +187,10 @@ export function createRenderPlan(
               audioEq: getAudioEq(clip),
             }
           : {}),
-        ...(track.type === "audio" && asset.mediaType === "audio"
+        ...((
+          (track.type === "audio" && asset.mediaType === "audio") ||
+          (track.type === "video" && asset.mediaType === "video")
+        )
           ? {
               audioCompressor: getAudioCompressor(clip),
             }
