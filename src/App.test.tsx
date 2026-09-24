@@ -2085,11 +2085,15 @@ describe("App", () => {
     expect(pan).toHaveValue("0");
 
     fireEvent.change(volume, { target: { value: "0.45" } });
-    fireEvent.change(pan, { target: { value: "0.3" } });
 
     await waitFor(() => {
       expect(volume).toHaveValue("0.45");
       expect(volume).toHaveAttribute("aria-valuetext", "45%");
+    });
+
+    fireEvent.change(pan, { target: { value: "0.3" } });
+
+    await waitFor(() => {
       expect(pan).toHaveValue("0.3");
       expect(pan).toHaveAttribute("aria-valuetext", "R 30%");
     });
