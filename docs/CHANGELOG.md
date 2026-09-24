@@ -24,29 +24,29 @@ Known limitations:
 - Embedded Video source-audio EQ export remains a separate follow-up milestone.
 - Video source-audio compressor export remains a later follow-up milestone.
 
-### M3.81 — Embedded Video Source-Audio EQ Export — active — 2026-09-24
+### M3.81 — Embedded Video Source-Audio EQ Export — in progress — 2026-09-24
 
 Branch: `feat/m3-81-video-source-audio-eq-export`
+PR: Draft
 
 Scope:
-- Make exported embedded Video source audio honor the existing per-clip 3-band EQ already supported by the project model and Video preview.
-- Reuse the existing Audio-track EQ semantics and avoid introducing duplicate audio models or project schema fields.
-- Preserve Track Volume, Track Pan, clip Volume Automation, and clip Fade ordering for embedded Video source audio.
-- Preserve direct/segment fast paths unless Video source-audio EQ requires graph rendering.
+- Export embedded Video source audio with the existing per-clip 3-band EQ used by Video preview.
+- Reuse the existing Audio-track EQ semantics and keep the project schema unchanged.
+- Preserve the established Track Volume/Pan → clip Volume Automation → clip EQ → clip Fade → timeline delay ordering for embedded Video source audio.
 
-Implementation target:
-- Carry normalized Video clip EQ metadata through RenderPlan and the native unified source-audio request.
-- Route active Video source-audio EQ cases through the unified AV renderer so fast paths cannot silently omit EQ.
-- Apply the same 120 Hz / 1 kHz / 8 kHz FFmpeg equalizer semantics used by the existing Audio-track export graph.
-- Add focused RenderPlan, pipeline, frontend/native contract, and Rust filter-generation regression coverage.
-- Keep Audio-track EQ behavior unchanged.
-- No project schema change.
+Implementation:
+- RenderPlan now carries normalized `audioEq` metadata for Video clip segments.
+- The native source-audio contract accepts optional `audioEq` metadata.
+- Effective Video source-audio EQ prevents direct and sequential fast paths from silently omitting the processing and routes those cases through unified AV export.
+- Native source-audio filtering reuses the existing 120 Hz / 1 kHz / 8 kHz equalizer configuration from the Audio-track export graph.
+- Disabled and zero-gain EQ bands emit no filter; active gains are clamped to the existing -12 dB to +12 dB domain.
+- Added RenderPlan, pipeline, and Rust regression coverage.
+- Audio-track EQ behavior and the project schema remain unchanged.
 
 Validation:
 - Pending user local validation.
 
 Known limitations:
-- This milestone covers embedded Video source-audio EQ export only.
 - Video source-audio compressor export remains a separate milestone.
 - No new project schema or Video-specific audio Inspector controls are introduced.
 
