@@ -236,6 +236,71 @@ describe("render video pipeline", () => {
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });
 
+  it("routes Video clip fades through unified AV source-audio rendering", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+          audioFadeInMs: 500,
+          audioFadeOutMs: 750,
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/video-fades.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/video-fades.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/video-fades.mp4",
+    });
+
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith(
+      expect.objectContaining({
+        videoInputs: ["/media/a.mp4"],
+        videoInputMediaTypes: ["video"],
+        audioInputs: [],
+        sourceAudioSegments: [
+          {
+            inputIndex: 0,
+            sourceStartMs: 0,
+            timelineStartMs: 0,
+            durationMs: 4000,
+            trackVolume: 1,
+            trackPan: 0,
+            audioFadeInMs: 500,
+            audioFadeOutMs: 750,
+          },
+        ],
+        audioFilterComplex: expect.stringContaining("anullsrc"),
+        audioMap: "[aout]",
+        outputPath: "/tmp/video-fades.mp4",
+      }),
+    );
+
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+  });
+
   it("routes an offset single clip through the native segment renderer with a gap", async () => {
     const plan: RenderPlan = {
       width: 406,
