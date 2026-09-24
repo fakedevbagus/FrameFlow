@@ -1,3 +1,19 @@
+### M3.77 — Per-Clip Volume Automation for Embedded Video Audio — in progress — 2026-09-24
+
+Branch: `feat/m3-77-video-clip-volume-automation`
+
+Scope:
+- Extend the existing clip-level Audio Volume Automation feature to Video clips with embedded source audio.
+- Keep the project schema and existing automation model unchanged.
+
+Implementation target:
+- Expose the existing volume automation Inspector and Timeline keyframes for Video clips.
+- Carry keyframes into source-audio render metadata.
+- Apply the same normalized/interpolated volume curve in native FFmpeg.
+- Route automated Video source audio through the unified graph path instead of fast paths that cannot represent clip automation.
+
+Validation:
+- Pending user local validation.
 ### M3.76 — Video-Only Embedded Source Audio — completed — 2026-09-24
 
 Branch: `feat/m3-76-video-only-source-audio`
