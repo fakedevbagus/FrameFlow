@@ -632,6 +632,10 @@ describe("render video pipeline", () => {
           isMuted: false,
           trackVolume: 0.8,
           trackPan: 0.2,
+          audioVolumeKeyframes: [
+            { timeMs: 0, volume: 0.5 },
+            { timeMs: 2000, volume: 0.9 },
+          ],
         },
         {
           inputIndex: 9,
@@ -700,6 +704,10 @@ describe("render video pipeline", () => {
             durationMs: 4000,
             trackVolume: 0.8,
             trackPan: 0.2,
+            audioVolumeKeyframes: [
+              { timeMs: 0, volume: 0.5 },
+              { timeMs: 2000, volume: 0.9 },
+            ],
           },
         ],
       }),
