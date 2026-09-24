@@ -5,7 +5,8 @@
 - Timeline now renders V/P controls for both video and audio tracks.
 - Unified source-audio metadata carries track volume/pan; native FFmpeg applies clamped volume and constant-power stereo panning.
 - No project schema change.
-- Latest local validation passed lint, production build, all 43 Rust tests, and Tauri development startup; the only frontend failure was a stale command test still expecting Video-track Pan to be rejected.
+- A follow-up local run exposed a parse failure because `src/features/timeline/commands.test.ts` had been accidentally truncated in the branch; the complete test file was restored from `main` and the M3.74 pan-test correction was retained in commit `9ab4a029a1760eeee43bc347a0271516dad755df`.
+- Earlier local validation passed lint, production build, all 43 Rust tests, and Tauri development startup; the only frontend failure was the stale command test expecting Video-track Pan to be rejected.
 - Corrected that stale test; fresh frontend validation and manual export verification are pending.
 - Intended PR: #88 Draft.
 - M3.73 is complete and merged at `8c7292f1b4484c9a2156484c2d06f4980760c468`.
