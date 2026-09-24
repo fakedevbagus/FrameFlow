@@ -4,41 +4,41 @@ Branch:
 `feat/m3-83-video-source-audio-inspector-parity`
 
 PR:
-Not opened yet; implementation branch only.
+#98 — Draft
 
 Base:
 `2d4b1b7d180bb8fb8d334968a024a89adc9152c2` (M3.82 merge)
 
 Scope:
-- Expose the existing audio processing controls for embedded-audio Video clips in the Inspector.
-- Bring Video clip audio editing parity to the existing Audio clip controls without introducing a second model or project schema fields.
-- Keep the existing Video preview/export signal path unchanged unless a command/UI guard currently blocks the shared controls.
-- Preserve image clips as non-audio and preserve Audio-track behavior.
+- Expose the existing Audio Fade, EQ, and Compressor Inspector controls for embedded-audio Video clips.
+- Reuse the existing command helpers, models, history engine, preview routing, and export path.
+- Keep Image clips audio-free and preserve Audio-track behavior.
+- No project schema change.
 
 Repository evidence:
-- Video preview already routes embedded audio through the shared Web Audio chain, including EQ and compressor processing.
-- Video export already supports Fade, EQ, Compressor, Volume Automation, Track Volume, and Track Pan for embedded source audio through the unified AV path.
-- The main App currently renders Audio Fade/EQ/Compressor Inspector controls only when the selected clip is an Audio asset on an Audio track.
-- `handleUpdateAudioClipEq` and `handleUpdateAudioClipCompressor` currently reject Video-track Video clips, so the shared Inspector controls cannot be used for embedded Video audio.
-- Volume Automation is already exposed to Video clips; Fade command support exists for Video clips but its Inspector UI remains grouped with Audio-only controls.
+- Video embedded audio already has preview/export support for Volume Automation, Fade, EQ, Compressor, Track Volume, and Track Pan.
+- App Inspector previously exposed Fade/EQ/Compressor only for Audio-track audio clips.
+- The Fade, EQ, and Compressor command guards also rejected Video-track Video clips.
 
-Implementation target:
-- Allow the existing EQ and Compressor commands to target Video-track Video clips with the same validation and normalization rules.
-- Extend the existing Fade/EQ/Compressor Inspector visibility and handlers to Video clips carrying embedded audio.
-- Keep all changes routed through the existing history engine and command helpers.
-- Add focused command/App regression coverage; do not introduce new audio models or schema fields.
-- Preserve image clips without audio controls.
-- Keep processing/export architecture untouched beyond removing the current UI/command gating.
+Implementation:
+- `updateAudioClipFades`, `updateAudioClipEq`, and `updateAudioClipCompressor` now accept Video-track Video clips while retaining existing validation, normalization, locking, default-clearing, and history behavior.
+- Existing Fade/EQ/Compressor Inspector components are now exposed for Video clips through the same shared UI and handlers.
+- Image clips remain excluded from audio controls.
+- Fixed null-context guarding in the App audio handlers.
+- Added command-level regression coverage for Video clip updates and Image rejection.
+- Added App regression coverage for Video audio controls, representative edits, and Image control visibility.
+- No DSP redesign and no schema changes.
 
 Validation:
 - Pending user local validation of M3.83.
 
 Known limitations:
-- This milestone is Inspector parity only; no new audio effect types or advanced Video-specific DSP controls.
-- Track-level Volume/Pan and clip Volume Automation remain the existing controls and models.
+- Inspector parity only; no new audio effect types or Video-specific DSP controls.
+- Actual embedded audio stream presence remains determined by the existing preview/export media probing path.
 
 Next step:
-- Implement the shared Video audio Inspector/command parity, add regression coverage, update docs, open a Draft PR, and hand off local validation.
+- Run the documented local validation, manually verify Video audio controls and persistence, then report PASS before PR #98 is marked ready.
+
 
 ## M3.82 — Embedded Video Source-Audio Compressor Export — completed — 2026-09-24
 

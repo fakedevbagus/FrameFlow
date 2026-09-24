@@ -2334,6 +2334,36 @@ describe("App", () => {
     });
   });
 
+  it("keeps audio inspector controls hidden for image clips", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-image-audio-controls",
+        name: "cover.png",
+        mediaType: "image",
+        sourcePath: "/media/cover.png",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("cover.png")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add cover.png to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select cover.png clip" }),
+    );
+
+    expect(screen.queryByText("Audio Fade")).not.toBeInTheDocument();
+    expect(screen.queryByText("Audio EQ")).not.toBeInTheDocument();
+    expect(screen.queryByText("Audio Compressor")).not.toBeInTheDocument();
+  });
+
   it("does not surface expected playback AbortError as a project error", async () => {
     const playMock = vi
       .spyOn(HTMLMediaElement.prototype, "play")
@@ -2472,6 +2502,81 @@ describe("App", () => {
     });
 
     expect(screen.queryByText("The operation was aborted.")).not.toBeInTheDocument();
+  });
+
+  it("exposes shared audio controls for video clips", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-video-audio-controls",
+        name: "video-audio-controls.mp4",
+        mediaType: "video",
+        sourcePath: "/media/video-audio-controls.mp4",
+        durationMs: 8000,
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("video-audio-controls.mp4")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add video-audio-controls.mp4 to timeline",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Select video-audio-controls.mp4 clip",
+      }),
+    );
+
+    expect(screen.getByText("Audio fades")).toBeInTheDocument();
+    expect(screen.getByText("Audio EQ")).toBeInTheDocument();
+    expect(screen.getByText("Audio Compressor")).toBeInTheDocument();
+
+    const fadeIn = screen.getByRole("spinbutton", {
+      name: "Audio fade in",
+    });
+    const eqEnable = screen.getByRole("checkbox", {
+      name: "Enable audio EQ",
+    });
+    const eqLow = screen.getByRole("spinbutton", {
+      name: "Audio EQ low gain",
+    });
+    const compressorEnable = screen.getByRole("checkbox", {
+      name: "Enable audio compressor",
+    });
+    const compressorThreshold = screen.getByRole("spinbutton", {
+      name: "Audio compressor threshold",
+    });
+
+    expect(fadeIn).toHaveValue(0);
+    expect(eqEnable).not.toBeChecked();
+    expect(eqLow).toHaveValue(0);
+    expect(compressorEnable).not.toBeChecked();
+    expect(compressorThreshold).toHaveValue(-24);
+
+    fireEvent.change(fadeIn, { target: { value: "500" } });
+    fireEvent.blur(fadeIn);
+    fireEvent.click(eqEnable);
+    fireEvent.change(eqLow, { target: { value: "4.5" } });
+    fireEvent.blur(eqLow);
+    fireEvent.click(compressorEnable);
+    fireEvent.change(compressorThreshold, { target: { value: "-18" } });
+    fireEvent.blur(compressorThreshold);
+
+    await waitFor(() => {
+      expect(screen.getByRole("spinbutton", { name: "Audio fade in" })).toHaveValue(500);
+      expect(screen.getByRole("checkbox", { name: "Enable audio EQ" })).toBeChecked();
+      expect(screen.getByRole("spinbutton", { name: "Audio EQ low gain" })).toHaveValue(4.5);
+      expect(screen.getByRole("checkbox", { name: "Enable audio compressor" })).toBeChecked();
+      expect(
+        screen.getByRole("spinbutton", { name: "Audio compressor threshold" }),
+      ).toHaveValue(-18);
+    });
   });
 
   it("updates audio fade controls from the timeline handle", async () => {

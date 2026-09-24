@@ -673,8 +673,12 @@ export function updateAudioClipFades(
     (candidate) => candidate.id === location.clip.assetId,
   );
 
-  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
-    throw new Error("Audio fades are only available for audio clips.");
+  const isAudioBearingClip =
+    (location.track.type === "audio" && asset?.mediaType === "audio") ||
+    (location.track.type === "video" && asset?.mediaType === "video");
+
+  if (!isAudioBearingClip) {
+    throw new Error("Audio fades are only available for audio-bearing clips.");
   }
 
   if (
@@ -734,8 +738,12 @@ export function updateAudioClipEq(
     (candidate) => candidate.id === location.clip.assetId,
   );
 
-  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
-    throw new Error("Audio EQ is only available for audio clips.");
+  const isAudioBearingClip =
+    (location.track.type === "audio" && asset?.mediaType === "audio") ||
+    (location.track.type === "video" && asset?.mediaType === "video");
+
+  if (!isAudioBearingClip) {
+    throw new Error("Audio EQ is only available for audio-bearing clips.");
   }
 
   if (
@@ -802,8 +810,12 @@ export function updateAudioClipCompressor(
     (candidate) => candidate.id === location.clip.assetId,
   );
 
-  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
-    throw new Error("Audio compression is only available for audio clips.");
+  const isAudioBearingClip =
+    (location.track.type === "audio" && asset?.mediaType === "audio") ||
+    (location.track.type === "video" && asset?.mediaType === "video");
+
+  if (!isAudioBearingClip) {
+    throw new Error("Audio compression is only available for audio-bearing clips.");
   }
 
   if (

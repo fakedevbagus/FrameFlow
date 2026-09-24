@@ -848,7 +848,42 @@ describe("updateAudioClipCompressor", () => {
     })).toThrow("outside the supported range");
   });
 
-  it("rejects compression for visual clips and locked audio tracks", () => {
+  it("updates compressor settings for a video clip with embedded source audio", () => {
+    const project = createProject({ id: "video-compressor-command" });
+    project.assets.push({
+      id: "video",
+      name: "clip.mp4",
+      mediaType: "video",
+      sourcePath: "/clip.mp4",
+      durationMs: 5000,
+    });
+    const populated = addAssetToTimeline(project, "video");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    const updated = updateAudioClipCompressor(
+      populated,
+      clipId,
+      {
+        enabled: true,
+        thresholdDb: -18.25,
+        ratio: 6.4,
+        attackMs: 8.126,
+        releaseMs: 320.557,
+      },
+      new Date("2026-09-22T00:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].audioCompressor).toEqual({
+      enabled: true,
+      thresholdDb: -18.3,
+      ratio: 6.4,
+      attackMs: 8.13,
+      releaseMs: 320.56,
+    });
+    expect(updated.updatedAt).toBe("2026-09-22T00:00:00.000Z");
+  });
+
+  it("rejects compression for image clips and locked audio tracks", () => {
     let project = createProject({ id: "compressor-routing-errors" });
     project = {
       ...project,
@@ -862,7 +897,7 @@ describe("updateAudioClipCompressor", () => {
     const visualId = project.tracks[0].clips[0].id;
     expect(() => updateAudioClipCompressor(project, visualId, {
       enabled: true, thresholdDb: -24, ratio: 4, attackMs: 20, releaseMs: 250,
-    })).toThrow("Audio compression is only available for audio clips.");
+    })).toThrow("audio-bearing clips");
 
     project = addAssetToTimeline(project, "audio");
     const audioId = project.tracks[1].clips[0].id;
@@ -1114,8 +1149,8 @@ describe("updateAudioClipFades", () => {
     ).toThrow("cannot overlap");
   });
 
-  it("rejects audio fades on visual clips", () => {
-    const project = createProject({ id: "visual-fade-error" });
+  it("updates audio fades for a video clip with embedded source audio", () => {
+    const project = createProject({ id: "video-fade-command" });
     project.assets.push({
       id: "video",
       name: "clip.mp4",
@@ -1126,9 +1161,35 @@ describe("updateAudioClipFades", () => {
     const populated = addAssetToTimeline(project, "video");
     const clipId = populated.tracks[0].clips[0].id;
 
+    const updated = updateAudioClipFades(
+      populated,
+      clipId,
+      500,
+      700,
+      new Date("2026-09-22T00:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0]).toMatchObject({
+      audioFadeInMs: 500,
+      audioFadeOutMs: 700,
+    });
+  });
+
+  it("rejects audio fades on image clips", () => {
+    const project = createProject({ id: "image-fade-error" });
+    project.assets.push({
+      id: "image",
+      name: "cover.png",
+      mediaType: "image",
+      sourcePath: "/cover.png",
+      durationMs: 5000,
+    });
+    const populated = addAssetToTimeline(project, "image");
+    const clipId = populated.tracks[0].clips[0].id;
+
     expect(() =>
       updateAudioClipFades(populated, clipId, 500, 500),
-    ).toThrow("only available for audio clips");
+    ).toThrow("audio-bearing clips");
   });
 });
 
@@ -1202,7 +1263,39 @@ describe("updateAudioClipEq", () => {
     ).toThrow("between -12 and 12 dB.");
   });
 
-  it("rejects EQ on visual clips and locked audio tracks", () => {
+  it("updates EQ settings for a video clip with embedded source audio", () => {
+    const project = createProject({ id: "video-eq-command" });
+    project.assets.push({
+      id: "video",
+      name: "clip.mp4",
+      mediaType: "video",
+      sourcePath: "/clip.mp4",
+      durationMs: 5000,
+    });
+    const populated = addAssetToTimeline(project, "video");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    const updated = updateAudioClipEq(
+      populated,
+      clipId,
+      {
+        enabled: true,
+        lowGainDb: 3.5,
+        midGainDb: -2,
+        highGainDb: 5,
+      },
+      new Date("2026-09-22T00:00:00.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].audioEq).toEqual({
+      enabled: true,
+      lowGainDb: 3.5,
+      midGainDb: -2,
+      highGainDb: 5,
+    });
+  });
+
+  it("rejects EQ on image clips and locked audio tracks", () => {
     const project = createProject({ id: "audio-eq-errors" });
     project.assets.push({
       id: "video",
@@ -1220,7 +1313,7 @@ describe("updateAudioClipEq", () => {
         midGainDb: 0,
         highGainDb: 0,
       }),
-    ).toThrow("only available for audio clips");
+    ).toThrow("audio-bearing clips");
 
     const audioProject = createAudioProject();
     const lockedProject = {
