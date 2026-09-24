@@ -32,6 +32,7 @@ Known limitations:
 - No new project schema or Video-specific audio Inspector controls are introduced.
 
 Post-merge correction:
+- PR #96 — Draft tracks the focused correction.
 - Repository audit found that the merged pipeline did not actually include `audioEq` in `sourceAudioSegments`, so EQ metadata could be dropped before native rendering.
 - This correction branch restores that propagation and adds an explicit pipeline regression test before the M3.81 result is treated as fully reconciled.
 
