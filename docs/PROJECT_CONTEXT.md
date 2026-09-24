@@ -1,7 +1,13 @@
-## M3.78 — Embedded Video Audio Preview Consistency — in progress — 2026-09-24
+## M3.78 — Embedded Video Audio Preview Consistency — completed — 2026-09-24
 
 Branch:
 `feat/m3-78-video-source-audio-preview`
+
+PR:
+#92
+
+Merge SHA:
+`bd583a3891c9acf68ab827e31469008ce1f8e015`
 
 Scope:
 - Make embedded audio played by Video clips honor the same audio controls already used for Audio-track preview/export.
@@ -9,20 +15,26 @@ Scope:
 - Apply Track Volume, Track Pan, clip Volume Automation, and clip Fade In/Fade Out to Video preview.
 - Keep Audio-track preview behavior unchanged.
 
-Implementation target:
-- Generalize the existing preview Web Audio routing from Audio elements to HTML media elements.
-- Set Video element media volume from Track Volume × clip Volume Automation × Fade gain.
-- Route Video media through the existing StereoPanner and optional EQ/compressor processing path so Track Pan remains consistent in preview.
-- Keep export behavior unchanged in this milestone.
+Implementation completed:
+- Generalized the existing preview Web Audio routing from Audio elements to HTML media elements.
+- Added shared media-audio state application so Audio and Video media use the same effective volume calculation.
+- Video preview now applies Track Volume × clip Volume Automation × Fade gain.
+- Video preview reuses the existing StereoPanner and optional EQ/compressor processing path so Track Pan remains consistent in preview.
+- Re-runs Video audio routing when the prepared preview source URL becomes available.
+- Added regression coverage for the combined Video embedded-audio gain path.
+- Kept export behavior and the project schema unchanged.
 
 Validation:
-- Pending user local validation.
+- User reported PASS after local validation of the M3.78 embedded Video audio preview scope.
 
 Known limitations:
-- This milestone targets preview consistency only; export behavior from M3.73–M3.77 remains unchanged.
-- No new project schema fields.
-- No new Video-specific audio Inspector controls are introduced.
+- Export behavior for embedded Video source audio remains unchanged by this milestone.
+- Video source-audio export fade handling remains a separate milestone.
+- Video source-audio export EQ/compressor remains separate future work.
+- No new project schema fields or Video-specific audio Inspector controls were introduced.
 
+Next step:
+- Start M3.79 from updated `main`, focusing on exporting Video-clip embedded source-audio Fade In/Fade Out consistently with preview.
 ## M3.77 — Per-Clip Volume Automation for Embedded Video Audio — completed — 2026-09-24
 
 Branch:
