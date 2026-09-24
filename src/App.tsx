@@ -2870,6 +2870,22 @@ function App() {
                 </div>
               ) : null}
 
+              {selectedClipContext &&
+              ((selectedClipContext.track.type === "audio" &&
+                selectedClipContext.asset?.mediaType === "audio") ||
+                (selectedClipContext.track.type === "video" &&
+                  selectedClipContext.asset?.mediaType === "video")) ? (
+                <AudioVolumeAutomationInspector
+                  clip={selectedClipContext.clip}
+                  localTimeMs={selectedClipLocalTimeMs}
+                  durationMs={getClipDurationMs(selectedClipContext.clip)}
+                  onSetVolume={handleSetSelectedAudioVolume}
+                  onAddOrUpdateKeyframe={handleUpdateSelectedAudioVolume}
+                  onRemoveKeyframe={handleRemoveSelectedAudioVolumeKeyframe}
+                  onKeyDown={handleTransformInputKeyDown}
+                />
+              ) : null}
+
               {selectedClipContext.asset?.mediaType === "audio" &&
               selectedClipContext.track.type === "audio" ? (
                 <>
@@ -2882,15 +2898,6 @@ function App() {
                   <AudioEqInspector
                     clip={selectedClipContext.clip}
                     onCommit={handleUpdateSelectedAudioEq}
-                    onKeyDown={handleTransformInputKeyDown}
-                  />
-                  <AudioVolumeAutomationInspector
-                    clip={selectedClipContext.clip}
-                    localTimeMs={selectedClipLocalTimeMs}
-                    durationMs={getClipDurationMs(selectedClipContext.clip)}
-                    onSetVolume={handleSetSelectedAudioVolume}
-                    onAddOrUpdateKeyframe={handleUpdateSelectedAudioVolume}
-                    onRemoveKeyframe={handleRemoveSelectedAudioVolumeKeyframe}
                     onKeyDown={handleTransformInputKeyDown}
                   />
                   <AudioCompressorInspector
