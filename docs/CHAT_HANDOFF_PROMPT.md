@@ -1,16 +1,27 @@
-## M3.79 — active — 2026-09-24
+## M3.80 — active — 2026-09-24
+
+- Branch: `feat/m3-80-video-source-audio-fast-path-controls`.
+- Scope: ensure embedded Video source audio respects existing Video-track Volume and Pan controls on direct and sequential fast-path exports.
+- Root repository gap identified after M3.79: fast-path Video exports call native direct/segment renderers that preserve source audio but do not receive Track Volume/Pan metadata.
+- M3.80 should route affected non-default Video-track Volume/Pan cases through the unified AV source-audio renderer while preserving fast paths for default track audio settings.
+- Keep Audio-track behavior unchanged; no project schema change.
+- Add focused pipeline regression coverage and preserve current native source-audio implementation.
+- Validation is pending.
+- M3.79 completed and squash-merged as PR #93 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
+- M3.78 completed and squash-merged as PR #92 at `bd583a3891c9acf68ab827e31469008ce1f8e015`.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
+## M3.79 — completed — 2026-09-24
 
 - Branch: `feat/m3-79-video-source-audio-fade-export`.
 - Scope: make exported embedded Video source audio honor the existing clip Fade In/Fade Out metadata consistently with Video preview.
-- RenderPlan carries normalized Video fade durations for Video assets.
-- Unified source-audio metadata carries non-zero Video fade durations.
-- Video-only exports with active Video source-audio fades now route through the unified AV renderer instead of direct/segment fast paths.
-- Native source-audio rendering applies duration-clamped FFmpeg `afade` filters before timeline delay.
+- RenderPlan carries normalized Video fade durations and unified source-audio requests carry non-zero Video fades.
+- Video-only fade exports route through the unified AV renderer, and native FFmpeg applies duration-clamped `afade` filters before timeline delay.
 - Added RenderPlan, pipeline, and Rust regression coverage.
-- No project schema change.
-- Validation is pending.
-- M3.78 completed and squash-merged as PR #92 at `bd583a3891c9acf68ab827e31469008ce1f8e015`.
-- PR #76 remains parked and must not be merged or revived wholesale.
+- User reported PASS after local validation.
+- PR #93 was marked ready and squash-merged at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
+- M3.80 is the next focused milestone for Video-track Volume/Pan consistency across export fast paths.
+
 
 ## M3.78 — completed — 2026-09-24
 
