@@ -12,6 +12,11 @@ Implementation target:
 - Apply the same normalized/interpolated volume curve in native FFmpeg.
 - Route automated Video source audio through the unified graph path instead of fast paths that cannot represent clip automation.
 
+Implementation completed in the branch:
+- Extended the existing clip-volume automation workflow to embedded Video source audio.
+- Added command, Timeline, App, render-plan, render-pipeline, and native regression coverage.
+- Preserved the existing audio-track workflow and project schema.
+
 Validation:
 - Pending user local validation.
 ### M3.76 — Video-Only Embedded Source Audio — completed — 2026-09-24
