@@ -137,6 +137,7 @@ function hasVideoSourceAudioTrackProcessing(
     Math.abs(pan) > 0.000001
   );
 }
+
 function hasVideoSourceAudioEqProcessing(
   segment: RenderPlan["segments"][number],
 ): boolean {
