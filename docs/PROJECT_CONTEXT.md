@@ -1,37 +1,28 @@
-## M3.87 — Waveform Load-State Correction — in progress — 2026-09-25
+## M3.87 — Waveform Load-State Correction — completed — 2026-09-25
 
 Branch:
 `fix/m3-87-waveform-load-state`
 
 PR:
-Not opened yet; implementation branch only.
+#102
 
-Base:
-`afd49629d25bef4f399f2886f494d97dc6e9abdd` (M3.86 squash merge)
+Merge SHA:
+`c94322aab8f4862512893f1ab58d3764d34e681a`
 
-Scope:
-- Correct the waveform error path introduced by M3.86's state-shape refactor.
-- Preserve all M3.86 waveform trim-range behavior and avoid unrelated UI/export changes.
+Implementation reconciled:
+- Corrected `AudioWaveformPreview` rejection handling to use the current `peaks/sourceDurationMs/isLoading` state shape instead of the removed `path` field.
+- Added Timeline regression coverage for a rejected native waveform request and verified that the loading placeholder is cleared by the rejection path.
+- Preserved M3.86 waveform trim-range alignment, Video embedded-audio waveform parity, persistent cache behavior, project schema, and export DSP unchanged.
+- User reported PASS for M3.87 local validation.
+- PR #102 was marked ready and squash-merged at `c94322aab8f4862512893f1ab58d3764d34e681a`.
 
-Repository evidence:
-- M3.86 changed `AudioWaveformPreview` state from a rendered `path` string to raw `peaks` plus `sourceDurationMs`.
-- The success path uses the new state shape, but the `catch` path still writes a removed `path` property.
-- The type mismatch is confined to the waveform load failure state and should be corrected without changing waveform generation or caching.
-
-Implementation:
-- Fixed the waveform request rejection state to use the current `peaks/sourceDurationMs/isLoading` state shape.
-- Added a Timeline regression covering native waveform-load rejection and loading-state cleanup.
-- No waveform generation, cache, trim-range, schema, or export changes.
-
-Validation:
-- Pending focused local validation of M3.87.
-
-Known limitation:
-- None beyond the existing M3.86 waveform resolution constraint.
+Audit finding after merge:
+- Video volume automation is visually exposed in Timeline and already accepted by `updateAudioClipVolumeAtTime`, but App-level selected-volume updates still reject Video-track clips.
+- The command functions for moving/removing audio volume keyframes also still reject Video-track Video clips.
+- This is the next focused parity gap to correct; no schema change is required.
 
 Next step:
-- Implement the state-shape correction, add a rejection-path regression test, open a Draft PR, and hand off validation.
-
+- M3.88 — Embedded Video Volume Automation Command Parity: make Inspector set/update, Timeline move, and Timeline delete all use the same audio-bearing eligibility rule for Video clips.
 
 ## M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
 
