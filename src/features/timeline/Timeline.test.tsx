@@ -1,4 +1,10 @@
-import { createEvent, fireEvent, render, screen } from "@testing-library/react";
+import {
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -27,6 +33,7 @@ import {
   addTrack,
   updateAudioClipVolumeAtTime,
 } from "./commands";
+import { invoke } from "@tauri-apps/api/core";
 import { Timeline } from "./Timeline";
 
 describe("Timeline", () => {
@@ -775,6 +782,29 @@ describe("Timeline", () => {
       0,
     );
   });
+  it("clears the waveform loading state when native waveform loading fails", async () => {
+    const project = createVideoProject();
+    vi.mocked(invoke).mockRejectedValueOnce(new Error("waveform unavailable"));
+
+    const { container } = render(<Timeline project={project} />);
+
+    expect(
+      container.querySelector(".timeline-audio-waveform-placeholder"),
+    ).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(
+        container.querySelector(".timeline-audio-waveform-placeholder"),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId("timeline-audio-waveform")).not.toBeInTheDocument();
+    expect(invoke).toHaveBeenCalledWith(
+      "get_audio_waveform_source_fingerprint",
+      { path: "/media/intro.mp4" },
+    );
+  });
+
   it("renders a native audio waveform for an audio clip", async () => {
     const project = createVideoProject();
     project.assets.push({
