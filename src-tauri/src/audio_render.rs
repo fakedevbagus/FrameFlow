@@ -1227,6 +1227,7 @@ mod tests {
         duration_ms: 5_000,
         track_volume: 1.0,
         track_pan: 0.0,
+        audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1251,6 +1252,7 @@ mod tests {
         duration_ms: 5_000,
         track_volume: 1.0,
         track_pan: 0.0,
+        audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1275,6 +1277,7 @@ mod tests {
         duration_ms: 0,
         track_volume: 1.0,
         track_pan: 0.0,
+        audio_volume_keyframes: Vec::new(),
       }],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
@@ -1500,6 +1503,10 @@ mod tests {
       duration_ms: 4_000,
       track_volume: 0.65,
       track_pan: -0.25,
+      audio_volume_keyframes: vec![
+        NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 1.0 },
+        NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.4 },
+      ],
       has_audio: true,
     }];
 
@@ -1532,7 +1539,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=0.65,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume='0.65*if(lt(t,2),1+(-0.6)*((t-0)/2),0.4)':eval=frame,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
     ));
     assert!(filter.contains("[frameflow_explicit_audio]"));
     assert!(filter.contains(
