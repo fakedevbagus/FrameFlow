@@ -1,21 +1,22 @@
-### M3.87 — Waveform Load-State Correction — completed — 2026-09-25
+### M3.88 — Embedded Video Volume Automation Command Parity — in progress — 2026-09-25
 
-Branch: `fix/m3-87-waveform-load-state`
-PR #102
-Merge SHA: `c94322aab8f4862512893f1ab58d3764d34e681a`
+Branch: `feat/m3-88-video-volume-automation-command-parity`
+
+Scope:
+- Close the remaining embedded Video volume-automation command/handler gap across Inspector set/update, Timeline keyframe move, and Timeline keyframe delete.
+- Reuse the existing audio-bearing clip eligibility without changing the project schema or DSP behavior.
 
 Implementation:
-- Corrected the waveform load rejection state to the current `peaks/sourceDurationMs/isLoading` shape.
-- Added a Timeline regression for native waveform-load rejection and loading-placeholder cleanup.
-- Preserved M3.86 trim-range waveform alignment, Video embedded-audio waveform parity, caching, schema, and export behavior.
+- App selected-volume updates now accept Video-track Video clips.
+- Volume-keyframe move/remove commands now accept Video-track Video clips with the same eligibility rule already used by set/update, Fade, EQ, and Compressor.
+- Added focused command tests for Video keyframe move/remove.
+- Added an App regression covering Video Timeline keyframe move and delete.
+- Existing Video Inspector set/update coverage remains in place.
+- Image clips remain excluded.
 
 Validation:
-- User reported PASS.
-- PR #102 was marked ready and squash-merged.
+- Pending user local validation.
 
-Post-merge audit:
-- Found a remaining embedded Video volume-automation parity gap: App selected-volume updates reject Video clips, while move/remove command paths remain Audio-only.
-- Next focused milestone: M3.88, extending the existing audio-bearing eligibility rule across set/update, move, and remove operations.
 
 ### M3.86 — Waveform Trim-Range Alignment — completed — 2026-09-25
 
