@@ -1,3 +1,30 @@
+## M3.76 — Video-Only Embedded Source Audio — in progress — 2026-09-24
+
+Branch:
+`feat/m3-76-video-only-source-audio`
+
+Scope:
+- Preserve embedded audio from Video clips when video-only export requires the native visual graph renderer.
+- Cover visual graph cases such as transforms, text overlays, transitions, and multi-video-track compositing.
+- Keep the existing single-source/segment fast paths unchanged.
+- Do not add new project schema fields.
+
+Implementation target:
+- Reuse the unified native AV renderer's existing source-audio preservation path even when there are no explicit Audio-track clips.
+- Permit a video-only unified request to use a generated silent audio graph as the base mix when needed.
+- Continue respecting Video-track mute state and source/timeline placement.
+
+Validation:
+- Pending user local validation.
+- User must verify a graph-rendered video-only project retains its embedded source audio after export.
+- Existing automated lint, frontend, build, Rust, and Tauri validation must also pass.
+
+Known limitations:
+- Video-only exports that use the existing direct/segment fast paths already preserve source audio and are intentionally unchanged.
+- Clip-level source-audio EQ/compressor/fade/automation remains a later milestone.
+
+Next step:
+- Complete the unified pipeline/native changes and regression coverage, then hand off exact local validation commands.
 ## M3.75 — Timeline Track Header Layout — completed — 2026-09-24
 
 Branch:
