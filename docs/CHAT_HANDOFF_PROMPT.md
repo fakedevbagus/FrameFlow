@@ -1,10 +1,11 @@
-## M3.75 — active — 2026-09-24
+## M3.75 — completed — 2026-09-24
 
 - Branch: `fix/m3-75-timeline-track-header-layout`.
 - Scope: fix the cramped/clipped timeline track header after M3.74 exposed Video-track Volume/Pan controls.
 - Root cause: a later duplicate CSS block in `src/App.css` overrides the canonical `.track` width from 156px to 72px and uses a mismatched ruler layout.
 - Fix: restore the 156px track-label column and matching 156px ruler column without changing editor/export logic.
-- Awaiting user visual validation.
+- User confirmed the corrected timeline header layout visually.
+- PR #89 was marked ready and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
 - M3.74 completed and squash-merged at `a93ea6764dfb363304385f206e6a2e7204e39fe1`.
 - PR #76 remains parked and must not be merged or revived wholesale.
 
