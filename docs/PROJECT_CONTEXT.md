@@ -1,46 +1,69 @@
-## M3.82 — Embedded Video Source-Audio Compressor Export — in progress — 2026-09-24
+## M3.83 — Embedded Video Source-Audio Inspector Parity — in progress — 2026-09-24
 
 Branch:
-`feat/m3-82-video-source-audio-compressor-export`
+`feat/m3-83-video-source-audio-inspector-parity`
 
 PR:
 Not opened yet; implementation branch only.
 
 Base:
-`8a2c8c285dcbb8ddf9df640fc089673b37baa4fb` (M3.81 correction merge)
+`2d4b1b7d180bb8fb8d334968a024a89adc9152c2` (M3.82 merge)
 
 Scope:
-- Extend the existing per-clip `AudioCompressor` model from Audio-track export to embedded audio carried by Video clips.
-- Reuse the established Audio-track compressor semantics and processing order without introducing a new model or project schema fields.
-- Preserve existing Track Volume, Track Pan, clip Volume Automation, clip EQ, and clip Fade behavior.
-- Force Video-only exports to use unified AV rendering only when Video source-audio compression is enabled; preserve fast paths when compression is disabled.
-- Preserve explicit Audio-track compressor behavior unchanged.
+- Expose the existing audio processing controls for embedded-audio Video clips in the Inspector.
+- Bring Video clip audio editing parity to the existing Audio clip controls without introducing a second model or project schema fields.
+- Keep the existing Video preview/export signal path unchanged unless a command/UI guard currently blocks the shared controls.
+- Preserve image clips as non-audio and preserve Audio-track behavior.
 
-Implementation:
-- RenderPlan now carries normalized `audioCompressor` metadata for both Audio-track audio assets and Video-track video assets.
-- Native `NativeSourceAudioSegment` now accepts optional `audioCompressor` metadata.
-- The export pipeline propagates active Video compressor metadata in both Video-only and mixed Video + explicit Audio unified AV requests.
-- Effective enabled Video source-audio compression bypasses direct/segment fast paths so processing cannot be silently skipped.
-- Native FFmpeg source-audio filtering applies compressor processing after Track Volume/Pan and clip EQ, and before clip Fade/timeline delay.
-- Compressor semantics reuse the Audio-track export graph: threshold dB converted to linear amplitude, threshold clamped to -60..0 dB, ratio 1..20, attack 0.01..2000 ms, release 0.01..9000 ms.
-- Removed an inherited duplicate `audio_eq` assignment found during the post-M3.81 merge audit while extending the native source-audio resolver.
-- No project schema change.
+Repository evidence:
+- Video preview already routes embedded audio through the shared Web Audio chain, including EQ and compressor processing.
+- Video export already supports Fade, EQ, Compressor, Volume Automation, Track Volume, and Track Pan for embedded source audio through the unified AV path.
+- The main App currently renders Audio Fade/EQ/Compressor Inspector controls only when the selected clip is an Audio asset on an Audio track.
+- `handleUpdateAudioClipEq` and `handleUpdateAudioClipCompressor` currently reject Video-track Video clips, so the shared Inspector controls cannot be used for embedded Video audio.
+- Volume Automation is already exposed to Video clips; Fade command support exists for Video clips but its Inspector UI remains grouped with Audio-only controls.
 
-Regression coverage:
-- RenderPlan verifies Video clip compressor metadata propagation.
-- Export pipeline verifies enabled Video compressor routing/payload and disabled-compressor fast-path preservation.
-- Native Rust verifies compressor filter generation and ordering alongside existing EQ/fade behavior.
+Implementation target:
+- Allow the existing EQ and Compressor commands to target Video-track Video clips with the same validation and normalization rules.
+- Extend the existing Fade/EQ/Compressor Inspector visibility and handlers to Video clips carrying embedded audio.
+- Keep all changes routed through the existing history engine and command helpers.
+- Add focused command/App regression coverage; do not introduce new audio models or schema fields.
+- Preserve image clips without audio controls.
+- Keep processing/export architecture untouched beyond removing the current UI/command gating.
 
 Validation:
-- Pending user local validation of M3.82.
+- Pending user local validation of M3.83.
 
 Known limitations:
-- This milestone covers embedded Video source-audio compressor export only.
-- No new Video-specific audio Inspector controls are introduced.
-- Only the existing project `AudioCompressor` data path is reused.
+- This milestone is Inspector parity only; no new audio effect types or advanced Video-specific DSP controls.
+- Track-level Volume/Pan and clip Volume Automation remain the existing controls and models.
 
 Next step:
-- Open a Draft PR from this branch after the implementation/doc diff is internally audited, then hand off local lint, frontend tests, production build, Rust tests, Tauri startup, and manual export validation.
+- Implement the shared Video audio Inspector/command parity, add regression coverage, update docs, open a Draft PR, and hand off local validation.
+
+## M3.82 — Embedded Video Source-Audio Compressor Export — completed — 2026-09-24
+
+Branch:
+`feat/m3-82-video-source-audio-compressor-export`
+
+PR:
+#97
+
+Merge SHA:
+`2d4b1b7d180bb8fb8d334968a024a89adc9152c2`
+
+Implementation reconciled:
+- RenderPlan propagates normalized `audioCompressor` to Video segments.
+- Unified AV requests carry active Video source-audio compressor metadata for Video-only and mixed Video + explicit Audio exports.
+- Enabled Video compressor processing bypasses direct/segment fast paths; disabled compressor remains fast-path eligible.
+- Native FFmpeg applies `acompressor` after Track Volume/Pan and clip EQ, before clip Fade/timeline delay, using the existing Audio-track compressor semantics.
+- Added RenderPlan, pipeline routing/fast-path, mixed-payload, and Rust regression coverage.
+- Removed an inherited duplicate native `audio_eq` assignment found during the M3.81 merge-base audit.
+- User reported PASS for M3.82 local validation.
+- No project schema change.
+
+Known limitations:
+- Video-specific compressor Inspector controls were not introduced by M3.82.
+
 
 ## M3.81 — Embedded Video Source-Audio EQ Export — completed — 2026-09-24
 
