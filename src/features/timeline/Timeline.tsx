@@ -1614,7 +1614,7 @@ function TimelineTrack({
           }
 
           const keyframes = clip.transformKeyframes ?? [];
-          const audioVolumeKeyframes = isAudioClip
+          const audioVolumeKeyframes = hasAudioVolumeAutomation
             ? clip.audioVolumeKeyframes ?? []
             : [];
           const assetSupportsTransformKeyframes =
