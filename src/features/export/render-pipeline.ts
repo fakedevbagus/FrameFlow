@@ -66,7 +66,9 @@ export function renderVideoPlanToMp4(
         durationMs: segment.durationMs,
         trackVolume: segment.trackVolume ?? 1,
         trackPan: segment.trackPan ?? 0,
-        audioVolumeKeyframes: segment.audioVolumeKeyframes,
+        ...(segment.audioVolumeKeyframes?.length
+          ? { audioVolumeKeyframes: segment.audioVolumeKeyframes }
+          : {}),
       })),
     videoFilterComplex: videoGraph.filterComplex,
     videoMap: videoGraph.videoMap,
@@ -234,7 +236,9 @@ function renderVideoOnlyPlanToMp4(
       durationMs: segment.durationMs,
       trackVolume: segment.trackVolume ?? 1,
       trackPan: segment.trackPan ?? 0,
-      audioVolumeKeyframes: segment.audioVolumeKeyframes,
+      ...(segment.audioVolumeKeyframes?.length
+        ? { audioVolumeKeyframes: segment.audioVolumeKeyframes }
+        : {}),
     }));
 
   if (sourceAudioSegments.length > 0) {
