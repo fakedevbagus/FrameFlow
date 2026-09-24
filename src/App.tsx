@@ -693,11 +693,13 @@ function App() {
   ) {
     const clipContext = findClipContext(project, clipId);
 
-    if (
-      !clipContext ||
-      clipContext.track.type !== "audio" ||
-      clipContext.asset?.mediaType !== "audio"
-    ) {
+    const isAudioBearingClip =
+      (clipContext.track.type === "audio" &&
+        clipContext.asset?.mediaType === "audio") ||
+      (clipContext.track.type === "video" &&
+        clipContext.asset?.mediaType === "video");
+
+    if (!clipContext || !isAudioBearingClip) {
       return;
     }
 
@@ -803,11 +805,13 @@ function App() {
   ) {
     const clipContext = findClipContext(project, clipId);
 
-    if (
-      !clipContext ||
-      clipContext.track.type !== "audio" ||
-      clipContext.asset?.mediaType !== "audio"
-    ) {
+    const isAudioBearingClip =
+      (clipContext.track.type === "audio" &&
+        clipContext.asset?.mediaType === "audio") ||
+      (clipContext.track.type === "video" &&
+        clipContext.asset?.mediaType === "video");
+
+    if (!clipContext || !isAudioBearingClip) {
       return;
     }
 
@@ -2886,8 +2890,11 @@ function App() {
                 />
               ) : null}
 
-              {selectedClipContext.asset?.mediaType === "audio" &&
-              selectedClipContext.track.type === "audio" ? (
+              {selectedClipContext &&
+              ((selectedClipContext.track.type === "audio" &&
+                selectedClipContext.asset?.mediaType === "audio") ||
+                (selectedClipContext.track.type === "video" &&
+                  selectedClipContext.asset?.mediaType === "video")) ? (
                 <>
                   <AudioFadeInspector
                     clip={selectedClipContext.clip}
