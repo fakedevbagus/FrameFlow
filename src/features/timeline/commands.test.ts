@@ -916,7 +916,7 @@ describe("audio volume automation", () => {
     expect(project.tracks[1].clips[0].audioVolumeKeyframes).toBeUndefined();
   });
 
-  it("rejects invalid audio volume automation routing and values", () => {
+  it("supports video source-audio automation and rejects invalid values", () => {
     let project = createProject({ id: "audio-volume-automation-errors" });
     project = {
       ...project,
@@ -936,9 +936,14 @@ describe("audio volume automation", () => {
     };
     project = addAssetToTimeline(project, "video");
     const visualId = project.tracks[0].clips[0].id;
+    const updatedVideo = updateAudioClipVolumeAtTime(project, visualId, 0, 0.5);
+    expect(updatedVideo.tracks[0].clips[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 0, volume: 0.5 },
+    ]);
+
     expect(() =>
-      updateAudioClipVolumeAtTime(project, visualId, 0, 0.5),
-    ).toThrow("Audio automation is only available for audio clips.");
+      updateAudioClipVolumeAtTime(project, "missing-clip", 0, 0.5),
+    ).toThrow("Clip does not exist in this project.");
 
     project = addAssetToTimeline(project, "audio");
     const audioId = project.tracks[1].clips[0].id;
