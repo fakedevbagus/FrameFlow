@@ -1,21 +1,24 @@
-## M3.82 — active — 2026-09-24
+## M3.83 — active — 2026-09-24
 
-- Branch: `feat/m3-82-video-source-audio-compressor-export`.
-- Base: M3.81 correction merge `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
-- Scope: export the existing per-clip `AudioCompressor` metadata for embedded Video source audio.
-- Reuse the existing Audio-track compressor model and FFmpeg semantics; do not add schema fields or a second compressor model.
-- RenderPlan now propagates normalized Video `audioCompressor` metadata.
-- Unified AV export payloads now carry active Video compressor metadata for Video-only and mixed Video + explicit Audio paths.
-- Enabled Video source-audio compression forces unified AV rendering; disabled compression must preserve the direct/segment fast paths.
-- Native source-audio processing order is trim/reset/normalize → Track Volume → clip Volume Automation → Track Pan → clip EQ → clip Compressor → clip Fade → timeline delay.
-- Native compressor parameters match the Audio-track export graph: threshold -60..0 dB converted to linear amplitude, ratio 1..20, attack 0.01..2000 ms, release 0.01..9000 ms.
-- The native resolver had an inherited duplicate `audio_eq` assignment at the M3.81 merge base; it was removed while adding the compressor field.
-- Added RenderPlan, export-pipeline, and Rust regression coverage.
-- M3.81 is fully reconciled: PR #95 merged at `eae0f97a52343c794c337200ce8f3808feab2800`; post-merge correction PR #96 merged at `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
-- User reported PASS for PR #96 correction validation.
+- Branch: `feat/m3-83-video-source-audio-inspector-parity`.
+- Base: M3.82 merge `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
+- Scope: expose the existing Audio Fade, EQ, and Compressor Inspector controls for Video clips with embedded source audio.
+- Repository evidence: Video preview already uses the shared audio chain, and export already supports Video source-audio Fade/EQ/Compressor/Volume Automation/Track Volume/Pan.
+- Current gap: App Inspector JSX exposes Fade/EQ/Compressor only for Audio-track audio clips; EQ and Compressor command guards also reject Video-track Video clips.
+- Volume Automation Inspector is already available for Video clips and should remain unchanged.
+- M3.83 should reuse the existing AudioCompressor/AudioEq models, commands, Inspector components, history engine, and preview/export paths.
+- Extend EQ and Compressor command eligibility to Video-track Video clips using the same validation and normalization rules.
+- Expose Fade/EQ/Compressor Inspector UI for Video clips carrying embedded audio.
+- Keep images audio-free; preserve Audio-track behavior; do not add schema fields or new DSP architecture.
+- Add focused command/App regression coverage.
+- M3.82 completed and squash-merged as PR #97 at `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
+- M3.81 fully reconciled via PR #95 and correction PR #96; final correction merge `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
 - M3.80 remains merged at `6181359270552c82f6b4c4d557e41255b8f32bb4`; M3.79 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
 - PR #76 remains parked and must not be touched, merged, or revived wholesale.
-- Local M3.82 validation is pending.
+- PR #22 remains an old unrelated Draft and is not part of M3.83.
+- Local M3.83 validation is pending.
+
+
 
 ## M3.79 — completed — 2026-09-24
 
