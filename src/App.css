@@ -3586,3 +3586,21 @@ button:disabled {
 .inspector-section-header {
   align-items: center;
 }
+
+/* M3.75 timeline track-header layout correction */
+
+/*
+ * The compact duplicate timeline rules above override the canonical track header
+ * width and ruler alignment. Keep the track label wide enough for the existing
+ * two-row Volume/Pan controls.
+ */
+.timeline-ruler {
+  display: grid;
+  min-width: 880px;
+  grid-template-columns: 156px minmax(0, 1fr);
+  padding: 0;
+}
+
+.track {
+  grid-template-columns: 156px minmax(0, 1fr);
+}

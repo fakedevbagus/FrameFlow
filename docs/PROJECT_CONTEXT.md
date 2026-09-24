@@ -1,3 +1,20 @@
+## M3.75 — Timeline Track Header Layout — in progress — 2026-09-24
+
+Branch:
+`fix/m3-75-timeline-track-header-layout`
+
+Scope:
+- Fix the cramped/clipped timeline track header revealed after M3.74 exposed Video-track Volume/Pan controls.
+- Preserve all audio/export behavior and project schema.
+
+Implementation:
+- Restored the canonical 156px timeline track-label column.
+- Restored ruler alignment to the same 156px header width.
+- The fix targets a later duplicate CSS override that had reduced `.track` to 72px.
+
+Validation:
+- Awaiting user local validation and visual confirmation.
+
 ## M3.74 — Video Track Volume/Pan for Embedded Source Audio — completed — 2026-09-24
 
 Branch:
