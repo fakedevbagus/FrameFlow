@@ -1,3 +1,18 @@
+## M3.78 — active — 2026-09-24
+
+- Branch: `feat/m3-78-video-source-audio-fades`.
+- Scope: extend clip-level Audio Fade In/Fade Out to embedded source audio of Video clips.
+- Reuse existing fade validation, Inspector UI, Timeline fade handles, and schema.
+- EQ and compressor remain exclusive to Audio clips.
+- Video clip fades must propagate through RenderPlan/native source-audio metadata and use `afade` in unified FFmpeg rendering.
+- Video-only exports with fades must avoid fast paths that cannot represent clip fades.
+- Validation is pending.
+- M3.77 completed and squash-merged at `f5ae54f3deb5b2ba265736aec1a2aefd951bfdb2`.
+- M3.76 completed and squash-merged at `11c3928ae79cb814c6e3eef7346bf00bff088242`.
+- M3.75 completed and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
+- M3.74 completed and squash-merged at `a93ea6764dfb363304385f206e6a2e7204e39fe1`.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
 ## M3.77 — completed — 2026-09-24
 
 - Branch: `feat/m3-77-video-clip-volume-automation`.
