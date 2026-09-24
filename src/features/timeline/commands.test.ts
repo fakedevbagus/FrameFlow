@@ -88,6 +88,27 @@ describe("track management", () => {
     expect(updated.tracks[3].clips).toHaveLength(0);
   });
 
+  it("updates volume and pan on video tracks", () => {
+    const project = createProject({ id: "video-track-mix" });
+
+    const withVolume = updateTrackVolume(
+      project,
+      "video-1",
+      0.45,
+      new Date("2026-09-24T08:00:00.000Z"),
+    );
+    const updated = updateTrackPan(
+      withVolume,
+      "video-1",
+      -0.3,
+      new Date("2026-09-24T08:00:01.000Z"),
+    );
+
+    expect(updated.tracks[0].volume).toBe(0.45);
+    expect(updated.tracks[0].pan).toBe(-0.3);
+    expect(updated.updatedAt).toBe("2026-09-24T08:00:01.000Z");
+  });
+
   it("removes only empty tracks and keeps the last track of a type", () => {
     const project = addTrack(createProject({ id: "track-remove" }), "video");
 
