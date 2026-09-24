@@ -1,3 +1,39 @@
+## M3.77 — Per-Clip Volume Automation for Embedded Video Audio — in progress — 2026-09-24
+
+Branch:
+`feat/m3-77-video-clip-volume-automation`
+
+Scope:
+- Allow the existing Audio Volume Automation model to apply to Video clips that contain embedded source audio.
+- Keep the existing automation model, interpolation, keyframe editing, history behavior, and project schema unchanged.
+- Ensure preview and export use the same Video-clip volume automation data.
+- Preserve the existing direct/segment fast paths when no clip-level automation requires graph rendering.
+
+Implementation target:
+- Permit audio-volume commands and Inspector controls for Video clips.
+- Render Video-clip volume keyframes in the Timeline using the existing keyframe interaction model.
+- Carry Video-clip audio volume keyframes through the render plan and unified source-audio request.
+- Apply clip volume automation in native source-audio FFmpeg filtering.
+- Force graph-based export when Video source audio automation is present so fast-path exports cannot silently ignore it.
+
+Implementation completed in the branch:
+- Existing Audio Volume Automation commands now accept both audio clips and video clips with embedded source audio.
+- Inspector and Timeline reuse the existing automation UI for Video clips.
+- RenderPlan carries normalized Video-clip volume keyframes.
+- Video source-audio requests carry keyframes to native FFmpeg.
+- Native source-audio filtering applies the same piecewise-linear volume interpolation used by the frontend automation model.
+- Any Video clip with volume keyframes is routed through unified graph export so clip automation cannot be silently skipped by fast paths.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- This milestone is limited to clip-level Volume automation for embedded Video source audio.
+- Video source audio EQ, compressor, and fades remain separate future work.
+- Track Volume/Pan remain independent controls.
+
+Next step:
+- Complete implementation and regression coverage, then hand off focused local validation.
 ## M3.76 — Video-Only Embedded Source Audio — completed — 2026-09-24
 
 Branch:

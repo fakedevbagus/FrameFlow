@@ -163,6 +163,79 @@ describe("render video pipeline", () => {
     expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
   });
 
+  it("routes video clip volume automation through unified AV graph rendering", async () => {
+    const plan: RenderPlan = {
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      durationMs: 4000,
+      segments: [
+        {
+          inputIndex: 0,
+          assetId: "video-a",
+          sourcePath: "/media/a.mp4",
+          mediaType: "video",
+          trackId: "video-1",
+          trackType: "video",
+          trackIndex: 0,
+          timelineStartMs: 0,
+          timelineEndMs: 4000,
+          sourceStartMs: 0,
+          sourceEndMs: 4000,
+          durationMs: 4000,
+          isMuted: false,
+          audioVolumeKeyframes: [
+            { timeMs: 0, volume: 0.25 },
+            { timeMs: 2000, volume: 0.9 },
+          ],
+        },
+      ],
+    };
+
+    vi.mocked(renderVideoAudioGraphToMp4).mockResolvedValueOnce({
+      outputPath: "/tmp/video-volume-automation.mp4",
+    });
+
+    await expect(
+      renderVideoPlanToMp4(plan, "/tmp/video-volume-automation.mp4"),
+    ).resolves.toEqual({
+      outputPath: "/tmp/video-volume-automation.mp4",
+    });
+
+    expect(renderVideoAudioGraphToMp4).toHaveBeenCalledWith({
+      videoInputs: ["/media/a.mp4"],
+      videoInputMediaTypes: ["video"],
+      audioInputs: [],
+      sourceAudioSegments: [
+        {
+          inputIndex: 0,
+          sourceStartMs: 0,
+          timelineStartMs: 0,
+          durationMs: 4000,
+          trackVolume: 1,
+          trackPan: 0,
+          audioVolumeKeyframes: [
+            { timeMs: 0, volume: 0.25 },
+            { timeMs: 2000, volume: 0.9 },
+          ],
+        },
+      ],
+      videoFilterComplex: expect.any(String),
+      videoMap: "[vout]",
+      audioFilterComplex: expect.stringContaining("anullsrc"),
+      audioMap: "[aout]",
+      durationMs: 4000,
+      width: 406,
+      height: 720,
+      frameRate: 30,
+      outputPath: "/tmp/video-volume-automation.mp4",
+    });
+
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
+    expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
+    expect(renderVideoGraphToMp4).not.toHaveBeenCalled();
+  });
+
   it("routes an offset single clip through the native segment renderer with a gap", async () => {
     const plan: RenderPlan = {
       width: 406,
@@ -637,6 +710,10 @@ describe("render video pipeline", () => {
           isMuted: false,
           trackVolume: 0.8,
           trackPan: 0.2,
+          audioVolumeKeyframes: [
+            { timeMs: 0, volume: 0.4 },
+            { timeMs: 2000, volume: 0.9 },
+          ],
         },
         {
           inputIndex: 9,
@@ -705,6 +782,10 @@ describe("render video pipeline", () => {
             durationMs: 4000,
             trackVolume: 0.8,
             trackPan: 0.2,
+            audioVolumeKeyframes: [
+              { timeMs: 0, volume: 0.4 },
+              { timeMs: 2000, volume: 0.9 },
+            ],
           },
         ],
       }),

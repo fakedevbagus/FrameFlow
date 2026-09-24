@@ -1586,6 +1586,9 @@ function TimelineTrack({
           const isInteracting = interaction?.clipId === clip.id;
           const isAudioClip =
             track.type === "audio" && asset?.mediaType === "audio";
+          const hasAudioVolumeAutomation =
+            isAudioClip ||
+            (track.type === "video" && asset?.mediaType === "video");
           const audioFadeDurations = getAudioFadeDurations(clip);
           const displayAudioFadeDurations =
             audioFadeInteraction?.clipId === clip.id
@@ -1611,7 +1614,7 @@ function TimelineTrack({
           }
 
           const keyframes = clip.transformKeyframes ?? [];
-          const audioVolumeKeyframes = isAudioClip
+          const audioVolumeKeyframes = hasAudioVolumeAutomation
             ? clip.audioVolumeKeyframes ?? []
             : [];
           const assetSupportsTransformKeyframes =
@@ -1894,7 +1897,7 @@ function TimelineTrack({
                 );
               })()}
 
-              {isAudioClip && audioVolumeKeyframes.length > 0 ? (
+              {hasAudioVolumeAutomation && audioVolumeKeyframes.length > 0 ? (
                 <div
                   aria-label={
                     "Audio volume keyframes for " +

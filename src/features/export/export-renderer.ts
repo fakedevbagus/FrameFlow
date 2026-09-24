@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { MediaType } from "../project/domain";
+import type { AudioVolumeKeyframe, MediaType } from "../project/domain";
 
 export interface NativeExportRenderRequest {
   sourcePath: string;
@@ -56,6 +56,7 @@ export interface NativeSourceAudioSegment {
   durationMs: number;
   trackVolume: number;
   trackPan: number;
+  audioVolumeKeyframes?: AudioVolumeKeyframe[];
 }
 
 export interface NativeVideoAudioGraphRenderRequest {

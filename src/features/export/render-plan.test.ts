@@ -419,6 +419,39 @@ describe("render plan", () => {
     });
   });
 
+  it("carries video clip audio volume automation into render segments", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioVolumeKeyframes: [
+                  { timeMs: 0, volume: 0.25 },
+                  { timeMs: 2500, volume: 0.85 },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      project,
+      createDefaultExportSettings(project),
+    );
+
+    expect(plan.segments[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 0, volume: 0.25 },
+      { timeMs: 2500, volume: 0.85 },
+    ]);
+  });
+
   it("carries audio track pan into audio render segments", () => {
     let project = projectWithAssets();
     project = addAssetToTrack(project, "audio-a", "audio-1", 0);
