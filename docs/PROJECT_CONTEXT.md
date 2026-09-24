@@ -12,7 +12,7 @@ Implementation:
 - `validateProject()` now validates asset identity/metadata and known source durations.
 - Track validation now covers identity, type, lock/mute flags, volume/pan ranges, and clip arrays.
 - Clip validation now covers identity, asset references, timeline/source boundaries, known asset duration bounds, and media/track compatibility.
-- Persisted audio fade, EQ, and volume-automation data receives range/shape validation.
+- Persisted audio Fade, EQ, Compressor, and Volume Automation data receives range/shape validation.
 - Added regression tests for valid media round-tripping, duplicate asset/clip IDs, missing asset references, media/track mismatches, source ranges beyond known duration, invalid track volume/pan, and missing clip source-end fields.
 - No project schema change.
 
@@ -26,8 +26,11 @@ Known limitations:
 Previous milestone:
 - M3.89 completed and squash-merged as PR #104 at `fbdd60f45508c577046331255e024eea93b5960b`.
 
+PR:
+#105 — Draft.
+
 Next step:
-- Open a Draft PR for M3.90 and hand off focused local validation.
+- Hand off focused local validation for M3.90.
 
 
 ## M3.89 — Waveform Selection Lifecycle Hardening — completed — 2026-09-25
