@@ -2334,6 +2334,36 @@ describe("App", () => {
     });
   });
 
+  it("keeps audio inspector controls hidden for image clips", async () => {
+    importMediaFilesMock.mockResolvedValueOnce([
+      {
+        id: "asset-image-audio-controls",
+        name: "cover.png",
+        mediaType: "image",
+        sourcePath: "/media/cover.png",
+        durationMs: 5000,
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Import media" })[1]);
+
+    await waitFor(() =>
+      expect(screen.getByText("cover.png")).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add cover.png to timeline" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Select cover.png clip" }),
+    );
+
+    expect(screen.queryByText("Audio Fade")).not.toBeInTheDocument();
+    expect(screen.queryByText("Audio EQ")).not.toBeInTheDocument();
+    expect(screen.queryByText("Audio Compressor")).not.toBeInTheDocument();
+  });
+
   it("does not surface expected playback AbortError as a project error", async () => {
     const playMock = vi
       .spyOn(HTMLMediaElement.prototype, "play")
