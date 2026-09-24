@@ -496,6 +496,48 @@ describe("project domain", () => {
     );
   });
 
+  it("rejects out-of-range persisted compressor settings", () => {
+    const project = createProject({ id: "compressor-validation" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 2000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1000,
+                  audioCompressor: {
+                    enabled: true,
+                    thresholdDb: -61,
+                    ratio: 4,
+                    attackMs: 20,
+                    releaseMs: 250,
+                  },
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "thresholdDb must be between -60 and 0.",
+    );
+  });
+
   it("rejects invalid JSON and unsupported schemas", () => {
     expect(() => parseProject("not json")).toThrow(ProjectValidationError);
     expect(() => parseProject('{"schemaVersion":999}')).toThrow(
