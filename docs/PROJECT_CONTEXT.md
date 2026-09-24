@@ -1,41 +1,43 @@
-## M3.84 — Embedded Video Source-Audio Timeline Parity — in progress — 2026-09-24
+## M3.85 — Embedded Video Source-Audio Waveform Parity — in progress — 2026-09-25
 
 Branch:
-`feat/m3-84-video-source-audio-timeline-parity`
+`feat/m3-85-video-source-audio-waveform`
 
 PR:
 Not opened yet; implementation branch only.
 
 Base:
-`5f52dfca80d3c453252c59dd1428a64b58be6d6c` (M3.83 merge)
+`01bf4c2301afc0bdba40d4afcae443d12d6079e0` (M3.84 squash merge)
 
 Scope:
-- Align Timeline audio Fade interactions for Video clips with embedded source audio to the existing Audio clip interaction.
-- Reuse existing fade interaction, command, and history paths.
-- Keep waveform rendering Audio-only, keep Image clips audio-free, and avoid schema/DSP changes.
+- Expose the existing Timeline audio waveform for Video-track Video clips whose source contains embedded audio.
+- Reuse the existing waveform component, seeking, selection, caching, and native FFmpeg decode path.
+- Keep explicit Audio-track waveform behavior unchanged.
+- Keep Image clips audio-free and avoid project schema changes.
 
 Repository evidence:
-- M3.83 exposed Fade/EQ/Compressor in the Video Inspector.
-- Video Volume Automation Timeline interaction already exists.
-- Timeline currently classified Fade handles under Audio-track Audio-asset clips only, so Video clips could not directly drag/nudge their Fade controls even though the shared command/export path supports them.
+- M3.84 completed Timeline Fade parity for embedded-audio Video clips.
+- Timeline Volume Automation markers and Inspector audio controls already support embedded-audio Video clips.
+- `AudioWaveformPreview` was still rendered only for Audio-track Audio assets.
+- Native `audio_waveform` validation accepted only the `audio` media type, even though its FFmpeg pipeline already maps the first audio stream with `0:a:0` and can decode audio from video containers.
 
 Implementation:
-- Timeline now distinguishes Audio-track Audio clips from audio-bearing Video clips.
-- Existing Audio Fade handles and fade regions are shown for both audio-bearing Video clips and Audio clips.
-- Existing pointer drag, pointer cancel, pointer release, and keyboard nudge paths are reused unchanged.
-- Audio waveform preview remains restricted to Audio assets.
-- Image clips remain without audio Fade handles.
-- Added Timeline regression coverage for Video fade-handle drag/commit and Image exclusion.
-- No project schema change and no export DSP change.
+- Native waveform source validation now accepts Audio and Video source types; Images remain rejected.
+- Existing waveform generation still probes for an audio stream before decoding, so Video files without audio fail gracefully and render no waveform.
+- Timeline renders the existing waveform component for Video-track Video clips as well as explicit Audio clips.
+- Existing waveform seeking/selection and persistent request caching remain unchanged.
+- Added Rust validation coverage plus Timeline Video/Image waveform regressions.
+- No project schema or export DSP change.
 
 Validation:
-- Pending user local validation of M3.84.
+- Pending user local validation of M3.85.
 
 Known limitations:
-- The Timeline does not inspect the physical source stream before showing Video audio controls; actual embedded audio availability continues to be determined by the existing media/preview/export paths.
+- The waveform represents the source audio stream over the existing clip-duration display model; source-stream probing still occurs at waveform generation time.
+- Video clips without an audio stream intentionally show no waveform.
 
 Next step:
-- Open Draft PR after diff audit and hand off local validation.
+- Open Draft PR after diff audit and hand off focused local validation.
 
 
 ## M3.83 — Embedded Video Source-Audio Inspector Parity — completed — 2026-09-24
