@@ -1392,6 +1392,33 @@ describe("moveAudioClipVolumeKeyframe", () => {
     ).toThrow("already occupied");
   });
 
+  it("moves a video source-audio keyframe without changing its volume", () => {
+    let project = createProject({ id: "video-volume-move-command" });
+    project.assets.push({
+      id: "video",
+      name: "clip.mp4",
+      mediaType: "video",
+      sourcePath: "/clip.mp4",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.35);
+
+    const updated = moveAudioClipVolumeKeyframe(
+      project,
+      clipId,
+      1000,
+      2000,
+      new Date("2026-09-25T00:00:01.000Z"),
+    );
+
+    expect(updated.tracks[0].clips[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 2000, volume: 0.35 },
+    ]);
+    expect(updated.updatedAt).toBe("2026-09-25T00:00:01.000Z");
+  });
+
   it("rejects moves outside the clip and ignores missing source keyframes", () => {
     const project = createAudioProject();
     const clipId = project.tracks[1].clips[0].id;
@@ -1403,6 +1430,26 @@ describe("moveAudioClipVolumeKeyframe", () => {
     expect(
       moveAudioClipVolumeKeyframe(project, clipId, 1000, 2000),
     ).toEqual(project);
+  });
+});
+
+describe("removeAudioClipVolumeKeyframe", () => {
+  it("removes a video source-audio keyframe", () => {
+    let project = createProject({ id: "video-volume-remove-command" });
+    project.assets.push({
+      id: "video",
+      name: "clip.mp4",
+      mediaType: "video",
+      sourcePath: "/clip.mp4",
+      durationMs: 5000,
+    });
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.35);
+
+    const updated = removeAudioClipVolumeKeyframe(project, clipId, 1000);
+
+    expect(updated.tracks[0].clips[0].audioVolumeKeyframes).toBeUndefined();
   });
 });
 
