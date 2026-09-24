@@ -1,27 +1,21 @@
-## M3.81 — active — 2026-09-24
+## M3.82 — active — 2026-09-24
 
-- Branch: `feat/m3-81-video-source-audio-eq-export`.
-- PR: #95 — Draft.
-- Scope: make exported embedded Video source audio honor the existing per-clip 3-band EQ already used by Video preview.
-- Repository evidence: `RenderSegment` already exposes `audioEq`, but the implementation previously populated it only for Audio-track audio clips; the native embedded source-audio contract had no EQ field or native EQ filter stage.
-- Implemented Video EQ metadata propagation through RenderPlan and the native unified source-audio request without changing the project schema.
-- Effective non-zero Video EQ bypasses direct/segment fast paths and uses unified AV export so the processing cannot be silently omitted.
-- Native source-audio processing order is preserved: trim/reset/normalize → Track Volume → clip Volume Automation → Track Pan → clip EQ → clip Fade → timeline delay.
-- Native Video source-audio EQ matches the existing Audio-track export graph: 120 Hz Q 0.8, 1 kHz Q 1, and 8 kHz Q 0.8; inactive/zero-gain bands are omitted and active gains are clamped to -12 dB through +12 dB.
-- Added RenderPlan, pipeline-routing, source-audio contract, and Rust filter-generation regression coverage.
-- Keep Audio-track EQ behavior unchanged; do not introduce a second audio model or schema fields.
-- M3.81 initially received user PASS, but a repository audit after merge found a missing `audioEq` propagation step in the actual pipeline payload. A focused correction branch is now required before considering M3.81 fully reconciled.
-- The correction branch restores `audioEq` in `sourceAudioSegments` and adds a pipeline regression test.
-- PR #96 — Draft is the focused correction PR.
-- Local validation of the correction is pending.
-- M3.80 completed and squash-merged as PR #94 at `6181359270552c82f6b4c4d557e41255b8f32bb4`.
-- M3.79 completed and squash-merged as PR #93 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
-- M3.78 completed and squash-merged as PR #92 at `bd583a3891cacf68ab827e31469008ce1f8e015`.
-- PR #76 remains parked and must not be merged or revived wholesale.
-
-
-
-
+- Branch: `feat/m3-82-video-source-audio-compressor-export`.
+- Base: M3.81 correction merge `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
+- Scope: export the existing per-clip `AudioCompressor` metadata for embedded Video source audio.
+- Reuse the existing Audio-track compressor model and FFmpeg semantics; do not add schema fields or a second compressor model.
+- RenderPlan now propagates normalized Video `audioCompressor` metadata.
+- Unified AV export payloads now carry active Video compressor metadata for Video-only and mixed Video + explicit Audio paths.
+- Enabled Video source-audio compression forces unified AV rendering; disabled compression must preserve the direct/segment fast paths.
+- Native source-audio processing order is trim/reset/normalize → Track Volume → clip Volume Automation → Track Pan → clip EQ → clip Compressor → clip Fade → timeline delay.
+- Native compressor parameters match the Audio-track export graph: threshold -60..0 dB converted to linear amplitude, ratio 1..20, attack 0.01..2000 ms, release 0.01..9000 ms.
+- The native resolver had an inherited duplicate `audio_eq` assignment at the M3.81 merge base; it was removed while adding the compressor field.
+- Added RenderPlan, export-pipeline, and Rust regression coverage.
+- M3.81 is fully reconciled: PR #95 merged at `eae0f97a52343c794c337200ce8f3808feab2800`; post-merge correction PR #96 merged at `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
+- User reported PASS for PR #96 correction validation.
+- M3.80 remains merged at `6181359270552c82f6b4c4d557e41255b8f32bb4`; M3.79 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
+- PR #76 remains parked and must not be touched, merged, or revived wholesale.
+- Local M3.82 validation is pending.
 
 ## M3.79 — completed — 2026-09-24
 
