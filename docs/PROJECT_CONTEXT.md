@@ -16,6 +16,14 @@ Implementation target:
 - Apply clip volume automation in native source-audio FFmpeg filtering.
 - Force graph-based export when Video source audio automation is present so fast-path exports cannot silently ignore it.
 
+Implementation completed in the branch:
+- Existing Audio Volume Automation commands now accept both audio clips and video clips with embedded source audio.
+- Inspector and Timeline reuse the existing automation UI for Video clips.
+- RenderPlan carries normalized Video-clip volume keyframes.
+- Video source-audio requests carry keyframes to native FFmpeg.
+- Native source-audio filtering applies the same piecewise-linear volume interpolation used by the frontend automation model.
+- Any Video clip with volume keyframes is routed through unified graph export so clip automation cannot be silently skipped by fast paths.
+
 Validation:
 - Pending user local validation.
 
