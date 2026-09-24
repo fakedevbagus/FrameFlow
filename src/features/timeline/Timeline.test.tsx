@@ -291,6 +291,30 @@ describe("Timeline", () => {
     expect(onCurrentTimeChange).toHaveBeenLastCalledWith(1500);
   });
 
+  it("renders video clip audio volume keyframe markers", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = updateAudioClipVolumeAtTime(project, clipId, 1000, 0.4);
+    project = updateAudioClipVolumeAtTime(project, clipId, 3000, 0.8);
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={1000}
+      />,
+    );
+
+    const markers = screen.getAllByRole("button", {
+      name: /Go to audio volume keyframe for intro.mp4/,
+    });
+
+    expect(markers).toHaveLength(2);
+    expect(markers[0]).toHaveAttribute("title", "40% · 00:01.000");
+    expect(markers[1]).toHaveAttribute("title", "80% · 00:03.000");
+    expect(markers[0]).toHaveAttribute("aria-current", "time");
+  });
+
   it("renders audio volume keyframe markers and jumps to them", () => {
     let project = createVideoProject();
     project.assets.push({
