@@ -1032,7 +1032,8 @@ mod tests {
     build_ffmpeg_video_with_audio_graph_args, media_type,
     validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
     NativeAudioGraphRenderRequest, NativeSourceAudioSegment,
-    NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
+    NativeSourceAudioVolumeKeyframe, NativeVideoAudioGraphRenderRequest,
+    NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
   };
   use std::path::{Path, PathBuf};
@@ -1603,6 +1604,60 @@ mod tests {
       "-map".to_string(),
       "[aout]".to_string()
     ]));
+  }
+
+  #[test]
+  fn builds_unified_graph_with_video_clip_volume_automation() {
+    let video_paths = vec![PathBuf::from("/media/video.mp4")];
+    let video_media_types = vec!["video".to_string()];
+    let source_audio_segments = vec![ResolvedSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 0,
+      timeline_start_ms: 0,
+      duration_ms: 4_000,
+      track_volume: 0.75,
+      track_pan: 0.0,
+      audio_volume_keyframes: vec![
+        NativeSourceAudioVolumeKeyframe { time_ms: 0, volume: 0.2 },
+        NativeSourceAudioVolumeKeyframe { time_ms: 2_000, volume: 0.8 },
+      ],
+      has_audio: true,
+    }];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &[],
+      &source_audio_segments,
+      "[0:v:0]null[vout]",
+      "[vout]",
+      "anullsrc=r=48000:cl=stereo,atrim=duration=4,asetpts=PTS-STARTPTS[aout]",
+      "[aout]",
+      4_000,
+      1_280,
+      720,
+      30.0,
+      Path::new("/tmp/video-clip-volume.mp4"),
+    )
+    .unwrap();
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+    let filter = values
+      .windows(2)
+      .find(|pair| pair[0] == "-filter_complex")
+      .map(|pair| pair[1].clone())
+      .expect("filter_complex argument should exist");
+
+    assert!(filter.contains(
+      "volume='0.75*if(lt(t,2),0.2+(0.6)*((t-0)/2),0.8)':eval=frame"
+    ));
+    assert!(filter.contains("[frameflow_source_audio_0]"));
+    assert!(filter.contains(
+      "[frameflow_explicit_audio][frameflow_source_audio_0]amix=inputs=2:duration=longest:dropout_transition=0[aout]"
+    ));
   }
 
   #[test]
