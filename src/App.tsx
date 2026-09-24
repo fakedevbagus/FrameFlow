@@ -641,8 +641,12 @@ function App() {
     const clipContext = findClipContext(project, clipId);
     if (
       !clipContext ||
-      clipContext.track.type !== "audio" ||
-      clipContext.asset?.mediaType !== "audio"
+      !(
+        (clipContext.track.type === "audio" &&
+          clipContext.asset?.mediaType === "audio") ||
+        (clipContext.track.type === "video" &&
+          clipContext.asset?.mediaType === "video")
+      )
     ) {
       return;
     }
