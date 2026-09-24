@@ -1,4 +1,4 @@
-### M3.74 — Video Track Volume/Pan for Embedded Source Audio — in progress — 2026-09-24
+### M3.74 — Video Track Volume/Pan for Embedded Source Audio — completed — 2026-09-24
 
 Branch: `feat/m3-74-source-audio-track-controls`
 PR: Draft
@@ -16,7 +16,10 @@ Validation:
 - Frontend tests reached 400/401 tests with one stale command test still expecting Video-track Pan to be rejected.
 - The failing assertion was in the test named "rejects invalid pan values and non-audio tracks"; M3.74 intentionally permits Pan on Video tracks.
 - Updated that stale test to validate invalid values and unknown tracks only. The existing positive Video-track Volume/Pan command coverage remains.
-- Fresh frontend test rerun and manual export verification are still required.
+- User reported PASS after the corrected frontend test rerun and manual export verification. PR #88 was marked ready and squash-merged as a93ea6764dfb363304385f206e6a2e7204e39fe1.
+
+Post-merge UI note:
+- User reported that the Video-track Volume/Pan controls make the compact track header visually cramped/clipped in the current timeline layout. This is tracked as the next focused UI-fix milestone.
 
 Next step:
 - Rerun lint, frontend tests, production build, Rust tests, Tauri startup, and the manual export check.
