@@ -419,6 +419,41 @@ describe("render plan", () => {
     });
   });
 
+  it("propagates video clip audio volume keyframes for embedded source audio", () => {
+    let project = projectWithAssets();
+    project = addAssetToTimeline(project, "video-a");
+    const videoTrack = project.tracks.find((track) => track.type === "video");
+    if (!videoTrack) throw new Error("Expected video track.");
+
+    const projectWithMedia = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrack.id
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioVolumeKeyframes: [
+                  { timeMs: 0, volume: 0.3 },
+                  { timeMs: 2500, volume: 0.9 },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      projectWithMedia,
+      createDefaultExportSettings(projectWithMedia),
+    );
+
+    expect(plan.segments[0].audioVolumeKeyframes).toEqual([
+      { timeMs: 0, volume: 0.3 },
+      { timeMs: 2500, volume: 0.9 },
+    ]);
+  });
+
   it("carries audio track pan into audio render segments", () => {
     let project = projectWithAssets();
     project = addAssetToTrack(project, "audio-a", "audio-1", 0);
