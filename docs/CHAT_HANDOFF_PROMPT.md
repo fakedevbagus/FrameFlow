@@ -1,6 +1,7 @@
 ## M3.88 — active — 2026-09-25
 
 - Branch: `feat/m3-88-video-volume-automation-command-parity`.
+- PR #103 — Draft.
 - Scope: close the remaining embedded Video volume-automation gap across Inspector set/update, Timeline keyframe move, and Timeline keyframe delete.
 - Audit on merged `main` found that Timeline already rendered Video volume-automation markers and `updateAudioClipVolumeAtTime` already accepted Video clips, but the App selected-volume handler rejected Video clips.
 - The volume-keyframe move/remove commands still rejected Video-track Video clips even though Timeline already exposed those interactions.
