@@ -218,6 +218,57 @@ function renderVideoOnlyPlanToMp4(
       : renderVideoSegmentsToMp4(request);
   }
 
+  const sourceAudioSegments = videoSegments
+    .filter(
+      (segment) =>
+        segment.mediaType === "video" &&
+        !segment.isMuted &&
+        segment.durationMs > 0,
+    )
+    .map((segment) => ({
+      inputIndex: segment.inputIndex,
+      sourceStartMs: segment.sourceStartMs,
+      timelineStartMs: segment.timelineStartMs,
+      durationMs: segment.durationMs,
+      trackVolume: segment.trackVolume ?? 1,
+      trackPan: segment.trackPan ?? 0,
+    }));
+
+  if (sourceAudioSegments.length > 0) {
+    const durationSeconds = plan.durationMs / 1000;
+    const request = {
+      videoInputs: graph.inputs
+        .sort((left, right) => left.inputIndex - right.inputIndex)
+        .map((input) => input.sourcePath),
+      videoInputMediaTypes: graph.inputs
+        .sort((left, right) => left.inputIndex - right.inputIndex)
+        .map((input) => {
+          const segment = videoSegments.find(
+            (candidate) => candidate.inputIndex === input.inputIndex,
+          );
+          return segment?.mediaType ?? "video";
+        }),
+      audioInputs: [],
+      sourceAudioSegments,
+      videoFilterComplex: graph.filterComplex,
+      videoMap: graph.videoMap,
+      audioFilterComplex:
+        "anullsrc=r=48000:cl=stereo,atrim=duration=" +
+        durationSeconds +
+        ",asetpts=PTS-STARTPTS[aout]",
+      audioMap: "[aout]",
+      durationMs: plan.durationMs,
+      width: plan.width,
+      height: plan.height,
+      frameRate: plan.frameRate,
+      outputPath,
+    };
+
+    return jobId
+      ? renderVideoAudioGraphToMp4(request, jobId)
+      : renderVideoAudioGraphToMp4(request);
+  }
+
   const request = {
     inputs: graph.inputs.map((input) => input.sourcePath),
     inputMediaTypes: orderedMediaTypes(videoSegments),
