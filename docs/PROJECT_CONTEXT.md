@@ -18,6 +18,11 @@ Repository evidence:
 - The success path uses the new state shape, but the `catch` path still writes a removed `path` property.
 - The type mismatch is confined to the waveform load failure state and should be corrected without changing waveform generation or caching.
 
+Implementation:
+- Fixed the waveform request rejection state to use the current `peaks/sourceDurationMs/isLoading` state shape.
+- Added a Timeline regression covering native waveform-load rejection and loading-state cleanup.
+- No waveform generation, cache, trim-range, schema, or export changes.
+
 Validation:
 - Pending focused local validation of M3.87.
 
