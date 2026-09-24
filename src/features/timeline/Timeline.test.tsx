@@ -884,6 +884,46 @@ describe("Timeline", () => {
     expect(onUpdateTrackPan).toHaveBeenCalledWith("video-1", -0.25);
   });
 
+  it("renders video clip audio volume keyframes", () => {
+    let project = createVideoProject();
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.id === "video-1"
+          ? {
+              ...track,
+              clips: track.clips.map((clip) => ({
+                ...clip,
+                audioVolumeKeyframes: [
+                  { timeMs: 1000, volume: 0.4 },
+                  { timeMs: 7000, volume: 0.8 },
+                ],
+              })),
+            }
+          : track,
+      ),
+    };
+
+    render(
+      <Timeline
+        project={project}
+        currentTimeMs={1000}
+      />,
+    );
+
+    const markers = screen.getAllByRole("button", {
+      name: /Go to audio volume keyframe for intro.mp4/,
+    });
+
+    expect(markers).toHaveLength(2);
+    expect(markers[0]).toHaveAttribute("title", "40% · 00:01.000");
+    expect(markers[1]).toHaveAttribute("title", "80% · 00:07.000");
+    expect(markers[0]).toHaveAttribute("aria-current", "time");
+    expect(clipId).toBe(project.tracks[0].clips[0].id);
+  });
+
   it("adds video and audio tracks through timeline controls", () => {
     const project = createVideoProject();
     const onAddTrack = vi.fn();
