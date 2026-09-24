@@ -1,4 +1,4 @@
-### M3.76 — Video-Only Embedded Source Audio — in progress — 2026-09-24
+### M3.76 — Video-Only Embedded Source Audio — completed — 2026-09-24
 
 Branch: `feat/m3-76-video-only-source-audio`
 
@@ -14,7 +14,9 @@ Implementation target:
 - No project schema change.
 
 Validation:
-- Pending user local validation.
+- User reported PASS after correcting the two stale local Rust fixture fields.
+- Local validation showed lint passed, frontend tests passed 33/33 files and 400/400 tests, production build completed, and Tauri development startup succeeded.
+- The Rust compilation issue was limited to stale local fixture fields not present on the M3.76 structs.
 ### M3.75 — Timeline Track Header Layout — completed — 2026-09-24
 
 Branch: `fix/m3-75-timeline-track-header-layout`
