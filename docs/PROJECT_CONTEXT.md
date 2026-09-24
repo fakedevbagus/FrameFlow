@@ -1,43 +1,61 @@
-## M3.83 — Embedded Video Source-Audio Inspector Parity — in progress — 2026-09-24
+## M3.84 — Embedded Video Source-Audio Timeline Parity — in progress — 2026-09-24
+
+Branch:
+Not created yet.
+
+PR:
+Not opened yet.
+
+Base:
+`5f52dfca80d3c453252c59dd1428a64b58be6d6c` (M3.83 merge)
+
+Repository evidence:
+- Video clips now expose shared Audio Fade, EQ, and Compressor controls in the Inspector after M3.83.
+- Video clip source audio already supports Volume Automation and Track Volume/Pan across preview/export.
+- Timeline audio fade handles and related direct interaction paths still use Audio-clip-specific presentation/eligibility in the current UI.
+- The next focused gap is to make timeline audio interactions consistent for embedded Video source audio without changing DSP or project schema.
+
+Scope:
+- Audit and align Video clip audio timeline interactions with existing Audio clip interactions, starting with Fade handles and any directly related audio affordances.
+- Reuse the existing Timeline components, commands, and history engine.
+- Preserve Image clips as non-audio.
+- Avoid introducing duplicate Video-specific audio models or interaction systems.
+
+Implementation target:
+- Make Video clips carrying embedded source audio expose the same relevant Timeline audio fade interaction already available to Audio clips.
+- Ensure drag/commit paths call the shared audio fade command and preserve history behavior.
+- Add focused Timeline/App regression coverage for Video fade-handle visibility and editing.
+- Keep existing Video Volume Automation keyframe behavior unchanged unless the audit finds a concrete blocking inconsistency in the same interaction surface.
+- No project schema change and no export DSP redesign.
+
+Validation:
+- Pending implementation and user local validation.
+
+Known limitations:
+- Scope is Timeline interaction parity, not a new audio editing subsystem.
+
+Next step:
+- Inspect current Timeline fade-handle rendering/guards, implement the smallest parity change, add regressions, update docs, open Draft PR, and hand off local validation.
+
+## M3.83 — Embedded Video Source-Audio Inspector Parity — completed — 2026-09-24
 
 Branch:
 `feat/m3-83-video-source-audio-inspector-parity`
 
 PR:
-#98 — Draft
+#98
 
-Base:
-`2d4b1b7d180bb8fb8d334968a024a89adc9152c2` (M3.82 merge)
+Merge SHA:
+`5f52dfca80d3c453252c59dd1428a64b58be6d6c`
 
-Scope:
-- Expose the existing Audio Fade, EQ, and Compressor Inspector controls for embedded-audio Video clips.
-- Reuse the existing command helpers, models, history engine, preview routing, and export path.
-- Keep Image clips audio-free and preserve Audio-track behavior.
-- No project schema change.
-
-Repository evidence:
-- Video embedded audio already has preview/export support for Volume Automation, Fade, EQ, Compressor, Track Volume, and Track Pan.
-- App Inspector previously exposed Fade/EQ/Compressor only for Audio-track audio clips.
-- The Fade, EQ, and Compressor command guards also rejected Video-track Video clips.
-
-Implementation:
-- `updateAudioClipFades`, `updateAudioClipEq`, and `updateAudioClipCompressor` now accept Video-track Video clips while retaining existing validation, normalization, locking, default-clearing, and history behavior.
-- Existing Fade/EQ/Compressor Inspector components are now exposed for Video clips through the same shared UI and handlers.
+Implementation reconciled:
+- Shared Audio Fade, EQ, and Compressor Inspector components are now available for Video-track Video clips.
+- Existing Fade/EQ/Compressor commands now accept Video-track Video clips with their existing validation and normalization rules.
 - Image clips remain excluded from audio controls.
-- Fixed null-context guarding in the App audio handlers.
-- Added command-level regression coverage for Video clip updates and Image rejection.
-- Added App regression coverage for Video audio controls, representative edits, and Image control visibility.
-- No DSP redesign and no schema changes.
-
-Validation:
-- Pending user local validation of M3.83.
-
-Known limitations:
-- Inspector parity only; no new audio effect types or Video-specific DSP controls.
-- Actual embedded audio stream presence remains determined by the existing preview/export media probing path.
-
-Next step:
-- Run the documented local validation, manually verify Video audio controls and persistence, then report PASS before PR #98 is marked ready.
+- App command handlers use the same audio-bearing clip eligibility and history path.
+- Added command and App regression coverage.
+- User reported PASS for M3.83 validation.
+- No project schema change.
 
 
 ## M3.82 — Embedded Video Source-Audio Compressor Export — completed — 2026-09-24
