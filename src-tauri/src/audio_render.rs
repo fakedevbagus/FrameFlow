@@ -265,8 +265,10 @@ fn validate_video_audio_graph_request(
     );
   }
 
-  if request.audio_inputs.is_empty() {
-    return Err("Native unified AV graph requires at least one audio input.".to_string());
+  if request.audio_inputs.is_empty() && request.source_audio_segments.is_empty() {
+    return Err(
+      "Native unified AV graph requires an audio input or embedded source audio.".to_string(),
+    );
   }
 
   if request.video_filter_complex.trim().is_empty() {
@@ -1258,6 +1260,33 @@ mod tests {
     };
     assert!(validate_video_audio_graph_request(&missing_audio).is_err());
 
+    let source_audio_only = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: Vec::new(),
+      source_audio_segments: vec![NativeSourceAudioSegment {
+        input_index: 0,
+        source_start_ms: 0,
+        timeline_start_ms: 0,
+        duration_ms: 5_000,
+        track_volume: 1.0,
+        track_pan: 0.0,
+        audio_volume_keyframes: Vec::new(),
+      }],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex:
+        "anullsrc=r=48000:cl=stereo,atrim=duration=5,asetpts=PTS-STARTPTS[aout]"
+          .to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    assert!(validate_video_audio_graph_request(&source_audio_only).is_ok());
+
     let mut missing_filter = NativeVideoAudioGraphRenderRequest {
       video_inputs: vec!["/media/video.mp4".to_string()],
       video_input_media_types: vec!["video".to_string()],
@@ -1441,6 +1470,60 @@ mod tests {
       "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=0.65,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
     ));
     assert!(filter.contains("[frameflow_explicit_audio]"));
+    assert!(filter.contains(
+      "[frameflow_explicit_audio][frameflow_source_audio_0]amix=inputs=2:duration=longest:dropout_transition=0[aout]"
+    ));
+    assert!(values.windows(2).any(|pair| pair == [
+      "-map".to_string(),
+      "[aout]".to_string()
+    ]));
+  }
+
+  #[test]
+  fn builds_unified_graph_with_source_audio_only() {
+    let video_paths = vec![PathBuf::from("/media/video.mp4")];
+    let video_media_types = vec!["video".to_string()];
+    let source_audio_segments = vec![ResolvedSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 500,
+      timeline_start_ms: 1_000,
+      duration_ms: 2_000,
+      track_volume: 1.0,
+      track_pan: 0.0,
+      audio_volume_keyframes: Vec::new(),
+      has_audio: true,
+    }];
+
+    let args = build_ffmpeg_video_audio_graph_args(
+      &video_paths,
+      &video_media_types,
+      &[],
+      &source_audio_segments,
+      "[0:v:0]null[vout]",
+      "[vout]",
+      "anullsrc=r=48000:cl=stereo,atrim=duration=4,asetpts=PTS-STARTPTS[aout]",
+      "[aout]",
+      4_000,
+      1_280,
+      720,
+      30.0,
+      Path::new("/tmp/source-audio-only.mp4"),
+    )
+    .unwrap();
+
+    let values: Vec<String> = args
+      .iter()
+      .map(|arg| arg.to_string_lossy().into_owned())
+      .collect();
+    let filter = values
+      .windows(2)
+      .find(|pair| pair[0] == "-filter_complex")
+      .map(|pair| pair[1].clone())
+      .expect("filter_complex argument should exist");
+
+    assert!(filter.contains("anullsrc=r=48000:cl=stereo,atrim=duration=4"));
+    assert!(filter.contains("[frameflow_explicit_audio]"));
+    assert!(filter.contains("[frameflow_source_audio_0]"));
     assert!(filter.contains(
       "[frameflow_explicit_audio][frameflow_source_audio_0]amix=inputs=2:duration=longest:dropout_transition=0[aout]"
     ));
