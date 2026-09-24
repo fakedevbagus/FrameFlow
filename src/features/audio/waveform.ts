@@ -258,6 +258,70 @@ function normalizeWaveformPeak(peak: number): number {
   return Math.min(1, Math.max(0, peak));
 }
 
+export function getWaveformPeaksForSourceRange(
+  peaks: number[],
+  sourceDurationMs: number,
+  sourceStartMs: number,
+  sourceEndMs: number | null,
+  outputPeakCount = peaks.length,
+): number[] {
+  if (
+    peaks.length === 0 ||
+    !Number.isFinite(sourceDurationMs) ||
+    sourceDurationMs <= 0 ||
+    !Number.isFinite(sourceStartMs) ||
+    sourceStartMs < 0 ||
+    !Number.isFinite(outputPeakCount) ||
+    outputPeakCount <= 0
+  ) {
+    return [];
+  }
+
+  const safeOutputCount = Math.max(1, Math.round(outputPeakCount));
+  const safeStartMs = Math.min(sourceDurationMs, Math.max(0, sourceStartMs));
+  const requestedEndMs =
+    sourceEndMs === null || !Number.isFinite(sourceEndMs)
+      ? sourceDurationMs
+      : sourceEndMs;
+  const safeEndMs = Math.min(
+    sourceDurationMs,
+    Math.max(safeStartMs, requestedEndMs),
+  );
+
+  if (safeEndMs <= safeStartMs) {
+    return Array.from({ length: safeOutputCount }, () => 0);
+  }
+
+  if (
+    safeStartMs === 0 &&
+    safeEndMs === sourceDurationMs &&
+    safeOutputCount === peaks.length
+  ) {
+    return peaks.map(normalizeWaveformPeak);
+  }
+
+  const lastSourceIndex = peaks.length - 1;
+  const rangeDurationMs = safeEndMs - safeStartMs;
+
+  return Array.from({ length: safeOutputCount }, (_, index) => {
+    const progress = safeOutputCount === 1 ? 0 : index / (safeOutputCount - 1);
+    const sourceTimeMs = safeStartMs + progress * rangeDurationMs;
+    const sourcePosition =
+      sourceDurationMs <= 0
+        ? 0
+        : sourceTimeMs / sourceDurationMs * lastSourceIndex;
+    const leftIndex = Math.floor(sourcePosition);
+    const rightIndex = Math.min(lastSourceIndex, leftIndex + 1);
+    const fraction = sourcePosition - leftIndex;
+    const leftPeak = normalizeWaveformPeak(peaks[leftIndex] ?? 0);
+    const rightPeak = normalizeWaveformPeak(peaks[rightIndex] ?? leftPeak);
+
+    return normalizeWaveformPeak(
+      leftPeak + (rightPeak - leftPeak) * fraction,
+    );
+  });
+}
+
 export function getWaveformLocalTimeMs(
   clientX: number,
   left: number,
