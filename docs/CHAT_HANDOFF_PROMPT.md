@@ -1,3 +1,16 @@
+## M3.78 — active — 2026-09-24
+
+- Branch: `feat/m3-78-video-source-audio-preview`.
+- Scope: make embedded Video source audio preview honor Track Volume, Track Pan, clip Volume Automation, and clip Fade gain.
+- Reuse existing Web Audio routing and audio automation helpers; do not add schema fields.
+- Keep export behavior unchanged in this milestone.
+- Validation is pending.
+- M3.77 completed and squash-merged at `f5ae54f3deb5b2ba265736aec1a2aefd951bfdb2`.
+- M3.76 completed and squash-merged at `11c3928ae79cb814c6e3eef7346bf00bff088242`.
+- M3.75 completed and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
+- M3.74 completed and squash-merged at `a93ea6764dfb363304385f206e6a2e7204e39fe1`.
+- PR #76 remains parked and must not be merged or revived wholesale.
+
 ## M3.77 — completed — 2026-09-24
 
 - Branch: `feat/m3-77-video-clip-volume-automation`.
