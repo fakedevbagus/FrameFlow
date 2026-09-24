@@ -12,6 +12,7 @@
 - Keep Audio-track EQ behavior unchanged; do not introduce a second audio model or schema fields.
 - M3.81 initially received user PASS, but a repository audit after merge found a missing `audioEq` propagation step in the actual pipeline payload. A focused correction branch is now required before considering M3.81 fully reconciled.
 - The correction branch restores `audioEq` in `sourceAudioSegments` and adds a pipeline regression test.
+- PR #96 — Draft is the focused correction PR.
 - Local validation of the correction is pending.
 - M3.80 completed and squash-merged as PR #94 at `6181359270552c82f6b4c4d557e41255b8f32bb4`.
 - M3.79 completed and squash-merged as PR #93 at `eb6e43e9d923e63c92f258fa378d6936924f07e1`.
