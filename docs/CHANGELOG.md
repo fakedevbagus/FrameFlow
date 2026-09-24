@@ -11,7 +11,8 @@ Implemented:
 - No project schema change.
 
 Validation:
-- The subsequent local rerun passed lint, production build, and all 43 Rust tests; Tauri development startup also completed successfully.
+- A follow-up local run exposed a parse failure in `commands.test.ts`; the branch copy had been accidentally truncated to a fragment. Restored the complete test file from `main` while retaining the M3.74 pan-test correction in commit `9ab4a029a1760eeee43bc347a0271516dad755df`.
+- The earlier local rerun passed lint, production build, and all 43 Rust tests; Tauri development startup also completed successfully.
 - Frontend tests reached 400/401 tests with one stale command test still expecting Video-track Pan to be rejected.
 - The failing assertion was in the test named "rejects invalid pan values and non-audio tracks"; M3.74 intentionally permits Pan on Video tracks.
 - Updated that stale test to validate invalid values and unknown tracks only. The existing positive Video-track Volume/Pan command coverage remains.
