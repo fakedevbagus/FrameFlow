@@ -1,28 +1,40 @@
-## M3.87 — Waveform Load-State Correction — completed — 2026-09-25
+## M3.88 — Embedded Video Volume Automation Command Parity — in progress — 2026-09-25
 
 Branch:
-`fix/m3-87-waveform-load-state`
+`feat/m3-88-video-volume-automation-command-parity`
 
 PR:
-#102
+Not opened yet; implementation branch only.
 
-Merge SHA:
-`c94322aab8f4862512893f1ab58d3764d34e681a`
+Base:
+`d990aaac45245bc93ff94f208eb4d97e2704ab2e`
 
-Implementation reconciled:
-- Corrected `AudioWaveformPreview` rejection handling to use the current `peaks/sourceDurationMs/isLoading` state shape instead of the removed `path` field.
-- Added Timeline regression coverage for a rejected native waveform request and verified that the loading placeholder is cleared by the rejection path.
-- Preserved M3.86 waveform trim-range alignment, Video embedded-audio waveform parity, persistent cache behavior, project schema, and export DSP unchanged.
-- User reported PASS for M3.87 local validation.
-- PR #102 was marked ready and squash-merged at `c94322aab8f4862512893f1ab58d3764d34e681a`.
+Scope:
+- Close the remaining embedded Video volume automation parity gap across Inspector set/update, Timeline keyframe move, and Timeline keyframe delete.
+- Reuse the existing audio-bearing clip eligibility; no schema, automation-model, or DSP change.
 
-Audit finding after merge:
-- Video volume automation is visually exposed in Timeline and already accepted by `updateAudioClipVolumeAtTime`, but App-level selected-volume updates still reject Video-track clips.
-- The command functions for moving/removing audio volume keyframes also still reject Video-track Video clips.
-- This is the next focused parity gap to correct; no schema change is required.
+Repository evidence:
+- Timeline already renders Volume Automation markers for Video-track Video clips.
+- `updateAudioClipVolumeAtTime` already accepts Audio-track Audio and Video-track Video clips, but the App selected-volume handler was still Audio-only.
+- `moveAudioClipVolumeKeyframe` and `removeAudioClipVolumeKeyframe` were still restricted to Audio-track Audio clips.
+
+Implementation:
+- Updated the App selected-volume handler to accept Audio-track Audio and Video-track Video clips.
+- Updated volume-keyframe move/remove commands to use the same audio-bearing eligibility and reject Image/non-audio clips.
+- Added command regressions for Video source-audio keyframe move/remove.
+- Added an App integration regression covering Video Timeline keyframe move and delete.
+- Retained the existing Video Inspector set/update regression.
+- No project schema, keyframe interpolation, preview routing, export DSP, waveform, or UI layout changes.
+
+Validation:
+- Pending user local validation.
+
+Known limitation:
+- None introduced; Image clips remain excluded from audio volume automation.
 
 Next step:
-- M3.88 — Embedded Video Volume Automation Command Parity: make Inspector set/update, Timeline move, and Timeline delete all use the same audio-bearing eligibility rule for Video clips.
+- Open a Draft PR and hand off focused local validation.
+
 
 ## M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
 
