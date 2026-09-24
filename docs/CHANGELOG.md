@@ -1,4 +1,4 @@
-### M3.75 — Timeline Track Header Layout — in progress — 2026-09-24
+### M3.75 — Timeline Track Header Layout — completed — 2026-09-24
 
 Branch: `fix/m3-75-timeline-track-header-layout`
 
@@ -12,7 +12,8 @@ Implementation:
 - No behavior or schema changes.
 
 Validation:
-- Awaiting user local validation and visual confirmation.
+- User confirmed the timeline header no longer appears cramped/clipped after M3.74 Video-track Volume/Pan controls were exposed.
+- PR #89 was marked ready and squash-merged at `ca48be24adc4a12a6b7dcce89358b9eef3ecdc51`.
 
 ### M3.74 — Video Track Volume/Pan for Embedded Source Audio — completed — 2026-09-24
 
