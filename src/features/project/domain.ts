@@ -500,6 +500,50 @@ function validateOptionalAudioFields(
     }
   }
 
+  const audioCompressor = clip.audioCompressor;
+  if (audioCompressor !== undefined) {
+    if (!isRecord(audioCompressor)) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor must be an object.",
+      );
+    }
+
+    if (typeof audioCompressor.enabled !== "boolean") {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor enabled must be a boolean.",
+      );
+    }
+
+    const thresholdDb = audioCompressor.thresholdDb;
+    const ratio = audioCompressor.ratio;
+    const attackMs = audioCompressor.attackMs;
+    const releaseMs = audioCompressor.releaseMs;
+
+    if (!isFiniteNumber(thresholdDb) || thresholdDb < -60 || thresholdDb > 0) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor thresholdDb must be between -60 and 0.",
+      );
+    }
+
+    if (!isFiniteNumber(ratio) || ratio < 1 || ratio > 20) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor ratio must be between 1 and 20.",
+      );
+    }
+
+    if (!isFiniteNumber(attackMs) || attackMs < 0.01 || attackMs > 2000) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor attackMs must be between 0.01 and 2000.",
+      );
+    }
+
+    if (!isFiniteNumber(releaseMs) || releaseMs < 0.01 || releaseMs > 9000) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor releaseMs must be between 0.01 and 9000.",
+      );
+    }
+  }
+
   const audioVolumeKeyframes = clip.audioVolumeKeyframes;
   if (audioVolumeKeyframes !== undefined) {
     if (!Array.isArray(audioVolumeKeyframes)) {
