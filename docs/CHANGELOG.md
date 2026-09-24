@@ -1,18 +1,28 @@
-### M3.78 — Embedded Video Audio Preview Consistency — in progress — 2026-09-24
+### M3.78 — Embedded Video Audio Preview Consistency — completed — 2026-09-24
 
 Branch: `feat/m3-78-video-source-audio-preview`
+PR #92
+Merge SHA: `bd583a3891c9acf68ab827e31469008ce1f8e015`
 
 Scope:
 - Make embedded audio played by Video clips honor the same audio controls already used by Audio-track preview/export.
 - Preserve schema and existing export behavior.
 
-Implementation target:
-- Generalize preview Web Audio routing to video media elements.
-- Apply Track Volume, Track Pan, clip Volume Automation, and Fade gain to Video preview.
-- Reuse existing EQ/compressor routing implementation without adding new Video-specific controls.
+Implementation:
+- Generalized preview Web Audio routing to video media elements.
+- Applied Track Volume, Track Pan, clip Volume Automation, and Fade gain to Video preview.
+- Reused the existing EQ/compressor routing implementation without adding Video-specific controls.
+- Re-ran Video audio routing when the prepared preview source URL becomes available.
+- Added regression coverage for the combined Video embedded-audio gain path.
 
 Validation:
-- Pending user local validation.
+- User reported PASS after local validation of the M3.78 embedded Video audio preview scope.
+
+Known limitations:
+- Export behavior for embedded Video source audio remains unchanged in M3.78.
+- Video source-audio export fade handling is deferred to M3.79.
+- Video source-audio export EQ/compressor remains future work.
+
 ### M3.77 — Per-Clip Volume Automation for Embedded Video Audio — completed — 2026-09-24
 
 Branch: `feat/m3-77-video-clip-volume-automation`
