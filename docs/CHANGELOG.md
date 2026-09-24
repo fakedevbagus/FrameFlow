@@ -27,7 +27,7 @@ Known limitations:
 ### M3.81 — Embedded Video Source-Audio EQ Export — in progress — 2026-09-24
 
 Branch: `feat/m3-81-video-source-audio-eq-export`
-PR: Draft
+PR: #95
 
 Scope:
 - Export embedded Video source audio with the existing per-clip 3-band EQ used by Video preview.
