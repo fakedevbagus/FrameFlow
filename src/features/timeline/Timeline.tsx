@@ -1897,7 +1897,7 @@ function TimelineTrack({
                 );
               })()}
 
-              {isAudioClip && audioVolumeKeyframes.length > 0 ? (
+              {hasAudioVolumeAutomation && audioVolumeKeyframes.length > 0 ? (
                 <div
                   aria-label={
                     "Audio volume keyframes for " +
