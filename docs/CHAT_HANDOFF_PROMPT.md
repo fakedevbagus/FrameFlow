@@ -1,19 +1,18 @@
-## M3.84 — active — 2026-09-24
+## M3.85 — active — 2026-09-25
 
-- Branch: `feat/m3-84-video-source-audio-timeline-parity`.
-- Base: M3.83 merge `5f52dfca80d3c453252c59dd1428a64b58be6d6c`.
-- Scope: make existing Timeline Audio Fade handles available for embedded Video source audio.
-- Repository evidence: Video Inspector parity is complete; Video Volume Automation Timeline markers already exist; only the Timeline Fade handle surface remained Audio-clip-specific.
-- Implementation reuses the existing fade interaction, pointer drag/cancel/release, keyboard nudge, shared Fade command, and history engine.
-- Audio waveform remains Audio-only; Image clips remain audio-free.
-- Added Timeline regressions for Video Fade drag/commit and Image exclusion.
+- Branch: `feat/m3-85-video-source-audio-waveform`.
+- Base: M3.84 squash merge `01bf4c2301afc0bdba40d4afcae443d12d6079e0`.
+- Scope: expose the existing Timeline waveform for Video clips with embedded source audio.
+- Repository evidence: Fade handles, Volume Automation, EQ, Compressor, and source-audio export/preview paths already support embedded-audio Video clips; only the Timeline waveform remained Audio-track-only.
+- Native waveform validation previously rejected Video sources before FFmpeg decode, despite the waveform decoder already selecting the first audio stream with `0:a:0`.
+- Implementation now accepts Audio/Video waveform sources, keeps stream probing for graceful no-audio handling, and reuses the existing Timeline waveform/seek/selection/cache path for Video clips.
+- Image clips remain excluded.
+- Added Rust validator coverage plus Timeline Video/Image waveform regressions.
 - No project schema or export DSP change.
-- M3.83 completed and squash-merged as PR #98 at `5f52dfca80d3c453252c59dd1428a64b58be6d6c`.
-- M3.82 completed and merged as PR #97 at `2d4b1b7d180bb8fb8d334968a024a89adc9152c2`.
-- M3.81 correction completed at `8a2c8c285dcbb8ddf9df640fc089673b37baa4fb`.
+- M3.84 completed and squash-merged as PR #99 at `01bf4c2301afc0bdba40d4afcae443d12d6079e0`.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
-- Local M3.84 validation is pending.
-
+- PR #100 is Draft.
+- Local M3.85 validation is pending.
 
 ## M3.79 — completed — 2026-09-24
 

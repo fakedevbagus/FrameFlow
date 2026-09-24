@@ -800,6 +800,46 @@ describe("Timeline", () => {
     );
   });
 
+  it("renders an embedded source-audio waveform for a video clip", async () => {
+    const project = createVideoProject();
+
+    render(<Timeline project={project} />);
+
+    const waveform = await screen.findByTestId("timeline-audio-waveform");
+
+    expect(waveform).toBeInTheDocument();
+    expect(waveform).toHaveAttribute("viewBox", "0 0 512 20");
+    expect(waveform.querySelector("path")).toHaveAttribute("d");
+  });
+
+  it("does not render an audio waveform for image clips", async () => {
+    let project = createProject({
+      id: "image-waveform-project",
+      now: new Date("2026-09-19T00:00:00.000Z"),
+    });
+
+    project = {
+      ...project,
+      assets: [
+        {
+          id: "image-waveform",
+          name: "poster.png",
+          mediaType: "image",
+          sourcePath: "/poster.png",
+          durationMs: 3000,
+        },
+      ],
+    };
+
+    project = addAssetToTimeline(project, "image-waveform");
+
+    render(<Timeline project={project} />);
+
+    expect(
+      screen.queryByTestId("timeline-audio-waveform"),
+    ).not.toBeInTheDocument();
+  });
+
   it("seeks the playhead from the audio waveform", async () => {
     const project = createVideoProject();
     project.assets.push({
