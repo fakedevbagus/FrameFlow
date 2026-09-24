@@ -265,8 +265,10 @@ fn validate_video_audio_graph_request(
     );
   }
 
-  if request.audio_inputs.is_empty() {
-    return Err("Native unified AV graph requires at least one audio input.".to_string());
+  if request.audio_inputs.is_empty() && request.source_audio_segments.is_empty() {
+    return Err(
+      "Native unified AV graph requires an audio input or embedded source audio.".to_string(),
+    );
   }
 
   if request.video_filter_complex.trim().is_empty() {
