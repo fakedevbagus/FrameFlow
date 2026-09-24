@@ -878,8 +878,13 @@ export function updateAudioClipVolumeAtTime(
     (candidate) => candidate.id === location.clip.assetId,
   );
 
-  if (location.track.type !== "audio" || asset?.mediaType !== "audio") {
-    throw new Error("Audio automation is only available for audio clips.");
+  if (
+    (location.track.type !== "audio" || asset?.mediaType !== "audio") &&
+    (location.track.type !== "video" || asset?.mediaType !== "video")
+  ) {
+    throw new Error(
+      "Audio volume automation is only available for audio-bearing clips.",
+    );
   }
 
   const durationMs = getClipDurationMs(location.clip);
