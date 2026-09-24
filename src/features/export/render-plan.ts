@@ -157,6 +157,16 @@ export function createRenderPlan(
         isMuted: track.isMuted,
         trackVolume: getTrackVolume(track),
         trackPan: getTrackPan(track),
+        ...((
+          (track.type === "audio" && asset.mediaType === "audio") ||
+          (track.type === "video" && asset.mediaType === "video")
+        )
+          ? {
+              audioVolumeKeyframes: clip.audioVolumeKeyframes?.length
+                ? normalizeAudioVolumeKeyframes(clip.audioVolumeKeyframes)
+                : undefined,
+            }
+          : {}),
         ...(track.type === "audio" && asset.mediaType === "audio"
           ? (() => {
               const fades = getAudioFadeDurations(clip);
@@ -165,9 +175,6 @@ export function createRenderPlan(
                 audioFadeOutMs: fades.fadeOutMs,
                 audioEq: getAudioEq(clip),
                 audioCompressor: getAudioCompressor(clip),
-                audioVolumeKeyframes: clip.audioVolumeKeyframes?.length
-                  ? normalizeAudioVolumeKeyframes(clip.audioVolumeKeyframes)
-                  : undefined,
               };
             })()
           : {}),
