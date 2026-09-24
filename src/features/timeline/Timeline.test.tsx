@@ -628,6 +628,79 @@ describe("Timeline", () => {
     expect(onUpdateAudioClipFades).toHaveBeenCalledWith(clip.id, 1000, 0);
   });
 
+  it("drags the audio fade-in handle on a video clip and commits once", () => {
+    const project = createVideoProject();
+    const clip = project.tracks[0].clips[0];
+    const onUpdateAudioClipFades = vi.fn();
+
+    render(
+      <Timeline
+        project={project}
+        onUpdateAudioClipFades={onUpdateAudioClipFades}
+      />,
+    );
+
+    const handle = screen.getByRole("button", {
+      name: "Adjust audio fade in for intro.mp4 to 0 ms",
+    });
+
+    fireEvent.pointerDown(handle, {
+      button: 0,
+      clientX: 100,
+      pointerId: 53,
+    });
+    fireEvent.pointerMove(handle, {
+      buttons: 1,
+      clientX: 140,
+      pointerId: 53,
+    });
+    fireEvent.pointerUp(handle, {
+      button: 0,
+      clientX: 140,
+      pointerId: 53,
+    });
+
+    expect(onUpdateAudioClipFades).toHaveBeenCalledTimes(1);
+    expect(onUpdateAudioClipFades).toHaveBeenCalledWith(clip.id, 1000, 0);
+  });
+
+  it("does not expose audio fade handles for image clips", () => {
+    const project = createVideoProject();
+    project.assets.push({
+      id: "image-fade",
+      name: "cover.png",
+      mediaType: "image",
+      sourcePath: "/cover.png",
+      durationMs: 5000,
+    });
+
+    const populated = {
+      ...project,
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  ...track.clips[0],
+                  id: "image-clip",
+                  assetId: "image-fade",
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    render(<Timeline project={populated} />);
+
+    expect(
+      screen.queryByRole("button", {
+        name: "Adjust audio fade in for cover.png to 0 ms",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it("cancels audio fade-handle dragging with Escape without committing", () => {
     let project = createVideoProject();
     project.assets.push({
