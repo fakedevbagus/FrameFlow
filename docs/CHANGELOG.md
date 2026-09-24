@@ -1,7 +1,7 @@
 ### M3.89 — Waveform Selection Lifecycle Hardening — in progress — 2026-09-25
 
 Branch: `fix/m3-89-waveform-selection-lifecycle`
-PR: Not opened yet
+PR: #104 — Draft
 
 Scope:
 - Clear stale Timeline waveform selections when a clip's source range changes after trim.
