@@ -4,7 +4,7 @@ Branch:
 `feat/m3-88-video-volume-automation-command-parity`
 
 PR:
-Not opened yet; implementation branch only.
+#103 — Draft.
 
 Base:
 `d990aaac45245bc93ff94f208eb4d97e2704ab2e`
