@@ -1,39 +1,32 @@
-### M3.86 — Waveform Trim-Range Alignment — in progress — 2026-09-25
+### M3.87 — Waveform Load-State Correction — in progress — 2026-09-25
 
-Branch: `feat/m3-86-waveform-trim-range-alignment`
-
-Scope:
-- Align the Timeline waveform with the clip's actual `sourceStartMs`/`sourceEndMs` range for trimmed Audio and Video clips.
-- Reuse existing waveform generation/caching and preserve Video embedded-audio parity.
-- No project schema or export DSP change.
-
-Implementation:
-- Added source-range peak cropping/resampling in the existing waveform helper.
-- Timeline derives the visible waveform from stored full-source peaks and the current trim range, so trim interaction updates the waveform without a second FFmpeg decode.
-- Added waveform range/resampling regression coverage.
-- Validation pending user local run.
-
-### M3.85 — Embedded Video Source-Audio Waveform Parity — completed — 2026-09-25
-
-### M3.85 — Embedded Video Source-Audio Waveform Parity — in progress — 2026-09-25
-
-Branch: `feat/m3-85-video-source-audio-waveform`
-PR #100 (Draft)
+Branch: `fix/m3-87-waveform-load-state`
 
 Scope:
-- Render the existing Timeline audio waveform for Video clips with embedded source audio.
-- Keep existing Audio-track waveform behavior, seek/selection interaction, cache semantics, and project schema unchanged.
-- Keep Image clips audio-free.
+- Fix the M3.86 waveform load failure state after the component state model changed from rendered `path` to raw peaks/source duration.
+- Preserve existing waveform rendering and trim-range behavior.
 
-Implementation:
-- Native waveform source validation accepts both Audio and Video media types.
-- Video waveform generation still probes `a:0`, so files without audio produce no waveform rather than a fake signal.
-- Timeline reuses `AudioWaveformPreview` for audio-bearing Video clips.
-- Added Rust validator coverage and Timeline Video/Image regression tests.
-- No project schema or export DSP change.
+Implementation target:
+- Replace the stale `path` field in the waveform generation error state with the current state shape.
+- Add regression coverage for a rejected native waveform request.
+- No project schema, export DSP, or native waveform-generation change.
 
 Validation:
 - Pending user local validation.
+
+### M3.86 — Waveform Trim-Range Alignment — completed — 2026-09-25
+
+Branch: `feat/m3-86-waveform-trim-range-alignment`
+PR #101
+Merge SHA: `afd49629d25bef4f399f2886f494d97dc6e9abdd`
+
+Implementation:
+- Timeline waveform now follows the clip's actual source range after trim.
+- Cached full-source peaks are cropped/resampled into the visible source range without a second FFmpeg decode.
+- Behavior applies to explicit Audio clips and embedded-audio Video clips.
+- Added waveform range/resampling regression coverage.
+- User reported PASS.
+- No project schema or export renderer change.
 
 ### M3.84 — Embedded Video Source-Audio Timeline Parity — completed — 2026-09-25
 
