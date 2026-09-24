@@ -77,8 +77,12 @@ pub fn generate_audio_waveform(
 }
 
 fn validate_audio_source(source_path: &Path) -> Result<(), String> {
-  if super::media_type(source_path)? != "audio" {
-    return Err("Audio waveform generation requires an audio source.".to_string());
+  let media_type = super::media_type(source_path)?;
+
+  if media_type != "audio" && media_type != "video" {
+    return Err(
+      "Audio waveform generation requires an audio or video source.".to_string(),
+    );
   }
 
   Ok(())
@@ -273,6 +277,17 @@ fn build_ffmpeg_waveform_args(source_path: &Path, sample_rate: u32) -> Vec<Strin
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn accepts_audio_and_video_waveform_sources() {
+    assert!(validate_audio_source(Path::new("/tmp/music.mp3")).is_ok());
+    assert!(validate_audio_source(Path::new("/tmp/video.mp4")).is_ok());
+  }
+
+  #[test]
+  fn rejects_image_waveform_sources() {
+    assert!(validate_audio_source(Path::new("/tmp/poster.png")).is_err());
+  }
 
   #[test]
   fn clamps_waveform_sample_rate_to_supported_bounds() {
