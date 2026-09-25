@@ -595,7 +595,7 @@ function validateClip(
     validateVisualPayloads(value, fieldPrefix);
   }
 
-  validateOptionalAudioFields(value, fieldPrefix);
+  validateOptionalAudioFields(value, fieldPrefix, track.type, asset.mediaType);
 }
 
 function validateVisualPayloads(
@@ -907,7 +907,27 @@ function validateTransitionPayload(
 function validateOptionalAudioFields(
   clip: Record<string, unknown>,
   fieldPrefix: string,
+  trackType: TrackType,
+  mediaType: MediaType,
 ): void {
+  const isAudioBearingClip =
+    (trackType === "audio" && mediaType === "audio") ||
+    (trackType === "video" && mediaType === "video");
+
+  for (const field of [
+    "audioFadeInMs",
+    "audioFadeOutMs",
+    "audioEq",
+    "audioCompressor",
+    "audioVolumeKeyframes",
+  ] as const) {
+    if (clip[field] !== undefined && !isAudioBearingClip) {
+      throw new ProjectValidationError(
+        fieldPrefix + " " + field + " is only available for audio-bearing clips.",
+      );
+    }
+  }
+
   for (const field of ["audioFadeInMs", "audioFadeOutMs"] as const) {
     const value = clip[field];
     if (
@@ -917,6 +937,33 @@ function validateOptionalAudioFields(
       throw new ProjectValidationError(
         fieldPrefix + " " + field + " must be a non-negative integer.",
       );
+    }
+  }
+
+  if (clip.audioFadeInMs !== undefined || clip.audioFadeOutMs !== undefined) {
+    const fadeInMs = clip.audioFadeInMs === undefined ? 0 : Number(clip.audioFadeInMs);
+    const fadeOutMs = clip.audioFadeOutMs === undefined ? 0 : Number(clip.audioFadeOutMs);
+
+    if (clip.sourceEndMs === null) {
+      if (fadeInMs > 0 || fadeOutMs > 0) {
+        throw new ProjectValidationError(
+          fieldPrefix + " audio fade durations require a known clip duration.",
+        );
+      }
+    } else {
+      const durationMs = Number(clip.sourceEndMs) - Number(clip.sourceStartMs);
+
+      if (fadeInMs > durationMs || fadeOutMs > durationMs) {
+        throw new ProjectValidationError(
+          fieldPrefix + " audio fade duration cannot exceed the clip duration.",
+        );
+      }
+
+      if (fadeInMs + fadeOutMs > durationMs) {
+        throw new ProjectValidationError(
+          fieldPrefix + " audio fade-in and fade-out cannot overlap.",
+        );
+      }
     }
   }
 
