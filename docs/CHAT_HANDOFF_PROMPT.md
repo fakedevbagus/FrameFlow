@@ -1,19 +1,19 @@
-## M3.100 — completed — 2026-09-25
+## M3.101 — active — 2026-09-25
 
-- Branch: `fix/m3-100-integer-asset-duration`.
-- PR #115; squash-merged at `a6d9d8ee5d5f3782bd5de22ac61c2a3b5122218d`.
-- Persisted `MediaAsset.durationMs` values now require non-negative integer milliseconds or `null`.
-- Persistence aligns with the native media probe representation, which returns known durations as unsigned integer milliseconds.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor behavior.
+- Branch: `fix/m3-101-integer-clip-times`.
+- Scope: require persisted clip `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` values to be non-negative integer milliseconds.
+- `sourceEndMs: null` remains valid for unknown source duration.
+- M3.100 completed and squash-merged as PR #115 at `a6d9d8ee5d5f3782bd5de22ac61c2a3b5122218d`.
+- Awaiting local validation of M3.101.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.100 is the active milestone; do not assume local validation has passed.
+- M3.101 is the active milestone; do not assume local validation has passed.
 - When user reports `PASS` / `pass` / `lanjutkan`, mark the active Draft PR ready, squash-merge it using the verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, then audit and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+
 
 ## M3.99 — completed — 2026-09-25
 
