@@ -539,11 +539,11 @@ function validateClip(
     );
   }
 
-  assertFiniteNonNegativeNumber(
+  assertFiniteNonNegativeIntegerMilliseconds(
     value.timelineStartMs,
     fieldPrefix + " timelineStartMs",
   );
-  assertFiniteNonNegativeNumber(
+  assertFiniteNonNegativeIntegerMilliseconds(
     value.sourceStartMs,
     fieldPrefix + " sourceStartMs",
   );
@@ -555,7 +555,7 @@ function validateClip(
       fieldPrefix + " sourceEndMs must be a number or null.",
     );
   } else {
-    assertFiniteNonNegativeNumber(
+    assertFiniteNonNegativeIntegerMilliseconds(
       value.sourceEndMs,
       fieldPrefix + " sourceEndMs",
     );
@@ -1131,6 +1131,17 @@ function assertMediaType(value: unknown, field: string): asserts value is MediaT
 function assertFiniteNonNegativeNumber(value: unknown, field: string): asserts value is number {
   if (!isFiniteNumber(value) || value < 0) {
     throw new ProjectValidationError(field + " must be a finite non-negative number.");
+  }
+}
+
+function assertFiniteNonNegativeIntegerMilliseconds(
+  value: unknown,
+  field: string,
+): asserts value is number {
+  if (!isFiniteNumber(value) || !Number.isInteger(value) || value < 0) {
+    throw new ProjectValidationError(
+      field + " must be a non-negative integer number of milliseconds.",
+    );
   }
 }
 
