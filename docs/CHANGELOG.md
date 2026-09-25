@@ -1,10 +1,12 @@
-### M3.104 — Canonical Audio EQ Precision — in progress — 2026-09-25
+### M3.104 — Canonical Audio EQ Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-104-canonical-audio-eq`.
-- Require persisted Audio EQ low/mid/high gains to use at most one decimal place.
-- This matches both `getAudioEq()` and `updateAudioClipEq()`, which canonicalize gains to one decimal place.
+- PR #119; squash-merged at `c83479fec28f6403fedefad9add5ada8ddecfc30`.
+- Persisted Audio EQ low/mid/high gains now require at most one decimal place.
+- This matches `getAudioEq()` and `updateAudioClipEq()`, which canonicalize gains to one decimal place.
 - Added parser regression coverage for over-precise low, mid, and high gains.
-- Validation is pending.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 ### M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
@@ -17,38 +19,14 @@
 
 ### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 
-### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
-### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
-
 - Branch: `fix/m3-102-canonical-text-overlay`.
-- PR #117; merge SHA `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
+- PR #117; squash-merged at `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
 - Persisted text overlay text must already be trimmed.
 - Persisted text overlay x/y positions must use at most three decimal places.
 - Persisted text overlay colors must use lowercase six-digit hex notation.
 - Added parser regression coverage for non-canonical persisted text overlays.
 - User reported PASS.
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
-
-### M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
-### M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
-
-- Branch: `fix/m3-101-integer-clip-times`.
-- PR #116; merge SHA `59a71942d771e5b4e019d01429865df3cadb7a5b`.
-- Persisted clip `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` values now require non-negative integer milliseconds.
-- `sourceEndMs: null` remains valid for unknown source duration.
-- Added parser regression coverage for fractional persisted clip timing fields.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor behavior.
-
-### M3.100 — Canonical Integer Asset Durations — completed — 2026-09-25
-
-- Branch: `fix/m3-100-integer-asset-duration`.
-- PR #115; merge SHA `a6d9d8ee5d5f3782bd5de22ac61c2a3b5122218d`.
-- Persisted `MediaAsset.durationMs` values now require non-negative integer milliseconds or `null`.
-- This matches the native media probe representation, which exposes known media duration as unsigned integer milliseconds.
-- Added parser regression coverage for fractional persisted asset durations.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor behavior.
 
 ### M3.99 — Canonical Integer Audio Keyframe Times — completed — 2026-09-25
 
