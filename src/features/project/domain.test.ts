@@ -931,6 +931,35 @@ describe("project domain", () => {
 
     expect(() =>
       parseProject(JSON.stringify(makeProject({
+        transformKeyframes: [
+          {
+            timeMs: 1000,
+            transform: {
+              x: 0,
+              y: 0,
+              scale: 1,
+              rotation: 0,
+              opacity: 1,
+            },
+          },
+          {
+            timeMs: 500,
+            transform: {
+              x: 10,
+              y: 0,
+              scale: 1,
+              rotation: 0,
+              opacity: 1,
+            },
+          },
+        ],
+      }))),
+    ).toThrow(
+      "transformKeyframes[1] timeMs must be in strictly increasing order.",
+    );
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
         transitionOut: { type: "dissolve", durationMs: 25 },
       }))),
     ).toThrow("durationMs must be an integer between 50 and 2000.");
@@ -1111,6 +1140,45 @@ describe("project domain", () => {
 
     expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "audio fade-in and fade-out cannot overlap.",
+    );
+  });
+
+  it("rejects non-monotonic persisted audio volume keyframes", () => {
+    const project = createProject({ id: "audio-keyframe-order" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 3000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 3000,
+                  audioVolumeKeyframes: [
+                    { timeMs: 1000, volume: 0.8 },
+                    { timeMs: 500, volume: 0.4 },
+                  ],
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "audioVolumeKeyframes[1] timeMs must be in strictly increasing order.",
     );
   });
 
