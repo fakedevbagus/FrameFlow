@@ -1,26 +1,23 @@
-## M3.106 — Canonical Audio Volume Automation Precision — in progress — 2026-09-25
+## M3.106 — Canonical Audio Volume Automation Precision — completed — 2026-09-25
 
 Branch:
 `fix/m3-106-canonical-audio-volume`
 
-Scope:
-- Require persisted Audio Volume Automation keyframe `volume` values to use at most three decimal places.
-- Align the persistence boundary with runtime normalization and edit-command canonicalization.
-- Preserve the existing 0 to 1 range, integer `timeMs` rule, ordering validation, and project schema version.
+PR:
+#121
 
-Implementation:
-- Added parser validation rejecting over-precise persisted audio volume keyframe values.
-- Added regression coverage for values exceeding three decimal places.
-- Existing 0 to 1 range, integer timeMs, ordering, and project schema rules remain unchanged.
+Merge SHA:
+`223856cd70bfaef8d149cc38860d9f9f86745672`
 
-Previous milestone:
-- M3.105 completed and squash-merged as PR #120 at `6cc2a230ed351b44db8dc9551e58a17b1305ed94`.
-
-Validation:
-- Pending user local validation.
+Implementation reconciled:
+- Persisted Audio Volume Automation keyframe `volume` values now require at most three decimal places.
+- Added parser regression coverage for over-precise persisted volume keyframe values.
+- Existing 0 to 1 range, integer `timeMs`, ordering, and clip-duration rules remain unchanged.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 Next step:
-- Run the documented local and manual validation for M3.106, then report PASS/pass/lanjutkan.
+- M3.107 — enforce canonical persisted project-name trimming.
 
 ## M3.105 — Canonical Audio Compressor Precision — completed — 2026-09-25
 
