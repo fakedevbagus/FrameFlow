@@ -1,25 +1,23 @@
-## M3.103 — Canonical Visual Effects Precision — in progress — 2026-09-25
+## M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
 Branch:
 `fix/m3-103-canonical-visual-effects`
 
-Scope:
-- Require persisted `visualEffects.brightness`, `contrast`, and `saturation` values to use at most two decimal places.
-- Align the project persistence boundary with the runtime visual-effects normalizer, which rounds these values to two decimal places.
-- Preserve existing ranges and canonical runtime/editor/preview/export behavior.
+PR:
+#118
 
-Implementation:
-- Added parser validation rejecting over-precise persisted visual-effect values.
-- Added regression coverage for over-precise brightness, contrast, and saturation values.
+Merge SHA:
+`c4ae88dc9cf1cde64a1f39672809b74bc25e266e`
 
-Previous milestone:
-- M3.102 completed and squash-merged as PR #117 at `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
-
-Validation:
-- Pending user local validation.
+Implementation reconciled:
+- Persisted `visualEffects.brightness`, `contrast`, and `saturation` now require at most two decimal places.
+- Added parser regression coverage for over-precise persisted visual-effect values.
+- Existing -1 to 1 range validation remains unchanged.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 Next step:
-- Open Draft PR and hand off local validation.
+- M3.104 — audit and enforce canonical persisted Audio EQ gain precision against the existing one-decimal runtime/command normalizer.
 
 ## M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 ## M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
