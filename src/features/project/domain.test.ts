@@ -1216,6 +1216,62 @@ describe("project domain", () => {
     expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
   });
 
+  it("accepts canonical UTC project timestamps and equal timestamps", () => {
+    const project = createProject({
+      id: "timestamp-valid",
+      now: new Date("2026-09-25T08:00:00.000Z"),
+    });
+
+    expect(parseProject(JSON.stringify(project))).toEqual(project);
+
+    const sameTimestampProject = {
+      ...project,
+      updatedAt: project.createdAt,
+    };
+
+    expect(parseProject(JSON.stringify(sameTimestampProject))).toEqual(
+      sameTimestampProject,
+    );
+  });
+
+  it("rejects non-canonical persisted project timestamps", () => {
+    const project = createProject({ id: "timestamp-format" });
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...project,
+          createdAt: "September 25, 2026",
+        }),
+      ),
+    ).toThrow("Project createdAt must be a canonical UTC ISO timestamp.");
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...project,
+          updatedAt: "2026-09-25T15:00:00.000+07:00",
+        }),
+      ),
+    ).toThrow("Project updatedAt must be a canonical UTC ISO timestamp.");
+  });
+
+  it("rejects a project updated before it was created", () => {
+    const project = createProject({
+      id: "timestamp-order",
+      now: new Date("2026-09-25T08:00:00.000Z"),
+    });
+    const invalidProject = {
+      ...project,
+      createdAt: "2026-09-25T09:00:00.000Z",
+      updatedAt: "2026-09-25T08:59:59.999Z",
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Project updatedAt must be the same as or later than createdAt.",
+    );
+  });
+
   it("rejects invalid JSON and unsupported schemas", () => {
     expect(() => parseProject("not json")).toThrow(ProjectValidationError);
     expect(() => parseProject('{"schemaVersion":999}')).toThrow(

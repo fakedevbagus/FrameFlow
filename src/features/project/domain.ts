@@ -237,6 +237,13 @@ export function validateProject(value: unknown): asserts value is Project {
   assertNonEmptyString(value.name, "Project name");
   assertIsoTimestamp(value.createdAt, "Project createdAt");
   assertIsoTimestamp(value.updatedAt, "Project updatedAt");
+
+  if (Date.parse(value.updatedAt) < Date.parse(value.createdAt)) {
+    throw new ProjectValidationError(
+      "Project updatedAt must be the same as or later than createdAt.",
+    );
+  }
+
   validateCanvas(value.canvas);
 
   const assets = validateAssets(value.assets);
@@ -1131,8 +1138,13 @@ function assertNonEmptyString(value: unknown, field: string): asserts value is s
 function assertIsoTimestamp(value: unknown, field: string): asserts value is string {
   assertNonEmptyString(value, field);
 
-  if (Number.isNaN(Date.parse(value))) {
-    throw new ProjectValidationError(`${field} must be an ISO timestamp.`);
+  if (
+    !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/.test(value) ||
+    Number.isNaN(Date.parse(value))
+  ) {
+    throw new ProjectValidationError(
+      `${field} must be a canonical UTC ISO timestamp.`,
+    );
   }
 }
 
