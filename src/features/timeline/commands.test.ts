@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createProject } from "../project/domain";
+import { createProject, serializeProject } from "../project/domain";
 import {
   addAssetToTimeline,
   addAssetToTrack,
@@ -1562,6 +1562,88 @@ describe("addAssetToTimeline", () => {
   });
 });
 
+
+describe("clip command time normalization", () => {
+  function createVideoProject() {
+    const project = createProject({ id: "clip-command-time-normalization" });
+    return {
+      ...project,
+      assets: [{
+        id: "video",
+        name: "clip.mp4",
+        mediaType: "video" as const,
+        sourcePath: "/clip.mp4",
+        durationMs: 10000,
+      }],
+    };
+  }
+
+  it("canonicalizes fractional add and move timeline positions", () => {
+    const project = createVideoProject();
+    const added = addAssetToTrack(
+      project,
+      "video",
+      "video-1",
+      1000.4,
+    );
+    const clipId = added.tracks[0].clips[0].id;
+
+    expect(added.tracks[0].clips[0].timelineStartMs).toBe(1000);
+    expect(() => serializeProject(added)).not.toThrow();
+
+    const moved = moveClipOnTimeline(added, clipId, 2500.6);
+
+    expect(moved.tracks[0].clips[0].timelineStartMs).toBe(2501);
+    expect(() => serializeProject(moved)).not.toThrow();
+  });
+
+  it("canonicalizes fractional trim source boundaries", () => {
+    const project = createVideoProject();
+    const populated = addAssetToTimeline(project, "video");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    const startTrimmed = trimClipStart(populated, clipId, 2000.6);
+
+    expect(startTrimmed.tracks[0].clips[0]).toMatchObject({
+      timelineStartMs: 2001,
+      sourceStartMs: 2001,
+      sourceEndMs: 10000,
+    });
+    expect(() => serializeProject(startTrimmed)).not.toThrow();
+
+    const endTrimmed = trimClipEnd(startTrimmed, clipId, 8000.4);
+
+    expect(endTrimmed.tracks[0].clips[0]).toMatchObject({
+      timelineStartMs: 2001,
+      sourceStartMs: 2001,
+      sourceEndMs: 8000,
+    });
+    expect(() => serializeProject(endTrimmed)).not.toThrow();
+  });
+
+  it("canonicalizes fractional split times and keeps both resulting clips serializable", () => {
+    const project = createVideoProject();
+    const populated = addAssetToTimeline(project, "video");
+    const clipId = populated.tracks[0].clips[0].id;
+
+    const split = splitClipAtTime(populated, clipId, 4000.6);
+    const clips = [...split.tracks[0].clips].sort(
+      (left, right) => left.timelineStartMs - right.timelineStartMs,
+    );
+
+    expect(clips[0]).toMatchObject({
+      timelineStartMs: 0,
+      sourceStartMs: 0,
+      sourceEndMs: 4001,
+    });
+    expect(clips[1]).toMatchObject({
+      timelineStartMs: 4001,
+      sourceStartMs: 4001,
+      sourceEndMs: 10000,
+    });
+    expect(() => serializeProject(split)).not.toThrow();
+  });
+});
 
 describe("removeClipFromTimeline", () => {
   it("removes a clip and updates the project timestamp", () => {
