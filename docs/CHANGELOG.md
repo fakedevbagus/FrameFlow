@@ -1,10 +1,19 @@
-### M3.97 — Strict Persisted Transform Keyframe Payload — in progress — 2026-09-25
+### M3.98 — Unique Native Project Save Temp Paths — in progress — 2026-09-25
+
+- Branch: `fix/m3-98-unique-project-save-temp`.
+- Native project save temp paths now use process ID + an atomic per-process counter instead of one fixed `.tmp` path.
+- Added Rust regression coverage for temp-path uniqueness.
+- Existing write-to-temp then rename persistence flow is preserved.
+- Validation is pending.
+
+### M3.97 — Strict Persisted Transform Keyframe Payload — completed — 2026-09-25
 
 - Branch: `fix/m3-97-strict-transform-keyframe-payload`.
-- Persisted transform keyframes now require a structured `transform` object.
-- Added parser regressions for missing and null persisted transform payloads.
-- Existing keyframe ordering, duplicate-time, range, easing, and transform-field validation remain unchanged.
-- Validation is pending.
+- PR #112; merge SHA `3bca10042a369191a14e441acabc891a21a09135`.
+- Persisted transform keyframes require a structured `transform` object.
+- Added parser regressions for missing and null transform payloads.
+- User reported PASS.
+- No project schema, runtime/editor, preview, or export behavior change.
 
 ### M3.96 — Strict Persisted Keyframe Ordering — completed — 2026-09-25
 

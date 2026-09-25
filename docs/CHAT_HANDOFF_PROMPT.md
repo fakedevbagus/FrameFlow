@@ -1,16 +1,17 @@
-## M3.97 — active — 2026-09-25
+## M3.98 — active — 2026-09-25
 
-- Branch: `fix/m3-97-strict-transform-keyframe-payload`.
-- Scope: require every persisted transform keyframe to contain a structured `transform` object.
-- Preserve keyframe ordering, duplicate-time validation, all existing payload/range checks, schema version 1, and runtime/editor/preview/export behavior.
-- M3.96 completed and squash-merged as PR #111 at `95fba85c4eee193af70bb306e5a86535e0b601b1`.
-- Awaiting local validation of M3.97.
+- Branch: `fix/m3-98-unique-project-save-temp`.
+- Scope: prevent concurrent native project saves from sharing a fixed temporary file path.
+- Temp save paths now include process ID and an atomic per-process counter.
+- Preserve the existing temp-write-then-rename save flow.
+- M3.97 completed and squash-merged as PR #112 at `3bca10042a369191a14e441acabc891a21a09135`.
+- Awaiting local validation of M3.98.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.97 is the active milestone; do not assume local validation has passed.
+- M3.98 is the active milestone; do not assume local validation has passed.
 - When user reports `PASS` / `pass` / `lanjutkan`, mark the active Draft PR ready, squash-merge it using the verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, then audit and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 

@@ -1,25 +1,45 @@
-## M3.97 — Strict Persisted Transform Keyframe Payload — in progress — 2026-09-25
+## M3.98 — Unique Native Project Save Temp Paths — in progress — 2026-09-25
 
 Branch:
-`fix/m3-97-strict-transform-keyframe-payload`
+`fix/m3-98-unique-project-save-temp`
 
 Scope:
-- Require every persisted transform keyframe to contain a structured `transform` object.
-- Preserve all existing time ordering, duplicate-time, range, easing, and transform-field validation.
-- Keep project schema version 1 and runtime/editor/preview/export behavior unchanged.
+- Prevent concurrent native project saves from sharing one deterministic temporary file path.
+- Preserve the existing temp-write-then-rename persistence flow and project serialization behavior.
 
 Implementation:
-- Added an explicit parser boundary check requiring `transformKeyframes[].transform` to be an object.
-- Added regressions for missing and null persisted transform payloads.
+- Native project save temp paths now include a process identifier and per-process atomic counter.
+- Added Rust regression coverage proving sequential temp-path allocations are unique.
 
 Previous milestone:
-- M3.96 completed and squash-merged as PR #111 at `95fba85c4eee193af70bb306e5a86535e0b601b1`.
+- M3.97 completed and squash-merged as PR #112 at `3bca10042a369191a14e441acabc891a21a09135`.
 
 Validation:
 - Pending user local validation.
 
 Next step:
 - Open Draft PR and hand off local validation.
+
+## M3.97 — Strict Persisted Transform Keyframe Payload — completed — 2026-09-25
+
+Branch:
+`fix/m3-97-strict-transform-keyframe-payload`
+
+PR:
+#112
+
+Merge SHA:
+`3bca10042a369191a14e441acabc891a21a09135`
+
+Implementation reconciled:
+- Every persisted transform keyframe now requires a structured `transform` object.
+- Added parser regressions for missing and null transform payloads.
+- Existing ordering, duplicate-time, range, easing, and transform-field validation remain unchanged.
+- User reported PASS.
+- No project schema, runtime/editor, preview, or export behavior change.
+
+Next step:
+- Audit native project-save durability and temp-file handling.
 
 ## M3.96 — Strict Persisted Keyframe Ordering — completed — 2026-09-25
 
