@@ -459,7 +459,319 @@ function validateClip(
     );
   }
 
+  if (asset.mediaType === "audio") {
+    rejectVisualPayloads(value, fieldPrefix);
+  } else {
+    validateVisualPayloads(value, fieldPrefix);
+  }
+
   validateOptionalAudioFields(value, fieldPrefix);
+}
+
+function validateVisualPayloads(
+  clip: Record<string, unknown>,
+  fieldPrefix: string,
+): void {
+  validateTransformPayload(clip.transform, fieldPrefix + " transform");
+  validateAnchorPayload(clip.transformAnchor, fieldPrefix + " transformAnchor");
+  validateCropPayload(clip.crop, fieldPrefix + " crop");
+  validateCropPositionPayload(
+    clip.cropPosition,
+    fieldPrefix + " cropPosition",
+  );
+  validateVisualEffectsPayload(
+    clip.visualEffects,
+    fieldPrefix + " visualEffects",
+  );
+  validateTextOverlayPayload(
+    clip.textOverlay,
+    fieldPrefix + " textOverlay",
+  );
+  validateTransformKeyframesPayload(
+    clip.transformKeyframes,
+    clip,
+    fieldPrefix + " transformKeyframes",
+  );
+  validateTransitionPayload(
+    clip.transitionOut,
+    fieldPrefix + " transitionOut",
+  );
+}
+
+function rejectVisualPayloads(
+  clip: Record<string, unknown>,
+  fieldPrefix: string,
+): void {
+  for (const field of [
+    "transform",
+    "transformAnchor",
+    "crop",
+    "cropPosition",
+    "visualEffects",
+    "textOverlay",
+    "transformKeyframes",
+    "transitionOut",
+  ]) {
+    if (clip[field] !== undefined) {
+      throw new ProjectValidationError(
+        fieldPrefix + " " + field + " is only available for visual clips.",
+      );
+    }
+  }
+}
+
+function validateTransformPayload(
+  value: unknown,
+  field: string,
+): void {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(field + " must be an object.");
+  }
+
+  for (const [key, minimum, maximum] of [
+    ["x", -100, 100],
+    ["y", -100, 100],
+    ["scale", 0.05, 10],
+    ["opacity", 0, 1],
+  ] as const) {
+    const entry = value[key];
+    if (!isFiniteNumber(entry) || entry < minimum || entry > maximum) {
+      throw new ProjectValidationError(
+        field + " " + key + " is outside the supported range.",
+      );
+    }
+  }
+
+  if (!isFiniteNumber(value.rotation)) {
+    throw new ProjectValidationError(
+      field + " rotation must be a finite number.",
+    );
+  }
+}
+
+function validateAnchorPayload(value: unknown, field: string): void {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(field + " must be an object.");
+  }
+
+  for (const key of ["x", "y"] as const) {
+    const entry = value[key];
+    if (!isFiniteNumber(entry) || entry < 0 || entry > 1) {
+      throw new ProjectValidationError(
+        field + " " + key + " must be between 0 and 1.",
+      );
+    }
+  }
+}
+
+function validateCropPayload(value: unknown, field: string): void {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(field + " must be an object.");
+  }
+
+  for (const key of ["top", "right", "bottom", "left"] as const) {
+    const entry = value[key];
+    if (!isFiniteNumber(entry) || entry < 0 || entry > 0.99) {
+      throw new ProjectValidationError(
+        field + " " + key + " must be between 0 and 0.99.",
+      );
+    }
+  }
+
+  if (
+    Number(value.left) + Number(value.right) >= 1 ||
+    Number(value.top) + Number(value.bottom) >= 1
+  ) {
+    throw new ProjectValidationError(
+      field + " must leave a positive visible region.",
+    );
+  }
+}
+
+function validateCropPositionPayload(
+  value: unknown,
+  field: string,
+): void {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(field + " must be an object.");
+  }
+
+  for (const key of ["x", "y"] as const) {
+    const entry = value[key];
+    if (!isFiniteNumber(entry) || entry < 0 || entry > 1) {
+      throw new ProjectValidationError(
+        field + " " + key + " must be between 0 and 1.",
+      );
+    }
+  }
+}
+
+function validateVisualEffectsPayload(
+  value: unknown,
+  field: string,
+): void {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(field + " must be an object.");
+  }
+
+  for (const key of ["brightness", "contrast", "saturation"] as const) {
+    const entry = value[key];
+    if (!isFiniteNumber(entry) || entry < -1 || entry > 1) {
+      throw new ProjectValidationError(
+        field + " " + key + " must be between -1 and 1.",
+      );
+    }
+  }
+}
+
+function validateTextOverlayPayload(
+  value: unknown,
+  field: string,
+): void {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(field + " must be an object.");
+  }
+
+  if (typeof value.text !== "string" || value.text.trim().length === 0) {
+    throw new ProjectValidationError(field + " text must be non-empty.");
+  }
+
+  if (value.text.trim().length > MAX_TEXT_OVERLAY_LENGTH) {
+    throw new ProjectValidationError(
+      field + " text exceeds the supported length.",
+    );
+  }
+
+  for (const key of ["x", "y"] as const) {
+    const entry = value[key];
+    if (!isFiniteNumber(entry) || entry < 0 || entry > 1) {
+      throw new ProjectValidationError(
+        field + " " + key + " must be between 0 and 1.",
+      );
+    }
+  }
+
+  if (
+    !isFiniteNumber(value.fontSize) ||
+    !Number.isInteger(value.fontSize) ||
+    value.fontSize < 12 ||
+    value.fontSize > 240
+  ) {
+    throw new ProjectValidationError(
+      field + " fontSize must be an integer between 12 and 240.",
+    );
+  }
+
+  if (
+    typeof value.color !== "string" ||
+    !/^#[0-9a-fA-F]{6}$/.test(value.color)
+  ) {
+    throw new ProjectValidationError(
+      field + " color must be a six-digit hex color.",
+    );
+  }
+
+  if (
+    value.alignment !== "left" &&
+    value.alignment !== "center" &&
+    value.alignment !== "right"
+  ) {
+    throw new ProjectValidationError(
+      field + " alignment is invalid.",
+    );
+  }
+}
+
+function validateTransformKeyframesPayload(
+  value: unknown,
+  clip: Record<string, unknown>,
+  field: string,
+): void {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    throw new ProjectValidationError(field + " must be an array.");
+  }
+
+  const times = new Set<number>();
+  const durationMs =
+    clip.sourceEndMs === null || clip.sourceEndMs === undefined
+      ? null
+      : Number(clip.sourceEndMs) - Number(clip.sourceStartMs);
+
+  for (let index = 0; index < value.length; index += 1) {
+    const keyframe = value[index];
+    const keyframeField = field + "[" + index + "]";
+
+    if (!isRecord(keyframe)) {
+      throw new ProjectValidationError(keyframeField + " must be an object.");
+    }
+
+    assertFiniteNonNegativeNumber(keyframe.timeMs, keyframeField + " timeMs");
+
+    if (durationMs !== null && keyframe.timeMs > durationMs) {
+      throw new ProjectValidationError(
+        keyframeField + " timeMs must be inside the clip duration.",
+      );
+    }
+
+    if (times.has(keyframe.timeMs)) {
+      throw new ProjectValidationError(
+        keyframeField + " duplicates a previous timeMs.",
+      );
+    }
+    times.add(keyframe.timeMs);
+
+    validateTransformPayload(
+      keyframe.transform,
+      keyframeField + " transform",
+    );
+
+    if (
+      keyframe.easing !== undefined &&
+      keyframe.easing !== "linear" &&
+      keyframe.easing !== "ease-in" &&
+      keyframe.easing !== "ease-out" &&
+      keyframe.easing !== "ease-in-out"
+    ) {
+      throw new ProjectValidationError(
+        keyframeField + " easing is invalid.",
+      );
+    }
+  }
+}
+
+function validateTransitionPayload(
+  value: unknown,
+  field: string,
+): void {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    throw new ProjectValidationError(field + " must be an object.");
+  }
+
+  if (
+    value.type !== "dissolve" &&
+    value.type !== "fade-through-black"
+  ) {
+    throw new ProjectValidationError(field + " type is invalid.");
+  }
+
+  if (
+    !isFiniteNumber(value.durationMs) ||
+    !Number.isInteger(value.durationMs) ||
+    value.durationMs < 50 ||
+    value.durationMs > 2000
+  ) {
+    throw new ProjectValidationError(
+      field + " durationMs must be an integer between 50 and 2000.",
+    );
+  }
 }
 
 function validateOptionalAudioFields(
