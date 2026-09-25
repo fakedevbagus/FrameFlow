@@ -1,23 +1,26 @@
-## M3.104 — Canonical Audio EQ Precision — completed — 2026-09-25
+## M3.105 — Canonical Audio Compressor Precision — in progress — 2026-09-25
 
 Branch:
-`fix/m3-104-canonical-audio-eq`
+`fix/m3-105-canonical-audio-compressor`
 
-PR:
-#119
+Scope:
+- Require persisted Audio Compressor `thresholdDb` and `ratio` to use at most one decimal place.
+- Require persisted `attackMs` and `releaseMs` to use at most two decimal places.
+- Align the persistence boundary with the existing runtime and command normalizers.
+- Preserve existing supported ranges, `enabled` handling, and project schema version.
 
-Merge SHA:
-`c83479fec28f6403fedefad9add5ada8ddecfc30`
+Implementation:
+- Added parser validation rejecting over-precise persisted Audio Compressor values.
+- Added regression coverage for over-precise threshold, ratio, attack, and release values.
 
-Implementation reconciled:
-- Persisted `audioEq.lowGainDb`, `midGainDb`, and `highGainDb` now require at most one decimal place.
-- Added parser regression coverage for over-precise persisted Audio EQ gains.
-- Existing -12 to 12 dB range and `enabled` validation remain unchanged.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
+Previous milestone:
+- M3.104 completed and squash-merged as PR #119 at `c83479fec28f6403fedefad9add5ada8ddecfc30`.
+
+Validation:
+- Pending user local validation.
 
 Next step:
-- M3.105 — audit and enforce canonical persisted Audio Compressor precision against the existing runtime/command normalizers.
+- Run the documented local and manual validation for M3.105, then report PASS/pass/lanjutkan.
 
 ## M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 

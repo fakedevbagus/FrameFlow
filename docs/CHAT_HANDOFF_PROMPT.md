@@ -1,10 +1,10 @@
 ## M3.105 — active — 2026-09-25
 
 - Branch: `fix/m3-105-canonical-audio-compressor`.
-- Scope: audit and, where runtime canonicalization requires it, enforce persisted Audio Compressor precision.
-- Audit finding from current `main`: `getAudioCompressor()` canonicalizes threshold/ratio to one decimal place and attack/release to two decimal places; `updateAudioClipCompressor()` follows the same precision before persistence, while project parsing currently accepts arbitrary finite precision within the supported ranges.
-- No project schema change is planned.
-- Local validation is pending and must not be assumed passed.
+- Scope: enforce persisted Audio Compressor precision to match runtime/command canonicalization.
+- Audit finding: threshold/ratio are normalized to one decimal place; attack/release are normalized to two decimal places; the parser previously accepted arbitrary finite precision within the supported ranges.
+- Implemented parser validation plus focused regression coverage.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## Workflow for this chat
 
