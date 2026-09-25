@@ -4,6 +4,8 @@ import {
   getVisualEffects,
   getTextOverlay,
   getAudioCompressor,
+  normalizeTrackVolume,
+  normalizeTrackPan,
   normalizeTextOverlay,
   type AudioCompressor,
   type AudioEq,
@@ -497,6 +499,8 @@ export function updateTrackVolume(
     throw new Error("Track volume must be between 0 and 1.");
   }
 
+  const normalizedVolume = normalizeTrackVolume(volume);
+
   const trackIndex = project.tracks.findIndex((track) => track.id === trackId);
 
   if (trackIndex === -1) {
@@ -506,7 +510,7 @@ export function updateTrackVolume(
   const tracks = [...project.tracks];
   tracks[trackIndex] = {
     ...tracks[trackIndex],
-    volume,
+    volume: normalizedVolume,
   };
 
   return { ...project, tracks, updatedAt: now.toISOString() };
@@ -523,6 +527,8 @@ export function updateTrackPan(
     throw new Error("Track pan must be between -1 and 1.");
   }
 
+  const normalizedPan = normalizeTrackPan(pan);
+
   const trackIndex = project.tracks.findIndex((track) => track.id === trackId);
 
   if (trackIndex === -1) {
@@ -532,7 +538,7 @@ export function updateTrackPan(
   const tracks = [...project.tracks];
   tracks[trackIndex] = {
     ...tracks[trackIndex],
-    pan,
+    pan: normalizedPan,
   };
 
   return { ...project, tracks, updatedAt: now.toISOString() };
