@@ -1,15 +1,12 @@
-## M3.111 — active — 2026-09-25
+## M3.112 — active — 2026-09-25
 
-- Branch: `fix/m3-111-strict-transform-rotation-range`.
-- Scope: align persisted Transform Rotation with the runtime's supported `-180..180` angle range.
-- M3.110 completed and squash-merged as PR #125 at `40c0fd1df662754e814e7e658f9a56e0ce615b78`; user reported PASS.
-- Implemented strict persisted Rotation range validation and focused parser regressions for `181` and `-181`.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- M3.111 completed and squash-merged as PR #126 at `eb7ab0fe11c0c279e7daf70c2e31317bf972394f`; user reported PASS.
+- The next milestone is a fresh audit from updated `main`; do not assume a candidate without verifying the current repository.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.111 is the active milestone; do not assume local validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
@@ -60,4 +57,3 @@ Next milestone:
 
 Next milestone:
 - M3.109 — Canonical Transform Scale Precision.
-
