@@ -2,6 +2,15 @@
 
 - Branch: `fix/m3-104-canonical-audio-eq`.
 - Scope: require persisted Audio EQ `lowGainDb`, `midGainDb`, and `highGainDb` values to use at most one decimal place.
+- Audit finding: `getAudioEq()` rounds gains to one decimal place and `updateAudioClipEq()` also persists one-decimal gains, while project parsing previously accepted arbitrary finite precision within -12 to 12.
+- Implemented parser validation plus focused regression coverage.
+- PR will be created after documentation is updated.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+
+## M3.104 — active — 2026-09-25
+
+- Branch: `fix/m3-104-canonical-audio-eq`.
+- Scope: require persisted Audio EQ `lowGainDb`, `midGainDb`, and `highGainDb` values to use at most one decimal place.
 - Audit finding: `getAudioEq()` rounds gains to one decimal place and `updateAudioClipEq()` also persists one-decimal gains, while the project parser currently accepts arbitrary finite precision within -12 to 12.
 - No project schema change is planned.
 - PR will be created after implementation and focused regression coverage.
