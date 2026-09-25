@@ -1,21 +1,34 @@
-## M3.112 — completed — 2026-09-25
+## M3.113 — active — 2026-09-25
 
-- Branch: `fix/m3-112-canonical-text-overlay-position-precision`.
-- Scope: align Text Overlay X/Y persistence and runtime normalization with the Inspector's integer-percent input contract.
-- PR #127; squash-merged at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`.
-- Implemented two-decimal Text Overlay X/Y normalization, strict persisted-value validation, and focused regression coverage.
-- No direct canvas Text Overlay positioning path was found during the audit.
-- User reported PASS.
-- No project schema change.
-- Local validation is considered passed only because the user reported PASS; do not infer additional checks beyond the user's report.
+- Branch: `fix/m3-113-canonical-transform-keyframe-times`.
+- Scope: canonicalize Transform Keyframe timestamps to integer milliseconds while preserving fractional playback interpolation.
+- M3.112 completed and squash-merged as PR #127 at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`; user reported PASS.
+- Implemented canonical timestamp normalization/lookup, command-level time canonicalization, strict persisted integer validation, and focused regression coverage.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- The latest completed milestone is M3.112; the next step is a fresh audit from updated `main`.
+- M3.113 is the active milestone; do not assume local validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.112 — completed — 2026-09-25
+
+- Branch: `fix/m3-112-canonical-text-overlay-position-precision`.
+- PR #127; squash-merged at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`.
+- Implemented two-decimal Text Overlay X/Y normalization and strict persisted-value validation.
+- User reported PASS.
+- No project schema change.
+
+## M3.111 — completed — 2026-09-25
+
+- Branch: `fix/m3-111-strict-transform-rotation-range`.
+- PR #126; squash-merged at `eb7ab0fe11c0c279e7daf70c2e31317bf972394f`.
+- Implemented strict persisted Rotation `-180..180` validation and focused parser regressions.
+- User reported PASS.
+- No project schema change.
 
 ## M3.110 — completed — 2026-09-25
 
