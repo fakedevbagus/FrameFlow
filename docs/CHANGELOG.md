@@ -1,12 +1,11 @@
-### M3.104 — Canonical Audio EQ Precision — completed — 2026-09-25
+### M3.105 — Canonical Audio Compressor Precision — in progress — 2026-09-25
 
-- Branch: `fix/m3-104-canonical-audio-eq`.
-- PR #119; squash-merged at `c83479fec28f6403fedefad9add5ada8ddecfc30`.
-- Persisted Audio EQ low/mid/high gains now require at most one decimal place.
-- This matches `getAudioEq()` and `updateAudioClipEq()`, which canonicalize gains to one decimal place.
-- Added parser regression coverage for over-precise low, mid, and high gains.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
+- Branch: `fix/m3-105-canonical-audio-compressor`.
+- Persisted Audio Compressor threshold/ratio values must use at most one decimal place; attack/release values must use at most two decimal places.
+- This matches the existing `getAudioCompressor()` and `updateAudioClipCompressor()` canonicalization.
+- Added parser regression coverage for over-precise threshold, ratio, attack, and release values.
+- No project schema change is planned.
+- Validation is pending.
 
 ### M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
