@@ -1,13 +1,12 @@
-### M3.90 — Project Persistence Validation Hardening — in progress — 2026-09-25
+### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
 - Branch: `feat/m3-90-project-validation-hardening`.
-- Scope: harden the persisted project JSON validation boundary without changing schema version 1.
-- `validateProject()` now validates asset metadata and unique IDs, track identity/type/controls, clip asset references, clip source/timeline ranges, known asset duration bounds, and media/track compatibility.
-- Persisted Audio Fade, EQ, Compressor, and Volume Automation data now receives focused shape/range validation.
-- Added regression coverage for valid media round-tripping plus duplicate IDs, missing assets, media/track mismatch, invalid source ranges, invalid track volume/pan, and missing source-end fields.
-- User local validation is pending.
-- Native media existence/decodeability and transition/advanced visual-effect validation remain outside this milestone.
-
+- PR #105; merge SHA `c91efb620ddde050487bb11152ebf3c5d563b0d1`.
+- Hardened the JSON parsing boundary for asset/track/clip identity, references, ranges, known source duration bounds, media/track compatibility, and persisted Audio Fade/EQ/Compressor/Volume Automation fields.
+- Added regression coverage for valid media round-tripping and malformed persisted project cases.
+- User reported PASS.
+- No project schema, preview, timeline, export, or DSP behavior change.
+- Follow-up gap: persisted visual payload fields still rely mostly on runtime normalization and need focused parser validation.
 
 ### M3.89 — Waveform Selection Lifecycle Hardening — completed — 2026-09-25
 
