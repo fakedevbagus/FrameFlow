@@ -332,6 +332,56 @@ describe("project domain", () => {
     );
   });
 
+  it("rejects fractional persisted clip timeline and source times", () => {
+    const project = createProject({ id: "fractional-clip-times" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const makeProject = (changes: Record<string, unknown>) => ({
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 1000,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  ...changes,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({ timelineStartMs: 1000.5 }))),
+    ).toThrow(
+      "Clip 0.0 timelineStartMs must be a non-negative integer number of milliseconds.",
+    );
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({ sourceStartMs: 0.5 }))),
+    ).toThrow(
+      "Clip 0.0 sourceStartMs must be a non-negative integer number of milliseconds.",
+    );
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({ sourceEndMs: 4000.5 }))),
+    ).toThrow(
+      "Clip 0.0 sourceEndMs must be a non-negative integer number of milliseconds.",
+    );
+  });
+
   it("rejects clips that reference missing assets", () => {
     const project = createProject({ id: "missing-asset" });
     const invalidProject = {
