@@ -1030,6 +1030,12 @@ function validateOptionalAudioFields(
           fieldPrefix + " audioEq " + field + " must be between -12 and 12.",
         );
       }
+
+      if (Math.round(value * 10) / 10 !== value) {
+        throw new ProjectValidationError(
+          fieldPrefix + " audioEq " + field + " must use at most one decimal place.",
+        );
+      }
     }
   }
 

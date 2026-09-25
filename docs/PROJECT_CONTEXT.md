@@ -1,3 +1,26 @@
+## M3.104 — Canonical Audio EQ Precision — in progress — 2026-09-25
+
+Branch:
+`fix/m3-104-canonical-audio-eq`
+
+Scope:
+- Require persisted `audioEq.lowGainDb`, `midGainDb`, and `highGainDb` values to use at most one decimal place.
+- Align the persistence boundary with the existing Audio EQ runtime/command normalizers.
+- Preserve existing -12 to 12 dB range validation, `enabled` handling, and project schema version.
+
+Implementation:
+- Added parser validation rejecting over-precise persisted Audio EQ gain values.
+- Added regression coverage for over-precise low, mid, and high gain values.
+
+Previous milestone:
+- M3.103 completed and squash-merged as PR #118 at `c4ae88dc9cf1cde64a1f39672809b74bc25e266e`.
+
+Validation:
+- Pending user local validation.
+
+Next step:
+- Run the documented local and manual validation for M3.104, then report PASS/pass/lanjutkan.
+
 ## M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
 Branch:
