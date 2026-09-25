@@ -7,6 +7,7 @@ FrameFlow stores each project as a versioned JSON document. The first schema ver
 - Every document declares `schemaVersion`.
 - Unsupported schema versions are rejected instead of being modified silently.
 - Times are stored in milliseconds.
+- Canvas frame rates must be finite, greater than 0, and no more than 240 fps; supported fractional frame rates remain valid.
 - Source paths point to local media and may need relinking when media moves.
 - Cache and generated proxy files do not belong in the project document.
 
