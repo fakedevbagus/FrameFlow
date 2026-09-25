@@ -836,6 +836,7 @@ function validateTransformKeyframesPayload(
   }
 
   const times = new Set<number>();
+  let previousTimeMs: number | undefined;
   const durationMs =
     clip.sourceEndMs === null || clip.sourceEndMs === undefined
       ? null
@@ -862,7 +863,15 @@ function validateTransformKeyframesPayload(
         keyframeField + " duplicates a previous timeMs.",
       );
     }
+
+    if (previousTimeMs !== undefined && keyframe.timeMs < previousTimeMs) {
+      throw new ProjectValidationError(
+        keyframeField + " timeMs must be in strictly increasing order.",
+      );
+    }
+
     times.add(keyframe.timeMs);
+    previousTimeMs = keyframe.timeMs;
 
     validateTransformPayload(
       keyframe.transform,
@@ -1049,6 +1058,7 @@ function validateOptionalAudioFields(
     }
 
     const keyframeTimes = new Set<number>();
+    let previousTimeMs: number | undefined;
     for (let index = 0; index < audioVolumeKeyframes.length; index += 1) {
       const keyframe = audioVolumeKeyframes[index];
       const keyframePrefix =
@@ -1073,7 +1083,15 @@ function validateOptionalAudioFields(
           keyframePrefix + " duplicates a previous timeMs.",
         );
       }
+
+      if (previousTimeMs !== undefined && keyframe.timeMs < previousTimeMs) {
+        throw new ProjectValidationError(
+          keyframePrefix + " timeMs must be in strictly increasing order.",
+        );
+      }
+
       keyframeTimes.add(keyframe.timeMs);
+      previousTimeMs = keyframe.timeMs;
 
       if (
         clip.sourceEndMs !== null &&
