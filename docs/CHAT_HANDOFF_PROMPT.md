@@ -1,11 +1,11 @@
-## M3.99 — active — 2026-09-25
+## M3.99 — completed — 2026-09-25
 
 - Branch: `fix/m3-99-integer-audio-keyframe-times`.
-- Scope: require persisted Audio Volume Automation keyframe `timeMs` values to be integer milliseconds.
-- Align persistence with runtime audio automation normalization, which rounds timestamps to integer milliseconds before ordering/deduplication.
-- Preserve schema version 1 and existing canonical audio automation behavior.
-- M3.98 completed and squash-merged as PR #113 at `d3e93c9a3af3333fd2a2fd33baecf33a38f9fa74`.
-- Awaiting local validation of M3.99.
+- PR #114; squash-merged at `2918b809edf39306e15fdf884ce11ae3558fee7f`.
+- Persisted Audio Volume Automation keyframe `timeMs` values now require integer milliseconds.
+- Persistence aligns with runtime normalization, which rounds timestamps before ordering/deduplication.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
