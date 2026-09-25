@@ -1,11 +1,10 @@
-### M3.94 — Persisted Canvas Dimension Validation — completed — 2026-09-25
+### M3.95 — Strict Project Timestamp Validation — active — 2026-09-25
 
-- PR #109; merge SHA `6048b038e4d15e00372e0267a9e0d2f14caaf72b`.
-- Persisted canvas width/height now require positive integers, matching `updateCanvasDimensions()`.
-- Supported positive fractional frame rates remain valid.
-- Added parser regressions for invalid fractional dimensions and valid fractional frame rate.
-- User reported PASS.
-- No project schema, preview, playback, Timeline, waveform, or export behavior change.
+- Branch: pending creation from updated `main`.
+- Require `createdAt` and `updatedAt` to use canonical UTC ISO-8601 timestamps emitted by `Date.toISOString()`.
+- Require `updatedAt >= createdAt`.
+- Add focused parser regressions without changing schema version 1.
+- Validation is pending.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
