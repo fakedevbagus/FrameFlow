@@ -1,10 +1,13 @@
-## M3.113 — active — 2026-09-25
+## M3.113 — completed — 2026-09-25
 
 - Branch: `fix/m3-113-canonical-transform-keyframe-times`.
 - Scope: canonicalize Transform Keyframe timestamps to integer milliseconds while preserving fractional playback interpolation.
-- M3.112 completed and squash-merged as PR #127 at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`; user reported PASS.
+- PR #128; squash-merged at `7672e1d9d603ab573178f3c908bd0807d0bfa4f1`.
 - Implemented canonical timestamp normalization/lookup, command-level time canonicalization, strict persisted integer validation, and focused regression coverage.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- User reported PASS.
+- No project schema change.
+- Local validation is considered passed only because the user reported PASS; do not infer additional checks beyond the user's report.
+- Next step: fresh audit from updated `main` for the next focused persisted/runtime invariant.
 
 ## Workflow for this chat
 
