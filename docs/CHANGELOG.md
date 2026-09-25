@@ -1,18 +1,27 @@
-### M3.105 — Canonical Audio Compressor Precision — in progress — 2026-09-25
+### M3.105 — Canonical Audio Compressor Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-105-canonical-audio-compressor`.
-- Persisted Audio Compressor threshold/ratio values must use at most one decimal place; attack/release values must use at most two decimal places.
-- This matches the existing `getAudioCompressor()` and `updateAudioClipCompressor()` canonicalization.
-- Added parser regression coverage for over-precise threshold, ratio, attack, and release values.
-- No project schema change is planned.
-- Validation is pending.
+- PR #120; squash-merged at `6cc2a230ed351b44db8dc9551e58a17b1305ed94`.
+- Persisted Audio Compressor threshold/ratio values now require at most one decimal place; attack/release values require at most two decimal places.
+- Added parser regression coverage for all four over-precision cases.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
+
+### M3.104 — Canonical Audio EQ Precision — completed — 2026-09-25
+
+- Branch: `fix/m3-104-canonical-audio-eq`.
+- PR #119; squash-merged at `c83479fec28f6403fedefad9add5ada8ddecfc30`.
+- Persisted Audio EQ low/mid/high gains now require at most one decimal place.
+- Added parser regression coverage for over-precise low, mid, and high gains.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 ### M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-103-canonical-visual-effects`.
 - PR #118; squash-merged at `c4ae88dc9cf1cde64a1f39672809b74bc25e266e`.
-- Persisted `visualEffects.brightness`, `contrast`, and `saturation` values now require at most two decimal places.
-- Added parser regression coverage for over-precise persisted visual-effect values.
+- Persisted visual-effect brightness/contrast/saturation values now require at most two decimal places.
+- Added parser regression coverage.
 - User reported PASS.
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
@@ -20,10 +29,8 @@
 
 - Branch: `fix/m3-102-canonical-text-overlay`.
 - PR #117; squash-merged at `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
-- Persisted text overlay text must already be trimmed.
-- Persisted text overlay x/y positions must use at most three decimal places.
-- Persisted text overlay colors must use lowercase six-digit hex notation.
-- Added parser regression coverage for non-canonical persisted text overlays.
+- Persisted text overlay text must already be trimmed, x/y positions use at most three decimal places, and colors use lowercase six-digit hex notation.
+- Added parser regression coverage.
 - User reported PASS.
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
