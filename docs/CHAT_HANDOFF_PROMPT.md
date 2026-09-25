@@ -1,10 +1,11 @@
-## M3.100 — active — 2026-09-25
+## M3.100 — completed — 2026-09-25
 
 - Branch: `fix/m3-100-integer-asset-duration`.
-- Scope: require persisted `MediaAsset.durationMs` values to be non-negative integer milliseconds or `null`.
-- Align persistence with the native media probe representation, which returns known durations as unsigned integer milliseconds.
-- M3.99 completed and squash-merged as PR #114 at `2918b809edf39306e15fdf884ce11ae3558fee7f`.
-- Awaiting local validation of M3.100.
+- PR #115; squash-merged at `a6d9d8ee5d5f3782bd5de22ac61c2a3b5122218d`.
+- Persisted `MediaAsset.durationMs` values now require non-negative integer milliseconds or `null`.
+- Persistence aligns with the native media probe representation, which returns known durations as unsigned integer milliseconds.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor behavior.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
