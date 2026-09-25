@@ -1,3 +1,14 @@
+### M3.91 — Persisted Visual Payload Validation — in progress — 2026-09-25
+
+- Branch: `feat/m3-91-visual-payload-validation`.
+- PR #106 — Draft.
+- Validates Transform, Anchor, Crop, Crop Position, Visual Effects, Text Overlay, Transform Keyframes, and Transition payloads at the JSON parsing boundary.
+- Rejects visual-only payloads persisted on Audio clips.
+- Added valid round-trip and malformed visual payload regression coverage.
+- No project schema, preview, timeline, waveform, export, or DSP change.
+- User local validation is pending.
+
+
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
 - Branch: `feat/m3-90-project-validation-hardening`.
@@ -6,7 +17,7 @@
 - Added regression coverage for valid media round-tripping and malformed persisted project cases.
 - User reported PASS.
 - No project schema, preview, timeline, export, or DSP behavior change.
-- Follow-up gap: persisted visual payload fields still rely mostly on runtime normalization and need focused parser validation.
+- Follow-up gap addressed by M3.91: persisted visual payload fields now receive focused parser validation.
 
 ### M3.89 — Waveform Selection Lifecycle Hardening — completed — 2026-09-25
 
