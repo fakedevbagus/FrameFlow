@@ -1,14 +1,15 @@
-### M3.113 — Canonical Transform Keyframe Times — in progress — 2026-09-25
+### M3.113 — Canonical Transform Keyframe Times — completed — 2026-09-25
 
 - Branch: `fix/m3-113-canonical-transform-keyframe-times`.
-- Transform keyframe timestamps are now canonicalized to integer milliseconds for storage and lookup.
+- PR #128; squash-merged at `7672e1d9d603ab573178f3c908bd0807d0bfa4f1`.
+- Transform keyframe timestamps are canonicalized to integer milliseconds for storage and lookup.
 - Transform keyframe commands canonicalize add/update/move/easing/removal times.
 - Persisted Transform Keyframe timestamps with fractional milliseconds are rejected.
 - Runtime interpolation remains able to evaluate at fractional playback time between integer keyframes.
 - Added regression coverage for normalization, command behavior, and persisted-value rejection.
 - No project schema change and no media/preview/export contract change.
-- Validation is pending.
-- Next milestone after M3.113: continue auditing remaining persisted/runtime invariants from updated `main`.
+- User reported PASS.
+- Next milestone: fresh audit from updated `main`.
 
 ### M3.112 — Canonical Text Overlay Position Precision — completed — 2026-09-25
 
