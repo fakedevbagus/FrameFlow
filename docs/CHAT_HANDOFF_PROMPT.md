@@ -1,3 +1,19 @@
+## M3.100 — active — 2026-09-25
+
+- Branch: `fix/m3-100-integer-asset-duration`.
+- Scope: require persisted `MediaAsset.durationMs` values to be non-negative integer milliseconds or `null`.
+- Align persistence with the native media probe representation, which returns known durations as unsigned integer milliseconds.
+- M3.99 completed and squash-merged as PR #114 at `2918b809edf39306e15fdf884ce11ae3558fee7f`.
+- Awaiting local validation of M3.100.
+- PR #76 remains parked; PR #22 remains unrelated and untouched.
+
+## Workflow for next chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.100 is the active milestone; do not assume local validation has passed.
+- When user reports `PASS` / `pass` / `lanjutkan`, mark the active Draft PR ready, squash-merge it using the verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, then audit and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+
 ## M3.99 — completed — 2026-09-25
 
 - Branch: `fix/m3-99-integer-audio-keyframe-times`.
@@ -8,12 +24,6 @@
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
-## Workflow for next chat
-
-- Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.99 is the active milestone; do not assume local validation has passed.
-- When user reports `PASS` / `pass` / `lanjutkan`, mark the active Draft PR ready, squash-merge it using the verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, then audit and start the next focused milestone.
-- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 
 ## M3.95 — completed — 2026-09-25
 

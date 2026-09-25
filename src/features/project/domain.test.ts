@@ -312,6 +312,26 @@ describe("project domain", () => {
     ).toThrow("Duplicate asset id: asset-1.");
   });
 
+  it("rejects fractional persisted asset durations", () => {
+    const project = createProject({ id: "fractional-asset-duration" });
+    const invalidProject = {
+      ...project,
+      assets: [
+        {
+          id: "asset-1",
+          name: "Audio",
+          mediaType: "audio" as const,
+          sourcePath: "/tmp/audio.wav",
+          durationMs: 1000.25,
+        },
+      ],
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Asset 0 durationMs must be null or a non-negative integer number of milliseconds.",
+    );
+  });
+
   it("rejects clips that reference missing assets", () => {
     const project = createProject({ id: "missing-asset" });
     const invalidProject = {

@@ -280,10 +280,13 @@ function validateAssets(value: unknown): MediaAsset[] {
 
     if (
       asset.durationMs !== null &&
-      (!isFiniteNumber(asset.durationMs) || asset.durationMs < 0)
+      (!isFiniteNumber(asset.durationMs) ||
+        !Number.isInteger(asset.durationMs) ||
+        asset.durationMs < 0)
     ) {
       throw new ProjectValidationError(
-        fieldPrefix + " durationMs must be null or a non-negative number.",
+        fieldPrefix +
+          " durationMs must be null or a non-negative integer number of milliseconds.",
       );
     }
 
