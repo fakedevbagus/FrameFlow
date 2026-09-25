@@ -1,3 +1,15 @@
+### M3.114 — Canonical Clip Command Times — in progress — 2026-09-25
+
+- Branch: `fix/m3-114-canonical-clip-command-times`.
+- M3.101 hardened the persistence boundary, but reusable timeline commands could still create fractional clip timing before serialization.
+- Canonicalize valid non-negative timing inputs in add, move, trim-start, trim-end, and split commands.
+- Split timing is normalized before deriving resulting clip boundaries and related automation/keyframe times.
+- Existing negative/non-finite/range/overlap/adjacency protections remain intact.
+- Added regression coverage plus serialization checks for command-produced projects.
+- No project schema change.
+- Validation is pending.
+- Next milestone: complete M3.114, then audit the next focused persisted/runtime invariant.
+
 ### M3.113 — Canonical Transform Keyframe Times — completed — 2026-09-25
 
 - Branch: `fix/m3-113-canonical-transform-keyframe-times`.
