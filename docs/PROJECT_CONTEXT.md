@@ -1,37 +1,31 @@
-## M3.90 — Project Persistence Validation Hardening — in progress — 2026-09-25
+## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
 Branch:
 `feat/m3-90-project-validation-hardening`
 
-Scope:
-- Harden persisted project validation at the JSON parsing boundary.
-- Detect malformed asset metadata, duplicate IDs, invalid track controls, missing asset references, media/track mismatches, and invalid clip source ranges before a project enters the editor.
-- Preserve schema version 1, existing optional media fields, history semantics, export behavior, and runtime UI behavior.
+PR:
+#105
 
-Implementation:
-- `validateProject()` now validates asset identity/metadata and known source durations.
-- Track validation now covers identity, type, lock/mute flags, volume/pan ranges, and clip arrays.
-- Clip validation now covers identity, asset references, timeline/source boundaries, known asset duration bounds, and media/track compatibility.
-- Persisted audio Fade, EQ, Compressor, and Volume Automation data receives range/shape validation.
-- Added regression tests for valid media round-tripping, duplicate asset/clip IDs, missing asset references, media/track mismatches, source ranges beyond known duration, invalid track volume/pan, and missing clip source-end fields.
-- No project schema change.
+Merge SHA:
+`c91efb620ddde050487bb11152ebf3c5d563b0d1`
 
-Validation:
-- Pending user local validation.
+Implementation reconciled:
+- `validateProject()` validates asset identity/metadata and known source duration values.
+- Track validation covers identity, type, lock/mute flags, optional Volume/Pan ranges, and clip arrays.
+- Clip validation covers identity, asset references, timeline/source boundaries, known asset-duration bounds, and media/track compatibility.
+- Persisted Audio Fade, EQ, Compressor, and Volume Automation fields receive range/shape validation.
+- Added regression coverage for valid Audio + Video project round-tripping plus malformed persisted project cases.
+- Unknown source duration represented by `null` remains valid.
+- No project schema, preview, timeline, export, or DSP behavior change.
+- User reported PASS.
+- PR #105 was marked ready and squash-merged at the SHA above.
 
 Known limitations:
-- Native media-file existence/decodeability is intentionally outside this boundary validation.
-- Transition adjacency and advanced visual-effect payload validation remain outside this focused milestone.
-
-Previous milestone:
-- M3.89 completed and squash-merged as PR #104 at `fbdd60f45508c577046331255e024eea93b5960b`.
-
-PR:
-#105 — Draft.
+- Native media-file existence/decodeability is intentionally outside the project-domain boundary validator.
+- Transition adjacency and visual payload validation remain separate follow-up work.
 
 Next step:
-- Hand off focused local validation for M3.90.
-
+- Audit remaining persisted visual payload validation from updated `main`.
 
 ## M3.89 — Waveform Selection Lifecycle Hardening — completed — 2026-09-25
 
