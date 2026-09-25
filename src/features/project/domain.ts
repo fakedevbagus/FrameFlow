@@ -1064,9 +1064,21 @@ function validateOptionalAudioFields(
       );
     }
 
+    if (Math.round(thresholdDb * 10) / 10 !== thresholdDb) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor thresholdDb must use at most one decimal place.",
+      );
+    }
+
     if (!isFiniteNumber(ratio) || ratio < 1 || ratio > 20) {
       throw new ProjectValidationError(
         fieldPrefix + " audioCompressor ratio must be between 1 and 20.",
+      );
+    }
+
+    if (Math.round(ratio * 10) / 10 !== ratio) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor ratio must use at most one decimal place.",
       );
     }
 
@@ -1076,9 +1088,21 @@ function validateOptionalAudioFields(
       );
     }
 
+    if (Math.round(attackMs * 100) / 100 !== attackMs) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor attackMs must use at most two decimal places.",
+      );
+    }
+
     if (!isFiniteNumber(releaseMs) || releaseMs < 0.01 || releaseMs > 9000) {
       throw new ProjectValidationError(
         fieldPrefix + " audioCompressor releaseMs must be between 0.01 and 9000.",
+      );
+    }
+
+    if (Math.round(releaseMs * 100) / 100 !== releaseMs) {
+      throw new ProjectValidationError(
+        fieldPrefix + " audioCompressor releaseMs must use at most two decimal places.",
       );
     }
   }
