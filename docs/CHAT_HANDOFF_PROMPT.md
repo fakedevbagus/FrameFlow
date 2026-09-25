@@ -1,10 +1,11 @@
-## M3.101 — active — 2026-09-25
+## M3.101 — completed — 2026-09-25
 
 - Branch: `fix/m3-101-integer-clip-times`.
-- Scope: require persisted clip `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` values to be non-negative integer milliseconds.
+- PR #116; squash-merged at `59a71942d771e5b4e019d01429865df3cadb7a5b`.
+- Persisted clip `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` values now require non-negative integer milliseconds.
 - `sourceEndMs: null` remains valid for unknown source duration.
-- M3.100 completed and squash-merged as PR #115 at `a6d9d8ee5d5f3782bd5de22ac61c2a3b5122218d`.
-- Awaiting local validation of M3.101.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor behavior.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
