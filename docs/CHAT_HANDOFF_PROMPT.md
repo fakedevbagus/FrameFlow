@@ -1,19 +1,27 @@
-## M3.106 — active — 2026-09-25
+## M3.107 — active — 2026-09-25
 
-- Branch: `fix/m3-106-canonical-audio-volume`.
-- Scope: enforce persisted Audio Volume Automation keyframe `volume` values to the same three-decimal precision used by runtime normalization and editing commands.
-- Audit finding from current `main`: `normalizeAudioVolumeKeyframes()` and `updateAudioClipVolumeAtTime()` canonicalize volume to three decimal places, while persistence currently accepts arbitrary finite values within 0..1.
-- Implemented parser validation plus focused regression coverage.
-- PR will be created after branch verification.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- Branch: `fix/m3-107-canonical-project-name`.
+- Scope: require persisted project `name` to already equal its trimmed canonical form.
+- Audit finding from current `main`: `createProject()` trims project names before persistence, while `validateProject()` only checks that the persisted name is non-empty, allowing leading/trailing whitespace to survive load/save.
+- No project schema change is planned.
+- Local validation is pending and must not be assumed passed.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.106 is the active milestone; do not assume local validation has passed.
+- M3.107 is the active milestone; do not assume local validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.106 — completed — 2026-09-25
+
+- Branch: `fix/m3-106-canonical-audio-volume`.
+- PR #121; squash-merged at `223856cd70bfaef8d149cc38860d9f9f86745672`.
+- Persisted Audio Volume Automation keyframe `volume` values now require at most three decimal places.
+- Added parser regression coverage.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 ## M3.105 — completed — 2026-09-25
 
