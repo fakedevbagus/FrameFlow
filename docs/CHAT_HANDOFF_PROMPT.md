@@ -1,6 +1,6 @@
 ## M3.95 — active — 2026-09-25
 
-- Branch: pending creation from updated `main`.
+- Branch: `fix/m3-95-strict-project-timestamps`.
 - Scope: strictly validate persisted `createdAt`/`updatedAt` timestamps and require `updatedAt >= createdAt`.
 - Preserve schema version 1 and editor/export behavior.
 - M3.94 completed and squash-merged as PR #109 at `6048b038e4d15e00372e0267a9e0d2f14caaf72b`.
