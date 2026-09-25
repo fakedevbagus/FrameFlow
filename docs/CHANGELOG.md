@@ -1,3 +1,12 @@
+### M3.109 — Canonical Transform Scale Precision — in progress — 2026-09-25
+
+- Branch: `fix/m3-109-canonical-transform-scale-precision`.
+- Transform Scale is now rounded to two decimal places by the shared runtime normalizer.
+- Persisted Transform Scale values with more than two decimal places are rejected, including keyframe transforms.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- No project schema change.
+- Validation is pending.
+
 ### M3.108 — Canonical Track Volume/Pan Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-108-canonical-track-audio-precision`.
