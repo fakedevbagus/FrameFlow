@@ -1185,6 +1185,37 @@ describe("project domain", () => {
     expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
   });
 
+  it("rejects persisted fractional canvas dimensions", () => {
+    const project = createProject({ id: "fractional-canvas" });
+
+    for (const dimension of ["width", "height"] as const) {
+      const invalidProject = {
+        ...project,
+        canvas: {
+          ...project.canvas,
+          [dimension]: project.canvas[dimension] + 0.5,
+        },
+      };
+
+      expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+        `Canvas ${dimension} must be a positive integer.`,
+      );
+    }
+  });
+
+  it("accepts supported non-integer persisted frame rates", () => {
+    const project = createProject({ id: "fractional-frame-rate" });
+    const validProject = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        frameRate: 29.97,
+      },
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
   it("rejects invalid JSON and unsupported schemas", () => {
     expect(() => parseProject("not json")).toThrow(ProjectValidationError);
     expect(() => parseProject('{"schemaVersion":999}')).toThrow(
