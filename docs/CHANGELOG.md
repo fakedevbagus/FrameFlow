@@ -1,8 +1,13 @@
-### M3.112 — fresh audit — 2026-09-25
+### M3.112 — Canonical Text Overlay Position Precision — in progress — 2026-09-25
 
-- M3.111 completed and squash-merged as PR #126 at `eb7ab0fe11c0c279e7daf70c2e31317bf972394f`; user reported PASS.
-- Fresh audit from updated `main` is selecting the next smallest verified contract gap.
-- No M3.112 implementation committed yet.
+- Branch: `fix/m3-112-canonical-text-overlay-position-precision`.
+- Text Overlay X/Y now use two-decimal canonical normalization after range clamping, matching the Inspector's integer-percent input contract.
+- Persisted Text Overlay X/Y values with more than two decimal places are rejected.
+- Added regression coverage for runtime normalization and persisted-value rejection.
+- No direct canvas Text Overlay positioning path was found during audit.
+- No project schema change and no Preview/Export behavior change.
+- Validation is pending.
+- Next milestone after M3.112: continue auditing remaining persisted project invariants from updated `main`.
 
 ### M3.110 — Canonical Transform Opacity Precision — completed — 2026-09-25
 

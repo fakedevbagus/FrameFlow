@@ -276,6 +276,23 @@ describe("project domain", () => {
       color: "#ffffff",
       alignment: "center",
     });
+
+    expect(
+      getTextOverlay({
+        ...clip,
+        textOverlay: {
+          text: "Hello FrameFlow",
+          x: 0.1234,
+          y: 0.4567,
+          fontSize: 56,
+          color: "#ffffff",
+          alignment: "center",
+        },
+      }),
+    ).toMatchObject({
+      x: 0.12,
+      y: 0.46,
+    });
   });
 
   it("defaults the audio compressor and clamps stored settings", () => {
@@ -1394,11 +1411,11 @@ describe("project domain", () => {
 
     expect(() =>
       parseProject(JSON.stringify(makeProject({ ...base, x: 0.1234 }))),
-    ).toThrow("textOverlay x must use at most three decimal places.");
+    ).toThrow("textOverlay x must use at most two decimal places.");
 
     expect(() =>
       parseProject(JSON.stringify(makeProject({ ...base, y: 0.0001 }))),
-    ).toThrow("textOverlay y must use at most three decimal places.");
+    ).toThrow("textOverlay y must use at most two decimal places.");
 
     expect(() =>
       parseProject(JSON.stringify(makeProject({ ...base, color: "#FFFFFF" }))),

@@ -318,8 +318,8 @@ describe("text overlays", () => {
       clipId,
       {
         text: "  Hello  ",
-        x: 1.4,
-        y: -0.2,
+        x: 0.1234,
+        y: 0.4567,
         fontSize: 300,
         color: "#AABBCC",
         alignment: "right",
@@ -329,8 +329,8 @@ describe("text overlays", () => {
 
     expect(updated.tracks[0].clips[0].textOverlay).toEqual({
       text: "Hello",
-      x: 1,
-      y: 0,
+      x: 0.12,
+      y: 0.46,
       fontSize: 240,
       color: "#aabbcc",
       alignment: "right",
