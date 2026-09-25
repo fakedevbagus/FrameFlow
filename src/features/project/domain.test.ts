@@ -1444,6 +1444,50 @@ describe("project domain", () => {
     }
   });
 
+  it("rejects over-precise persisted audio volume keyframe values", () => {
+    const project = createProject({ id: "over-precise-audio-volume" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.mp3",
+      durationMs: 5000,
+    };
+    const makeProject = (volume: number) => ({
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  audioVolumeKeyframes: [{ timeMs: 1000, volume }],
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject(0.1234))),
+    ).toThrow(
+      "audioVolumeKeyframes[0] volume must use at most three decimal places.",
+    );
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject(0.9876))),
+    ).toThrow(
+      "audioVolumeKeyframes[0] volume must use at most three decimal places.",
+    );
+  });
+
   it("rejects persisted audio fades that exceed clip duration", () => {
     const project = createProject({ id: "fade-over-duration" });
     const audioAsset = {
