@@ -1,29 +1,44 @@
-## M3.95 — Strict Project Timestamp Validation — in progress — 2026-09-25
+## M3.96 — Strict Persisted Keyframe Ordering — in progress — 2026-09-25
 
 Branch:
-`fix/m3-95-strict-project-timestamps`
-
-PR:
-Pending creation after implementation and regression coverage.
+`fix/m3-96-strict-persisted-keyframe-order`
 
 Scope:
-- Require persisted `createdAt` and `updatedAt` to use canonical UTC ISO-8601 timestamps emitted by `Date.toISOString()`.
-- Require `updatedAt` to be the same as or later than `createdAt`.
-- Preserve schema version 1 and all editor/export behavior.
+- Require persisted transform keyframes and audio volume keyframes to be strictly increasing by `timeMs`.
+- Keep duplicate-time rejection explicit and preserve existing keyframe payload/range validation.
+- Keep project schema version 1, runtime normalization, Timeline editing, preview, and export behavior unchanged.
 
 Implementation:
-- Tightened `assertIsoTimestamp()` to the canonical millisecond UTC format.
-- Added project-level timestamp ordering validation.
-- Added parser regressions for canonical/equal timestamps, non-canonical timestamp formats, and invalid chronological ordering.
+- Added parser-level monotonic ordering checks for transform keyframes.
+- Added parser-level monotonic ordering checks for Audio Volume Automation keyframes.
+- Added focused regressions for out-of-order persisted keyframes.
 
 Previous milestone:
-- M3.94 completed and squash-merged as PR #109 at `6048b038e4d15e00372e0267a9e0d2f14caaf72b`.
+- M3.95 completed and squash-merged as PR #110 at `e775ef3eeab26ed4557303b723778748182b6488`.
 
 Validation:
 - Pending user local validation.
 
 Next step:
 - Open Draft PR and hand off local validation.
+
+## M3.95 — Strict Project Timestamp Validation — completed — 2026-09-25
+
+Branch:
+`fix/m3-95-strict-project-timestamps`
+
+PR:
+#110
+
+Merge SHA:
+`e775ef3eeab26ed4557303b723778748182b6488`
+
+Implementation reconciled:
+- Persisted `createdAt` and `updatedAt` require canonical UTC ISO-8601 timestamps emitted by `Date.toISOString()`.
+- Persisted `updatedAt` must be the same as or later than `createdAt`.
+- Added parser regressions for canonical/equal timestamps, non-canonical formats, timezone-offset representations, and invalid chronological ordering.
+- User reported PASS.
+- No project schema, preview, timeline, playback, waveform, or export behavior change.
 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 

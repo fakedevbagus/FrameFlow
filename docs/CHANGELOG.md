@@ -1,10 +1,20 @@
-### M3.95 — Strict Project Timestamp Validation — in progress — 2026-09-25
+### M3.96 — Strict Persisted Keyframe Ordering — in progress — 2026-09-25
+
+- Branch: `fix/m3-96-strict-persisted-keyframe-order`.
+- Persisted transform keyframes and Audio Volume Automation keyframes must use strictly increasing `timeMs` order.
+- Duplicate timestamps remain rejected with their existing validation error.
+- Added focused parser regression coverage for out-of-order persisted keyframes.
+- Validation is pending.
+
+### M3.95 — Strict Project Timestamp Validation — completed — 2026-09-25
 
 - Branch: `fix/m3-95-strict-project-timestamps`.
-- Persisted `createdAt`/`updatedAt` now require canonical UTC ISO timestamps with millisecond precision.
+- PR #110; merge SHA `e775ef3eeab26ed4557303b723778748182b6488`.
+- Persisted `createdAt`/`updatedAt` require canonical UTC ISO timestamps with millisecond precision.
 - Persisted `updatedAt` must be the same as or later than `createdAt`.
 - Added focused parser regression coverage.
-- Validation is pending.
+- User reported PASS.
+- No project schema, preview, timeline, playback, waveform, or export behavior change.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
