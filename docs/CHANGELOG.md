@@ -1,10 +1,19 @@
-### M3.98 — Unique Native Project Save Temp Paths — in progress — 2026-09-25
+### M3.99 — Canonical Integer Audio Keyframe Times — in progress — 2026-09-25
+
+- Branch: `fix/m3-99-integer-audio-keyframe-times`.
+- Persisted Audio Volume Automation keyframe `timeMs` values must be integer milliseconds.
+- This matches the runtime normalizer, which rounds audio automation timestamps before ordering/deduplication.
+- Added parser regression coverage for fractional persisted audio keyframe times.
+- Validation is pending.
+
+### M3.98 — Unique Native Project Save Temp Paths — completed — 2026-09-25
 
 - Branch: `fix/m3-98-unique-project-save-temp`.
-- Native project save temp paths now use process ID + an atomic per-process counter instead of one fixed `.tmp` path.
+- PR #113; merge SHA `d3e93c9a3af3333fd2a2fd33baecf33a38f9fa74`.
+- Native project save temp paths use process ID + atomic per-process counter.
 - Added Rust regression coverage for temp-path uniqueness.
-- Existing write-to-temp then rename persistence flow is preserved.
-- Validation is pending.
+- User reported PASS.
+- No project format or React-side persistence behavior change.
 
 ### M3.97 — Strict Persisted Transform Keyframe Payload — completed — 2026-09-25
 

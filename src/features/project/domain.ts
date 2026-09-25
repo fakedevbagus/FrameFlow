@@ -1078,6 +1078,11 @@ function validateOptionalAudioFields(
         keyframe.timeMs,
         keyframePrefix + " timeMs",
       );
+      if (!Number.isInteger(keyframe.timeMs)) {
+        throw new ProjectValidationError(
+          keyframePrefix + " timeMs must be an integer number of milliseconds.",
+        );
+      }
       if (!isFiniteNumber(keyframe.volume) || keyframe.volume < 0 || keyframe.volume > 1) {
         throw new ProjectValidationError(
           keyframePrefix + " volume must be between 0 and 1.",
