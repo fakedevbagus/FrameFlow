@@ -702,6 +702,12 @@ function validateTransformPayload(
         field + " " + key + " is outside the supported range.",
       );
     }
+
+    if (key === "scale" && Math.round(entry * 100) / 100 !== entry) {
+      throw new ProjectValidationError(
+        field + " scale must use at most two decimal places.",
+      );
+    }
   }
 
   if (!isFiniteNumber(value.rotation)) {
