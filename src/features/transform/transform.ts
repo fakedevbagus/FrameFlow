@@ -262,7 +262,7 @@ export function normalizeClipTransform(
     y: clamp(current.y, -100, 100),
     scale: Math.round(clamp(current.scale, 0.05, 10) * 100) / 100,
     rotation: wrapRotation(current.rotation),
-    opacity: clamp(current.opacity, 0, 1),
+    opacity: Math.round(clamp(current.opacity, 0, 1) * 100) / 100,
   };
 }
 

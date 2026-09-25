@@ -703,9 +703,12 @@ function validateTransformPayload(
       );
     }
 
-    if (key === "scale" && Math.round(entry * 100) / 100 !== entry) {
+    if (
+      (key === "scale" || key === "opacity") &&
+      Math.round(entry * 100) / 100 !== entry
+    ) {
       throw new ProjectValidationError(
-        field + " scale must use at most two decimal places.",
+        field + " " + key + " must use at most two decimal places.",
       );
     }
   }

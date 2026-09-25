@@ -1,9 +1,10 @@
 ## M3.110 — active — 2026-09-25
 
-- Branch: `fix/m3-110-visual-transform-precision-audit`.
-- Scope: audit remaining persisted visual-transform precision and control normalization from updated `main`.
+- Branch: `fix/m3-110-canonical-transform-opacity-precision`.
+- Scope: align Transform Opacity persistence and runtime normalization with the Inspector's integer-percent input contract.
 - M3.109 completed and squash-merged as PR #124 at `d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`; user reported PASS.
-- No M3.110 code change has been made yet; candidate invariants are being verified before implementation.
+- Implemented two-decimal Opacity normalization, strict persisted-value validation, and focused regression coverage.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## Workflow for this chat
 

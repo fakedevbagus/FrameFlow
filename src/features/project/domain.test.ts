@@ -1186,6 +1186,12 @@ describe("project domain", () => {
 
     expect(() =>
       parseProject(JSON.stringify(makeProject({
+        transform: { x: 0, y: 0, scale: 1, rotation: 0, opacity: 0.123 },
+      }))),
+    ).toThrow("transform opacity must use at most two decimal places.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
         crop: { top: 0.7, right: 0.4, bottom: 0, left: 0 },
       }))),
     ).toThrow("crop must leave a positive visible region.");

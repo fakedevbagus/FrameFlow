@@ -1,3 +1,28 @@
+## M3.110 — Canonical Transform Opacity Precision — in progress — 2026-09-25
+
+Branch:
+`fix/m3-110-canonical-transform-opacity-precision`
+
+Scope:
+- Align persisted and runtime Transform Opacity precision with the Inspector's integer-percent input contract.
+- Preserve the existing Opacity range of `0` to `1`.
+
+Implementation:
+- Transform normalization now rounds Opacity to two decimal places after range clamping.
+- Persisted Transform Opacity values with more than two decimal places are rejected, including transform keyframe transforms.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- No project schema version change.
+
+Previous milestone:
+- M3.109 completed and squash-merged as PR #124 at `d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`.
+- User reported PASS for M3.109.
+
+Validation:
+- Pending user local validation.
+
+Next step:
+- Validate M3.110 locally and manually, then report PASS/pass/lanjutkan.
+
 ## M3.109 — Canonical Transform Scale Precision — completed — 2026-09-25
 
 Branch:

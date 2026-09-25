@@ -1,3 +1,12 @@
+### M3.110 — Canonical Transform Opacity Precision — in progress — 2026-09-25
+
+- Branch: `fix/m3-110-canonical-transform-opacity-precision`.
+- Transform Opacity is now rounded to two decimal places by the shared runtime normalizer.
+- Persisted Transform Opacity values with more than two decimal places are rejected, including keyframe transforms.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- No project schema change.
+- Validation is pending.
+
 ### M3.109 — Canonical Transform Scale Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-109-canonical-transform-scale-precision`.
