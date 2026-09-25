@@ -1,10 +1,20 @@
-### M3.96 — Strict Persisted Keyframe Ordering — in progress — 2026-09-25
+### M3.97 — Strict Persisted Transform Keyframe Payload — in progress — 2026-09-25
+
+- Branch: `fix/m3-97-strict-transform-keyframe-payload`.
+- Persisted transform keyframes now require a structured `transform` object.
+- Added parser regressions for missing and null persisted transform payloads.
+- Existing keyframe ordering, duplicate-time, range, easing, and transform-field validation remain unchanged.
+- Validation is pending.
+
+### M3.96 — Strict Persisted Keyframe Ordering — completed — 2026-09-25
 
 - Branch: `fix/m3-96-strict-persisted-keyframe-order`.
+- PR #111; merge SHA `95fba85c4eee193af70bb306e5a86535e0b601b1`.
 - Persisted transform keyframes and Audio Volume Automation keyframes must use strictly increasing `timeMs` order.
 - Duplicate timestamps remain rejected with their existing validation error.
 - Added focused parser regression coverage for out-of-order persisted keyframes.
-- Validation is pending.
+- User reported PASS.
+- No project schema, runtime normalization, Timeline editing, preview, or export behavior change.
 
 ### M3.95 — Strict Project Timestamp Validation — completed — 2026-09-25
 
