@@ -29,6 +29,7 @@ import {
   getTransformKeyframeAtTime,
   isValidClipCrop,
   normalizeClipTransform,
+  normalizeTransformKeyframeTime,
   normalizeTransformAnchor,
   compensateTransformForAnchorChange,
   normalizeClipCrop,
@@ -1189,15 +1190,16 @@ export function updateClipTransformAtTime(
   }
 
   const durationMs = getClipDurationMs(location.clip);
+  const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
 
-  if (!Number.isFinite(timeMs) || timeMs < 0 || timeMs > durationMs) {
+  if (!Number.isFinite(timeMs) || timeMs < 0 || normalizedTimeMs > durationMs) {
     throw new Error("Transform keyframe time must be inside the clip.");
   }
 
   const currentTransform = getClipTransformAtTime(
     location.clip.transform,
     location.clip.transformKeyframes,
-    timeMs,
+    normalizedTimeMs,
   );
   const nextTransform = normalizeClipTransform({
     ...currentTransform,
@@ -1207,7 +1209,7 @@ export function updateClipTransformAtTime(
   if (location.clip.transformKeyframes?.length) {
     const nextKeyframes = upsertTransformKeyframe(
       location.clip.transformKeyframes,
-      timeMs,
+      normalizedTimeMs,
       nextTransform,
     );
 
@@ -1248,19 +1250,20 @@ export function addTransformKeyframe(
   }
 
   const durationMs = getClipDurationMs(location.clip);
+  const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
 
-  if (!Number.isFinite(timeMs) || timeMs < 0 || timeMs > durationMs) {
+  if (!Number.isFinite(timeMs) || timeMs < 0 || normalizedTimeMs > durationMs) {
     throw new Error("Transform keyframe time must be inside the clip.");
   }
 
   const transform = getClipTransformAtTime(
     location.clip.transform,
     location.clip.transformKeyframes,
-    timeMs,
+    normalizedTimeMs,
   );
   const keyframes = upsertTransformKeyframe(
     location.clip.transformKeyframes,
-    timeMs,
+    normalizedTimeMs,
     transform,
   );
 
@@ -1295,41 +1298,44 @@ export function moveTransformKeyframe(
   }
 
   const durationMs = getClipDurationMs(location.clip);
+  const normalizedFromTimeMs = normalizeTransformKeyframeTime(fromTimeMs);
+  const normalizedToTimeMs = normalizeTransformKeyframeTime(toTimeMs);
 
   if (
     !Number.isFinite(fromTimeMs) ||
     !Number.isFinite(toTimeMs) ||
     fromTimeMs < 0 ||
     toTimeMs < 0 ||
-    fromTimeMs > durationMs ||
-    toTimeMs > durationMs
+    normalizedFromTimeMs > durationMs ||
+    normalizedToTimeMs > durationMs
   ) {
     throw new Error("Transform keyframe time must be inside the clip.");
   }
 
+  if (normalizedFromTimeMs === normalizedToTimeMs) {
+    return project;
+  }
+
   const keyframe = getTransformKeyframeAtTime(
     location.clip.transformKeyframes,
-    fromTimeMs,
+    normalizedFromTimeMs,
   );
 
   if (!keyframe) {
     throw new Error("No transform keyframe exists at the source time.");
   }
 
-  if (
-    toTimeMs !== fromTimeMs &&
-    getTransformKeyframeAtTime(location.clip.transformKeyframes, toTimeMs)
-  ) {
+  if (getTransformKeyframeAtTime(location.clip.transformKeyframes, normalizedToTimeMs)) {
     throw new Error("A transform keyframe already exists at the target time.");
   }
 
   const remaining = removeTransformKeyframeAtTime(
     location.clip.transformKeyframes,
-    fromTimeMs,
+    normalizedFromTimeMs,
   );
   const keyframes = upsertTransformKeyframe(
     remaining,
-    toTimeMs,
+    normalizedToTimeMs,
     keyframe.transform,
   );
 
@@ -1341,7 +1347,7 @@ export function moveTransformKeyframe(
       transform: getClipTransformAtTime(
         location.clip.transform,
         keyframes,
-        toTimeMs,
+        normalizedToTimeMs,
       ),
     },
     now,
@@ -1367,9 +1373,10 @@ export function updateTransformKeyframeEasing(
     throw new Error("Transform keyframes are only available for visual media.");
   }
 
+  const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
   const keyframe = getTransformKeyframeAtTime(
     location.clip.transformKeyframes,
-    timeMs,
+    normalizedTimeMs,
   );
 
   if (!keyframe) {
@@ -1411,9 +1418,10 @@ export function removeTransformKeyframe(
     throw new Error("Transform keyframes are only available for visual media.");
   }
 
+  const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
   const keyframe = getTransformKeyframeAtTime(
     location.clip.transformKeyframes,
-    timeMs,
+    normalizedTimeMs,
   );
 
   if (!keyframe) {
@@ -1422,7 +1430,7 @@ export function removeTransformKeyframe(
 
   const keyframes = removeTransformKeyframeAtTime(
     location.clip.transformKeyframes,
-    timeMs,
+    normalizedTimeMs,
   );
 
   return updateClipAtLocation(
@@ -1433,7 +1441,7 @@ export function removeTransformKeyframe(
       transform: getClipTransformAtTime(
         location.clip.transform,
         keyframes,
-        timeMs,
+        normalizedTimeMs,
       ),
     },
     now,
