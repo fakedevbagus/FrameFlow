@@ -1,16 +1,18 @@
-## M3.112 — active — 2026-09-25
+## M3.112 — completed — 2026-09-25
 
 - Branch: `fix/m3-112-canonical-text-overlay-position-precision`.
 - Scope: align Text Overlay X/Y persistence and runtime normalization with the Inspector's integer-percent input contract.
-- M3.111 completed and squash-merged as PR #126 at `eb7ab0fe11c0c279e7daf70c2e31317bf972394f`; user reported PASS.
+- PR #127; squash-merged at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`.
 - Implemented two-decimal Text Overlay X/Y normalization, strict persisted-value validation, and focused regression coverage.
 - No direct canvas Text Overlay positioning path was found during the audit.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- User reported PASS.
+- No project schema change.
+- Local validation is considered passed only because the user reported PASS; do not infer additional checks beyond the user's report.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.112 is the active milestone; do not assume local validation has passed.
+- The latest completed milestone is M3.112; the next step is a fresh audit from updated `main`.
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
