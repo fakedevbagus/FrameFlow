@@ -864,6 +864,12 @@ function validateTransformKeyframesPayload(
       );
     }
 
+    if (!isRecord(keyframe.transform)) {
+      throw new ProjectValidationError(
+        keyframeField + " transform must be an object.",
+      );
+    }
+
     if (previousTimeMs !== undefined && keyframe.timeMs < previousTimeMs) {
       throw new ProjectValidationError(
         keyframeField + " timeMs must be in strictly increasing order.",
