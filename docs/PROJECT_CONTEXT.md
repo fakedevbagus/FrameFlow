@@ -1,3 +1,29 @@
+## M3.111 — Strict Persisted Transform Rotation Range — in progress — 2026-09-25
+
+Branch:
+`fix/m3-111-strict-transform-rotation-range`
+
+Scope:
+- Align persisted Transform Rotation with the runtime's supported canonical angle range.
+- Preserve the existing runtime wrapping behavior and `-180..180` Inspector contract.
+
+Implementation:
+- Persisted Transform Rotation values must now be finite and within `-180` to `180` degrees.
+- Added parser regression coverage for both out-of-range directions.
+- No runtime transform normalization change.
+- No project schema version change.
+- No changes to X/Y, Scale, Opacity, Crop, Preview, or Export contracts.
+
+Previous milestone:
+- M3.110 completed and squash-merged as PR #125 at `40c0fd1df662754e814e7e658f9a56e0ce615b78`.
+- User reported PASS for M3.110.
+
+Validation:
+- Pending user local validation.
+
+Next step:
+- Validate M3.111 locally and manually, then report PASS/pass/lanjutkan.
+
 ## M3.110 — Canonical Transform Opacity Precision — completed — 2026-09-25
 
 Branch:

@@ -1,3 +1,12 @@
+### M3.111 — Strict Persisted Transform Rotation Range — in progress — 2026-09-25
+
+- Branch: `fix/m3-111-strict-transform-rotation-range`.
+- Persisted Transform Rotation values must now stay within `-180..180` degrees, matching the supported Inspector/runtime angle range.
+- Added parser regression coverage for `181` and `-181` degree persisted values.
+- No runtime transform normalization change and no project schema change.
+- Validation is pending.
+- Next milestone after M3.111: continue auditing remaining persisted visual-transform invariants from updated `main`.
+
 ### M3.110 — Canonical Transform Opacity Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-110-canonical-transform-opacity-precision`.
