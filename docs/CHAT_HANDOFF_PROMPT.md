@@ -1,8 +1,9 @@
 ## M3.94 — active — 2026-09-25
 
-- Branch: pending creation from updated `main`.
+- Branch: `feat/m3-94-persisted-canvas-dimension-validation`.
 - Scope: require persisted canvas width/height to be positive integers at parse time.
 - Preserve supported non-integer frame rates.
+- Add focused parser regression coverage.
 - M3.93 completed and squash-merged as PR #108 at `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 

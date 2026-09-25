@@ -1,9 +1,9 @@
-### M3.94 — Persisted Canvas Dimension Validation — active — 2026-09-25
+### M3.94 — Persisted Canvas Dimension Validation — in progress — 2026-09-25
 
-- Branch: pending creation from updated `main`.
-- Require persisted canvas width/height to be positive integers, matching `updateCanvasDimensions()`.
-- Preserve non-integer positive frame rates.
-- Add focused parser regression coverage.
+- Branch: `feat/m3-94-persisted-canvas-dimension-validation`.
+- Persisted canvas width/height now require positive integer semantics matching `updateCanvasDimensions()`.
+- Fractional frame rates remain accepted.
+- Added parser regressions for invalid fractional dimensions and valid fractional frame rate.
 - Validation is pending.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25

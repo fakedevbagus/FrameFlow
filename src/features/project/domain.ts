@@ -1117,8 +1117,8 @@ function validateCanvas(value: unknown): asserts value is CanvasSettings {
     throw new ProjectValidationError("Project canvas must be an object.");
   }
 
-  assertPositiveNumber(value.width, "Canvas width");
-  assertPositiveNumber(value.height, "Canvas height");
+  assertPositiveInteger(value.width, "Canvas width");
+  assertPositiveInteger(value.height, "Canvas height");
   assertPositiveNumber(value.frameRate, "Canvas frameRate");
 }
 
@@ -1133,6 +1133,22 @@ function assertIsoTimestamp(value: unknown, field: string): asserts value is str
 
   if (Number.isNaN(Date.parse(value))) {
     throw new ProjectValidationError(`${field} must be an ISO timestamp.`);
+  }
+}
+
+function assertPositiveInteger(
+  value: unknown,
+  field: string,
+): asserts value is number {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    !Number.isInteger(value) ||
+    value <= 0
+  ) {
+    throw new ProjectValidationError(
+      `${field} must be a positive integer.`,
+    );
   }
 }
 
