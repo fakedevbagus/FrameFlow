@@ -1,32 +1,27 @@
-## M3.93 — Persisted Audio Payload Validation — completed — 2026-09-25
+## M3.94 — Persisted Canvas Dimension Validation — active — 2026-09-25
 
 Branch:
-`feat/m3-93-persisted-audio-payload-validation`
+Pending creation from updated `main`.
 
-PR:
-#108
+Scope:
+- Harden persisted Canvas dimensions at the project JSON parsing boundary.
+- Require persisted canvas width and height to be positive integers, matching the existing canvas mutation contract.
+- Preserve fractional frame rates as valid because playback/export paths support non-integer frame rates such as 29.97-style rates.
 
-Merge SHA:
-`efd4d92061e8f4a7005d1839f3b24c4e2edcc078`
+Repository evidence:
+- `updateCanvasDimensions()` already rejects non-integer or non-positive width/height values.
+- `validateCanvas()` currently accepts any positive finite width/height, allowing persisted fractional dimensions that cannot be produced by the editor command.
+- `frameDurationMs()` safely supports positive non-integer frame rates, so this milestone does not tighten frame-rate semantics.
 
-Implementation reconciled:
-- Persisted audio payloads are now validated against audio-bearing media/track combinations.
-- Image clips cannot carry persisted Audio Fade, EQ, Compressor, or Volume Automation fields.
-- Persisted Audio Fade In/Fade Out values must be non-negative integers that fit the clip duration and cannot overlap.
-- Non-zero persisted fades are rejected when source duration is unknown.
-- Schema version 1 remains unchanged.
-- Runtime normalization and command-layer behavior remain unchanged.
-- Added parser regressions for invalid Image audio payloads, invalid fade bounds/overlap, unknown-duration fades, and valid fades.
-- User reported PASS.
-- No project schema, preview, timeline, waveform, export, or DSP behavior change.
+Previous milestone:
+- M3.93 completed and squash-merged as PR #108 at `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
 
-Known limitations:
-- Native media-file existence/decodeability remains outside project-domain validation.
-- Further persistence invariants can be audited from updated `main`.
+Validation:
+- Pending implementation and user local validation.
 
 Next step:
-- Audit updated `main` and select the smallest remaining persistence/domain gap.
- 
+- Implement focused persisted canvas-dimension validation and regression coverage.
+
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
 Branch:
