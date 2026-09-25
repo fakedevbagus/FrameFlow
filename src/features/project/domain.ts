@@ -235,6 +235,9 @@ export function validateProject(value: unknown): asserts value is Project {
 
   assertNonEmptyString(value.id, "Project id");
   assertNonEmptyString(value.name, "Project name");
+  if (value.name !== value.name.trim()) {
+    throw new ProjectValidationError("Project name must be trimmed.");
+  }
   assertIsoTimestamp(value.createdAt, "Project createdAt");
   assertIsoTimestamp(value.updatedAt, "Project updatedAt");
 

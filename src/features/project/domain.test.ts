@@ -31,6 +31,22 @@ describe("project domain", () => {
     expect(project.tracks.map((track) => track.type)).toEqual(["video", "audio"]);
   });
 
+  it("rejects persisted project names with leading or trailing whitespace", () => {
+    const project = createProject({
+      id: "project-name-whitespace",
+      name: "Canonical project",
+    });
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...project,
+          name: "  Canonical project  ",
+        }),
+      ),
+    ).toThrow("Project name must be trimmed.");
+  });
+
   it("round-trips a valid project document", () => {
     const project = createProject({ id: "project-1", now: new Date("2026-09-19T12:00:00.000Z") });
 
