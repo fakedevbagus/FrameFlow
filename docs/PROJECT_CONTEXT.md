@@ -1,18 +1,19 @@
-## M3.98 — Unique Native Project Save Temp Paths — in progress — 2026-09-25
+## M3.99 — Canonical Integer Audio Keyframe Times — in progress — 2026-09-25
 
 Branch:
-`fix/m3-98-unique-project-save-temp`
+`fix/m3-99-integer-audio-keyframe-times`
 
 Scope:
-- Prevent concurrent native project saves from sharing one deterministic temporary file path.
-- Preserve the existing temp-write-then-rename persistence flow and project serialization behavior.
+- Require persisted Audio Volume Automation keyframe `timeMs` values to be integer milliseconds.
+- Align persisted audio automation timestamps with the runtime normalizer, which rounds timestamps to integer milliseconds before ordering/deduplication.
+- Preserve schema version 1 and all existing audio automation behavior for canonical data.
 
 Implementation:
-- Native project save temp paths now include a process identifier and per-process atomic counter.
-- Added Rust regression coverage proving sequential temp-path allocations are unique.
+- Added parser validation rejecting fractional persisted audio volume keyframe times.
+- Added regression coverage for fractional persisted audio volume keyframes.
 
 Previous milestone:
-- M3.97 completed and squash-merged as PR #112 at `3bca10042a369191a14e441acabc891a21a09135`.
+- M3.98 completed and squash-merged as PR #113 at `d3e93c9a3af3333fd2a2fd33baecf33a38f9fa74`.
 
 Validation:
 - Pending user local validation.
@@ -20,6 +21,26 @@ Validation:
 Next step:
 - Open Draft PR and hand off local validation.
 
+## M3.98 — Unique Native Project Save Temp Paths — completed — 2026-09-25
+
+Branch:
+`fix/m3-98-unique-project-save-temp`
+
+PR:
+#113
+
+Merge SHA:
+`d3e93c9a3af3333fd2a2fd33baecf33a38f9fa74`
+
+Implementation reconciled:
+- Native project save temp paths use process ID plus an atomic per-process counter.
+- Existing temp-write-then-rename persistence flow is preserved.
+- Added Rust regression coverage for temp-path uniqueness.
+- User reported PASS.
+- No project format or React-side persistence behavior change.
+
+Next step:
+- Audit persisted audio automation timestamp canonicalization.
 ## M3.97 — Strict Persisted Transform Keyframe Payload — completed — 2026-09-25
 
 Branch:
