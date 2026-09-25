@@ -1,3 +1,20 @@
+## M3.114 — active — 2026-09-25
+
+- Branch: `fix/m3-114-strict-project-frame-rate-range`.
+- Scope: align persisted project canvas frame-rate validation with the native export upper bound while preserving supported fractional frame rates.
+- Implementation: persisted `canvas.frameRate` must be finite, greater than 0, and no more than 240 FPS.
+- Added parser regression coverage for a persisted frame rate above 240 FPS.
+- No project schema change.
+- Local validation is pending user verification.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.114 is the active milestone; do not assume local validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.113 — completed — 2026-09-25
 
 - Branch: `fix/m3-113-canonical-transform-keyframe-times`.
