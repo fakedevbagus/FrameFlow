@@ -718,6 +718,12 @@ function validateTransformPayload(
       field + " rotation must be a finite number.",
     );
   }
+
+  if (value.rotation < -180 || value.rotation > 180) {
+    throw new ProjectValidationError(
+      field + " rotation must be between -180 and 180 degrees.",
+    );
+  }
 }
 
 function validateAnchorPayload(value: unknown, field: string): void {
