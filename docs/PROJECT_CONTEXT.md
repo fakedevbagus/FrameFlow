@@ -3,16 +3,19 @@
 Branch:
 `feat/m3-92-timeline-topology-validation`
 
+PR:
+#107 — Draft.
+
 Scope:
 - Validate persisted timeline topology at the JSON parsing boundary.
 - Reject overlapping clips on the same track and invalid persisted Transition relationships.
 - Preserve schema version 1, existing timeline commands, preview behavior, export behavior, and transition rendering semantics.
 
-Implementation target:
-- Ensure each track's clips form a non-overlapping timeline.
-- Ensure a persisted transition belongs to a visual clip, points only to the immediately following visual clip on the same track, requires direct adjacency, and does not exceed either clip duration.
-- Keep existing runtime transition sanitization for mutation paths; this milestone hardens loaded/persisted projects.
-- Add regression coverage for valid adjacent transitions plus malformed overlap/transition topologies.
+Implementation:
+- Each track's persisted clips are checked for timeline overlap.
+- A persisted transition must belong to a visual clip on a video track, have a following visual clip, use direct adjacency, and fit both adjacent clip durations.
+- Existing mutation-time transition sanitization remains unchanged.
+- Added regression coverage for valid adjacent transitions plus malformed overlap/transition topologies.
 
 Validation:
 - Pending user local validation.
@@ -21,7 +24,7 @@ Previous milestone:
 - M3.91 completed and squash-merged as PR #106 at `0917d4be572dca5b0ed741740c61e12eed2def00`.
 
 Next step:
-- Implement focused topology validation and open a Draft PR.
+- Hand off focused local validation for M3.92.
 
 
 
