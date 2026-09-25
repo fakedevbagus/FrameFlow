@@ -1,3 +1,11 @@
+### M3.104 — Canonical Audio EQ Precision — in progress — 2026-09-25
+
+- Branch: `fix/m3-104-canonical-audio-eq`.
+- Require persisted Audio EQ low/mid/high gains to use at most one decimal place.
+- This matches both `getAudioEq()` and `updateAudioClipEq()`, which canonicalize gains to one decimal place.
+- Added parser regression coverage for over-precise low, mid, and high gains.
+- Validation is pending.
+
 ### M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-103-canonical-visual-effects`.
