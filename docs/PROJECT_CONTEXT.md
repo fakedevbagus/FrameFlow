@@ -1,28 +1,24 @@
-## M3.108 — Canonical Track Volume/Pan Precision — in progress — 2026-09-25
+## M3.108 — Canonical Track Volume/Pan Precision — completed — 2026-09-25
 
 Branch:
 `fix/m3-108-canonical-track-audio-precision`
 
-Scope:
-- Align persisted Track Volume and Pan values with the existing Timeline control step of 0.01.
-- Canonicalize command updates and getters to two decimal places while preserving the existing [0, 1] and [-1, 1] ranges.
+PR:
+#123
 
-Implementation:
-- Added shared Track Volume/Pan normalizers.
-- Track update commands now round values to canonical 0.01 precision.
-- Persisted Track Volume/Pan validation rejects over-precise values.
-- Added regression coverage for command normalization, getter normalization, and persisted-value rejection.
-- No project schema version change.
+Merge SHA:
+`317f09aa66f6f7e1196fdd6d8ce86e07fdd07cd8`
 
-Previous milestone:
-- M3.107 completed and squash-merged as PR #122 at `a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`.
-- User reported PASS for M3.107.
-
-Validation:
-- Pending user local validation.
+Implementation reconciled:
+- Track Volume and Pan now use shared two-decimal canonical normalization in getters and update commands.
+- Persisted Track Volume/Pan values with more than two decimal places are rejected.
+- Existing Volume `[0, 1]` and Pan `[-1, 1]` ranges remain unchanged.
+- Added regression coverage for getter normalization, command normalization, and persisted-value rejection.
+- User reported PASS.
+- No project schema version change and no change to preview/export/media behavior beyond canonicalizing existing track controls.
 
 Next step:
-- Validate M3.108 locally and manually, then report PASS/pass/lanjutkan.
+- M3.109 — audit remaining persisted visual-transform precision and control normalization.
 
 ## M3.107 — Canonical Project Name Trimming — completed — 2026-09-25
 
