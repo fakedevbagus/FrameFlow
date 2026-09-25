@@ -1,11 +1,12 @@
-### M3.101 — Canonical Integer Clip Times — in progress — 2026-09-25
+### M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
 
 - Branch: `fix/m3-101-integer-clip-times`.
-- Persisted clip `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` values must be non-negative integer milliseconds.
+- PR #116; merge SHA `59a71942d771e5b4e019d01429865df3cadb7a5b`.
+- Persisted clip `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` values now require non-negative integer milliseconds.
 - `sourceEndMs: null` remains valid for unknown source duration.
-- This matches Timeline snapping/editor command timing and native millisecond-based media timing.
 - Added parser regression coverage for fractional persisted clip timing fields.
-- Validation is pending.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor behavior.
 
 ### M3.100 — Canonical Integer Asset Durations — completed — 2026-09-25
 
