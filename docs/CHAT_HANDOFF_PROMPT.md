@@ -1,6 +1,7 @@
 ## M3.91 — active — 2026-09-25
 
-- Branch: `pending-from-audited-main`.
+- Branch: `feat/m3-91-visual-payload-validation`.
+- PR #106 — Draft.
 - Scope: validate persisted visual payloads (transform, crop, anchor, visual effects, text overlay, keyframes, and transitions) at the project parse boundary without changing schema version 1.
 - M3.90 completed and squash-merged as PR #105 at `c91efb620ddde050487bb11152ebf3c5d563b0d1`.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
