@@ -1266,7 +1266,7 @@ function validateCanvas(value: unknown): asserts value is CanvasSettings {
 
   assertPositiveInteger(value.width, "Canvas width");
   assertPositiveInteger(value.height, "Canvas height");
-  assertPositiveNumber(value.frameRate, "Canvas frameRate");
+  assertProjectFrameRate(value.frameRate);
 }
 
 function assertNonEmptyString(value: unknown, field: string): asserts value is string {
