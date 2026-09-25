@@ -1,3 +1,36 @@
+## M3.91 — Persisted Visual Payload Validation — in progress — 2026-09-25
+
+Branch:
+`feat/m3-91-visual-payload-validation`
+
+PR:
+#106 — Draft.
+
+Scope:
+- Validate persisted visual payloads at the project parsing boundary without changing schema version 1.
+- Cover Transform, Transform Anchor, Crop, Crop Position, Visual Effects, Text Overlay, Transform Keyframes, and Transition structure/ranges.
+- Reject visual-only payloads persisted on Audio clips.
+
+Implementation:
+- Added shape/range validation for the visual payloads above.
+- Added regression coverage for valid visual round-tripping and malformed visual payloads.
+- Preserve existing runtime normalization, preview, timeline, waveform, and export behavior.
+- No project schema change.
+
+Validation:
+- Pending user local validation.
+
+Known limitations:
+- Transition adjacency across neighboring clips remains separate from this local payload validation.
+- Native media-file existence/decodeability remains outside project-domain validation.
+
+Previous milestone:
+- M3.90 completed and squash-merged as PR #105 at `c91efb620ddde050487bb11152ebf3c5d563b0d1`.
+
+Next step:
+- Hand off focused local validation for M3.91.
+
+
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
 Branch:
