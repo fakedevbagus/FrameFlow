@@ -1,25 +1,23 @@
-## M3.104 — Canonical Audio EQ Precision — in progress — 2026-09-25
+## M3.104 — Canonical Audio EQ Precision — completed — 2026-09-25
 
 Branch:
 `fix/m3-104-canonical-audio-eq`
 
-Scope:
-- Require persisted `audioEq.lowGainDb`, `midGainDb`, and `highGainDb` values to use at most one decimal place.
-- Align the persistence boundary with the existing Audio EQ runtime/command normalizers.
-- Preserve existing -12 to 12 dB range validation, `enabled` handling, and project schema version.
+PR:
+#119
 
-Implementation:
-- Added parser validation rejecting over-precise persisted Audio EQ gain values.
-- Added regression coverage for over-precise low, mid, and high gain values.
+Merge SHA:
+`c83479fec28f6403fedefad9add5ada8ddecfc30`
 
-Previous milestone:
-- M3.103 completed and squash-merged as PR #118 at `c4ae88dc9cf1cde64a1f39672809b74bc25e266e`.
-
-Validation:
-- Pending user local validation.
+Implementation reconciled:
+- Persisted `audioEq.lowGainDb`, `midGainDb`, and `highGainDb` now require at most one decimal place.
+- Added parser regression coverage for over-precise persisted Audio EQ gains.
+- Existing -12 to 12 dB range and `enabled` validation remain unchanged.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 Next step:
-- Run the documented local and manual validation for M3.104, then report PASS/pass/lanjutkan.
+- M3.105 — audit and enforce canonical persisted Audio Compressor precision against the existing runtime/command normalizers.
 
 ## M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
@@ -40,9 +38,8 @@ Implementation reconciled:
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 Next step:
-- M3.104 — audit and enforce canonical persisted Audio EQ gain precision against the existing one-decimal runtime/command normalizer.
+- Audit remaining persisted project invariants and select the next focused milestone.
 
-## M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 ## M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 
 Branch:
@@ -61,49 +58,6 @@ Implementation reconciled:
 - Added parser regression coverage for non-canonical persisted text overlays.
 - User reported PASS.
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
-
-Next step:
-- Audit remaining persisted project invariants and select the next focused milestone.
-
-## M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
-## M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
-
-Branch:
-`fix/m3-101-integer-clip-times`
-
-PR:
-#116
-
-Merge SHA:
-`59a71942d771e5b4e019d01429865df3cadb7a5b`
-
-Implementation reconciled:
-- Persisted clip `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` now require non-negative integer milliseconds.
-- `sourceEndMs: null` remains valid for unknown source duration.
-- Added parser regression coverage for fractional persisted clip timing fields.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor behavior.
-
-Next step:
-- Audit remaining persisted project invariants and select the next focused milestone.
-
-## M3.100 — Canonical Integer Asset Durations — completed — 2026-09-25
-
-Branch:
-`fix/m3-100-integer-asset-duration`
-
-PR:
-#115
-
-Merge SHA:
-`a6d9d8ee5d5f3782bd5de22ac61c2a3b5122218d`
-
-Implementation reconciled:
-- Persisted `MediaAsset.durationMs` values now require `null` or non-negative integer milliseconds.
-- Persistence aligns with the native media probe representation, which exposes known media duration as unsigned integer milliseconds.
-- Added parser regression coverage for fractional persisted asset durations.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor behavior.
 
 Next step:
 - Audit remaining persisted project invariants and select the next focused milestone.
