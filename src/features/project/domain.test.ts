@@ -538,6 +538,201 @@ describe("project domain", () => {
     );
   });
 
+  it("accepts valid persisted visual payloads", () => {
+    const project = createProject({ id: "visual-payloads" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const invalidBase = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  transform: {
+                    x: 12,
+                    y: -8,
+                    scale: 1.2,
+                    rotation: 45,
+                    opacity: 0.8,
+                  },
+                  transformAnchor: { x: 0.5, y: 0.5 },
+                  crop: { top: 0.1, right: 0.2, bottom: 0.1, left: 0.2 },
+                  cropPosition: { x: 0.45, y: 0.5 },
+                  visualEffects: {
+                    brightness: 0.1,
+                    contrast: -0.2,
+                    saturation: 0.3,
+                  },
+                  textOverlay: {
+                    text: "FrameFlow",
+                    x: 0.5,
+                    y: 0.25,
+                    fontSize: 48,
+                    color: "#ffffff",
+                    alignment: "center",
+                  },
+                  transitionOut: {
+                    type: "dissolve",
+                    durationMs: 300,
+                  },
+                  transformKeyframes: [
+                    {
+                      timeMs: 1000,
+                      transform: {
+                        x: 0,
+                        y: 0,
+                        scale: 1,
+                        rotation: 0,
+                        opacity: 1,
+                      },
+                      easing: "ease-in-out",
+                    },
+                  ],
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(parseProject(JSON.stringify(invalidBase))).toEqual(invalidBase);
+  });
+
+  it("rejects malformed persisted visual payloads", () => {
+    const project = createProject({ id: "bad-visual" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const makeProject = (changes: Record<string, unknown>) => ({
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  ...changes,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
+        transform: { x: 101, y: 0, scale: 1, rotation: 0, opacity: 1 },
+      }))),
+    ).toThrow("transform x is outside the supported range.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
+        crop: { top: 0.7, right: 0.4, bottom: 0, left: 0 },
+      }))),
+    ).toThrow("crop must leave a positive visible region.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
+        textOverlay: {
+          text: "",
+          x: 0.5,
+          y: 0.5,
+          fontSize: 48,
+          color: "#ffffff",
+          alignment: "center",
+        },
+      }))),
+    ).toThrow("textOverlay text must be non-empty.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
+        transformKeyframes: [
+          {
+            timeMs: 5000,
+            transform: {
+              x: 0,
+              y: 0,
+              scale: 1,
+              rotation: 0,
+              opacity: 1,
+            },
+          },
+        ],
+      }))),
+    ).toThrow("timeMs must be inside the clip duration.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
+        transitionOut: { type: "dissolve", durationMs: 25 },
+      }))),
+    ).toThrow("durationMs must be an integer between 50 and 2000.");
+  });
+
+  it("rejects visual payloads persisted on audio clips", () => {
+    const project = createProject({ id: "audio-visual-payload" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 2000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1000,
+                  transform: {
+                    x: 0,
+                    y: 0,
+                    scale: 1,
+                    rotation: 0,
+                    opacity: 1,
+                  },
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "transform is only available for visual clips.",
+    );
+  });
+
   it("rejects invalid JSON and unsupported schemas", () => {
     expect(() => parseProject("not json")).toThrow(ProjectValidationError);
     expect(() => parseProject('{"schemaVersion":999}')).toThrow(
