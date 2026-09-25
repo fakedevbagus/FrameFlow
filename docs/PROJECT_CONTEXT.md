@@ -1,3 +1,28 @@
+## M3.102 — Canonical Text Overlay Payload — in progress — 2026-09-25
+
+Branch:
+`fix/m3-102-canonical-text-overlay`
+
+Scope:
+- Require persisted `TextOverlay` text to already be trimmed.
+- Require persisted `TextOverlay` x/y positions to use at most three decimal places.
+- Require persisted `TextOverlay` colors to use lowercase six-digit hex notation.
+- Preserve existing text, position, font-size, alignment, and visual behavior for canonical data.
+
+Implementation:
+- Added parser validation for trimmed text, canonical position precision, and lowercase colors.
+- Added regression coverage for non-canonical persisted text overlays.
+
+Previous milestone:
+- M3.101 completed and squash-merged as PR #116 at `59a71942d771e5b4e019d01429865df3cadb7a5b`.
+
+Validation:
+- Pending user local validation.
+
+Next step:
+- Open Draft PR and hand off local validation.
+
+## M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
 ## M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
 
 Branch:
