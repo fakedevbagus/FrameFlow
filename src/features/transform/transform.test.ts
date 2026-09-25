@@ -197,6 +197,29 @@ describe("transform keyframes", () => {
     });
   });
 
+  it("canonicalizes fractional transform keyframe times", () => {
+    const keyframes = normalizeTransformKeyframes([
+      {
+        timeMs: 1000.4,
+        transform: DEFAULT_CLIP_TRANSFORM,
+      },
+      {
+        timeMs: 2000.6,
+        transform: { ...DEFAULT_CLIP_TRANSFORM, scale: 1.5 },
+      },
+    ]);
+
+    expect(keyframes.map((keyframe) => keyframe.timeMs)).toEqual([1000, 2001]);
+    expect(getTransformKeyframeAtTime(keyframes, 1000.4)?.timeMs).toBe(1000);
+    expect(upsertTransformKeyframe(keyframes, 2000.4, {
+      ...DEFAULT_CLIP_TRANSFORM,
+      scale: 2,
+    })[1]).toMatchObject({
+      timeMs: 2000,
+      transform: { ...DEFAULT_CLIP_TRANSFORM, scale: 2 },
+    });
+  });
+
   it("defaults legacy keyframes to linear easing", () => {
     const normalized = normalizeTransformKeyframes([
       {
