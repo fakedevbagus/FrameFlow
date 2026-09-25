@@ -1310,6 +1310,20 @@ function assertPositiveNumber(value: unknown, field: string): asserts value is n
   }
 }
 
+function assertProjectFrameRate(
+  value: unknown,
+): asserts value is number {
+  if (
+    !isFiniteNumber(value) ||
+    value <= 0 ||
+    value > 240
+  ) {
+    throw new ProjectValidationError(
+      "Canvas frameRate must be greater than 0 and no more than 240 fps.",
+    );
+  }
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
