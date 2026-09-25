@@ -1,46 +1,30 @@
-## M3.112 — Canonical Text Overlay Position Precision — completed — 2026-09-25
+## M3.113 — Canonical Transform Keyframe Times — in progress — 2026-09-25
 
 Branch:
-`fix/m3-112-canonical-text-overlay-position-precision`
+`fix/m3-113-canonical-transform-keyframe-times`
 
-PR:
-#127
+Scope:
+- Align Transform Keyframe time storage and lookup with the existing integer-millisecond persistence contract used by Audio Volume Automation.
+- Preserve fractional playback evaluation while canonicalizing stored keyframe timestamps.
 
-Merge SHA:
-`fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`
+Implementation:
+- Transform keyframe timestamps are rounded to the nearest non-negative integer millisecond when normalized/upserted.
+- Transform keyframe lookup/removal accepts fractional query times by canonicalizing the query first.
+- Transform keyframe commands canonicalize add/update/move/easing/removal times.
+- Persisted Transform Keyframe timestamps now require integer milliseconds.
+- Added regression coverage for normalization, command behavior, and persisted-value rejection.
+- No project schema version change.
+- No change to playback interpolation precision between stored integer keyframes.
 
-Implementation reconciled:
-- Text Overlay X/Y now use two-decimal canonical normalization after range clamping, matching the Inspector's integer-percent position input contract.
-- Persisted Text Overlay X/Y values with more than two decimal places are rejected.
-- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
-- No direct canvas Text Overlay positioning path exists, so no supported higher-precision interaction path was removed.
-- No project schema version change and no changes to visual Transform, Crop, Preview, or Export contracts beyond canonical Text Overlay position normalization.
-- User reported PASS.
+Previous milestone:
+- M3.112 completed and squash-merged as PR #127 at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`.
+- User reported PASS for M3.112.
 
-Next step:
-- Fresh audit from updated `main` for the next focused milestone.
-
-## M3.110 — Canonical Transform Opacity Precision — completed — 2026-09-25
-
-Branch:
-`fix/m3-110-canonical-transform-opacity-precision`
-
-PR:
-#125
-
-Merge SHA:
-`40c0fd1df662754e814e7e658f9a56e0ce615b78`
-
-Implementation reconciled:
-- Transform Opacity now uses two-decimal canonical normalization after range clamping.
-- Persisted Transform Opacity values with more than two decimal places are rejected, including transform keyframe transforms.
-- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
-- Existing Opacity range `0` to `1` remains unchanged.
-- User reported PASS.
-- No project schema version change and no change to X/Y, Rotation, Crop, Preview, or Export contracts beyond canonicalizing Opacity.
+Validation:
+- Pending user local validation.
 
 Next step:
-- Audit remaining persisted visual-transform precision and control normalization from updated `main`.
+- Validate M3.113 locally and manually, then report PASS/pass/lanjutkan.
 
 ## M3.109 — Canonical Transform Scale Precision — completed — 2026-09-25
 
