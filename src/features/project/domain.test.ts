@@ -1035,6 +1035,63 @@ describe("project domain", () => {
     ).toThrow("durationMs must be an integer between 50 and 2000.");
   });
 
+  it("rejects non-canonical persisted text overlays", () => {
+    const project = createProject({ id: "non-canonical-text-overlay" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const makeProject = (textOverlay: Record<string, unknown>) => ({
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  textOverlay,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
+    const base = {
+      text: "FrameFlow",
+      x: 0.5,
+      y: 0.25,
+      fontSize: 48,
+      color: "#ffffff",
+      alignment: "center",
+    };
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({ ...base, text: " FrameFlow" }))),
+    ).toThrow("textOverlay text must be trimmed.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({ ...base, x: 0.1234 }))),
+    ).toThrow("textOverlay x must use at most three decimal places.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({ ...base, y: 0.0001 }))),
+    ).toThrow("textOverlay y must use at most three decimal places.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({ ...base, color: "#FFFFFF" }))),
+    ).toThrow("textOverlay color must be a lowercase six-digit hex color.");
+  });
+
   it("rejects visual payloads persisted on audio clips", () => {
     const project = createProject({ id: "audio-visual-payload" });
     const audioAsset = {
