@@ -733,6 +733,54 @@ describe("project domain", () => {
     ).toThrow("pan must use at most two decimal places.");
   });
 
+  it("rejects non-integer persisted transform keyframe times", () => {
+    const project = createProject({ id: "fractional-transform-keyframe-time" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+
+    const invalidProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  transformKeyframes: [
+                    {
+                      timeMs: 1000.5,
+                      transform: {
+                        x: 0,
+                        y: 0,
+                        scale: 1,
+                        rotation: 0,
+                        opacity: 1,
+                      },
+                    },
+                  ],
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "transformKeyframes[0] timeMs must be an integer number of milliseconds.",
+    );
+  });
+
   it("rejects duplicate clip ids", () => {
     const project = createProject({ id: "duplicate-clips" });
     const audioAsset = {
