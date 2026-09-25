@@ -1,30 +1,26 @@
-## M3.94 — Persisted Canvas Dimension Validation — in progress — 2026-09-25
+## M3.94 — Persisted Canvas Dimension Validation — completed — 2026-09-25
 
 Branch:
 `feat/m3-94-persisted-canvas-dimension-validation`
 
 PR:
-Pending creation after implementation and regression coverage.
+#109
 
-Scope:
-- Require persisted canvas width and height to be positive integers at the project parsing boundary.
-- Match the existing `updateCanvasDimensions()` mutation contract.
-- Preserve positive non-integer frame rates because playback/export support fractional rates.
-- Preserve schema version 1 and all existing render/editor behavior.
+Merge SHA:
+`6048b038e4d15e00372e0267a9e0d2f14caaf72b`
 
-Implementation:
-- `validateCanvas()` now uses a dedicated positive-integer assertion for width and height.
-- Added regression coverage for fractional width/height rejection.
-- Added regression coverage confirming a supported fractional frame rate such as 29.97 remains accepted.
+Implementation reconciled:
+- Persisted canvas width and height now require positive integers, matching `updateCanvasDimensions()`.
+- Positive non-integer frame rates remain valid for supported playback/export use cases.
+- Added parser regressions for fractional width/height rejection and a valid 29.97 frame rate.
+- User reported PASS.
+- No project schema, preview, playback, Timeline, waveform, or export behavior change.
 
 Previous milestone:
 - M3.93 completed and squash-merged as PR #108 at `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
 
-Validation:
-- Pending user local validation.
-
 Next step:
-- Finish focused local validation and Draft PR review.
+- Audit updated `main` for the next smallest persisted-domain invariant.
 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
