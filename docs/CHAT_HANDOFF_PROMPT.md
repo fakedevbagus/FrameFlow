@@ -1,17 +1,33 @@
-## M3.109 — active — 2026-09-25
+## M3.110 — active — 2026-09-25
 
-- Branch: `fix/m3-109-canonical-transform-scale-precision`.
-- Scope: align Transform Scale persistence and runtime normalization with the existing Inspector precision contract.
-- Implemented two-decimal Scale normalization, strict persisted-value validation, and focused regression coverage.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- Branch: `fix/m3-110-visual-transform-precision-audit`.
+- Scope: audit remaining persisted visual-transform precision and control normalization from updated `main`.
+- M3.109 completed and squash-merged as PR #124 at `d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`; user reported PASS.
+- No M3.110 code change has been made yet; candidate invariants are being verified before implementation.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.109 is the active milestone; do not assume local validation has passed.
+- M3.110 is the active milestone; do not assume local validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+
+
+## M3.109 — completed — 2026-09-25
+
+- Branch: `fix/m3-109-canonical-transform-scale-precision`.
+- PR #124; squash-merged at `d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`.
+- Transform Scale now uses two-decimal canonical normalization after range clamping.
+- Persisted Transform Scale values with more than two decimal places are rejected, including transform keyframe transforms.
+- Existing Scale range `0.05..10` remains unchanged.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- User reported PASS.
+- No project schema change and no change to X/Y, Rotation, Opacity, Crop, Preview, or Export contracts.
+
+Next milestone:
+- M3.110 — audit remaining persisted visual-transform precision and control normalization.
 
 ## M3.108 — completed — 2026-09-25
 
