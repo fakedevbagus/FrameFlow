@@ -7,6 +7,7 @@ use std::{
   fs,
   path::{Path, PathBuf},
   process::Command,
+  sync::atomic::{AtomicU64, Ordering},
 };
 
 use serde::{Deserialize, Serialize};
@@ -1356,9 +1357,15 @@ fn project_path(value: &str) -> Result<PathBuf, String> {
 }
 
 fn temporary_path(project_path: &Path) -> PathBuf {
-  let mut temporary_path = project_path.as_os_str().to_os_string();
-  temporary_path.push(".tmp");
-  PathBuf::from(temporary_path)
+  static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+  let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+  let process_id = std::process::id();
+
+  PathBuf::from(format!(
+    "{}.tmp-{process_id}-{counter}",
+    project_path.to_string_lossy()
+  ))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -1391,8 +1398,24 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-  use super::{media_type, parse_duration_ms, preview_cache_key};
+  use super::{media_type, parse_duration_ms, preview_cache_key, temporary_path};
   use std::path::Path;
+
+  #[test]
+  fn generates_unique_project_save_temp_paths() {
+    let project_path = Path::new("/tmp/example.frameflow.json");
+
+    let first = temporary_path(project_path);
+    let second = temporary_path(project_path);
+
+    assert_ne!(first, second);
+    assert!(first.to_string_lossy().starts_with(
+      "/tmp/example.frameflow.json.tmp-"
+    ));
+    assert!(second.to_string_lossy().starts_with(
+      "/tmp/example.frameflow.json.tmp-"
+    ));
+  }
 
   #[test]
   fn recognizes_mp3_as_audio() {
