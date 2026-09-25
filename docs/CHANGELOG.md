@@ -1,10 +1,11 @@
 ### M3.92 — Persisted Timeline Topology Validation — in progress — 2026-09-25
 
 - Branch: `feat/m3-92-timeline-topology-validation`.
+- PR #107 — Draft.
 - Scope: harden persisted timeline topology without changing schema version 1.
 - Validate non-overlapping clips per track and transition relationships against immediate clip adjacency, visual-media eligibility, and duration bounds.
 - Preserve existing mutation-time transition sanitization and timeline behavior.
-- Regression coverage will include valid adjacent transitions and malformed overlap/transition topology.
+- Added regression coverage for valid adjacent transitions and malformed overlap/transition topology.
 - User local validation is pending.
 
 ### M3.91 — Persisted Visual Payload Validation — completed — 2026-09-25
