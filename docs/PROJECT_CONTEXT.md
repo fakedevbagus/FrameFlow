@@ -1,30 +1,29 @@
-## M3.113 — Canonical Transform Keyframe Times — in progress — 2026-09-25
+## M3.113 — Canonical Transform Keyframe Times — completed — 2026-09-25
 
 Branch:
 `fix/m3-113-canonical-transform-keyframe-times`
 
-Scope:
-- Align Transform Keyframe time storage and lookup with the existing integer-millisecond persistence contract used by Audio Volume Automation.
-- Preserve fractional playback evaluation while canonicalizing stored keyframe timestamps.
+PR:
+#128
 
-Implementation:
-- Transform keyframe timestamps are rounded to the nearest non-negative integer millisecond when normalized/upserted.
-- Transform keyframe lookup/removal accepts fractional query times by canonicalizing the query first.
-- Transform keyframe commands canonicalize add/update/move/easing/removal times.
-- Persisted Transform Keyframe timestamps now require integer milliseconds.
+Merge SHA:
+`7672e1d9d603ab573178f3c908bd0807d0bfa4f1`
+
+Implementation reconciled:
+- Transform keyframe timestamps are now canonicalized to the nearest non-negative integer millisecond for storage and lookup.
+- Transform keyframe add/update/move/easing/removal commands canonicalize timestamps before mutation.
+- Persisted Transform Keyframe timestamps must be integer milliseconds.
+- Fractional playback evaluation between stored integer keyframes remains unchanged.
 - Added regression coverage for normalization, command behavior, and persisted-value rejection.
-- No project schema version change.
-- No change to playback interpolation precision between stored integer keyframes.
-
-Previous milestone:
-- M3.112 completed and squash-merged as PR #127 at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`.
-- User reported PASS for M3.112.
+- No project schema version change and no media/preview/export contract change.
+- User reported PASS.
+- No direct canvas precision path was removed; Transform X/Y/Rotation and Crop/Anchor interactions remain continuous.
 
 Validation:
-- Pending user local validation.
+- User reported PASS for M3.113.
 
 Next step:
-- Validate M3.113 locally and manually, then report PASS/pass/lanjutkan.
+- Fresh audit from updated `main` for the next focused persisted/runtime invariant.
 
 ## M3.112 — Canonical Text Overlay Position Precision — completed — 2026-09-25
 
