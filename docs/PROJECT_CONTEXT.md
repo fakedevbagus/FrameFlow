@@ -1,24 +1,23 @@
-## M3.107 — Canonical Project Name Trimming — in progress — 2026-09-25
+## M3.107 — Canonical Project Name Trimming — completed — 2026-09-25
 
 Branch:
 `fix/m3-107-canonical-project-name`
 
-Scope:
-- Require persisted project `name` to already equal its trimmed canonical form.
-- Preserve non-empty-name validation and project schema version.
+PR:
+#122
 
-Implementation:
-- Added parser validation rejecting leading or trailing whitespace in persisted project names.
-- Added regression coverage for a persisted name with surrounding whitespace.
+Merge SHA:
+`a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`
 
-Previous milestone:
-- M3.106 completed and squash-merged as PR #121 at `223856cd70bfaef8d149cc38860d9f9f86745672`.
-
-Validation:
-- Pending user local validation.
+Implementation reconciled:
+- Persisted project `name` values now require an already-trimmed canonical form.
+- Added parser regression coverage for leading/trailing whitespace.
+- Existing non-empty-name validation and project schema version remain unchanged.
+- User reported PASS.
+- No runtime/editor/preview/export behavior change for canonical names.
 
 Next step:
-- Run the documented local and manual validation for M3.107, then report PASS/pass/lanjutkan.
+- M3.108 — Canonical Track Volume/Pan Precision: align track audio-control persistence with the existing 0.01 UI step.
 
 ## M3.106 — Canonical Audio Volume Automation Precision — completed — 2026-09-25
 
