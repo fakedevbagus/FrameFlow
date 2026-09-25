@@ -1045,6 +1045,13 @@ describe("updateTrackPan", () => {
 
     expect(updated.tracks.find((track) => track.id === "audio-1")?.pan).toBe(-0.65);
     expect(updated.updatedAt).toBe("2026-09-20T00:00:01.000Z");
+
+    const rounded = updateTrackPan(
+      project,
+      "audio-1",
+      -0.456,
+    );
+    expect(rounded.tracks.find((track) => track.id === "audio-1")?.pan).toBe(-0.46);
   });
 
   it("rejects invalid pan values and unknown tracks", () => {
@@ -1079,6 +1086,13 @@ describe("updateTrackVolume", () => {
 
     expect(updated.tracks.find((track) => track.id === "audio-1")?.volume).toBe(0.35);
     expect(updated.updatedAt).toBe("2026-09-20T00:00:01.000Z");
+
+    const rounded = updateTrackVolume(
+      project,
+      "audio-1",
+      0.456,
+    );
+    expect(rounded.tracks.find((track) => track.id === "audio-1")?.volume).toBe(0.46);
   });
 
   it("rejects invalid volume values and unknown tracks", () => {
