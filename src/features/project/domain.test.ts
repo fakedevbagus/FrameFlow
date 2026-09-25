@@ -978,6 +978,213 @@ describe("project domain", () => {
     );
   });
 
+  it("rejects persisted audio payloads on image clips", () => {
+    const project = createProject({ id: "image-audio-payload" });
+    const imageAsset = {
+      id: "image-1",
+      name: "Image",
+      mediaType: "image" as const,
+      sourcePath: "/tmp/image.png",
+      durationMs: 5000,
+    };
+
+    for (const field of [
+      "audioFadeInMs",
+      "audioFadeOutMs",
+      "audioEq",
+      "audioCompressor",
+      "audioVolumeKeyframes",
+    ]) {
+      const invalidProject = {
+        ...project,
+        assets: [imageAsset],
+        tracks: project.tracks.map((track) =>
+          track.type === "video"
+            ? {
+                ...track,
+                clips: [
+                  {
+                    id: "image-clip",
+                    assetId: imageAsset.id,
+                    timelineStartMs: 0,
+                    sourceStartMs: 0,
+                    sourceEndMs: 5000,
+                    [field]:
+                      field === "audioEq"
+                        ? {
+                            enabled: true,
+                            lowGainDb: 0,
+                            midGainDb: 0,
+                            highGainDb: 0,
+                          }
+                        : field === "audioCompressor"
+                          ? {
+                              enabled: true,
+                              thresholdDb: -24,
+                              ratio: 4,
+                              attackMs: 20,
+                              releaseMs: 250,
+                            }
+                          : field === "audioVolumeKeyframes"
+                            ? [{ timeMs: 0, volume: 1 }]
+                            : 0,
+                  },
+                ],
+              }
+            : track,
+        ),
+      };
+
+      expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+        `Clip 0.0 ${field} is only available for audio-bearing clips.`,
+      );
+    }
+  });
+
+  it("rejects persisted audio fades that exceed clip duration", () => {
+    const project = createProject({ id: "fade-over-duration" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 3000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 2000,
+                  audioFadeInMs: 2001,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "audio fade duration cannot exceed the clip duration.",
+    );
+  });
+
+  it("rejects persisted audio fades that overlap", () => {
+    const project = createProject({ id: "fade-overlap" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 3000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 2000,
+                  audioFadeInMs: 1500,
+                  audioFadeOutMs: 501,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "audio fade-in and fade-out cannot overlap.",
+    );
+  });
+
+  it("rejects non-zero persisted fades when clip duration is unknown", () => {
+    const project = createProject({ id: "fade-unknown-duration" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: null,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: null,
+                  audioFadeInMs: 100,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "audio fade durations require a known clip duration.",
+    );
+  });
+
+  it("accepts persisted audio fades that fit the clip duration", () => {
+    const project = createProject({ id: "fade-valid" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 3000,
+    };
+    const validProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 3000,
+                  audioFadeInMs: 1000,
+                  audioFadeOutMs: 1000,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
   it("rejects invalid JSON and unsupported schemas", () => {
     expect(() => parseProject("not json")).toThrow(ProjectValidationError);
     expect(() => parseProject('{"schemaVersion":999}')).toThrow(
