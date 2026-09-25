@@ -113,6 +113,83 @@ describe("project domain", () => {
     expect(project.tracks.find((track) => track.type === "audio")?.pan).toBe(0);
   });
 
+  it("rejects over-precise persisted audio EQ gains", () => {
+    const project = createProject({ id: "over-precise-audio-eq" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.mp3",
+      durationMs: 5000,
+    };
+    const makeProject = (audioEq: Record<string, unknown>) => ({
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  audioEq,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            enabled: true,
+            lowGainDb: 1.23,
+            midGainDb: 0,
+            highGainDb: 0,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "audioEq lowGainDb must use at most one decimal place.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            enabled: true,
+            lowGainDb: 0,
+            midGainDb: -2.34,
+            highGainDb: 0,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "audioEq midGainDb must use at most one decimal place.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            enabled: true,
+            lowGainDb: 0,
+            midGainDb: 0,
+            highGainDb: 3.45,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "audioEq highGainDb must use at most one decimal place.",
+    );
+  });
+
   it("defaults visual effects to neutral values and clamps stored values", () => {
     const clip = {
       id: "visual-effects-clip",
