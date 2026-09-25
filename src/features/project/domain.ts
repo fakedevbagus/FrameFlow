@@ -767,6 +767,12 @@ function validateVisualEffectsPayload(
         field + " " + key + " must be between -1 and 1.",
       );
     }
+
+    if (Math.round(entry * 100) / 100 !== entry) {
+      throw new ProjectValidationError(
+        field + " " + key + " must use at most two decimal places.",
+      );
+    }
   }
 }
 
