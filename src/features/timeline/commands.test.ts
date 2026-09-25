@@ -573,6 +573,11 @@ describe("clip transforms", () => {
     });
     expect(rounded.tracks[0].clips[0].transform?.scale).toBe(1.24);
 
+    const roundedOpacity = updateClipTransform(project, clipId, {
+      opacity: 0.1234,
+    });
+    expect(roundedOpacity.tracks[0].clips[0].transform?.opacity).toBe(0.12);
+
     const reset = resetClipTransform(updated, clipId);
 
     expect(reset.tracks[0].clips[0].transform).toEqual({
