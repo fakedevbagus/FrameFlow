@@ -1,17 +1,14 @@
-## M3.107 — completed — 2026-09-25
+## M3.108 — active — 2026-09-25
 
-- Branch: `fix/m3-107-canonical-project-name`.
-- PR #122; squash-merged at `a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`.
-- Persisted project `name` values now require an already-trimmed canonical form.
-- Added parser regression coverage for leading/trailing whitespace.
-- User reported PASS.
-- No project schema change and no change to canonical runtime/editor/preview/export behavior.
-- Next milestone selected: M3.108 — Canonical Track Volume/Pan Precision.
+- Branch: `fix/m3-108-canonical-track-audio-precision`.
+- Scope: align Track Volume/Pan persistence and runtime canonicalization with the existing 0.01 Timeline control step.
+- Implemented shared two-decimal normalizers, command normalization, getter normalization, strict persisted-value validation, and focused regression coverage.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.107 is the active milestone; do not assume local validation has passed.
+- M3.108 is the active milestone; do not assume local validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
@@ -69,4 +66,12 @@
 - User reported PASS.
 - No project schema, preview, playback, Timeline, waveform, or export behavior change.
 
+## M3.107 — completed — 2026-09-25
 
+- Branch: `fix/m3-107-canonical-project-name`.
+- PR #122; squash-merged at `a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`.
+- Persisted project `name` values now require an already-trimmed canonical form.
+- Added parser regression coverage for leading/trailing whitespace.
+- User reported PASS.
+- No project schema change and no change to canonical runtime/editor/preview/export behavior.
+- Next milestone selected: M3.108 — Canonical Track Volume/Pan Precision.
