@@ -1,27 +1,24 @@
-## M3.109 — Canonical Transform Scale Precision — in progress — 2026-09-25
+## M3.109 — Canonical Transform Scale Precision — completed — 2026-09-25
 
 Branch:
 `fix/m3-109-canonical-transform-scale-precision`
 
-Scope:
-- Align persisted and runtime Transform Scale precision with the existing Inspector precision contract.
-- Preserve the existing scale range of `0.05` to `10`.
+PR:
+#124
 
-Implementation:
-- Transform normalization now rounds Scale to two decimal places after range clamping.
-- Persisted transform validation rejects Scale values with more than two decimal places, including transform keyframe payloads.
+Merge SHA:
+`d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`
+
+Implementation reconciled:
+- Transform Scale now uses two-decimal canonical normalization after range clamping.
+- Persisted Transform Scale values with more than two decimal places are rejected, including transform keyframe transforms.
+- Existing Scale range `0.05` to `10` remains unchanged.
 - Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
-- No project schema version change.
-
-Previous milestone:
-- M3.108 completed and squash-merged as PR #123 at `317f09aa66f6f7e1196fdd6d8ce86e07fdd07cd8`.
-- User reported PASS for M3.108.
-
-Validation:
-- Pending user local validation.
+- User reported PASS.
+- No project schema version change and no change to X/Y, Rotation, Opacity, Crop, Preview, or Export contracts.
 
 Next step:
-- Validate M3.109 locally and manually, then report PASS/pass/lanjutkan.
+- M3.110 — audit remaining persisted visual-transform precision and control normalization.
 
 ## M3.108 — Canonical Track Volume/Pan Precision — completed — 2026-09-25
 
