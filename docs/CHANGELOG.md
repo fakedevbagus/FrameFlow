@@ -1,3 +1,15 @@
+### M3.113 — Canonical Transform Keyframe Times — in progress — 2026-09-25
+
+- Branch: `fix/m3-113-canonical-transform-keyframe-times`.
+- Transform keyframe timestamps are now canonicalized to integer milliseconds for storage and lookup.
+- Transform keyframe commands canonicalize add/update/move/easing/removal times.
+- Persisted Transform Keyframe timestamps with fractional milliseconds are rejected.
+- Runtime interpolation remains able to evaluate at fractional playback time between integer keyframes.
+- Added regression coverage for normalization, command behavior, and persisted-value rejection.
+- No project schema change and no media/preview/export contract change.
+- Validation is pending.
+- Next milestone after M3.113: continue auditing remaining persisted/runtime invariants from updated `main`.
+
 ### M3.112 — Canonical Text Overlay Position Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-112-canonical-text-overlay-position-precision`.
@@ -9,6 +21,15 @@
 - No project schema change and no Preview/Export behavior change.
 - User reported PASS.
 - Next milestone: fresh audit from updated `main`.
+
+### M3.111 — Strict Persisted Transform Rotation Range — completed — 2026-09-25
+
+- Branch: `fix/m3-111-strict-transform-rotation-range`.
+- PR #126; squash-merged at `eb7ab0fe11c0c279e7daf70c2e31317bf972394f`.
+- Persisted Transform Rotation values are now restricted to `-180..180` degrees, matching the existing Inspector/runtime range.
+- Added parser regression coverage for `181` and `-181`.
+- User reported PASS.
+- No project schema change.
 
 ### M3.110 — Canonical Transform Opacity Precision — completed — 2026-09-25
 
