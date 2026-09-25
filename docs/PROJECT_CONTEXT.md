@@ -1,35 +1,26 @@
-## M3.93 — Persisted Audio Payload Validation — active — 2026-09-25
+## M3.93 — Persisted Audio Payload Validation — in progress — 2026-09-25
 
 Branch:
-Pending branch creation from updated `main`.
+`feat/m3-93-persisted-audio-payload-validation`
+
+PR:
+Pending creation after implementation and regression coverage.
 
 Scope:
-- Harden the project JSON parsing boundary for persisted audio payload eligibility and clip-duration semantics.
+- Harden the project JSON parsing boundary for persisted audio payload eligibility and Audio Fade duration/overlap semantics.
 - Reject audio-only payloads persisted on Image clips.
 - Enforce Audio Fade In/Fade Out bounds and prevent fade overlap for clips with known duration.
+- Reject non-zero persisted fades when clip source duration is unknown.
 - Preserve schema version 1 and existing runtime normalization/command behavior.
-
-Repository evidence:
-- Timeline audio commands allow Audio-track Audio and Video-track Video clips, but not Image clips.
-- `validateOptionalAudioFields()` currently validates audio field shapes/ranges without checking whether the referenced clip can carry audio.
-- `updateAudioClipFades()` already rejects fade durations beyond clip duration and rejects overlapping fade-in/fade-out ranges.
-- `getAudioFadeDurations()` silently clamps persisted fade metadata, so malformed persisted fades can currently parse and normalize instead of being rejected.
-
-Implementation target:
-- Add persisted audio-payload eligibility validation using the resolved asset media type and track type.
-- Reject non-default audio fields on Image clips rather than allowing ignored metadata into the editor.
-- Validate persisted fade durations against the clip duration and require fade-in + fade-out to fit without overlap.
-- Preserve zero-value/absent audio metadata behavior and unknown source duration handling without schema changes.
-- Add focused parser regressions for valid Audio/Video audio payloads and malformed Image/fade cases.
-
-Validation:
-- Pending user local validation.
 
 Previous milestone:
 - M3.92 completed and squash-merged as PR #107 at `d9cce0266274b1d974ed084ee8345993d30a2312`.
 
+Validation:
+- Pending implementation and user local validation.
+
 Next step:
-- Implement M3.93 on a feature branch from updated `main`, then hand off focused local validation.
+- Complete M3.93 implementation, regression coverage, documentation, and Draft PR.
 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
