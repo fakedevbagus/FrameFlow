@@ -1141,6 +1141,12 @@ function validateOptionalAudioFields(
         );
       }
 
+      if (Math.round(keyframe.volume * 1000) / 1000 !== keyframe.volume) {
+        throw new ProjectValidationError(
+          keyframePrefix + " volume must use at most three decimal places.",
+        );
+      }
+
       if (keyframeTimes.has(keyframe.timeMs)) {
         throw new ProjectValidationError(
           keyframePrefix + " duplicates a previous timeMs.",

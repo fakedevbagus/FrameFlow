@@ -11,6 +11,7 @@ Scope:
 Implementation:
 - Added parser validation rejecting over-precise persisted audio volume keyframe values.
 - Added regression coverage for values exceeding three decimal places.
+- Existing 0 to 1 range, integer timeMs, ordering, and project schema rules remain unchanged.
 
 Previous milestone:
 - M3.105 completed and squash-merged as PR #120 at `6cc2a230ed351b44db8dc9551e58a17b1305ed94`.

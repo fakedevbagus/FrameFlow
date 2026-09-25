@@ -4,6 +4,7 @@
 - Persisted Audio Volume Automation keyframe `volume` values must use at most three decimal places.
 - This matches `normalizeAudioVolumeKeyframes()` and `updateAudioClipVolumeAtTime()`, which canonicalize volume values to three decimal places.
 - Added parser regression coverage for over-precise volume keyframe values.
+- Existing 0 to 1 range and integer timeMs validation remain unchanged.
 - No project schema change is planned.
 - Validation is pending.
 
