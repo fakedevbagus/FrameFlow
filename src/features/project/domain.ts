@@ -704,11 +704,6 @@ function validateAnchorPayload(value: unknown, field: string): void {
       );
     }
 
-    if (Math.round(entry * 1000) / 1000 !== entry) {
-      throw new ProjectValidationError(
-        field + " " + key + " must use at most three decimal places.",
-      );
-    }
   }
 }
 
@@ -805,6 +800,12 @@ function validateTextOverlayPayload(
     if (!isFiniteNumber(entry) || entry < 0 || entry > 1) {
       throw new ProjectValidationError(
         field + " " + key + " must be between 0 and 1.",
+      );
+    }
+
+    if (Math.round(entry * 1000) / 1000 !== entry) {
+      throw new ProjectValidationError(
+        field + " " + key + " must use at most three decimal places.",
       );
     }
   }
