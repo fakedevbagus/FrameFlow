@@ -1161,6 +1161,44 @@ describe("project domain", () => {
     );
   });
 
+  it("rejects fractional persisted audio volume keyframe times", () => {
+    const project = createProject({ id: "audio-keyframe-fractional-time" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 3000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 3000,
+                  audioVolumeKeyframes: [
+                    { timeMs: 1000.25, volume: 0.8 },
+                  ],
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "audioVolumeKeyframes[0] timeMs must be an integer number of milliseconds.",
+    );
+  });
+
   it("rejects non-monotonic persisted audio volume keyframes", () => {
     const project = createProject({ id: "audio-keyframe-order" });
     const audioAsset = {
