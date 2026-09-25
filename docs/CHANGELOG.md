@@ -1,3 +1,13 @@
+### M3.108 — Canonical Track Volume/Pan Precision — in progress — 2026-09-25
+
+- Branch: `fix/m3-108-canonical-track-audio-precision`.
+- Align Track Volume/Pan persistence with the existing Timeline input step of 0.01.
+- Added shared two-decimal normalizers used by getters and update commands.
+- Persisted Track Volume/Pan values with more than two decimal places are now rejected.
+- Added regression coverage for getter normalization, command normalization, and persisted-value rejection.
+- No project schema change.
+- Validation is pending.
+
 ### M3.107 — Canonical Project Name Trimming — completed — 2026-09-25
 
 - Branch: `fix/m3-107-canonical-project-name`.
