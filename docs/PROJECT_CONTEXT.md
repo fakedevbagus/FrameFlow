@@ -1,27 +1,32 @@
-## M3.93 — Persisted Audio Payload Validation — in progress — 2026-09-25
+## M3.93 — Persisted Audio Payload Validation — completed — 2026-09-25
 
 Branch:
 `feat/m3-93-persisted-audio-payload-validation`
 
 PR:
-Pending creation after implementation and regression coverage.
+#108
 
-Scope:
-- Harden the project JSON parsing boundary for persisted audio payload eligibility and Audio Fade duration/overlap semantics.
-- Reject audio-only payloads persisted on Image clips.
-- Enforce Audio Fade In/Fade Out bounds and prevent fade overlap for clips with known duration.
-- Reject non-zero persisted fades when clip source duration is unknown.
-- Preserve schema version 1 and existing runtime normalization/command behavior.
+Merge SHA:
+`efd4d92061e8f4a7005d1839f3b24c4e2edcc078`
 
-Previous milestone:
-- M3.92 completed and squash-merged as PR #107 at `d9cce0266274b1d974ed084ee8345993d30a2312`.
+Implementation reconciled:
+- Persisted audio payloads are now validated against audio-bearing media/track combinations.
+- Image clips cannot carry persisted Audio Fade, EQ, Compressor, or Volume Automation fields.
+- Persisted Audio Fade In/Fade Out values must be non-negative integers that fit the clip duration and cannot overlap.
+- Non-zero persisted fades are rejected when source duration is unknown.
+- Schema version 1 remains unchanged.
+- Runtime normalization and command-layer behavior remain unchanged.
+- Added parser regressions for invalid Image audio payloads, invalid fade bounds/overlap, unknown-duration fades, and valid fades.
+- User reported PASS.
+- No project schema, preview, timeline, waveform, export, or DSP behavior change.
 
-Validation:
-- Pending implementation and user local validation.
+Known limitations:
+- Native media-file existence/decodeability remains outside project-domain validation.
+- Further persistence invariants can be audited from updated `main`.
 
 Next step:
-- Complete M3.93 implementation, regression coverage, documentation, and Draft PR.
-
+- Audit updated `main` and select the smallest remaining persistence/domain gap.
+ 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
 Branch:
