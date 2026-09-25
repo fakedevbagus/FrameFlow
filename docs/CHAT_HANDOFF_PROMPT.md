@@ -1,13 +1,19 @@
+## M3.94 — active — 2026-09-25
+
+- Branch: pending creation from updated `main`.
+- Scope: require persisted canvas width/height to be positive integers at parse time.
+- Preserve supported non-integer frame rates.
+- M3.93 completed and squash-merged as PR #108 at `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
+- PR #76 remains parked; PR #22 remains unrelated and untouched.
+
 ## M3.93 — completed — 2026-09-25
 
-- Branch: `feat/m3-93-persisted-audio-payload-validation`.
 - PR #108; merge SHA `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
-- Persisted audio payloads are restricted to Audio-track Audio and Video-track Video clips.
+- Persisted audio fields are restricted to audio-bearing Audio-track Audio and Video-track Video clips.
 - Image clips reject Audio Fade, EQ, Compressor, and Volume Automation metadata.
 - Persisted fades must fit the clip duration, cannot overlap, and must be zero/absent when source duration is unknown.
 - User reported PASS.
 - No project schema, preview, timeline, waveform, export, or DSP behavior change.
-- PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## M3.88 — completed — 2026-09-25
 
