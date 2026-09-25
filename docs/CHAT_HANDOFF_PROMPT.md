@@ -3,8 +3,9 @@
 - Branch: `fix/m3-106-canonical-audio-volume`.
 - Scope: enforce persisted Audio Volume Automation keyframe `volume` values to the same three-decimal precision used by runtime normalization and editing commands.
 - Audit finding from current `main`: `normalizeAudioVolumeKeyframes()` and `updateAudioClipVolumeAtTime()` canonicalize volume to three decimal places, while persistence currently accepts arbitrary finite values within 0..1.
-- No project schema change is planned.
-- Local validation is pending and must not be assumed passed.
+- Implemented parser validation plus focused regression coverage.
+- PR will be created after branch verification.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## Workflow for this chat
 
