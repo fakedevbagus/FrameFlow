@@ -845,9 +845,9 @@ function validateTextOverlayPayload(
       );
     }
 
-    if (Math.round(entry * 1000) / 1000 !== entry) {
+    if (Math.round(entry * 100) / 100 !== entry) {
       throw new ProjectValidationError(
-        field + " " + key + " must use at most three decimal places.",
+        field + " " + key + " must use at most two decimal places.",
       );
     }
   }
@@ -1404,7 +1404,7 @@ function normalizeTextOverlayPosition(value: unknown, fallback: number): number 
     return fallback;
   }
 
-  return Math.min(1, Math.max(0, Math.round(value * 1000) / 1000));
+  return Math.min(1, Math.max(0, Math.round(value * 100) / 100));
 }
 
 function normalizeTextOverlayFontSize(value: unknown, fallback: number): number {
