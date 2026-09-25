@@ -1,3 +1,12 @@
+### M3.106 — Canonical Audio Volume Automation Precision — in progress — 2026-09-25
+
+- Branch: `fix/m3-106-canonical-audio-volume`.
+- Persisted Audio Volume Automation keyframe `volume` values must use at most three decimal places.
+- This matches `normalizeAudioVolumeKeyframes()` and `updateAudioClipVolumeAtTime()`, which canonicalize volume values to three decimal places.
+- Added parser regression coverage for over-precise volume keyframe values.
+- No project schema change is planned.
+- Validation is pending.
+
 ### M3.105 — Canonical Audio Compressor Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-105-canonical-audio-compressor`.
