@@ -1,19 +1,13 @@
-## M3.93 — active — 2026-09-25
+## M3.93 — completed — 2026-09-25
 
 - Branch: `feat/m3-93-persisted-audio-payload-validation`.
-- Scope: validate persisted audio payload eligibility and Audio Fade duration/overlap semantics at parse time.
-- Reject audio-only fields on Image clips; keep Audio-track Audio and Video-track Video audio payload behavior.
-- Reject fades that exceed clip duration, overlap each other, or are non-zero when source duration is unknown.
-- M3.92 completed and squash-merged as PR #107 at `d9cce0266274b1d974ed084ee8345993d30a2312`.
-- PR #76 remains parked; PR #22 remains unrelated and untouched.
-
-## M3.92 — completed — 2026-09-25
-
-- PR #107; merge SHA `d9cce0266274b1d974ed084ee8345993d30a2312`.
-- Persisted project parsing rejects same-track clip overlap and invalid Transition topology.
-- Valid transitions require visual clips, a following visual clip, direct adjacency, and duration fitting both clips.
+- PR #108; merge SHA `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
+- Persisted audio payloads are restricted to Audio-track Audio and Video-track Video clips.
+- Image clips reject Audio Fade, EQ, Compressor, and Volume Automation metadata.
+- Persisted fades must fit the clip duration, cannot overlap, and must be zero/absent when source duration is unknown.
 - User reported PASS.
 - No project schema, preview, timeline, waveform, export, or DSP behavior change.
+- PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## M3.88 — completed — 2026-09-25
 
