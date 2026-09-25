@@ -1,27 +1,29 @@
-## M3.95 — Strict Project Timestamp Validation — active — 2026-09-25
+## M3.95 — Strict Project Timestamp Validation — in progress — 2026-09-25
 
 Branch:
-Pending creation from updated `main`.
+`fix/m3-95-strict-project-timestamps`
+
+PR:
+Pending creation after implementation and regression coverage.
 
 Scope:
-- Harden persisted project metadata timestamps at the JSON parsing boundary.
-- Require `createdAt` and `updatedAt` to use the same canonical UTC ISO-8601 representation emitted by `Date.toISOString()`.
+- Require persisted `createdAt` and `updatedAt` to use canonical UTC ISO-8601 timestamps emitted by `Date.toISOString()`.
 - Require `updatedAt` to be the same as or later than `createdAt`.
 - Preserve schema version 1 and all editor/export behavior.
 
-Repository evidence:
-- `createProject()` emits UTC timestamps using `toISOString()`.
-- `validateProject()` currently calls `assertIsoTimestamp()`, but that helper only delegates to `Date.parse()`, which accepts broader date formats than the persisted contract implies.
-- Project mutations consistently advance `updatedAt`; no migration or schema change is required.
+Implementation:
+- Tightened `assertIsoTimestamp()` to the canonical millisecond UTC format.
+- Added project-level timestamp ordering validation.
+- Added parser regressions for canonical/equal timestamps, non-canonical timestamp formats, and invalid chronological ordering.
 
 Previous milestone:
 - M3.94 completed and squash-merged as PR #109 at `6048b038e4d15e00372e0267a9e0d2f14caaf72b`.
 
 Validation:
-- Pending implementation and user local validation.
+- Pending user local validation.
 
 Next step:
-- Implement strict timestamp parsing/ordering and focused regression coverage.
+- Open Draft PR and hand off local validation.
 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
