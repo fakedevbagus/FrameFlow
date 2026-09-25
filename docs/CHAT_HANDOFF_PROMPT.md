@@ -1,10 +1,11 @@
-## M3.91 — active — 2026-09-25
+## M3.92 — active — 2026-09-25
 
-- Branch: `feat/m3-91-visual-payload-validation`.
-- PR #106 — Draft.
-- Scope: validate persisted visual payloads (transform, crop, anchor, visual effects, text overlay, keyframes, and transitions) at the project parse boundary without changing schema version 1.
-- M3.90 completed and squash-merged as PR #105 at `c91efb620ddde050487bb11152ebf3c5d563b0d1`.
+- Branch: `feat/m3-92-timeline-topology-validation`.
+- Scope: validate persisted timeline topology, including clip overlap and Transition relationships, at parse time.
+- M3.91 completed and squash-merged as PR #106 at `0917d4be572dca5b0ed741740c61e12eed2def00`.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
+
+
 
 
 ## M3.88 — completed — 2026-09-25
