@@ -1,21 +1,10 @@
-### M3.93 — Persisted Audio Payload Validation — active — 2026-09-25
+### M3.93 — Persisted Audio Payload Validation — in progress — 2026-09-25
 
-- Branch: pending creation from updated `main`.
-- Scope: harden persisted audio payload eligibility and Audio Fade duration/overlap invariants at the JSON parsing boundary.
-- Reject audio-only payloads on Image clips.
-- Mirror the existing Audio Fade command invariants for persisted metadata without changing schema version 1.
-- Add focused parser regression coverage; preserve runtime normalization and existing Audio/Video behavior.
-- User local validation is pending.
-
-### M3.92 — Persisted Timeline Topology Validation — completed — 2026-09-25
-
-- PR #107; merge SHA `d9cce0266274b1d974ed084ee8345993d30a2312`.
-- Validated non-overlapping persisted clips per track.
-- Validated persisted transitions against visual-media eligibility, following-clip presence, direct adjacency, and both adjacent clip durations.
-- Preserved existing mutation-time transition sanitization and schema version 1.
-- Added regression coverage for valid adjacent transitions and malformed overlap/transition topologies.
-- User reported PASS.
-- No project schema, preview, timeline, waveform, export, or DSP behavior change.
+- Branch: `feat/m3-93-persisted-audio-payload-validation`.
+- Scope: enforce persisted audio payload eligibility and Audio Fade duration/overlap semantics at the JSON parsing boundary.
+- Reject audio fields on Image clips and non-zero fades with unknown duration.
+- Mirror the existing Audio Fade command invariants without changing schema version 1.
+- Regression coverage is being added; validation is pending.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
