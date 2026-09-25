@@ -26,6 +26,71 @@ Validation:
 Next step:
 - Validate M3.113 locally and manually, then report PASS/pass/lanjutkan.
 
+## M3.112 — Canonical Text Overlay Position Precision — completed — 2026-09-25
+
+Branch:
+`fix/m3-112-canonical-text-overlay-position-precision`
+
+PR:
+#127
+
+Merge SHA:
+`fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`
+
+Implementation reconciled:
+- Text Overlay X/Y now use two-decimal canonical normalization after range clamping, matching the Inspector's integer-percent position input contract.
+- Persisted Text Overlay X/Y values with more than two decimal places are rejected.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- No direct canvas Text Overlay positioning path exists, so no supported higher-precision interaction path was removed.
+- No project schema version change and no changes to visual Transform, Crop, Preview, or Export contracts beyond canonical Text Overlay position normalization.
+- User reported PASS.
+
+Next step:
+- Fresh audit from updated `main` for the next focused milestone.
+
+## M3.111 — Strict Persisted Transform Rotation Range — completed — 2026-09-25
+
+Branch:
+`fix/m3-111-strict-transform-rotation-range`
+
+PR:
+#126
+
+Merge SHA:
+`eb7ab0fe11c0c279e7daf70c2e31317bf972394f`
+
+Implementation reconciled:
+- Persisted Transform Rotation values must be finite and within `-180` to `180` degrees.
+- Existing runtime rotation wrapping behavior remains unchanged.
+- Added parser regression coverage for both out-of-range directions.
+- No project schema version change.
+- User reported PASS.
+
+Next step:
+- Fresh audit for M3.112.
+
+## M3.110 — Canonical Transform Opacity Precision — completed — 2026-09-25
+
+Branch:
+`fix/m3-110-canonical-transform-opacity-precision`
+
+PR:
+#125
+
+Merge SHA:
+`40c0fd1df662754e814e7e658f9a56e0ce615b78`
+
+Implementation reconciled:
+- Transform Opacity now uses two-decimal canonical normalization after range clamping.
+- Persisted Transform Opacity values with more than two decimal places are rejected, including transform keyframe transforms.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- Existing Opacity range `0` to `1` remains unchanged.
+- User reported PASS.
+- No project schema version change.
+
+Next step:
+- M3.111 — Strict Persisted Transform Rotation Range.
+
 ## M3.109 — Canonical Transform Scale Precision — completed — 2026-09-25
 
 Branch:
