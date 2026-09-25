@@ -70,6 +70,10 @@ describe("project domain", () => {
       ...audioTrack!,
       volume: -1,
     })).toBe(0);
+    expect(getTrackVolume({
+      ...audioTrack!,
+      volume: 0.456,
+    })).toBe(0.46);
   });
 
   it("defaults missing track pan to center and clamps explicit values", () => {
@@ -89,6 +93,10 @@ describe("project domain", () => {
       ...audioTrack!,
       pan: -2,
     })).toBe(-1);
+    expect(getTrackPan({
+      ...audioTrack!,
+      pan: 0.456,
+    })).toBe(0.46);
   });
 
 
@@ -688,6 +696,24 @@ describe("project domain", () => {
       }),
     ),
   ).toThrow("pan must be between -1 and 1.");
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...project,
+          tracks: project.tracks.map((track) => ({ ...track, volume: 0.123 })),
+        }),
+      ),
+    ).toThrow("volume must use at most two decimal places.");
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...project,
+          tracks: project.tracks.map((track) => ({ ...track, pan: -0.456 })),
+        }),
+      ),
+    ).toThrow("pan must use at most two decimal places.");
   });
 
   it("rejects duplicate clip ids", () => {
