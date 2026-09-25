@@ -1,26 +1,46 @@
-## M3.96 — Strict Persisted Keyframe Ordering — in progress — 2026-09-25
+## M3.97 — Strict Persisted Transform Keyframe Payload — in progress — 2026-09-25
 
 Branch:
-`fix/m3-96-strict-persisted-keyframe-order`
+`fix/m3-97-strict-transform-keyframe-payload`
 
 Scope:
-- Require persisted transform keyframes and audio volume keyframes to be strictly increasing by `timeMs`.
-- Keep duplicate-time rejection explicit and preserve existing keyframe payload/range validation.
-- Keep project schema version 1, runtime normalization, Timeline editing, preview, and export behavior unchanged.
+- Require every persisted transform keyframe to contain a structured `transform` object.
+- Preserve all existing time ordering, duplicate-time, range, easing, and transform-field validation.
+- Keep project schema version 1 and runtime/editor/preview/export behavior unchanged.
 
 Implementation:
-- Added parser-level monotonic ordering checks for transform keyframes.
-- Added parser-level monotonic ordering checks for Audio Volume Automation keyframes.
-- Added focused regressions for out-of-order persisted keyframes.
+- Added an explicit parser boundary check requiring `transformKeyframes[].transform` to be an object.
+- Added regressions for missing and null persisted transform payloads.
 
 Previous milestone:
-- M3.95 completed and squash-merged as PR #110 at `e775ef3eeab26ed4557303b723778748182b6488`.
+- M3.96 completed and squash-merged as PR #111 at `95fba85c4eee193af70bb306e5a86535e0b601b1`.
 
 Validation:
 - Pending user local validation.
 
 Next step:
 - Open Draft PR and hand off local validation.
+
+## M3.96 — Strict Persisted Keyframe Ordering — completed — 2026-09-25
+
+Branch:
+`fix/m3-96-strict-persisted-keyframe-order`
+
+PR:
+#111
+
+Merge SHA:
+`95fba85c4eee193af70bb306e5a86535e0b601b1`
+
+Implementation reconciled:
+- Persisted transform keyframes and Audio Volume Automation keyframes must be strictly increasing by `timeMs`.
+- Duplicate-time rejection remains explicit and existing keyframe payload/range validation is preserved.
+- Added focused parser regressions for out-of-order persisted keyframes.
+- User reported PASS.
+- No project schema, runtime normalization, Timeline editing, preview, or export behavior change.
+
+Next step:
+- Audit remaining persisted project invariants and select the next focused milestone.
 
 ## M3.95 — Strict Project Timestamp Validation — completed — 2026-09-25
 

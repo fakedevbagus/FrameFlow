@@ -1143,6 +1143,24 @@ describe("project domain", () => {
     );
   });
 
+  it("rejects transform keyframes without a persisted transform payload", () => {
+    const missingTransform = makeProject({
+      transformKeyframes: [{ timeMs: 1000 } as never],
+    });
+
+    expect(() => parseProject(JSON.stringify(missingTransform))).toThrow(
+      "transformKeyframes[0] transform must be an object.",
+    );
+
+    const nullTransform = makeProject({
+      transformKeyframes: [{ timeMs: 1000, transform: null } as never],
+    });
+
+    expect(() => parseProject(JSON.stringify(nullTransform))).toThrow(
+      "transformKeyframes[0] transform must be an object.",
+    );
+  });
+
   it("rejects non-monotonic persisted audio volume keyframes", () => {
     const project = createProject({ id: "audio-keyframe-order" });
     const audioAsset = {
