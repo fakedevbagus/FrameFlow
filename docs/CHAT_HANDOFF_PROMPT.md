@@ -1,20 +1,22 @@
-## M3.110 — active — 2026-09-25
+## M3.110 — completed — 2026-09-25
 
 - Branch: `fix/m3-110-canonical-transform-opacity-precision`.
 - Scope: align Transform Opacity persistence and runtime normalization with the Inspector's integer-percent input contract.
-- M3.109 completed and squash-merged as PR #124 at `d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`; user reported PASS.
-- Implemented two-decimal Opacity normalization, strict persisted-value validation, and focused regression coverage.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- PR #125; squash-merged at `40c0fd1df662754e814e7e658f9a56e0ce615b78`.
+- Transform Opacity is now normalized to two decimal places after range clamping.
+- Persisted Transform Opacity values with more than two decimal places are rejected, including transform keyframe transforms.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- User reported PASS.
+- No project schema change.
+- Local validation is considered passed only because the user reported PASS; do not infer additional checks beyond the user's report.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.110 is the active milestone; do not assume local validation has passed.
+- The latest completed milestone is M3.110; the next step is a fresh audit from updated `main`.
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
-
-
 
 ## M3.109 — completed — 2026-09-25
 
