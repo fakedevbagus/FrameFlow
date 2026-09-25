@@ -1,9 +1,9 @@
 ## M3.109 — active — 2026-09-25
 
-- Branch: `fix/m3-109-visual-transform-precision-audit`.
-- Scope: audit remaining persisted visual-transform precision and control normalization from updated `main`.
-- M3.108 completed and squash-merged as PR #123 at `317f09aa66f6f7e1196fdd6d8ce86e07fdd07cd8`; user reported PASS.
-- No M3.109 code change has been made yet; candidate invariants are being verified before implementation.
+- Branch: `fix/m3-109-canonical-transform-scale-precision`.
+- Scope: align Transform Scale persistence and runtime normalization with the existing Inspector precision contract.
+- Implemented two-decimal Scale normalization, strict persisted-value validation, and focused regression coverage.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## Workflow for this chat
 
@@ -12,17 +12,6 @@
 - On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
-
-## M3.107 — completed — 2026-09-25
-
-- Branch: `fix/m3-107-canonical-project-name`.
-- PR #122; squash-merged at `a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`.
-- Persisted project `name` values now require an already-trimmed canonical form.
-- Added parser regression coverage for leading/trailing whitespace.
-- User reported PASS.
-- No project schema change and no change to canonical runtime/editor/preview/export behavior.
-- Next milestone: M3.108 — Canonical Track Volume/Pan Precision.
-
 
 ## M3.108 — completed — 2026-09-25
 
@@ -34,59 +23,6 @@
 - User reported PASS.
 - No project schema change and no change to preview/export/media behavior beyond canonicalizing existing track controls.
 
-Next step:
-- M3.109 — audit remaining persisted visual-transform precision and control normalization.
-
-## M3.106 — completed — 2026-09-25
-
-- Branch: `fix/m3-106-canonical-audio-volume`.
-- PR #121; squash-merged at `223856cd70bfaef8d149cc38860d9f9f86745672`.
-- Persisted Audio Volume Automation keyframe `volume` values now require at most three decimal places.
-- Added parser regression coverage.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
-
-## M3.105 — completed — 2026-09-25
-
-- Branch: `fix/m3-105-canonical-audio-compressor`.
-- PR #120; squash-merged at `6cc2a230ed351b44db8dc9551e58a17b1305ed94`.
-- Persisted Audio Compressor threshold/ratio values now require at most one decimal place; attack/release values require at most two decimal places.
-- Added parser regression coverage.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
-
-## M3.104 — completed — 2026-09-25
-
-- Branch: `fix/m3-104-canonical-audio-eq`.
-- PR #119; squash-merged at `c83479fec28f6403fedefad9add5ada8ddecfc30`.
-- Persisted Audio EQ low/mid/high gains now require at most one decimal place.
-- Added parser regression coverage.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
-
-## M3.99 — completed — 2026-09-25
-
-- Branch: `fix/m3-99-integer-audio-keyframe-times`.
-- PR #114; squash-merged at `2918b809edf39306e15fdf884ce11ae3558fee7f`.
-- Persisted Audio Volume Automation keyframe `timeMs` values now require integer milliseconds.
-- Persistence aligns with runtime normalization, which rounds timestamps before ordering/deduplication.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
-- PR #76 remains parked; PR #22 remains unrelated and untouched.
-
-
-## M3.95 — completed — 2026-09-25
-
-- PR #110; merge SHA `e775ef3eeab26ed4557303b723778748182b6488`.
-- Persisted project timestamps require canonical UTC ISO timestamps and chronological ordering.
-- User reported PASS.
-- No project schema, preview, playback, Timeline, waveform, or export behavior change.
-
-## M3.94 — completed — 2026-09-25
-
-- PR #109; merge SHA `6048b038e4d15e00372e0267a9e0d2f14caaf72b`.
-- Persisted canvas width/height now require positive integers.
-- Positive fractional frame rates remain valid.
-- User reported PASS.
-- No project schema, preview, playback, Timeline, waveform, or export behavior change.
+Next milestone:
+- M3.109 — Canonical Transform Scale Precision.
 
