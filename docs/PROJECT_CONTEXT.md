@@ -1,69 +1,43 @@
-## M3.105 — Canonical Audio Compressor Precision — in progress — 2026-09-25
+## M3.105 — Canonical Audio Compressor Precision — completed — 2026-09-25
 
 Branch:
 `fix/m3-105-canonical-audio-compressor`
 
-Scope:
-- Require persisted Audio Compressor `thresholdDb` and `ratio` to use at most one decimal place.
-- Require persisted `attackMs` and `releaseMs` to use at most two decimal places.
-- Align the persistence boundary with the existing runtime and command normalizers.
-- Preserve existing supported ranges, `enabled` handling, and project schema version.
-
-Implementation:
-- Added parser validation rejecting over-precise persisted Audio Compressor values.
-- Added regression coverage for over-precise threshold, ratio, attack, and release values.
-
-Previous milestone:
-- M3.104 completed and squash-merged as PR #119 at `c83479fec28f6403fedefad9add5ada8ddecfc30`.
-
-Validation:
-- Pending user local validation.
-
-Next step:
-- Run the documented local and manual validation for M3.105, then report PASS/pass/lanjutkan.
-
-## M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
-
-Branch:
-`fix/m3-103-canonical-visual-effects`
-
 PR:
-#118
+#120
 
 Merge SHA:
-`c4ae88dc9cf1cde64a1f39672809b74bc25e266e`
+`6cc2a230ed351b44db8dc9551e58a17b1305ed94`
 
 Implementation reconciled:
-- Persisted `visualEffects.brightness`, `contrast`, and `saturation` now require at most two decimal places.
-- Added parser regression coverage for over-precise persisted visual-effect values.
-- Existing -1 to 1 range validation remains unchanged.
+- Persisted Audio Compressor `thresholdDb` and `ratio` now require at most one decimal place.
+- Persisted `attackMs` and `releaseMs` now require at most two decimal places.
+- Added parser regression coverage for over-precise persisted compressor values.
 - User reported PASS.
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 Next step:
-- Audit remaining persisted project invariants and select the next focused milestone.
+- M3.106 — canonicalize persisted Audio Volume Automation keyframe volume precision.
 
-## M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
+## M3.104 — Canonical Audio EQ Precision — completed — 2026-09-25
 
 Branch:
-`fix/m3-102-canonical-text-overlay`
+`fix/m3-104-canonical-audio-eq`
 
 PR:
-#117
+#119
 
 Merge SHA:
-`834a8ee84367f79bc1cdf02ef1d75f13072aa928`
+`c83479fec28f6403fedefad9add5ada8ddecfc30`
 
 Implementation reconciled:
-- Persisted `TextOverlay` text now requires trimmed content.
-- Persisted `TextOverlay` x/y positions now use at most three decimal places.
-- Persisted `TextOverlay` colors now require lowercase six-digit hex notation.
-- Added parser regression coverage for non-canonical persisted text overlays.
+- Persisted Audio EQ low/mid/high gains now require at most one decimal place.
+- Added parser regression coverage for over-precise persisted Audio EQ gains.
 - User reported PASS.
 - No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 Next step:
-- Audit remaining persisted project invariants and select the next focused milestone.
+- Continue auditing remaining persisted project invariants.
 
 ## M3.99 — Canonical Integer Audio Keyframe Times — completed — 2026-09-25
 
