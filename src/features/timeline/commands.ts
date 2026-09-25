@@ -1602,7 +1602,11 @@ export function trimClipStart(
     {
       sourceStartMs: normalizedNewSourceStartMs,
       timelineStartMs,
-      ...getClampedAudioFadePatch(clip, newSourceStartMs, sourceEndMs),
+      ...getClampedAudioFadePatch(
+        clip,
+        normalizedNewSourceStartMs,
+        sourceEndMs,
+      ),
     },
     now,
   );
@@ -1666,7 +1670,7 @@ export function trimClipEnd(
       ...getClampedAudioFadePatch(
         clip,
         clip.sourceStartMs,
-        newSourceEndMs,
+        normalizedNewSourceEndMs,
       ),
     },
     now,
