@@ -1,10 +1,12 @@
-### M3.100 — Canonical Integer Asset Durations — in progress — 2026-09-25
+### M3.100 — Canonical Integer Asset Durations — completed — 2026-09-25
 
 - Branch: `fix/m3-100-integer-asset-duration`.
-- Persisted `MediaAsset.durationMs` values must be non-negative integer milliseconds or `null`.
+- PR #115; merge SHA `a6d9d8ee5d5f3782bd5de22ac61c2a3b5122218d`.
+- Persisted `MediaAsset.durationMs` values now require non-negative integer milliseconds or `null`.
 - This matches the native media probe representation, which exposes known media duration as unsigned integer milliseconds.
 - Added parser regression coverage for fractional persisted asset durations.
-- Validation is pending.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor behavior.
 
 ### M3.99 — Canonical Integer Audio Keyframe Times — completed — 2026-09-25
 
