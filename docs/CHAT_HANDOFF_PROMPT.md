@@ -1,6 +1,7 @@
 ## M3.92 — active — 2026-09-25
 
 - Branch: `feat/m3-92-timeline-topology-validation`.
+- PR #107 — Draft.
 - Scope: validate persisted timeline topology, including clip overlap and Transition relationships, at parse time.
 - M3.91 completed and squash-merged as PR #106 at `0917d4be572dca5b0ed741740c61e12eed2def00`.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
