@@ -366,6 +366,136 @@ function validateTracks(
         clipIds,
       );
     }
+
+    validateTrackTopology(track, trackIndex, assetById);
+  }
+}
+
+function validateTrackTopology(
+  track: Record<string, unknown>,
+  trackIndex: number,
+  assetById: Map<string, MediaAsset>,
+): void {
+  const clips = track.clips as unknown[];
+  const orderedClips = clips
+    .map((clip, index) => ({
+      clip: clip as Record<string, unknown>,
+      index,
+    }))
+    .sort((left, right) => {
+      const startDelta =
+        Number(left.clip.timelineStartMs) - Number(right.clip.timelineStartMs);
+      return startDelta !== 0 ? startDelta : left.index - right.index;
+    });
+
+  for (let index = 1; index < orderedClips.length; index += 1) {
+    const previous = orderedClips[index - 1].clip;
+    const current = orderedClips[index].clip;
+    const previousEnd =
+      Number(previous.timelineStartMs) +
+      (previous.sourceEndMs === null
+        ? 0
+        : Number(previous.sourceEndMs) - Number(previous.sourceStartMs));
+
+    if (previousEnd > Number(current.timelineStartMs)) {
+      throw new ProjectValidationError(
+        "Track " +
+          trackIndex +
+          " contains overlapping clips at indices " +
+          orderedClips[index - 1].index +
+          " and " +
+          orderedClips[index].index +
+          ".",
+      );
+    }
+  }
+
+  for (const { clip, index } of orderedClips) {
+    if (clip.transitionOut === undefined) {
+      continue;
+    }
+
+    const asset = assetById.get(String(clip.assetId));
+    if (
+      track.type !== "video" ||
+      !asset ||
+      (asset.mediaType !== "video" && asset.mediaType !== "image")
+    ) {
+      throw new ProjectValidationError(
+        "Clip " +
+          trackIndex +
+          "." +
+          index +
+          " transitionOut requires a visual clip on a video track.",
+      );
+    }
+
+    const position = orderedClips.findIndex(
+      (candidate) => candidate.index === index,
+    );
+    const next = position >= 0 ? orderedClips[position + 1]?.clip : undefined;
+
+    if (!next) {
+      throw new ProjectValidationError(
+        "Clip " + trackIndex + "." + index + " transitionOut requires a following clip.",
+      );
+    }
+
+    const nextAsset = assetById.get(String(next.assetId));
+    if (
+      !nextAsset ||
+      (nextAsset.mediaType !== "video" && nextAsset.mediaType !== "image")
+    ) {
+      throw new ProjectValidationError(
+        "Clip " +
+          trackIndex +
+          "." +
+          index +
+          " transitionOut requires the following clip to be visual.",
+      );
+    }
+
+    const outgoingEnd =
+      Number(clip.timelineStartMs) +
+      (clip.sourceEndMs === null
+        ? 0
+        : Number(clip.sourceEndMs) - Number(clip.sourceStartMs));
+
+    if (outgoingEnd !== Number(next.timelineStartMs)) {
+      throw new ProjectValidationError(
+        "Clip " +
+          trackIndex +
+          "." +
+          index +
+          " transitionOut requires directly adjacent clips.",
+      );
+    }
+
+    const outgoingDuration =
+      clip.sourceEndMs === null
+        ? 0
+        : Number(clip.sourceEndMs) - Number(clip.sourceStartMs);
+    const incomingDuration =
+      next.sourceEndMs === null
+        ? 0
+        : Number(next.sourceEndMs) - Number(next.sourceStartMs);
+    const transitionDuration = (
+      clip.transitionOut as Record<string, unknown>
+    ).durationMs;
+
+    if (
+      !isFiniteNumber(transitionDuration) ||
+      transitionDuration > outgoingDuration ||
+      transitionDuration > incomingDuration
+    ) {
+      throw new ProjectValidationError(
+        "Clip " +
+          trackIndex +
+          "." +
+          index +
+          " transitionOut duration cannot exceed either adjacent clip duration.",
+      );
+    }
   }
 }
 

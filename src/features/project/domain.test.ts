@@ -538,6 +538,251 @@ describe("project domain", () => {
     );
   });
 
+  it("accepts adjacent non-overlapping visual clips with a valid transition", () => {
+    const project = createProject({ id: "timeline-topology-valid" });
+    const videoAssetA = {
+      id: "video-a",
+      name: "A",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/a.mp4",
+      durationMs: 4000,
+    };
+    const videoAssetB = {
+      id: "video-b",
+      name: "B",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/b.mp4",
+      durationMs: 3000,
+    };
+    const invalidBase = {
+      ...project,
+      assets: [videoAssetA, videoAssetB],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-a",
+                  assetId: videoAssetA.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  transitionOut: {
+                    type: "dissolve" as const,
+                    durationMs: 300,
+                  },
+                },
+                {
+                  id: "clip-b",
+                  assetId: videoAssetB.id,
+                  timelineStartMs: 4000,
+                  sourceStartMs: 0,
+                  sourceEndMs: 3000,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(parseProject(JSON.stringify(invalidBase))).toEqual(invalidBase);
+  });
+
+  it("rejects overlapping clips in one persisted track", () => {
+    const project = createProject({ id: "timeline-overlap" });
+    const audioAssetA = {
+      id: "audio-a",
+      name: "A",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/a.wav",
+      durationMs: 3000,
+    };
+    const audioAssetB = {
+      id: "audio-b",
+      name: "B",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/b.wav",
+      durationMs: 3000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [audioAssetA, audioAssetB],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-a",
+                  assetId: audioAssetA.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 3000,
+                },
+                {
+                  id: "clip-b",
+                  assetId: audioAssetB.id,
+                  timelineStartMs: 2000,
+                  sourceStartMs: 0,
+                  sourceEndMs: 3000,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "contains overlapping clips",
+    );
+  });
+
+  it("rejects a transition without a following adjacent visual clip", () => {
+    const project = createProject({ id: "timeline-transition-end" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 4000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  transitionOut: {
+                    type: "dissolve" as const,
+                    durationMs: 300,
+                  },
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "transitionOut requires a following clip.",
+    );
+  });
+
+  it("rejects a transition between non-adjacent persisted clips", () => {
+    const project = createProject({ id: "timeline-transition-gap" });
+    const firstAsset = {
+      id: "video-first",
+      name: "First",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/first.mp4",
+      durationMs: 2000,
+    };
+    const secondAsset = {
+      id: "video-second",
+      name: "Second",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/second.mp4",
+      durationMs: 2000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [firstAsset, secondAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: firstAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1000,
+                  transitionOut: {
+                    type: "dissolve" as const,
+                    durationMs: 300,
+                  },
+                },
+                {
+                  id: "clip-2",
+                  assetId: secondAsset.id,
+                  timelineStartMs: 1500,
+                  sourceStartMs: 0,
+                  sourceEndMs: 2000,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "transitionOut requires directly adjacent clips.",
+    );
+  });
+
+  it("rejects a persisted transition longer than either adjacent clip", () => {
+    const project = createProject({ id: "timeline-transition-duration" });
+    const firstAsset = {
+      id: "video-first",
+      name: "First",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/first.mp4",
+      durationMs: 1000,
+    };
+    const secondAsset = {
+      id: "video-second",
+      name: "Second",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/second.mp4",
+      durationMs: 2000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [firstAsset, secondAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: firstAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1000,
+                  transitionOut: {
+                    type: "dissolve" as const,
+                    durationMs: 2000,
+                  },
+                },
+                {
+                  id: "clip-2",
+                  assetId: secondAsset.id,
+                  timelineStartMs: 1000,
+                  sourceStartMs: 0,
+                  sourceEndMs: 2000,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "cannot exceed either adjacent clip duration",
+    );
+  });
+
   it("accepts valid persisted visual payloads", () => {
     const project = createProject({ id: "visual-payloads" });
     const videoAsset = {
