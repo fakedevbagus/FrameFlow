@@ -1,11 +1,14 @@
-### M3.109 — Canonical Transform Scale Precision — in progress — 2026-09-25
+### M3.109 — Canonical Transform Scale Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-109-canonical-transform-scale-precision`.
-- Transform Scale is now rounded to two decimal places by the shared runtime normalizer.
-- Persisted Transform Scale values with more than two decimal places are rejected, including keyframe transforms.
+- PR #124; squash-merged at `d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`.
+- Transform Scale now uses two-decimal canonical normalization after range clamping.
+- Persisted Transform Scale values with more than two decimal places are rejected, including transform keyframe transforms.
+- Existing Scale range `0.05..10` remains unchanged.
 - Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
-- No project schema change.
-- Validation is pending.
+- User reported PASS.
+- No project schema change and no change to X/Y, Rotation, Opacity, Crop, Preview, or Export contracts.
+- Next milestone: M3.110 — audit remaining persisted visual-transform precision and control normalization.
 
 ### M3.108 — Canonical Track Volume/Pan Precision — completed — 2026-09-25
 
