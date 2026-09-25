@@ -3,8 +3,8 @@
 - Branch: `fix/m3-107-canonical-project-name`.
 - Scope: require persisted project `name` to already equal its trimmed canonical form.
 - Audit finding from current `main`: `createProject()` trims project names before persistence, while `validateProject()` only checks that the persisted name is non-empty, allowing leading/trailing whitespace to survive load/save.
-- No project schema change is planned.
-- Local validation is pending and must not be assumed passed.
+- Implemented parser validation plus focused regression coverage.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## Workflow for this chat
 
