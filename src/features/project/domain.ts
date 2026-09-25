@@ -703,6 +703,7 @@ function validateAnchorPayload(value: unknown, field: string): void {
         field + " " + key + " must be between 0 and 1.",
       );
     }
+
   }
 }
 
@@ -782,6 +783,12 @@ function validateTextOverlayPayload(
     throw new ProjectValidationError(field + " text must be non-empty.");
   }
 
+  if (value.text !== value.text.trim()) {
+    throw new ProjectValidationError(
+      field + " text must be trimmed.",
+    );
+  }
+
   if (value.text.trim().length > MAX_TEXT_OVERLAY_LENGTH) {
     throw new ProjectValidationError(
       field + " text exceeds the supported length.",
@@ -793,6 +800,12 @@ function validateTextOverlayPayload(
     if (!isFiniteNumber(entry) || entry < 0 || entry > 1) {
       throw new ProjectValidationError(
         field + " " + key + " must be between 0 and 1.",
+      );
+    }
+
+    if (Math.round(entry * 1000) / 1000 !== entry) {
+      throw new ProjectValidationError(
+        field + " " + key + " must use at most three decimal places.",
       );
     }
   }
@@ -810,10 +823,10 @@ function validateTextOverlayPayload(
 
   if (
     typeof value.color !== "string" ||
-    !/^#[0-9a-fA-F]{6}$/.test(value.color)
+    !/^#[0-9a-f]{6}$/.test(value.color)
   ) {
     throw new ProjectValidationError(
-      field + " color must be a six-digit hex color.",
+      field + " color must be a lowercase six-digit hex color.",
     );
   }
 

@@ -1,3 +1,14 @@
+### M3.102 — Canonical Text Overlay Payload — in progress — 2026-09-25
+
+- Branch: `fix/m3-102-canonical-text-overlay`.
+- Persisted text overlay text must already be trimmed.
+- Persisted text overlay x/y positions must use at most three decimal places.
+- Persisted text overlay colors must use lowercase six-digit hex notation.
+- These constraints align persistence with the runtime text overlay normalizer.
+- Added parser regression coverage for non-canonical persisted text overlays.
+- Validation is pending.
+
+### M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
 ### M3.101 — Canonical Integer Clip Times — completed — 2026-09-25
 
 - Branch: `fix/m3-101-integer-clip-times`.
