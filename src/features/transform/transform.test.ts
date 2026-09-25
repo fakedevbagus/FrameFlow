@@ -41,6 +41,13 @@ describe("clip transforms", () => {
       rotation: 180,
       opacity: 1,
     });
+    expect(normalizeClipTransform({
+      x: 0,
+      y: 0,
+      scale: 1.236,
+      rotation: 0,
+      opacity: 1,
+    }).scale).toBe(1.24);
   });
 
   it("normalizes legacy and out-of-range transform anchors", () => {
