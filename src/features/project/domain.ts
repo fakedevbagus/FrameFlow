@@ -357,11 +357,29 @@ function validateTracks(
     }
 
     if (
+      track.volume !== undefined &&
+      normalizeTrackVolume(track.volume) !== track.volume
+    ) {
+      throw new ProjectValidationError(
+        fieldPrefix + " volume must use at most two decimal places.",
+      );
+    }
+
+    if (
       track.pan !== undefined &&
       (!isFiniteNumber(track.pan) || track.pan < -1 || track.pan > 1)
     ) {
       throw new ProjectValidationError(
         fieldPrefix + " pan must be between -1 and 1.",
+      );
+    }
+
+    if (
+      track.pan !== undefined &&
+      normalizeTrackPan(track.pan) !== track.pan
+    ) {
+      throw new ProjectValidationError(
+        fieldPrefix + " pan must use at most two decimal places.",
       );
     }
 
@@ -1275,6 +1293,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+export function normalizeTrackVolume(value: number): number {
+  return Math.min(1, Math.max(0, Math.round(value * 100) / 100));
+}
+
+export function normalizeTrackPan(value: number): number {
+  return Math.min(1, Math.max(-1, Math.round(value * 100) / 100));
+}
+
 export function getTrackVolume(track: Track): number {
   const volume = track.volume;
 
@@ -1282,7 +1308,7 @@ export function getTrackVolume(track: Track): number {
     return DEFAULT_TRACK_VOLUME;
   }
 
-  return Math.min(1, Math.max(0, volume));
+  return normalizeTrackVolume(volume);
 }
 
 
@@ -1293,7 +1319,7 @@ export function getTrackPan(track: Track): number {
     return DEFAULT_TRACK_PAN;
   }
 
-  return Math.min(1, Math.max(-1, pan));
+  return normalizeTrackPan(pan);
 }
 
 export function getVisualEffects(clip: Clip): VisualEffects {
