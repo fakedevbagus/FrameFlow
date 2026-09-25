@@ -1,12 +1,10 @@
-### M3.93 — Persisted Audio Payload Validation — completed — 2026-09-25
+### M3.94 — Persisted Canvas Dimension Validation — active — 2026-09-25
 
-- PR #108; merge SHA `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
-- Persisted audio fields are now restricted to audio-bearing Audio-track Audio and Video-track Video clips.
-- Image clips reject Audio Fade, EQ, Compressor, and Volume Automation payloads.
-- Persisted fades must fit the clip duration, cannot overlap, and must be zero/absent when source duration is unknown.
-- Added focused parser regressions.
-- User reported PASS.
-- No project schema, preview, timeline, waveform, export, or DSP behavior change.
+- Branch: pending creation from updated `main`.
+- Require persisted canvas width/height to be positive integers, matching `updateCanvasDimensions()`.
+- Preserve non-integer positive frame rates.
+- Add focused parser regression coverage.
+- Validation is pending.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
