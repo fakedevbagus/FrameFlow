@@ -280,7 +280,7 @@ export function normalizeTransformKeyframes(
         keyframe.timeMs >= 0,
     )
     .map((keyframe) => ({
-      timeMs: keyframe.timeMs,
+      timeMs: normalizeTransformKeyframeTime(keyframe.timeMs),
       transform: normalizeClipTransform(keyframe.transform),
       easing: normalizeTransformEasing(keyframe.easing),
     }))
@@ -301,6 +301,10 @@ export function normalizeTransformKeyframes(
   return deduplicated;
 }
 
+export function normalizeTransformKeyframeTime(value: number): number {
+  return Math.max(0, Math.round(value));
+}
+
 export function getTransformKeyframeAtTime(
   keyframes: TransformKeyframe[] | undefined,
   timeMs: number,
@@ -310,9 +314,9 @@ export function getTransformKeyframeAtTime(
   }
 
   const normalized = normalizeTransformKeyframes(keyframes);
+  const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
   return (
-    normalized.find((keyframe) => keyframe.timeMs === Math.max(0, timeMs)) ??
-    null
+    normalized.find((keyframe) => keyframe.timeMs === normalizedTimeMs) ?? null
   );
 }
 
@@ -375,12 +379,13 @@ export function upsertTransformKeyframe(
   }
 
   const normalized = normalizeTransformKeyframes(keyframes);
+  const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
   const existingIndex = normalized.findIndex(
-    (keyframe) => keyframe.timeMs === timeMs,
+    (keyframe) => keyframe.timeMs === normalizedTimeMs,
   );
   const existing = existingIndex === -1 ? undefined : normalized[existingIndex];
   const next = {
-    timeMs,
+    timeMs: normalizedTimeMs,
     transform: normalizeClipTransform(transform),
     easing: normalizeTransformEasing(easing ?? existing?.easing),
   };
@@ -402,8 +407,9 @@ export function removeTransformKeyframe(
     return normalizeTransformKeyframes(keyframes);
   }
 
+  const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
   return normalizeTransformKeyframes(keyframes).filter(
-    (keyframe) => keyframe.timeMs !== Math.max(0, timeMs),
+    (keyframe) => keyframe.timeMs !== normalizedTimeMs,
   );
 }
 
