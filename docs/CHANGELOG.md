@@ -1,10 +1,12 @@
-### M3.93 — Persisted Audio Payload Validation — in progress — 2026-09-25
+### M3.93 — Persisted Audio Payload Validation — completed — 2026-09-25
 
-- Branch: `feat/m3-93-persisted-audio-payload-validation`.
-- Scope: enforce persisted audio payload eligibility and Audio Fade duration/overlap semantics at the JSON parsing boundary.
-- Reject audio fields on Image clips and non-zero fades with unknown duration.
-- Mirror the existing Audio Fade command invariants without changing schema version 1.
-- Regression coverage is being added; validation is pending.
+- PR #108; merge SHA `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
+- Persisted audio fields are now restricted to audio-bearing Audio-track Audio and Video-track Video clips.
+- Image clips reject Audio Fade, EQ, Compressor, and Volume Automation payloads.
+- Persisted fades must fit the clip duration, cannot overlap, and must be zero/absent when source duration is unknown.
+- Added focused parser regressions.
+- User reported PASS.
+- No project schema, preview, timeline, waveform, export, or DSP behavior change.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
