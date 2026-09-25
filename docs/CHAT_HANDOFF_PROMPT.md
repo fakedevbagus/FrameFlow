@@ -1,17 +1,16 @@
-## M3.102 — completed — 2026-09-25
+## M3.103 — active — 2026-09-25
 
-- Branch: `fix/m3-102-canonical-text-overlay`.
-- PR #117; squash-merged at `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
-- Persisted TextOverlay text must be trimmed, x/y positions use at most three decimal places, and colors use lowercase six-digit hex notation.
-- These rules align persistence with the existing runtime text overlay normalizer.
-- User reported PASS.
-- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
+- Branch: `fix/m3-103-canonical-visual-effects`.
+- Scope: require persisted `visualEffects.brightness`, `contrast`, and `saturation` values to use at most two decimal places.
+- Align persistence with the runtime visual-effects normalizer, which rounds these values to two decimal places.
+- M3.102 completed and squash-merged as PR #117 at `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
+- Awaiting local validation of M3.103.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.102 is the active milestone; do not assume local validation has passed.
+- M3.103 is the active milestone; do not assume local validation has passed.
 - When user reports `PASS` / `pass` / `lanjutkan`, mark the active Draft PR ready, squash-merge it using the verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, then audit and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 
