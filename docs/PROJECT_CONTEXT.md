@@ -1,25 +1,23 @@
-## M3.99 — Canonical Integer Audio Keyframe Times — in progress — 2026-09-25
+## M3.99 — Canonical Integer Audio Keyframe Times — completed — 2026-09-25
 
 Branch:
 `fix/m3-99-integer-audio-keyframe-times`
 
-Scope:
-- Require persisted Audio Volume Automation keyframe `timeMs` values to be integer milliseconds.
-- Align persisted audio automation timestamps with the runtime normalizer, which rounds timestamps to integer milliseconds before ordering/deduplication.
-- Preserve schema version 1 and all existing audio automation behavior for canonical data.
+PR:
+#114
 
-Implementation:
-- Added parser validation rejecting fractional persisted audio volume keyframe times.
-- Added regression coverage for fractional persisted audio volume keyframes.
+Merge SHA:
+`2918b809edf39306e15fdf884ce11ae3558fee7f`
 
-Previous milestone:
-- M3.98 completed and squash-merged as PR #113 at `d3e93c9a3af3333fd2a2fd33baecf33a38f9fa74`.
-
-Validation:
-- Pending user local validation.
+Implementation reconciled:
+- Persisted Audio Volume Automation keyframe `timeMs` values now require integer milliseconds.
+- Persistence aligns with the runtime normalizer, which rounds audio automation timestamps before ordering/deduplication.
+- Added parser regression coverage for fractional persisted audio keyframe times.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 
 Next step:
-- Open Draft PR and hand off local validation.
+- Audit remaining persisted project invariants and select the next focused milestone.
 
 ## M3.98 — Unique Native Project Save Temp Paths — completed — 2026-09-25
 
