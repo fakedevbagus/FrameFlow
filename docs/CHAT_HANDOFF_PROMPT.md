@@ -1,19 +1,30 @@
-## M3.103 — active — 2026-09-25
+## M3.104 — active — 2026-09-25
+
+- Branch: `fix/m3-104-canonical-audio-eq`.
+- Scope: require persisted Audio EQ `lowGainDb`, `midGainDb`, and `highGainDb` values to use at most one decimal place.
+- Audit finding: `getAudioEq()` rounds gains to one decimal place and `updateAudioClipEq()` also persists one-decimal gains, while the project parser currently accepts arbitrary finite precision within -12 to 12.
+- No project schema change is planned.
+- PR will be created after implementation and focused regression coverage.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.104 is the active milestone; do not assume local validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.103 — completed — 2026-09-25
 
 - Branch: `fix/m3-103-canonical-visual-effects`.
-- Scope: require persisted `visualEffects.brightness`, `contrast`, and `saturation` values to use at most two decimal places.
-- Align persistence with the runtime visual-effects normalizer, which rounds these values to two decimal places.
-- M3.102 completed and squash-merged as PR #117 at `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
-- Awaiting local validation of M3.103.
+- PR #118; squash-merged at `c4ae88dc9cf1cde64a1f39672809b74bc25e266e`.
+- Persisted `visualEffects.brightness`, `contrast`, and `saturation` values now require at most two decimal places.
+- Added parser regression coverage for over-precise persisted visual-effect values.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
-
-- Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.103 is the active milestone; do not assume local validation has passed.
-- When user reports `PASS` / `pass` / `lanjutkan`, mark the active Draft PR ready, squash-merge it using the verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, then audit and start the next focused milestone.
-- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
-
 
 ## M3.99 — completed — 2026-09-25
 
