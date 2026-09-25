@@ -1,3 +1,12 @@
+### M3.107 — Canonical Project Name Trimming — in progress — 2026-09-25
+
+- Branch: `fix/m3-107-canonical-project-name`.
+- Persisted project `name` values must already be trimmed.
+- This aligns persistence with `createProject()`, which trims names before creation.
+- Added parser regression coverage for leading/trailing whitespace.
+- No project schema change is planned.
+- Validation is pending.
+
 ### M3.106 — Canonical Audio Volume Automation Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-106-canonical-audio-volume`.
