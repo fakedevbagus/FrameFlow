@@ -291,6 +291,102 @@ describe("project domain", () => {
     });
   });
 
+  it("rejects over-precise persisted audio compressor settings", () => {
+    const project = createProject({ id: "over-precise-audio-compressor" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.mp3",
+      durationMs: 5000,
+    };
+    const makeProject = (audioCompressor: Record<string, unknown>) => ({
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  audioCompressor,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            enabled: true,
+            thresholdDb: -24.12,
+            ratio: 4,
+            attackMs: 20,
+            releaseMs: 250,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "audioCompressor thresholdDb must use at most one decimal place.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            enabled: true,
+            thresholdDb: -24,
+            ratio: 4.56,
+            attackMs: 20,
+            releaseMs: 250,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "audioCompressor ratio must use at most one decimal place.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            enabled: true,
+            thresholdDb: -24,
+            ratio: 4,
+            attackMs: 20.123,
+            releaseMs: 250,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "audioCompressor attackMs must use at most two decimal places.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            enabled: true,
+            thresholdDb: -24,
+            ratio: 4,
+            attackMs: 20,
+            releaseMs: 250.987,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "audioCompressor releaseMs must use at most two decimal places.",
+    );
+  });
+
   it("normalizes audio fade durations against the clip duration", () => {
     const clip = {
       id: "fade-clip",
