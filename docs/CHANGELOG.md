@@ -1,3 +1,12 @@
+### M3.114 — Strict Project Frame Rate Range — in progress — 2026-09-25
+
+- Branch: `fix/m3-114-strict-project-frame-rate-range`.
+- Align persisted project `canvas.frameRate` validation with the native export limit of 240 FPS.
+- Fractional frame rates remain supported; only non-finite, non-positive, and over-limit values are rejected.
+- Added parser regression coverage for a persisted frame rate above 240 FPS.
+- No project schema change.
+- Local validation pending user verification.
+
 ### M3.113 — Canonical Transform Keyframe Times — completed — 2026-09-25
 
 - Branch: `fix/m3-113-canonical-transform-keyframe-times`.
