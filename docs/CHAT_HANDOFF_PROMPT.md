@@ -1,10 +1,11 @@
-## M3.102 — active — 2026-09-25
+## M3.102 — completed — 2026-09-25
 
 - Branch: `fix/m3-102-canonical-text-overlay`.
-- Scope: require persisted TextOverlay text to be trimmed, x/y positions to use at most three decimal places, and colors to use lowercase six-digit hex notation.
+- PR #117; squash-merged at `834a8ee84367f79bc1cdf02ef1d75f13072aa928`.
+- Persisted TextOverlay text must be trimmed, x/y positions use at most three decimal places, and colors use lowercase six-digit hex notation.
 - These rules align persistence with the existing runtime text overlay normalizer.
-- M3.101 completed and squash-merged as PR #116 at `59a71942d771e5b4e019d01429865df3cadb7a5b`.
-- Awaiting local validation of M3.102.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
 - PR #76 remains parked; PR #22 remains unrelated and untouched.
 
 ## Workflow for next chat
