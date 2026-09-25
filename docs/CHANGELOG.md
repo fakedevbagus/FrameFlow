@@ -1,3 +1,12 @@
+### M3.103 — Canonical Visual Effects Precision — in progress — 2026-09-25
+
+- Branch: `fix/m3-103-canonical-visual-effects`.
+- Persisted `visualEffects.brightness`, `contrast`, and `saturation` values must use at most two decimal places.
+- This matches the runtime normalizer, which rounds visual-effect values to two decimal places.
+- Added parser regression coverage for over-precise persisted visual-effect values.
+- Validation is pending.
+
+### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 ### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 
 - Branch: `fix/m3-102-canonical-text-overlay`.

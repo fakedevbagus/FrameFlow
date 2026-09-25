@@ -1035,6 +1035,80 @@ describe("project domain", () => {
     ).toThrow("durationMs must be an integer between 50 and 2000.");
   });
 
+  it("rejects over-precise persisted visual effects", () => {
+    const project = createProject({ id: "over-precise-visual-effects" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const makeProject = (visualEffects: Record<string, unknown>) => ({
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  visualEffects,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            brightness: 0.123,
+            contrast: 0,
+            saturation: 0,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "visualEffects brightness must use at most two decimal places.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            brightness: 0,
+            contrast: -0.456,
+            saturation: 0,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "visualEffects contrast must use at most two decimal places.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify(
+          makeProject({
+            brightness: 0,
+            contrast: 0,
+            saturation: 0.789,
+          }),
+        ),
+      ),
+    ).toThrow(
+      "visualEffects saturation must use at most two decimal places.",
+    );
+  });
+
   it("rejects non-canonical persisted text overlays", () => {
     const project = createProject({ id: "non-canonical-text-overlay" });
     const videoAsset = {
