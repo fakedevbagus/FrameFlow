@@ -1192,6 +1192,18 @@ describe("project domain", () => {
 
     expect(() =>
       parseProject(JSON.stringify(makeProject({
+        transform: { x: 0, y: 0, scale: 1, rotation: 181, opacity: 1 },
+      }))),
+    ).toThrow("transform rotation must be between -180 and 180 degrees.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
+        transform: { x: 0, y: 0, scale: 1, rotation: -181, opacity: 1 },
+      }))),
+    ).toThrow("transform rotation must be between -180 and 180 degrees.");
+
+    expect(() =>
+      parseProject(JSON.stringify(makeProject({
         crop: { top: 0.7, right: 0.4, bottom: 0, left: 0 },
       }))),
     ).toThrow("crop must leave a positive visible region.");
