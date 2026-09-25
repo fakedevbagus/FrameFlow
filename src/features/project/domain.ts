@@ -910,6 +910,12 @@ function validateTransformKeyframesPayload(
 
     assertFiniteNonNegativeNumber(keyframe.timeMs, keyframeField + " timeMs");
 
+    if (!Number.isInteger(keyframe.timeMs)) {
+      throw new ProjectValidationError(
+        keyframeField + " timeMs must be an integer number of milliseconds.",
+      );
+    }
+
     if (durationMs !== null && keyframe.timeMs > durationMs) {
       throw new ProjectValidationError(
         keyframeField + " timeMs must be inside the clip duration.",

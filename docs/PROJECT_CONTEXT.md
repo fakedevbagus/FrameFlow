@@ -1,3 +1,31 @@
+## M3.113 — Canonical Transform Keyframe Times — in progress — 2026-09-25
+
+Branch:
+`fix/m3-113-canonical-transform-keyframe-times`
+
+Scope:
+- Align Transform Keyframe time storage and lookup with the existing integer-millisecond persistence contract used by Audio Volume Automation.
+- Preserve fractional playback evaluation while canonicalizing stored keyframe timestamps.
+
+Implementation:
+- Transform keyframe timestamps are rounded to the nearest non-negative integer millisecond when normalized/upserted.
+- Transform keyframe lookup/removal accepts fractional query times by canonicalizing the query first.
+- Transform keyframe commands canonicalize add/update/move/easing/removal times.
+- Persisted Transform Keyframe timestamps now require integer milliseconds.
+- Added regression coverage for normalization, command behavior, and persisted-value rejection.
+- No project schema version change.
+- No change to playback interpolation precision between stored integer keyframes.
+
+Previous milestone:
+- M3.112 completed and squash-merged as PR #127 at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`.
+- User reported PASS for M3.112.
+
+Validation:
+- Pending user local validation.
+
+Next step:
+- Validate M3.113 locally and manually, then report PASS/pass/lanjutkan.
+
 ## M3.112 — Canonical Text Overlay Position Precision — completed — 2026-09-25
 
 Branch:
@@ -20,6 +48,27 @@ Implementation reconciled:
 Next step:
 - Fresh audit from updated `main` for the next focused milestone.
 
+## M3.111 — Strict Persisted Transform Rotation Range — completed — 2026-09-25
+
+Branch:
+`fix/m3-111-strict-transform-rotation-range`
+
+PR:
+#126
+
+Merge SHA:
+`eb7ab0fe11c0c279e7daf70c2e31317bf972394f`
+
+Implementation reconciled:
+- Persisted Transform Rotation values must be finite and within `-180` to `180` degrees.
+- Existing runtime rotation wrapping behavior remains unchanged.
+- Added parser regression coverage for both out-of-range directions.
+- No project schema version change.
+- User reported PASS.
+
+Next step:
+- Fresh audit for M3.112.
+
 ## M3.110 — Canonical Transform Opacity Precision — completed — 2026-09-25
 
 Branch:
@@ -37,10 +86,10 @@ Implementation reconciled:
 - Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
 - Existing Opacity range `0` to `1` remains unchanged.
 - User reported PASS.
-- No project schema version change and no change to X/Y, Rotation, Crop, Preview, or Export contracts beyond canonicalizing Opacity.
+- No project schema version change.
 
 Next step:
-- Audit remaining persisted visual-transform precision and control normalization from updated `main`.
+- M3.111 — Strict Persisted Transform Rotation Range.
 
 ## M3.109 — Canonical Transform Scale Precision — completed — 2026-09-25
 

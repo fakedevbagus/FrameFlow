@@ -719,6 +719,36 @@ describe("clip transforms", () => {
     expect(reset.tracks[0].clips[0].cropPosition).toBeUndefined();
   });
 
+  it("canonicalizes transform keyframe command times", () => {
+    let project = createProject({ id: "transform-keyframe-time" });
+    project = {
+      ...project,
+      assets: [{
+        id: "video",
+        name: "clip.mp4",
+        mediaType: "video",
+        sourcePath: "/clip.mp4",
+        durationMs: 4000,
+      }],
+    };
+    project = addAssetToTimeline(project, "video");
+    const clipId = project.tracks[0].clips[0].id;
+
+    project = addTransformKeyframe(project, clipId, 1000.4);
+    expect(project.tracks[0].clips[0].transformKeyframes?.map((keyframe) => keyframe.timeMs))
+      .toEqual([1000]);
+
+    project = updateTransformKeyframeEasing(project, clipId, 1000.6, "ease-in");
+    expect(project.tracks[0].clips[0].transformKeyframes?.[0]).toMatchObject({
+      timeMs: 1000,
+      easing: "ease-in",
+    });
+
+    project = moveTransformKeyframe(project, clipId, 1000.4, 2000.6);
+    expect(project.tracks[0].clips[0].transformKeyframes?.map((keyframe) => keyframe.timeMs))
+      .toEqual([2001]);
+  });
+
   it("rejects transform updates for audio clips", () => {
     let project = createProject({ id: "audio-transform-command" });
 
