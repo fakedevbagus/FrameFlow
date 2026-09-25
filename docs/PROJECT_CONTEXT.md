@@ -1,34 +1,28 @@
-## M3.91 — Persisted Visual Payload Validation — in progress — 2026-09-25
+## M3.92 — Persisted Timeline Topology Validation — in progress — 2026-09-25
 
 Branch:
-`feat/m3-91-visual-payload-validation`
-
-PR:
-#106 — Draft.
+`feat/m3-92-timeline-topology-validation`
 
 Scope:
-- Validate persisted visual payloads at the project parsing boundary without changing schema version 1.
-- Cover Transform, Transform Anchor, Crop, Crop Position, Visual Effects, Text Overlay, Transform Keyframes, and Transition structure/ranges.
-- Reject visual-only payloads persisted on Audio clips.
+- Validate persisted timeline topology at the JSON parsing boundary.
+- Reject overlapping clips on the same track and invalid persisted Transition relationships.
+- Preserve schema version 1, existing timeline commands, preview behavior, export behavior, and transition rendering semantics.
 
-Implementation:
-- Added shape/range validation for the visual payloads above.
-- Added regression coverage for valid visual round-tripping and malformed visual payloads.
-- Preserve existing runtime normalization, preview, timeline, waveform, and export behavior.
-- No project schema change.
+Implementation target:
+- Ensure each track's clips form a non-overlapping timeline.
+- Ensure a persisted transition belongs to a visual clip, points only to the immediately following visual clip on the same track, requires direct adjacency, and does not exceed either clip duration.
+- Keep existing runtime transition sanitization for mutation paths; this milestone hardens loaded/persisted projects.
+- Add regression coverage for valid adjacent transitions plus malformed overlap/transition topologies.
 
 Validation:
 - Pending user local validation.
 
-Known limitations:
-- Transition adjacency across neighboring clips remains separate from this local payload validation.
-- Native media-file existence/decodeability remains outside project-domain validation.
-
 Previous milestone:
-- M3.90 completed and squash-merged as PR #105 at `c91efb620ddde050487bb11152ebf3c5d563b0d1`.
+- M3.91 completed and squash-merged as PR #106 at `0917d4be572dca5b0ed741740c61e12eed2def00`.
 
 Next step:
-- Hand off focused local validation for M3.91.
+- Implement focused topology validation and open a Draft PR.
+
 
 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
