@@ -1,10 +1,12 @@
-## M3.107 — active — 2026-09-25
+## M3.107 — completed — 2026-09-25
 
 - Branch: `fix/m3-107-canonical-project-name`.
-- Scope: require persisted project `name` to already equal its trimmed canonical form.
-- Audit finding from current `main`: `createProject()` trims project names before persistence, while `validateProject()` only checks that the persisted name is non-empty, allowing leading/trailing whitespace to survive load/save.
-- Implemented parser validation plus focused regression coverage.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- PR #122; squash-merged at `a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`.
+- Persisted project `name` values now require an already-trimmed canonical form.
+- Added parser regression coverage for leading/trailing whitespace.
+- User reported PASS.
+- No project schema change and no change to canonical runtime/editor/preview/export behavior.
+- Next milestone selected: M3.108 — Canonical Track Volume/Pan Precision.
 
 ## Workflow for this chat
 
