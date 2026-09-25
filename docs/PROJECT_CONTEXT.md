@@ -1,26 +1,27 @@
-## M3.94 — Persisted Canvas Dimension Validation — completed — 2026-09-25
+## M3.95 — Strict Project Timestamp Validation — active — 2026-09-25
 
 Branch:
-`feat/m3-94-persisted-canvas-dimension-validation`
+Pending creation from updated `main`.
 
-PR:
-#109
+Scope:
+- Harden persisted project metadata timestamps at the JSON parsing boundary.
+- Require `createdAt` and `updatedAt` to use the same canonical UTC ISO-8601 representation emitted by `Date.toISOString()`.
+- Require `updatedAt` to be the same as or later than `createdAt`.
+- Preserve schema version 1 and all editor/export behavior.
 
-Merge SHA:
-`6048b038e4d15e00372e0267a9e0d2f14caaf72b`
-
-Implementation reconciled:
-- Persisted canvas width and height now require positive integers, matching `updateCanvasDimensions()`.
-- Positive non-integer frame rates remain valid for supported playback/export use cases.
-- Added parser regressions for fractional width/height rejection and a valid 29.97 frame rate.
-- User reported PASS.
-- No project schema, preview, playback, Timeline, waveform, or export behavior change.
+Repository evidence:
+- `createProject()` emits UTC timestamps using `toISOString()`.
+- `validateProject()` currently calls `assertIsoTimestamp()`, but that helper only delegates to `Date.parse()`, which accepts broader date formats than the persisted contract implies.
+- Project mutations consistently advance `updatedAt`; no migration or schema change is required.
 
 Previous milestone:
-- M3.93 completed and squash-merged as PR #108 at `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
+- M3.94 completed and squash-merged as PR #109 at `6048b038e4d15e00372e0267a9e0d2f14caaf72b`.
+
+Validation:
+- Pending implementation and user local validation.
 
 Next step:
-- Audit updated `main` for the next smallest persisted-domain invariant.
+- Implement strict timestamp parsing/ordering and focused regression coverage.
 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
