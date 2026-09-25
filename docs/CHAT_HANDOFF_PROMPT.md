@@ -13,6 +13,16 @@
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
+## M3.107 — completed — 2026-09-25
+
+- Branch: `fix/m3-107-canonical-project-name`.
+- PR #122; squash-merged at `a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`.
+- Persisted project `name` values now require an already-trimmed canonical form.
+- Added parser regression coverage for leading/trailing whitespace.
+- User reported PASS.
+- No project schema change and no change to canonical runtime/editor/preview/export behavior.
+- Next milestone: M3.108 — Canonical Track Volume/Pan Precision.
+
 ## M3.106 — completed — 2026-09-25
 
 - Branch: `fix/m3-106-canonical-audio-volume`.
@@ -66,12 +76,3 @@
 - User reported PASS.
 - No project schema, preview, playback, Timeline, waveform, or export behavior change.
 
-## M3.107 — completed — 2026-09-25
-
-- Branch: `fix/m3-107-canonical-project-name`.
-- PR #122; squash-merged at `a66fdc25ad5eebcbdd2a5b70451c4a4ecaacdcea`.
-- Persisted project `name` values now require an already-trimmed canonical form.
-- Added parser regression coverage for leading/trailing whitespace.
-- User reported PASS.
-- No project schema change and no change to canonical runtime/editor/preview/export behavior.
-- Next milestone selected: M3.108 — Canonical Track Volume/Pan Precision.
