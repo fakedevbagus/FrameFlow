@@ -1,22 +1,21 @@
-### M3.92 — Persisted Timeline Topology Validation — in progress — 2026-09-25
+### M3.93 — Persisted Audio Payload Validation — active — 2026-09-25
 
-- Branch: `feat/m3-92-timeline-topology-validation`.
-- PR #107 — Draft.
-- Scope: harden persisted timeline topology without changing schema version 1.
-- Validate non-overlapping clips per track and transition relationships against immediate clip adjacency, visual-media eligibility, and duration bounds.
-- Preserve existing mutation-time transition sanitization and timeline behavior.
-- Added regression coverage for valid adjacent transitions and malformed overlap/transition topology.
+- Branch: pending creation from updated `main`.
+- Scope: harden persisted audio payload eligibility and Audio Fade duration/overlap invariants at the JSON parsing boundary.
+- Reject audio-only payloads on Image clips.
+- Mirror the existing Audio Fade command invariants for persisted metadata without changing schema version 1.
+- Add focused parser regression coverage; preserve runtime normalization and existing Audio/Video behavior.
 - User local validation is pending.
 
-### M3.91 — Persisted Visual Payload Validation — completed — 2026-09-25
+### M3.92 — Persisted Timeline Topology Validation — completed — 2026-09-25
 
-- PR #106; merge SHA `0917d4be572dca5b0ed741740c61e12eed2def00`.
-- Validated Transform, Anchor, Crop, Crop Position, Visual Effects, Text Overlay, Transform Keyframes, and Transition payload structure/ranges at the project parsing boundary.
-- Rejected visual payloads persisted on Audio clips.
+- PR #107; merge SHA `d9cce0266274b1d974ed084ee8345993d30a2312`.
+- Validated non-overlapping persisted clips per track.
+- Validated persisted transitions against visual-media eligibility, following-clip presence, direct adjacency, and both adjacent clip durations.
+- Preserved existing mutation-time transition sanitization and schema version 1.
+- Added regression coverage for valid adjacent transitions and malformed overlap/transition topologies.
 - User reported PASS.
-- No project schema, preview, timeline, waveform, export, or DSP change.
-
-
+- No project schema, preview, timeline, waveform, export, or DSP behavior change.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
