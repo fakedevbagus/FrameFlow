@@ -1,9 +1,9 @@
-### M3.95 — Strict Project Timestamp Validation — active — 2026-09-25
+### M3.95 — Strict Project Timestamp Validation — in progress — 2026-09-25
 
-- Branch: pending creation from updated `main`.
-- Require `createdAt` and `updatedAt` to use canonical UTC ISO-8601 timestamps emitted by `Date.toISOString()`.
-- Require `updatedAt >= createdAt`.
-- Add focused parser regressions without changing schema version 1.
+- Branch: `fix/m3-95-strict-project-timestamps`.
+- Persisted `createdAt`/`updatedAt` now require canonical UTC ISO timestamps with millisecond precision.
+- Persisted `updatedAt` must be the same as or later than `createdAt`.
+- Added focused parser regression coverage.
 - Validation is pending.
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
