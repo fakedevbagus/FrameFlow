@@ -1,26 +1,30 @@
-## M3.94 — Persisted Canvas Dimension Validation — active — 2026-09-25
+## M3.94 — Persisted Canvas Dimension Validation — in progress — 2026-09-25
 
 Branch:
-Pending creation from updated `main`.
+`feat/m3-94-persisted-canvas-dimension-validation`
+
+PR:
+Pending creation after implementation and regression coverage.
 
 Scope:
-- Harden persisted Canvas dimensions at the project JSON parsing boundary.
-- Require persisted canvas width and height to be positive integers, matching the existing canvas mutation contract.
-- Preserve fractional frame rates as valid because playback/export paths support non-integer frame rates such as 29.97-style rates.
+- Require persisted canvas width and height to be positive integers at the project parsing boundary.
+- Match the existing `updateCanvasDimensions()` mutation contract.
+- Preserve positive non-integer frame rates because playback/export support fractional rates.
+- Preserve schema version 1 and all existing render/editor behavior.
 
-Repository evidence:
-- `updateCanvasDimensions()` already rejects non-integer or non-positive width/height values.
-- `validateCanvas()` currently accepts any positive finite width/height, allowing persisted fractional dimensions that cannot be produced by the editor command.
-- `frameDurationMs()` safely supports positive non-integer frame rates, so this milestone does not tighten frame-rate semantics.
+Implementation:
+- `validateCanvas()` now uses a dedicated positive-integer assertion for width and height.
+- Added regression coverage for fractional width/height rejection.
+- Added regression coverage confirming a supported fractional frame rate such as 29.97 remains accepted.
 
 Previous milestone:
 - M3.93 completed and squash-merged as PR #108 at `efd4d92061e8f4a7005d1839f3b24c4e2edcc078`.
 
 Validation:
-- Pending implementation and user local validation.
+- Pending user local validation.
 
 Next step:
-- Implement focused persisted canvas-dimension validation and regression coverage.
+- Finish focused local validation and Draft PR review.
 
 ## M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
 
