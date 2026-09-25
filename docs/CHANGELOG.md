@@ -1,10 +1,13 @@
-### M3.103 — Canonical Visual Effects Precision — in progress — 2026-09-25
+### M3.103 — Canonical Visual Effects Precision — completed — 2026-09-25
 
 - Branch: `fix/m3-103-canonical-visual-effects`.
-- Persisted `visualEffects.brightness`, `contrast`, and `saturation` values must use at most two decimal places.
-- This matches the runtime normalizer, which rounds visual-effect values to two decimal places.
+- PR #118; squash-merged at `c4ae88dc9cf1cde64a1f39672809b74bc25e266e`.
+- Persisted `visualEffects.brightness`, `contrast`, and `saturation` values now require at most two decimal places.
 - Added parser regression coverage for over-precise persisted visual-effect values.
-- Validation is pending.
+- User reported PASS.
+- No project schema version change and no change to canonical runtime/editor/preview/export behavior.
+
+### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 
 ### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
 ### M3.102 — Canonical Text Overlay Payload — completed — 2026-09-25
