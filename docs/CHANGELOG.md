@@ -1,12 +1,20 @@
-### M3.91 — Persisted Visual Payload Validation — in progress — 2026-09-25
+### M3.92 — Persisted Timeline Topology Validation — in progress — 2026-09-25
 
-- Branch: `feat/m3-91-visual-payload-validation`.
-- PR #106 — Draft.
-- Validates Transform, Anchor, Crop, Crop Position, Visual Effects, Text Overlay, Transform Keyframes, and Transition payloads at the JSON parsing boundary.
-- Rejects visual-only payloads persisted on Audio clips.
-- Added valid round-trip and malformed visual payload regression coverage.
-- No project schema, preview, timeline, waveform, export, or DSP change.
+- Branch: `feat/m3-92-timeline-topology-validation`.
+- Scope: harden persisted timeline topology without changing schema version 1.
+- Validate non-overlapping clips per track and transition relationships against immediate clip adjacency, visual-media eligibility, and duration bounds.
+- Preserve existing mutation-time transition sanitization and timeline behavior.
+- Regression coverage will include valid adjacent transitions and malformed overlap/transition topology.
 - User local validation is pending.
+
+### M3.91 — Persisted Visual Payload Validation — completed — 2026-09-25
+
+- PR #106; merge SHA `0917d4be572dca5b0ed741740c61e12eed2def00`.
+- Validated Transform, Anchor, Crop, Crop Position, Visual Effects, Text Overlay, Transform Keyframes, and Transition payload structure/ranges at the project parsing boundary.
+- Rejected visual payloads persisted on Audio clips.
+- User reported PASS.
+- No project schema, preview, timeline, waveform, export, or DSP change.
+
 
 
 ### M3.90 — Project Persistence Validation Hardening — completed — 2026-09-25
