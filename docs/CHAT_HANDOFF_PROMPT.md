@@ -1,12 +1,15 @@
-## M3.114 — active — 2026-09-25
+## M3.114 — completed — 2026-09-26
 
 - Branch: `fix/m3-114-canonical-clip-command-times`.
 - Scope: canonicalize valid non-negative clip timeline/source timing inputs at reusable command boundaries.
-- M3.101 already enforces integer clip timing at persistence; M3.114 closes the pre-persistence command gap for add/move/trim/split.
-- Split timing is normalized before deriving resulting clip boundaries and related automation/keyframe times.
+- M3.101 already enforced integer clip timing at persistence; M3.114 closed the pre-persistence command gap for add/move/trim/split.
+- Split timing is normalized before deriving resulting clip boundaries and related keyframe/audio automation timing.
 - Added regression and serialization coverage.
-- M3.113 completed and squash-merged as PR #128 at `7672e1d9d603ab573178f3c908bd0807d0bfa4f1`; user reported PASS.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- PR #129; squash-merged at `be77ca4e2966f1ac65268b3886f64a9ade40c2e7`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from current `main` for the next concrete engineering gap.
 
 ## M3.113 — completed — 2026-09-25
 
@@ -22,8 +25,8 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.114 is the active milestone; do not assume local validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- M3.114 is completed and merged; the next milestone must come from a fresh audit of current `main`.
+- On user `PASS` / `pass` / `lanjutkan` for a future active milestone: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
