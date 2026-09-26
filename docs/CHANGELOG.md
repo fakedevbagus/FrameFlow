@@ -1,13 +1,27 @@
-### M3.122 — Strict Single-Source Duration Semantics — active — 2026-09-26
+### M3.123 — Safe Integer Millisecond Contract — active — 2026-09-26
+
+- Branch: `fix/m3-123-safe-integer-milliseconds`.
+- Fresh audit found that persisted millisecond fields use `Number.isInteger` without requiring `Number.isSafeInteger`.
+- Unsafe JavaScript integers can lose exact timing precision during JSON serialization and native IPC.
+- Planned a shared safe-integer millisecond validator for asset durations, clip timing, keyframe times, and audio fade durations.
+- Existing safe timing values and feature-specific range rules remain unchanged.
+- No project schema change.
+- Validation is pending implementation and user confirmation.
+- Next step: implement the focused validator and regression coverage.
+
+### M3.122 — Strict Single-Source Duration Semantics — completed — 2026-09-26
 
 - Branch: `fix/m3-122-strict-single-source-duration-semantics`.
-- Fresh audit found that an explicitly supplied `sourceDurationMs: 0` was silently ignored by the single-source FFmpeg argument builder.
-- Tightened the shared native source-range validator so supplied source durations must be positive.
+- PR #137; squash-merged at `c429f3a74bd012693170e29d3e3b3a81b495ddb7`.
+- Fresh audit found that an explicitly supplied single-source duration of zero was silently ignored by FFmpeg argument construction.
+- Tightened the shared native source-range validator so supplied durations must be positive.
 - Omitted durations and positive durations retain their existing semantics.
-- Added focused native regression coverage for omitted duration, zero duration, exact-boundary positive duration, overrun, and overflow behavior.
+- Added focused native regression coverage.
 - No project schema change.
-- Implementation is complete; local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- User reported PASS.
+- Validation status is recorded as passed only from the user's explicit PASS; no additional local checks are inferred.
+- `main` was verified after merge at `c429f3a74bd012693170e29d3e3b3a81b495ddb7`.
+- Next step: fresh audit from verified `main` for the next concrete persisted/runtime/native invariant.
 
 ### M3.121 — Strict Legacy Source-Range Bounds — completed — 2026-09-26
 
