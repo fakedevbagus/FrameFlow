@@ -273,17 +273,17 @@ export function getWaveformPeaksForSourceRange(
 ): number[] {
   if (
     peaks.length === 0 ||
-    !Number.isFinite(sourceDurationMs) ||
+    !Number.isSafeInteger(sourceDurationMs) ||
     sourceDurationMs <= 0 ||
-    !Number.isFinite(sourceStartMs) ||
-    sourceStartMs < 0 ||
-    !Number.isFinite(outputPeakCount) ||
-    outputPeakCount <= 0
+    !Number.isSafeInteger(sourceStartMs) ||
+    !Number.isSafeInteger(outputPeakCount) ||
+    outputPeakCount <= 0 ||
+    (sourceEndMs !== null && !Number.isSafeInteger(sourceEndMs))
   ) {
     return [];
   }
 
-  const safeOutputCount = Math.round(outputPeakCount);
+  const safeOutputCount = outputPeakCount;
   if (
     !Number.isSafeInteger(safeOutputCount) ||
     safeOutputCount <= 0 ||

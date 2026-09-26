@@ -108,6 +108,58 @@ describe("audio waveform", () => {
     ).toHaveLength(2048);
   });
 
+  it("rejects unsafe or fractional source-range metadata", () => {
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        Number.MAX_SAFE_INTEGER + 1,
+        0,
+        null,
+        3,
+      ),
+    ).toEqual([]);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        10_000.5,
+        0,
+        null,
+        3,
+      ),
+    ).toEqual([]);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        10_000,
+        Number.MAX_SAFE_INTEGER + 1,
+        null,
+        3,
+      ),
+    ).toEqual([]);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        10_000,
+        2_500.5,
+        7_500,
+        3,
+      ),
+    ).toEqual([]);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        10_000,
+        2_500,
+        7_500.5,
+        3,
+      ),
+    ).toEqual([]);
+  });
+
   it("clamps an out-of-range source window safely", () => {
     expect(
       getWaveformPeaksForSourceRange(
