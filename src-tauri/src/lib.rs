@@ -568,6 +568,12 @@ fn validate_native_source_range(
     return Ok(());
   };
 
+  if source_duration_ms == 0 {
+    return Err(format!(
+      "{context} source duration must be positive when supplied."
+    ));
+  }
+
   let source_end_ms = source_start_ms
     .checked_add(source_duration_ms)
     .ok_or_else(|| {
@@ -1553,6 +1559,13 @@ mod tests {
       5_000,
       "Native test",
     ).is_ok());
+
+    assert!(super::validate_native_source_range(
+      5_000,
+      Some(0),
+      5_000,
+      "Native test",
+    ).is_err());
 
     assert!(super::validate_native_source_range(
       5_001,
