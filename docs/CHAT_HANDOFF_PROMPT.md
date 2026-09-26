@@ -1,3 +1,15 @@
+## M3.116 — active — 2026-09-26
+
+- Branch: `fix/m3-116-project-canvas-dimensions`.
+- Scope: align persisted project canvas width/height with the native export requirement that dimensions be positive even numbers.
+- Audit finding: project validation and `updateCanvasDimensions()` previously accepted odd positive integers, but native export rejects them.
+- Added strict positive-even integer validation for persisted canvas dimensions and command-level updates.
+- Added parser and command regression coverage for the boundary and odd dimensions.
+- No project schema version change.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+
+## M3.115 — completed — 2026-09-26
+
 ## M3.115 — completed — 2026-09-26
 
 - Branch: `fix/m3-115-project-framerate-range`.
