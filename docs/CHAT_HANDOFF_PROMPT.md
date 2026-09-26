@@ -1,27 +1,35 @@
-## M3.121 — active — 2026-09-26
+## M3.122 — active — 2026-09-26
+
+- Branch: `fix/m3-122-strict-single-source-duration-semantics`.
+- Fresh audit found that `NativeExportRenderRequest.sourceDurationMs` is optional, but the single-source FFmpeg builder filters out `0` and therefore silently ignores an explicitly supplied zero duration.
+- M3.121 established source-range duration bounds for the legacy video export paths; M3.122 tightens the request semantics at the same native boundary.
+- Planned change: reject an explicitly supplied zero `sourceDurationMs` instead of silently treating it as “no duration”.
+- Preserve omitted duration semantics and valid positive durations.
+- Add focused native regression coverage for omitted duration, zero duration, and positive duration behavior.
+- No project schema version change.
+- Local validation is pending implementation; do not assume lint/test/build/cargo/manual validation has passed.
+
+## M3.121 — completed — 2026-09-26
 
 - Branch: `fix/m3-121-strict-legacy-source-bounds`.
-- Scope: align the remaining direct single-source and multi-segment native video export paths with the actual source media duration contract.
-- Fresh audit found that `render_single_source_to_mp4` and `render_video_segments_to_mp4` still passed file-backed source ranges directly to FFmpeg without native duration-bound validation.
-- Added shared checked source-range validation for single-source optional ranges and file-backed multi-segment ranges.
-- Exact source-end boundaries remain valid; start/duration overruns and arithmetic overflow are rejected.
-- Duration probes are reused for repeated media paths in a multi-segment render.
+- Scope: align direct single-source and multi-segment native video export paths with actual source media duration.
+- PR #136; squash-merged at `86ec5c5e4943a9b282aa97e9631b73fa0d9fb094`.
+- Added shared checked source-range validation, actual media-duration probing, repeated-path duration caching, and regression coverage.
+- Exact source-end boundaries remain valid; invalid starts, overruns, and arithmetic overflow are rejected before FFmpeg.
 - Black gap segments remain unchanged.
-- No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: implement M3.122 on a fresh branch from verified `main`.
 
 ## M3.120 — completed — 2026-09-26
 
 - Branch: `fix/m3-120-source-audio-duration-bounds`.
-- Scope: enforce native unified AV source-audio ranges against actual source video duration.
 - PR #135; squash-merged at `c0b1ee692156a2b7f11cf130ba79f65efad81dd0`.
-- Added cached duration probing and checked source-range validation before FFmpeg filter construction.
-- Added focused regression coverage for exact boundaries, overruns, and arithmetic overflow.
-- No project schema version change.
+- Added checked source-audio source-range validation against actual video duration with cached duration probing.
 - User reported PASS.
-- `main` was verified after merge at `c0b1ee692156a2b7f11cf130ba79f65efad81dd0`.
+- `main` was verified after merge.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: M3.121 implementation on a fresh branch from verified `main`.
 
 ## M3.119 — completed — 2026-09-26
 
@@ -123,7 +131,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.120 is completed and merged; M3.121 is the active milestone and must remain tightly scoped to the audited native source-range gap.
+- M3.121 is completed and merged; M3.122 is the active milestone and must remain tightly scoped to the audited native single-source duration semantic gap.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
