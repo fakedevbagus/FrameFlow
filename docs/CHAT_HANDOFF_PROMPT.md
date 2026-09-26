@@ -8,6 +8,19 @@
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
+## M3.126 — active — 2026-09-26
+
+- Branch: `fix/m3-126-transition-endpoint-safety`.
+- Scope: reject unsafe derived clip endpoints inside transition helpers.
+- Fresh audit found `getClipEndMs()` performing unchecked `timelineStartMs + durationMs`; transition adjacency and visual-state code depend on this helper.
+- Added one checked safe-integer endpoint helper inside the transition module.
+- Added regression coverage for the maximum safe endpoint and the first unsafe endpoint.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Remaining separate risk: project topology validation performs independent endpoint arithmetic.
+- On user `PASS` / `pass` / `lanjutkan`: refresh PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.125 — completed — 2026-09-26
 
 - Branch: `fix/m3-125-timeline-command-endpoint-safety`.

@@ -1,3 +1,14 @@
+### M3.126 — Strict Transition Clip Endpoint Safety — active — 2026-09-26
+
+- Branch: `fix/m3-126-transition-endpoint-safety`.
+- Fresh audit found `getClipEndMs()` still derived clip timeline endpoints with unchecked millisecond addition after M3.125 hardened timeline commands.
+- Added checked safe-integer endpoint arithmetic to the transition clip-end helper.
+- Transition adjacency and visual-state calculations retain existing behavior for valid safe values.
+- Added focused regression coverage at `Number.MAX_SAFE_INTEGER` and the first unsafe endpoint.
+- No project schema change.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
 ### M3.125 — Strict Timeline Command Endpoint Safety — completed — 2026-09-26
 
 - Branch: `fix/m3-125-timeline-command-endpoint-safety`.
