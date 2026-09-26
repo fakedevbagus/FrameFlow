@@ -1,14 +1,27 @@
-## M3.130 — active — 2026-09-26
+## M3.131 — active — 2026-09-26
 
-- Branch: `fix/m3-130-transform-keyframe-safe-times`.
-- Scope: reject or discard runtime Transform Keyframe timestamps that cannot normalize to JavaScript safe integer milliseconds.
-- Fresh audit found `normalizeTransformKeyframes()` could preserve unsafe rounded timestamps and `upsertTransformKeyframe()` could accept unsafe rounded timestamps.
-- Added safe-integer normalization and safe-integer upsert validation.
-- Added focused regression coverage for the safe boundary and unsafe runtime timestamps.
+- Branch: `fix/m3-131-transform-keyframe-time-normalizer`.
+- Scope: make the exported Transform Keyframe time normalizer enforce finite safe-integer millisecond results.
+- Fresh audit found `normalizeTransformKeyframeTime()` could return unsafe or non-finite results directly.
+- Added strict finite/safe-integer validation to the primitive and pre-filtered collection inputs before invoking it.
+- Added focused regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.130 — completed — 2026-09-26
+
+- Branch: `fix/m3-130-transform-keyframe-safe-times`.
+- PR #145; squash-merged at `d4e1693480e15f0cc59acc4c18be76c820b00ec1`.
+- User reported PASS.
+- Added safe-integer normalization and upsert validation for runtime Transform Keyframe timestamps.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `693a874e3f3aec76f81857531ee2639ded893667` was verified before merge.
+- `main` was verified after merge at `d4e1693480e15f0cc59acc4c18be76c820b00ec1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.129 — completed — 2026-09-26
 
