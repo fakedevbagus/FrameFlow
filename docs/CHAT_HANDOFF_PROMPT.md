@@ -1,13 +1,25 @@
-## M3.122 — active — 2026-09-26
+## M3.123 — active — 2026-09-26
+
+- Branch: `fix/m3-123-safe-integer-milliseconds`.
+- Scope: require persisted project millisecond timestamps/durations to be JavaScript safe integers.
+- Fresh audit found that millisecond fields use `Number.isInteger` without `Number.isSafeInteger`, allowing values above `Number.MAX_SAFE_INTEGER` that cannot be represented exactly.
+- Planned coverage includes asset durations, clip timeline/source times, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
+- Preserve existing non-negative/range/ordering/feature-specific contracts.
+- No project schema version change.
+- Local validation is pending implementation; do not assume lint/test/build/cargo/manual validation has passed.
+
+## M3.122 — completed — 2026-09-26
 
 - Branch: `fix/m3-122-strict-single-source-duration-semantics`.
-- Scope: reject an explicitly supplied zero native single-source duration instead of silently treating it as omitted.
-- Fresh audit found that `build_ffmpeg_export_args` only emitted `-t` when `source_duration_ms > 0`, so `Some(0)` was ignored.
-- Tightened the shared source-range validator so supplied durations must be positive.
-- Preserved omitted duration semantics and valid positive durations.
+- Scope: reject explicitly supplied zero native single-source durations.
+- PR #137; squash-merged at `c429f3a74bd012693170e29d3e3b3a81b495ddb7`.
+- Added positive supplied-duration validation while preserving omitted-duration semantics and source-media bounds.
 - Added focused native regression coverage.
 - No project schema version change.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- User reported PASS.
+- `main` was verified after merge at `c429f3a74bd012693170e29d3e3b3a81b495ddb7`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: implement M3.123 on a fresh branch from verified `main`.
 
 ## M3.121 — completed — 2026-09-26
 
