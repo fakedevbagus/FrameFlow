@@ -1,4 +1,4 @@
-## M3.117 — active — 2026-09-26
+## M3.117 — completed — 2026-09-26
 
 - Branch: `fix/m3-117-export-settings-native-contract`.
 - Scope: align `normalizeExportSettings()` with native export requirements for positive even dimensions and frame rates up to 240 FPS.
@@ -6,7 +6,11 @@
 - Added even-dimension/minimum normalization and a shared 240 FPS ceiling.
 - Added focused export-setting regression coverage.
 - No project schema version change.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- PR #132; squash-merged at `51cc63f8a922cb0189c90d87027f845f3a722d35`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
 
 ## M3.116 — completed — 2026-09-26
 
@@ -65,7 +69,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.116 is completed and merged; the next milestone must come from a fresh audit of verified `main`.
+- M3.117 is completed and merged; the next milestone must come from a fresh audit of verified `main`.
 - On user `PASS` / `pass` / `lanjutkan` for a future active milestone: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
