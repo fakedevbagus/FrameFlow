@@ -25,6 +25,7 @@ export const DEFAULT_TEXT_OVERLAY_FONT_SIZE = 56;
 export const DEFAULT_TEXT_OVERLAY_COLOR = "#ffffff";
 export const DEFAULT_TEXT_OVERLAY_ALIGNMENT = "center" as const;
 export const MAX_TEXT_OVERLAY_LENGTH = 500;
+export const MAX_CANVAS_FRAME_RATE = 240;
 
 export interface CanvasSettings {
   width: number;
@@ -1267,6 +1268,12 @@ function validateCanvas(value: unknown): asserts value is CanvasSettings {
   assertPositiveInteger(value.width, "Canvas width");
   assertPositiveInteger(value.height, "Canvas height");
   assertPositiveNumber(value.frameRate, "Canvas frameRate");
+
+  if (value.frameRate > MAX_CANVAS_FRAME_RATE) {
+    throw new ProjectValidationError(
+      "Canvas frameRate must be at most 240 fps.",
+    );
+  }
 }
 
 function assertNonEmptyString(value: unknown, field: string): asserts value is string {
