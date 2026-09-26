@@ -1,15 +1,18 @@
-## M3.136 — active — 2026-09-26
+## M3.136 — completed — 2026-09-26
 
 - Branch: `fix/m3-136-waveform-local-time-contract`.
-- Scope: require waveform local-time mapping duration to be a positive JavaScript safe integer.
-- Fresh audit found `getWaveformLocalTimeMs()` accepted finite positive duration values without safe-integer validation.
-- Tightened duration validation and added focused regression coverage for unsafe/fractional duration input.
+- PR #151; squash-merged at `d7faebcc829810b88d59e027f0b30163fa1f69be`.
+- User reported PASS.
+- Tightened waveform local-time duration validation to positive JavaScript safe integers.
+- Added focused regression coverage for unsafe/fractional duration input.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- PR head `73a911583ce8ed7f5bef94e9054ad91014253f87` was verified before merge.
+- `main` was verified after merge at `d7faebcc829810b88d59e027f0b30163fa1f69be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.135 — completed — 2026-09-26
+
 
 - Branch: `fix/m3-135-waveform-source-range-contract`.
 - PR #150; squash-merged at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
