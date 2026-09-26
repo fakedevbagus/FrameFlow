@@ -1,12 +1,21 @@
-## M3.123 — active — 2026-09-26
+## M3.124 — active — 2026-09-26
+
+- Fresh audit of verified `main` is beginning.
+- M3.124 branch will be selected only after the next concrete invariant is confirmed from current code.
+- Local validation remains user-driven; do not infer lint/test/build/cargo/manual success.
+
+## M3.123 — completed — 2026-09-26
 
 - Branch: `fix/m3-123-safe-integer-milliseconds`.
-- Scope: require persisted project millisecond timestamps/durations to be JavaScript safe integers.
-- Fresh audit found that millisecond fields use `Number.isInteger` without `Number.isSafeInteger`, allowing values above `Number.MAX_SAFE_INTEGER` that cannot be represented exactly.
-- Applied the safe-integer requirement to asset durations, clip timeline/source times, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
-- Preserve existing non-negative/range/ordering/feature-specific contracts.
+- Scope: require persisted project millisecond timing to be JavaScript safe integers.
+- PR #138; squash-merged at `86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`.
+- Applied `Number.isSafeInteger` to the persisted millisecond validator and affected timing fields.
+- Added focused regression coverage.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- User reported PASS.
+- `main` was verified after merge at `86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main`.
 
 ## M3.122 — completed — 2026-09-26
 
