@@ -1,13 +1,17 @@
-### M3.137 — Strict Persistent Waveform Metadata Contract — active — 2026-09-27
+### M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-137-strict-persistent-waveform-metadata`.
-- Fresh audit found `isValidAudioWaveform()` still accepted finite fractional or unsafe persisted `durationMs` / `sampleRate` values from `localStorage`.
-- Tightened persisted waveform validation to positive JavaScript safe integers for both timing metadata fields.
+- PR #152; squash-merged at `816d970ac31c9b080c937b89803d3f52ebde0936`.
+- User reported PASS.
+- Tightened `isValidAudioWaveform()` to require positive JavaScript safe integers for persisted `durationMs` and `sampleRate`.
+- Invalid fractional or unsafe persisted timing metadata is treated as a cache miss and regenerated.
 - Added focused regression coverage for unsafe and fractional persisted metadata.
 - Preserved valid persisted waveform reuse.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- PR head `23dead40898b5a540138b943c564893c6abf9c5b` was verified before merge.
+- `main` was verified after merge at `816d970ac31c9b080c937b89803d3f52ebde0936`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
