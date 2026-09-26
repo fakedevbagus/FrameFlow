@@ -1,3 +1,14 @@
+### M3.116 — Strict Project Canvas Dimension Contract — active — 2026-09-26
+
+- Branch: `fix/m3-116-project-canvas-dimensions`.
+- Fresh audit found that persisted canvas width/height accepted any positive integer while native export requires positive even dimensions.
+- Added strict positive-even integer validation for persisted canvas width/height.
+- Tightened `updateCanvasDimensions()` to reject odd or sub-minimum dimensions before mutation.
+- Added regression coverage for the minimum valid boundary and odd width/height.
+- No project schema change.
+- Validation is pending user confirmation.
+- Next step: complete local validation, then merge and reconcile the documentation.
+
 ### M3.115 — Strict Project Canvas Frame-Rate Range — completed — 2026-09-26
 
 - Branch: `fix/m3-115-project-framerate-range`.

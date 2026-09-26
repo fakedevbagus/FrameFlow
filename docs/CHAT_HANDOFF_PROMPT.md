@@ -1,3 +1,13 @@
+## M3.116 — active — 2026-09-26
+
+- Branch: `fix/m3-116-project-canvas-dimensions`.
+- Scope: align persisted project canvas width/height with the native export requirement that dimensions be positive even numbers.
+- Audit finding: project validation and `updateCanvasDimensions()` previously accepted odd positive integers, but native export rejects them.
+- Added strict positive-even integer validation for persisted canvas dimensions and command-level updates.
+- Added parser and command regression coverage for the boundary and odd dimensions.
+- No project schema version change.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+
 ## M3.115 — completed — 2026-09-26
 
 - Branch: `fix/m3-115-project-framerate-range`.
@@ -39,7 +49,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.114 is completed and merged; the next milestone must come from a fresh audit of current `main`.
+- M3.115 is completed and merged; M3.116 is the active milestone and must be validated before merge.
 - On user `PASS` / `pass` / `lanjutkan` for a future active milestone: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.

@@ -1876,6 +1876,41 @@ describe("project domain", () => {
     }
   });
 
+  it("enforces the native export canvas dimension contract", () => {
+    const project = createProject({ id: "canvas-dimension-range" });
+
+    const atMinimum = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        width: 2,
+        height: 2,
+      },
+    };
+    const oddWidth = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        width: 3,
+      },
+    };
+    const oddHeight = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        height: 3,
+      },
+    };
+
+    expect(parseProject(JSON.stringify(atMinimum))).toEqual(atMinimum);
+    expect(() => parseProject(JSON.stringify(oddWidth))).toThrow(
+      "Canvas width must be a positive even integer.",
+    );
+    expect(() => parseProject(JSON.stringify(oddHeight))).toThrow(
+      "Canvas height must be a positive even integer.",
+    );
+  });
+
   it("accepts supported non-integer persisted frame rates", () => {
     const project = createProject({ id: "fractional-frame-rate" });
     const validProject = {
