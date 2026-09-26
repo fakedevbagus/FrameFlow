@@ -1,13 +1,17 @@
-## M3.118 — active — 2026-09-26
+## M3.118 — completed — 2026-09-26
 
 - Branch: `fix/m3-118-strict-video-graph-media-types`.
 - Scope: align the native video-graph request boundary with the declared and detected visual input media types.
 - Audit finding: `render_video_graph_to_mp4` only count-checked `input_media_types`, while FFmpeg argument construction uses those values to decide image looping.
 - Added allowed-value validation for supplied media types and actual-file type matching before graph rendering.
-- Preserved the current compatibility behavior where an empty media-type list defaults to video handling.
+- Preserved the current empty-list compatibility behavior.
 - Added focused native regression coverage.
 - No project schema version change.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- PR #133; squash-merged at `6ef44fd0af0c000cd3a122bbcf99b32627514ba7`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
 
 ## M3.117 — completed — 2026-09-26
 
@@ -80,7 +84,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.118 is the active milestone; after PASS, refresh the PR/head, merge, reconcile all three docs, verify `main`, then audit again.
+- M3.118 is completed and merged; the next milestone must come from a fresh audit of verified `main`.
 - On user `PASS` / `pass` / `lanjutkan` for a future active milestone: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
