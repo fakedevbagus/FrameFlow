@@ -8,6 +8,22 @@
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
+## M3.124 — completed — 2026-09-26
+
+- Branch: `fix/m3-124-render-plan-safe-endpoints`.
+- Scope: reject unsafe derived `timelineEndMs` values in the central export render plan.
+- PR #139; squash-merged at `4a1254dc80d3e9241c657a767d78eb60078424d4`.
+- Fresh audit found that `timelineStartMs + clipDurationMs` could exceed JavaScript's safe-integer range even when both operands were individually safe.
+- Added checked safe-integer arithmetic for render-plan source and timeline endpoints.
+- Exact `Number.MAX_SAFE_INTEGER` endpoints remain valid; unsafe derived endpoints are rejected.
+- Added focused regression coverage.
+- No project schema version change.
+- User reported PASS.
+- PR head `4fd7f0d7800948010eebeaae9e0d328fdaf4da20` was verified before merge.
+- `main` was verified after merge at `4a1254dc80d3e9241c657a767d78eb60078424d4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
 ## M3.123 — completed — 2026-09-26
 
 - Branch: `fix/m3-123-safe-integer-milliseconds`.
