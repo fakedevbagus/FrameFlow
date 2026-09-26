@@ -2,13 +2,13 @@
 
 - Branch: `fix/m3-121-strict-legacy-source-bounds`.
 - Fresh audit found that the active direct single-source and multi-segment native video export paths still pass requested source ranges to FFmpeg without checking them against actual media duration.
-- Planned shared source-range validation for `render_single_source_to_mp4` and `render_video_segments_to_mp4`.
-- Exact source-end boundaries will remain valid; overrun and arithmetic-overflow ranges will be rejected.
-- Repeated media paths in a multi-segment render will reuse duration probes.
+- Added shared source-range validation for `render_single_source_to_mp4` and `render_video_segments_to_mp4`.
+- Exact source-end boundaries remain valid; overrun and arithmetic-overflow ranges are rejected.
+- Repeated media paths in a multi-segment render reuse duration probes.
 - Black gap segments remain unchanged.
 - No project schema change.
-- Validation is pending implementation and user confirmation.
-- Next step: implement the focused native range checks and regression coverage.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
 
 ### M3.120 — Strict Source-Audio Media Duration Bounds — completed — 2026-09-26
 
