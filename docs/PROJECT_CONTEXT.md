@@ -1,39 +1,46 @@
-## M3.118 — Strict Video Graph Input Media-Type Contract — active — 2026-09-26
+## M3.118 — Strict Video Graph Input Media-Type Contract — completed — 2026-09-26
 
 Branch:
 `fix/m3-118-strict-video-graph-media-types`
 
-Scope:
-- Align the native video-graph request boundary with the actual visual input media types used by FFmpeg argument construction.
-- Prevent graph requests from declaring unsupported or mismatched media types for their input files.
+PR:
+#133
+
+Merge SHA:
+`6ef44fd0af0c000cd3a122bbcf99b32627514ba7`
+
+User validation:
+- User reported PASS for M3.118.
+- PR #133 was refreshed, its head `dccf53f35fa9d1d7b7e87d2645740ae967d304e9` was verified after the Ready-for-Review transition, and it was squash-merged.
+- `main` was verified after merge at `6ef44fd0af0c000cd3a122bbcf99b32627514ba7`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
-- `render_video_graph_to_mp4` already validates that input files are visual media, but `input_media_types` was only checked for count.
-- `build_ffmpeg_video_graph_args()` uses `input_media_types` to decide whether an input is looped as an image, so an incorrect declared type could change FFmpeg behavior.
-- The unified AV graph already validates both the allowed values and actual-file/media-type match, exposing an inconsistency in the native video-graph boundary.
+- `render_video_graph_to_mp4` detected the actual media type of each input but previously did not validate the supplied `input_media_types` values or compare them with the detected type.
+- `build_ffmpeg_video_graph_args()` uses `input_media_types` to decide whether an input is looped as an image, so stale or incorrect metadata could alter FFmpeg input handling.
 
 Implementation:
-- Native video-graph metadata validation now permits only `video` or `image` entries when media types are supplied.
-- Native video-graph rendering now compares each declared media type with the detected type of the corresponding input file.
-- Preserved the existing optional-empty media-type behavior for compatibility with the current request builder.
-- Added focused native regression coverage for invalid media types and mismatched input counts.
+- Added validation for supplied video-graph media-type values: only `video` or `image`.
+- Added count validation when media-type metadata is supplied.
+- Added actual-file type matching before FFmpeg argument construction.
+- Preserved empty `input_media_types` compatibility for existing direct callers.
+- Added focused native regression coverage.
 - No project schema version change.
 
 Invariant / contract:
-- Supplied video-graph input media types must be `video` or `image`.
-- When supplied, media-type metadata must match the input count.
-- When supplied, each media-type entry must match the actual detected media type of its corresponding input.
-- Image declarations may continue to trigger image-specific FFmpeg input handling; incorrect declarations are rejected before FFmpeg execution.
+- Supplied video-graph media types are limited to `video` and `image`.
+- Supplied media-type metadata matches the input count.
+- Each supplied declaration matches the detected input file type before FFmpeg execution.
 
 Validation:
-- Pending user local validation.
+- M3.118 is recorded as passed solely from the user's explicit PASS; no individual local command result is inferred.
 
 Remaining risks:
-- The native layer still performs independent filesystem/output validation.
-- Empty `input_media_types` remains accepted for compatibility and defaults to video behavior in the FFmpeg argument builder.
+- Empty `input_media_types` remains a compatibility path and defaults to video behavior in the FFmpeg argument builder.
+- Native export retains independent filesystem/output validation.
 
 Next step:
-- User local validation of M3.118, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+- Fresh repository audit from verified `main` to identify the next concrete persisted/runtime/native invariant.
 
 ## M3.117 — Strict Export Settings Native Contract — completed — 2026-09-26
 
