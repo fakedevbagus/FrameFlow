@@ -1,14 +1,26 @@
-### M3.130 — Strict Transform Keyframe Safe-Time Contract — active — 2026-09-26
+### M3.131 — Strict Transform Keyframe Time Normalizer — active — 2026-09-26
 
-- Branch: `fix/m3-130-transform-keyframe-safe-times`.
-- Fresh audit found runtime Transform Keyframe normalization could preserve rounded timestamps outside the JavaScript safe integer range, while `upsertTransformKeyframe()` accepted finite non-negative values without requiring the rounded timestamp to be safe.
-- Normalization now filters to safe integer millisecond timestamps.
-- Upsert now rejects timestamps whose rounded result is not a safe integer.
-- Existing fractional-millisecond rounding behavior remains unchanged for valid inputs.
-- Added focused regression coverage for the safe boundary and unsafe runtime timestamps.
+- Branch: `fix/m3-131-transform-keyframe-time-normalizer`.
+- Fresh audit found the exported `normalizeTransformKeyframeTime()` primitive could return unsafe or non-finite results even though M3.130 hardened its collection/upsert callers.
+- The normalizer now requires finite input and a safe integer result after rounding.
+- Collection normalization filters unsafe/invalid timestamps before invoking the strict primitive.
+- Added focused regression coverage for valid rounding, the safe boundary, unsafe values, and non-finite input.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.130 — Strict Transform Keyframe Safe-Time Contract — completed — 2026-09-26
+
+- Branch: `fix/m3-130-transform-keyframe-safe-times`.
+- PR #145; squash-merged at `d4e1693480e15f0cc59acc4c18be76c820b00ec1`.
+- User reported PASS.
+- Added safe-integer normalization and upsert validation for runtime Transform Keyframe timestamps.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `693a874e3f3aec76f81857531ee2639ded893667` was verified before merge.
+- `main` was verified after merge at `d4e1693480e15f0cc59acc4c18be76c820b00ec1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.129 — Strict Audio Keyframe Safe-Time Contract — completed — 2026-09-26
 
