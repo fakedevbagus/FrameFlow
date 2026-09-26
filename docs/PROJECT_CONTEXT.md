@@ -1,78 +1,38 @@
-## M3.138 — Strict Waveform Source-Range Metadata Contract — active — 2026-09-27
+## M3.139 — Strict Waveform Peak-Array Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-138-strict-waveform-source-range-metadata`
+`fix/m3-139-strict-waveform-peak-array-contract`
 
 Scope:
-- Ensure waveform source-range resampling only accepts safe-integer timing metadata before clamping and interpolation.
+- Ensure native and persisted waveform peak arrays cannot exceed the established maximum waveform density before cache reuse or render-path consumption.
 
 Audit finding:
-- `getWaveformPeaksForSourceRange()` validated `sourceDurationMs`, `sourceStartMs`, and `sourceEndMs` only with finite-number checks.
-- Fractional or unsafe timing values could therefore enter range arithmetic and interpolation despite the project-wide integer-millisecond contract.
-- Negative integer start/end values remain supported by the existing deliberate clamping behavior.
+- Fresh native waveform metadata validation required only a non-empty `peaks` array.
+- Persisted waveform validation reused the same weak array-length contract.
+- The native waveform generator already bounds requested peak density at 2048, and source-range resampling is also bounded to 2048 by M3.135.
+- A malformed native response or persisted cache entry with an extreme peak array could therefore bypass the established waveform density limit and create avoidable allocation/render work.
 
 Implementation:
-- Require `sourceDurationMs` and `sourceStartMs` to be JavaScript safe integers.
-- Require non-null `sourceEndMs` to be a JavaScript safe integer.
-- Preserve existing negative out-of-range clamping semantics for safe integer values.
-- Preserve existing output-peak maximum and valid interpolation behavior.
-- Added focused regression coverage for unsafe and fractional source-duration/source-start/source-end inputs.
+- Tightened waveform metadata validation to require a non-empty peak array with no more than 2048 entries.
+- Apply the same bound to fresh native responses and persisted waveform cache reuse through the shared validator path.
+- Added focused regression coverage for the maximum valid peak-array length and an over-limit persisted/native array.
+- Preserve all existing valid waveform behavior and interpolation semantics.
 - No project schema version change.
 
 Invariant / contract:
-- Waveform source-range timing metadata must be safe integer milliseconds before resampling.
-- Invalid fractional or unsafe timing metadata cannot propagate into waveform interpolation.
-- Safe integer values retain existing range clamping and rendering behavior.
+- Waveform peak arrays must contain between 1 and 2048 entries before cache/render use.
+- Native and persisted waveform metadata share the same peak-density boundary.
+- Existing valid waveform sizes remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
-- Floating-point waveform interpolation itself remains out of scope.
-- Other waveform/UI synchronization behavior remains subject to broader audits when justified.
-
-Next step:
-- Complete user local validation of M3.138; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
-
-## M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
-
-Branch:
-`fix/m3-137-strict-persistent-waveform-metadata`
-
-PR:
-#152
-
-Merge SHA:
-`816d970ac31c9b080c937b89803d3f52ebde0936`
-
-User validation:
-- User reported PASS for M3.137.
-- PR #152 was refreshed at head `23dead40898b5a540138b943c564893c6abf9c5b`, verified ahead of `main`, marked Ready for Review, and squash-merged.
-- `main` was verified after merge at `816d970ac31c9b080c937b89803d3f52ebde0936`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-
-Audit finding:
-- `readPersistentWaveform()` validates cached waveform metadata through `isValidAudioWaveform()`.
-- That validator still accepted finite fractional or unsafe `durationMs` and `sampleRate` values from `localStorage`.
-- A malformed persisted cache entry could therefore bypass the strict native-response boundary and re-enter waveform rendering/selection logic.
-
-Implementation:
-- Tightened `isValidAudioWaveform()` to require positive JavaScript safe integers for `durationMs` and `sampleRate`.
-- Added focused regression coverage proving unsafe and fractional persisted timing metadata is treated as a cache miss and regenerated.
-- Preserved valid persisted waveform reuse.
-- No project schema version change.
-
-Invariant / contract:
-- Persisted waveform duration and sample rate must be positive JavaScript safe integers before cache reuse.
-- Invalid persisted timing metadata cannot enter waveform render/selection paths.
-- Valid cached waveform behavior remains unchanged.
-
-Remaining risks:
-- Waveform source-range `sourceDurationMs` / `sourceStartMs` / `sourceEndMs` numeric validation remains subject to a separate focused audit.
 - Floating-point waveform interpolation remains out of scope.
+- Broader UI/render synchronization remains subject to separate audits when justified.
 
 Next step:
-- Fresh audit from verified `main` for the next concrete waveform/runtime boundary.
+- Complete user local validation of M3.139; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
