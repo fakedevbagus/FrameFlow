@@ -1,3 +1,41 @@
+## M3.120 — Strict Source-Audio Media Duration Bounds — active — 2026-09-26
+
+Branch:
+`fix/m3-120-source-audio-duration-bounds`
+
+Scope:
+- Align native unified AV source-audio segment source ranges with the actual duration of their referenced video media.
+- Reject source-audio segments whose requested source range extends beyond the media file before FFmpeg filter construction.
+
+Audit finding:
+- M3.119 aligned native source-audio processing metadata with the project-domain numeric/range contract.
+- A remaining native boundary gap was that `source_start_ms + duration_ms` was not checked against the actual source media duration.
+- The project render plan derives source end from validated clip timing, while native direct callers could still request an out-of-range source span.
+- FFmpeg could otherwise trim beyond EOF instead of receiving the same source-range invariant enforced by the project domain.
+
+Implementation:
+- Reused the existing native media-duration probing path through `probe_duration_ms()`.
+- Added source-duration caching by video input index to avoid repeated duration probes for multiple segments referencing the same source.
+- Reject source-range overflow using checked integer addition.
+- Reject source ranges whose end exceeds the probed media duration.
+- Added focused native regression coverage for exact-boundary, overrun, and arithmetic-overflow cases.
+- No project schema version change.
+
+Invariant / contract:
+- For every unified AV source-audio segment, `source_start_ms + duration_ms` must be representable and no greater than the actual source media duration.
+- Exact end-at-duration boundaries remain valid.
+- Invalid source ranges are rejected before audio filter generation/FFmpeg execution.
+
+Validation:
+- Pending user local validation.
+
+Remaining risks:
+- Duration probing adds native I/O for unified AV exports that use embedded source audio.
+- FFmpeg graph syntax validation remains a separate concern.
+
+Next step:
+- User local validation of M3.120, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+
 ## M3.119 — Strict Unified AV Source-Audio Segment Contract — completed — 2026-09-26
 
 Branch:
