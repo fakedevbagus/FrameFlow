@@ -1,8 +1,12 @@
-### M3.124 — active — 2026-09-26
+### M3.124 — Strict Render-Plan Timeline Endpoint Safety — active — 2026-09-26
 
-- Fresh audit of verified `main` is beginning.
-- M3.124 branch will be selected only after the concrete next invariant is confirmed from current code.
-- M3.123 was completed in PR #138 and remains documented below with its actual merge SHA.
+- Branch: `fix/m3-124-render-plan-safe-endpoints`.
+- Fresh audit found that `createRenderPlan()` derives `timelineEndMs` by adding two safe millisecond values without checking whether the result remains a safe integer.
+- Planned checked endpoint arithmetic at the export render-plan boundary.
+- Exact safe boundaries remain valid; unsafe derived endpoints are rejected.
+- No project schema change.
+- Validation is pending implementation and user confirmation.
+- Next step: implement the checked endpoint calculation and regression coverage.
 
 ### M3.123 — Safe Integer Millisecond Contract — completed — 2026-09-26
 
