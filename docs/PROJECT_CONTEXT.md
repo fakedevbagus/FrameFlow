@@ -1,20 +1,29 @@
-## M3.126 — Strict Transition Clip Endpoint Safety — active — 2026-09-26
+## M3.126 — Strict Transition Clip Endpoint Safety — completed — 2026-09-26
 
 Branch:
 `fix/m3-126-transition-endpoint-safety`
 
-Scope:
-- Prevent transition helpers from producing clip timeline endpoints outside JavaScript's safe integer range.
+PR:
+#141
+
+Merge SHA:
+`ff8868198d76009ae998fc6e6ffeda26f8e2f837`
+
+User validation:
+- User reported PASS for M3.126.
+- PR #141 was refreshed at head `f8f4861916cf65bab95fe2b3926d4e9c1d209b9d`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `ff8868198d76009ae998fc6e6ffeda26f8e2f837`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - M3.125 hardened timeline-edit command endpoint arithmetic.
-- `src/features/transition/transition.ts` still derived `getClipEndMs()` with unchecked `timelineStartMs + durationMs`.
-- Transition adjacency and visual-state evaluation consume this helper, so an unsafe derived endpoint could still enter transition logic independently of timeline commands.
+- `getClipEndMs()` still derived clip timeline endpoints with unchecked millisecond addition.
+- Transition adjacency and visual-state calculations consume this helper, so an unsafe derived endpoint could enter transition logic independently of timeline commands.
 
 Implementation:
 - Added checked safe-integer arithmetic to `getClipEndMs()`.
-- Preserve normal transition adjacency, dissolve, and fade-through-black behavior for valid safe values.
-- Reject unsafe derived clip endpoints before transition logic consumes them.
+- Preserved normal transition adjacency, dissolve, and fade-through-black behavior for valid safe values.
+- Unsafe derived clip endpoints are rejected before transition logic consumes them.
 - Added focused regression coverage for the maximum safe endpoint and the first unsafe endpoint.
 - No project schema version change.
 
@@ -22,15 +31,13 @@ Invariant / contract:
 - A transition clip end returned by `getClipEndMs()` must be a non-negative JavaScript safe integer whenever the source end is known.
 - Transition adjacency and visual-state calculations must not consume an unsafe derived clip endpoint.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Remaining risks:
 - Project topology validation still performs independent endpoint arithmetic.
 - Floating-point playback/timecode calculations remain out of scope.
 
 Next step:
-- Complete user local validation of M3.126; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next focused project-topology timeline arithmetic invariant.
+
 
 ## M3.125 — Strict Timeline Command Endpoint Safety — completed — 2026-09-26
 
@@ -72,41 +79,6 @@ Remaining risks:
 Next step:
 - Fresh audit from verified `main` for the next focused timeline endpoint invariant.
 
-
-## M3.124 — Strict Render-Plan Timeline Endpoint Safety — active — 2026-09-26
-
-Branch:
-`fix/m3-124-render-plan-safe-endpoints`
-
-Scope:
-- Prevent export render plans from producing derived timeline endpoints outside JavaScript's safe integer range.
-
-Audit finding:
-- M3.123 made persisted millisecond fields safe integers.
-- `createRenderPlan()` still derives `timelineEndMs` using `timelineStartMs + clipDurationMs` without checking the result.
-- Two individually safe millisecond values can sum above `Number.MAX_SAFE_INTEGER`, yielding an unsafe derived endpoint that can flow into render/native requests.
-- Source-end reconstruction remains bounded by persisted source fields; the newly derived timeline endpoint is the remaining central export-path gap.
-
-Implementation:
-- Added checked safe-integer arithmetic for render-plan source and timeline endpoints.
-- Export render-plan construction now rejects derived endpoints that are not JavaScript safe integers.
-- Preserve existing normal render-plan behavior and existing source/media validations.
-- Added focused regression coverage for the maximum safe endpoint and an unsafe derived endpoint.
-- No project schema version change.
-
-Invariant / contract:
-- Every render-plan `timelineEndMs` must be a non-negative JavaScript safe integer.
-- The render plan must not pass an unsafe derived timeline endpoint to downstream render/native layers.
-
-Validation:
-- Implementation complete; user local validation is pending.
-
-Remaining risks:
-- Other runtime helpers perform timeline arithmetic independently; this milestone protects the central export render-plan boundary.
-- Floating-point playback calculations are out of scope.
-
-Next step:
-- Complete user local validation of M3.124; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.124 — Strict Render-Plan Timeline Endpoint Safety — completed — 2026-09-26
 
