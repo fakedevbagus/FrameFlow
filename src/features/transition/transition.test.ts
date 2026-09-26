@@ -77,6 +77,28 @@ describe("transition helpers", () => {
     expect(getNextClipForTransition(project.tracks[0], "first")).toEqual(second);
   });
 
+  it("accepts a clip endpoint at the maximum safe integer", () => {
+    const first = createClip(
+      "safe-end",
+      Number.MAX_SAFE_INTEGER - 4000,
+      4000,
+    );
+
+    expect(getClipEndMs(first)).toBe(Number.MAX_SAFE_INTEGER);
+  });
+
+  it("rejects a clip endpoint above the maximum safe integer", () => {
+    const first = createClip(
+      "unsafe-end",
+      Number.MAX_SAFE_INTEGER,
+      1,
+    );
+
+    expect(() => getClipEndMs(first)).toThrow(
+      "Clip unsafe-end end exceeds the supported safe millisecond range.",
+    );
+  });
+
   it("recognizes directly adjacent clips", () => {
     const first = createClip("first", 0, 4000);
     const second = createClip("second", 4000, 3000);
