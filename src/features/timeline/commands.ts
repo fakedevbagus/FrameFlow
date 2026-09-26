@@ -306,7 +306,14 @@ export function addAssetToTimeline(
 
   const timelineStartMs = track.clips.reduce(
     (latest, clip) =>
-      Math.max(latest, clip.timelineStartMs + clipDuration(clip)),
+      Math.max(
+      latest,
+      addSafeTimelineMilliseconds(
+        clip.timelineStartMs,
+        clipDuration(clip),
+        `Timeline clip ${clip.id} end`,
+      ),
+    ),
     0,
   );
 
@@ -361,12 +368,23 @@ export function addAssetToTrack(
     timelineStartMs === null
       ? track.clips.reduce(
           (latest, clip) =>
-            Math.max(latest, clip.timelineStartMs + clipDuration(clip)),
+            Math.max(
+      latest,
+      addSafeTimelineMilliseconds(
+        clip.timelineStartMs,
+        clipDuration(clip),
+        `Timeline clip ${clip.id} end`,
+      ),
+    ),
           0,
         )
       : Math.round(timelineStartMs);
 
-  const candidateEndMs = requestedStartMs + durationMs;
+  const candidateEndMs = addSafeTimelineMilliseconds(
+    requestedStartMs,
+    durationMs,
+    `Clip ${asset.id} timeline end`,
+  );
 
   if (
     hasTimelineOverlap(
@@ -1122,7 +1140,11 @@ export function updateClipTransition(
     throw new Error("Transition requires an adjacent visual clip.");
   }
 
-  const clipEndMs = location.clip.timelineStartMs + getClipDurationMs(location.clip);
+  const clipEndMs = addSafeTimelineMilliseconds(
+    location.clip.timelineStartMs,
+    getClipDurationMs(location.clip),
+    `Clip ${clipId} timeline end`,
+  );
 
   if (clipEndMs !== nextClip.timelineStartMs) {
     throw new Error("Transition requires two adjacent clips.");
@@ -1523,8 +1545,11 @@ export function moveClipOnTimeline(
   }
 
   const normalizedTimelineStartMs = Math.round(timelineStartMs);
-  const candidateEndMs =
-    normalizedTimelineStartMs + getClipDurationMs(location.clip);
+  const candidateEndMs = addSafeTimelineMilliseconds(
+    normalizedTimelineStartMs,
+    getClipDurationMs(location.clip),
+    `Clip ${clipId} timeline end`,
+  );
 
   if (
     hasTimelineOverlap(
@@ -1584,15 +1609,21 @@ export function trimClipStart(
     throw new Error("Clip start trim would create an invalid source range.");
   }
 
-  const timelineStartMs =
-    clip.timelineStartMs +
-    (normalizedNewSourceStartMs - clip.sourceStartMs);
+  const timelineStartMs = addSafeTimelineMilliseconds(
+    clip.timelineStartMs,
+    normalizedNewSourceStartMs - clip.sourceStartMs,
+    `Clip ${clipId} timeline start`,
+  );
 
   if (timelineStartMs < 0) {
     throw new Error("Clip cannot be trimmed before the start of the timeline.");
   }
 
-  const candidateEndMs = clip.timelineStartMs + getClipDurationMs(clip);
+  const candidateEndMs = addSafeTimelineMilliseconds(
+    clip.timelineStartMs,
+    getClipDurationMs(clip),
+    `Clip ${clipId} timeline end`,
+  );
 
   if (hasTimelineOverlap(location.track, clipId, timelineStartMs, candidateEndMs)) {
     throw new Error("Clip cannot overlap another clip on the same track.");
@@ -1656,9 +1687,11 @@ export function trimClipEnd(
     }
   }
 
-  const candidateEndMs =
-    clip.timelineStartMs +
-    (normalizedNewSourceEndMs - clip.sourceStartMs);
+  const candidateEndMs = addSafeTimelineMilliseconds(
+    clip.timelineStartMs,
+    normalizedNewSourceEndMs - clip.sourceStartMs,
+    `Clip ${clipId} timeline end`,
+  );
 
   if (hasTimelineOverlap(location.track, clipId, clip.timelineStartMs, candidateEndMs)) {
     throw new Error("Clip cannot overlap another clip on the same track.");
@@ -1714,8 +1747,11 @@ export function splitClipAtTime(
     throw new Error("Clip does not have a known source duration.");
   }
 
-  const clipEndMs =
-    clip.timelineStartMs + (clip.sourceEndMs - clip.sourceStartMs);
+  const clipEndMs = addSafeTimelineMilliseconds(
+    clip.timelineStartMs,
+    clip.sourceEndMs - clip.sourceStartMs,
+    `Clip ${clipId} timeline end`,
+  );
 
   if (normalizedTimelineTimeMs >= clipEndMs) {
     throw new Error("Split time must be inside the selected clip.");
@@ -1880,6 +1916,26 @@ function getClampedAudioFadePatch(
   };
 }
 
+function addSafeTimelineMilliseconds(
+  startMs: number,
+  deltaMs: number,
+  context: string,
+): number {
+  if (!Number.isSafeInteger(startMs) || !Number.isSafeInteger(deltaMs)) {
+    throw new Error(`${context} contains an unsafe millisecond value.`);
+  }
+
+  const resultMs = startMs + deltaMs;
+
+  if (!Number.isSafeInteger(resultMs) || resultMs < 0) {
+    throw new Error(
+      `${context} exceeds the supported safe millisecond range.`,
+    );
+  }
+
+  return resultMs;
+}
+
 function hasTimelineOverlap(
   track: Project["tracks"][number],
   excludedClipId: string,
@@ -1892,7 +1948,11 @@ function hasTimelineOverlap(
     }
 
     const existingStartMs = clip.timelineStartMs;
-    const existingEndMs = existingStartMs + getClipDurationMs(clip);
+    const existingEndMs = addSafeTimelineMilliseconds(
+      existingStartMs,
+      getClipDurationMs(clip),
+      `Clip ${clip.id} timeline end`,
+    );
 
     return candidateStartMs < existingEndMs && candidateEndMs > existingStartMs;
   });
