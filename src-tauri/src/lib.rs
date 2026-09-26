@@ -332,6 +332,14 @@ fn render_video_graph_to_mp4(
         );
       }
 
+      if let Some(expected_type) = request.input_media_types.get(index) {
+        if source_type != expected_type {
+          return Err(format!(
+            "Native video graph input media type mismatch at index {index}."
+          ));
+        }
+      }
+
       if same_path(&path, &output_path) {
         return Err("Export output must differ from every graph input.".to_string());
       }
@@ -912,6 +920,18 @@ fn validate_native_video_graph_request_metadata(
 
   if request.video_map != "[vout]" {
     return Err("Native video graph render requires the [vout] output map.".to_string());
+  }
+
+  if !request.input_media_types.is_empty()
+    && request.input_media_types.len() != request.inputs.len()
+  {
+    return Err("Native video graph input media types must match the input count.".to_string());
+  }
+
+  for media_type in &request.input_media_types {
+    if media_type != "video" && media_type != "image" {
+      return Err("Native video graph input media types must be video or image.".to_string());
+    }
   }
 
   Ok(())
@@ -1535,6 +1555,27 @@ mod tests {
     missing_graph.filter_complex = "null[v0]".to_string();
     missing_graph.video_map = "[other]".to_string();
     assert!(super::validate_native_video_graph_request_metadata(&missing_graph).is_err());
+
+    let mut invalid_media_type = super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/media/a.mp4".to_string()],
+      input_media_types: vec!["audio".to_string()],
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "[0:v:0]trim=start=0:end=1[v0]".to_string(),
+      video_map: "[vout]".to_string(),
+    };
+    assert!(
+      super::validate_native_video_graph_request_metadata(&invalid_media_type)
+        .is_err()
+    );
+
+    invalid_media_type.input_media_types = vec!["video".to_string(), "image".to_string()];
+    assert!(
+      super::validate_native_video_graph_request_metadata(&invalid_media_type)
+        .is_err()
+    );
   }
 
   #[test]
