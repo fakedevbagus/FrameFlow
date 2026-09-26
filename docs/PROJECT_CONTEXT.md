@@ -13,13 +13,13 @@ Audit finding:
 - The native multi-segment path `render_video_segments_to_mp4` likewise validated segment structure and media type but did not validate each requested video source range against the actual source duration.
 - These paths remain active in the frontend render pipeline for simple single-clip and single-video-track exports.
 
-Planned implementation:
-- Add a shared native source-range validation helper based on checked addition.
-- Validate single-source `source_start_ms` and optional `source_duration_ms` against the probed source duration.
-- Validate each file-backed multi-segment source range against its probed duration.
-- Reuse duration probes for repeated paths within one multi-segment render.
+Implementation:
+- Added a shared native source-range validation helper based on checked addition.
+- Added single-source `source_start_ms` and optional `source_duration_ms` validation against the probed source duration.
+- Added file-backed multi-segment source-range validation against the probed duration.
+- Reused duration probes for repeated paths within one multi-segment render.
 - Keep black gap segments (`source_path: None`) unchanged.
-- Add focused native regression coverage for exact boundaries, overruns, overflow, and start-only requests.
+- Added focused native regression coverage for exact boundaries, overruns, arithmetic overflow, and start-only requests.
 - No project schema version change.
 
 Invariant / contract:
@@ -29,14 +29,14 @@ Invariant / contract:
 - Invalid ranges are rejected before FFmpeg execution.
 
 Validation:
-- Pending implementation and user local validation.
+- Implementation complete; user local validation is pending.
 
 Remaining risks:
 - Duration probing adds native I/O to direct video export paths.
 - FFmpeg behavior and graph/filter syntax remain separate validation concerns.
 
 Next step:
-- Implement the focused native source-range checks, add regression coverage, update the three docs, and prepare a Draft PR for user validation.
+- Complete user local validation of M3.121; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.119 — Strict Unified AV Source-Audio Segment Contract — completed — 2026-09-26
 
