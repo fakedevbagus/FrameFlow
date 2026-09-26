@@ -1,3 +1,13 @@
+### M3.125 — Strict Timeline Command Endpoint Safety — active — 2026-09-26
+
+- Branch: `fix/m3-125-timeline-command-endpoint-safety`.
+- Fresh audit found unchecked derived timeline endpoint arithmetic in timeline commands after M3.124 protected the central export render plan.
+- Guarded add-to-timeline placement, explicit add/move candidate ends, trim-start timeline shifts, trim-end candidate ends, split end checks, overlap checks, and transition adjacency endpoint checks.
+- Added focused regression coverage for unsafe derived endpoints across the affected command paths.
+- No project schema change.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
 ### M3.124 — Strict Render-Plan Timeline Endpoint Safety — active — 2026-09-26
 
 - Branch: `fix/m3-124-render-plan-safe-endpoints`.
