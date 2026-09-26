@@ -1,4 +1,4 @@
-## M3.115 — active — 2026-09-26
+## M3.115 — completed — 2026-09-26
 
 - Branch: `fix/m3-115-project-framerate-range`.
 - Scope: align persisted `canvas.frameRate` with the native export upper bound of 240 FPS while preserving supported fractional rates.
@@ -6,7 +6,11 @@
 - Added `MAX_CANVAS_FRAME_RATE = 240` and strict persisted upper-bound validation.
 - Added parser regression coverage for the 240 FPS boundary and over-limit values.
 - No project schema version change.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- PR #130; squash-merged at `05a474a2525d51bf51099e4f335081728652b2e8`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
 
 ## M3.114 — completed — 2026-09-26
 
