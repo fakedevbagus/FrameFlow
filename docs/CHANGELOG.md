@@ -1,13 +1,17 @@
-### M3.127 — Strict Project Topology Endpoint Safety — active — 2026-09-26
+### M3.127 — Strict Project Topology Endpoint Safety — completed — 2026-09-26
 
 - Branch: `fix/m3-127-project-topology-endpoint-safety`.
-- Fresh audit found `validateTrackTopology()` still derived overlap and transition adjacency endpoints with unchecked millisecond addition.
+- PR #142; squash-merged at `14300606826040eb69ef32f51f1e3cc98ef278a1`.
+- Fresh audit found `validateTrackTopology()` deriving overlap and transition adjacency endpoints with unchecked millisecond addition.
 - Added checked safe-integer topology endpoint arithmetic for persisted overlap and transition adjacency validation.
 - Existing valid ordering, overlap, and transition semantics remain unchanged.
 - Added focused regression coverage for safe boundary and unsafe derived endpoints in both topology paths.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- User reported PASS.
+- PR head `86de5096f236e8dfbf5ce256224eb499ce896ad8` was verified before merge.
+- `main` was verified after merge at `14300606826040eb69ef32f51f1e3cc98ef278a1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused runtime arithmetic invariant.
 
 ### M3.126 — Strict Transition Clip Endpoint Safety — completed — 2026-09-26
 
