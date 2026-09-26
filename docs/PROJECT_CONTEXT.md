@@ -1,37 +1,74 @@
-## M3.135 — Strict Waveform Output Peak-Count Contract — active — 2026-09-26
+## M3.136 — Strict Waveform Local-Time Duration Contract — active — 2026-09-26
 
 Branch:
-`fix/m3-135-waveform-source-range-contract`
+`fix/m3-136-waveform-local-time-contract`
 
 Scope:
-- Bound the waveform source-range helper's derived output peak count before it reaches `Array.from()`.
+- Ensure waveform local-time mapping only accepts positive JavaScript safe-integer duration metadata before producing a local timestamp.
 
 Audit finding:
-- `getWaveformPeaksForSourceRange()` accepted any finite positive `outputPeakCount`.
-- It rounded that value and immediately used it as an array length, so a very large finite request could cause an extreme allocation or runtime failure.
-- The native waveform generator already caps source waveform density at 2048 peaks.
+- `getWaveformLocalTimeMs()` only required `durationMs` to be finite and positive.
+- It then returned `Math.round(progress * durationMs)`, so malformed fractional or unsafe duration input could produce a timestamp outside the established safe-integer timing contract.
 
 Implementation:
-- Added a 2048 maximum for waveform source-range output peak counts.
-- Unsafe, non-positive, or over-limit rounded counts now return an empty result before allocation.
-- Preserved existing fractional rounding behavior within the supported range.
-- Added regression coverage for unsafe/over-limit counts and the maximum valid count.
+- Tightened the local-time helper to require a positive JavaScript safe-integer duration.
+- Invalid fractional or unsafe duration input now returns the existing safe fallback of 0.
+- Added focused regression coverage for unsafe and fractional duration values.
+- Existing valid pointer-to-time behavior remains unchanged.
 - No project schema version change.
 
 Invariant / contract:
-- `getWaveformPeaksForSourceRange()` may allocate at most 2048 output peaks.
-- The rounded output count must be a positive JavaScript safe integer within the supported waveform bound.
-- Existing valid source-range interpolation behavior remains unchanged.
+- Waveform local-time mapping only emits timestamps derived from positive safe-integer duration metadata.
+- Malformed duration values do not propagate into seek/selection timing.
+- Valid client-coordinate clamping semantics remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
-- Waveform source-duration/source-end numeric validation remains subject to separate focused auditing.
+- Waveform source-duration/source-start/source-end boundary validation remains subject to separate focused auditing.
 - Floating-point waveform interpolation remains out of scope.
 
 Next step:
-- Complete user local validation of M3.135; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.136; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.135 — Strict Waveform Output Peak-Count Contract — completed — 2026-09-26
+
+Branch:
+`fix/m3-135-waveform-source-range-contract`
+
+PR:
+#150
+
+Merge SHA:
+`8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`
+
+User validation:
+- User reported PASS for M3.135.
+- PR #150 was refreshed at head `56dcc66dccbf14bad2a3f5c5716f00b746c7ecdf`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `getWaveformPeaksForSourceRange()` accepted an extreme finite output peak count and used it as an array length before the M3.135 guard.
+
+Implementation:
+- Added the 2048 output-peak maximum and safe-integer validation before array allocation.
+- Added focused regression coverage for unsafe/over-limit counts and the maximum valid count.
+- Existing valid source-range interpolation remains unchanged.
+- No project schema version change.
+
+Invariant / contract:
+- Waveform source-range resampling cannot allocate more than 2048 output peaks.
+- Rounded output counts must be positive safe integers within the supported waveform bound.
+
+Remaining risks:
+- Waveform local-time duration validation remained a separate runtime boundary, addressed by M3.136.
+- Waveform source-duration/source-start/source-end validation remains subject to further focused audits.
+- Floating-point waveform interpolation remains out of scope.
+
+Next step:
+- Fresh audit from verified `main` for the next concrete waveform/runtime boundary.
 
 ## M3.134 — Strict Audio Waveform Response Contract — completed — 2026-09-26
 

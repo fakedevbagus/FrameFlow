@@ -346,7 +346,7 @@ export function getWaveformLocalTimeMs(
     !Number.isFinite(clientX) ||
     !Number.isFinite(left) ||
     !Number.isFinite(width) ||
-    !Number.isFinite(durationMs) ||
+    !Number.isSafeInteger(durationMs) ||
     width <= 0 ||
     durationMs <= 0
   ) {
