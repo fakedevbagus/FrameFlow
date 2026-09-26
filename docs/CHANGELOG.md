@@ -2,11 +2,11 @@
 
 - Branch: `fix/m3-124-render-plan-safe-endpoints`.
 - Fresh audit found that `createRenderPlan()` derives `timelineEndMs` by adding two safe millisecond values without checking whether the result remains a safe integer.
-- Planned checked endpoint arithmetic at the export render-plan boundary.
+- Added checked endpoint arithmetic at the export render-plan boundary.
 - Exact safe boundaries remain valid; unsafe derived endpoints are rejected.
 - No project schema change.
-- Validation is pending implementation and user confirmation.
-- Next step: implement the checked endpoint calculation and regression coverage.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
 
 ### M3.123 — Safe Integer Millisecond Contract — completed — 2026-09-26
 

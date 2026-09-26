@@ -132,8 +132,16 @@ export function createRenderPlan(
         );
       }
 
-      const sourceEndMs = clip.sourceStartMs + clipDurationMs;
-      const timelineEndMs = clip.timelineStartMs + clipDurationMs;
+      const sourceEndMs = addSafeMilliseconds(
+        clip.sourceStartMs,
+        clipDurationMs,
+        `Render clip ${clip.id} source end`,
+      );
+      const timelineEndMs = addSafeMilliseconds(
+        clip.timelineStartMs,
+        clipDurationMs,
+        `Render clip ${clip.id} timeline end`,
+      );
       const normalizedCrop = getClipCrop(clip.crop);
       const hasCrop =
         normalizedCrop.top > 0 ||
@@ -249,6 +257,28 @@ function scaleTextOverlayForExport(
     ...overlay,
     fontSize: Math.max(1, Math.round(overlay.fontSize * renderScale)),
   };
+}
+
+function addSafeMilliseconds(
+  startMs: number,
+  durationMs: number,
+  context: string,
+): number {
+  if (!Number.isSafeInteger(startMs) || !Number.isSafeInteger(durationMs)) {
+    throw new Error(
+      `${context} contains an unsafe millisecond value.`,
+    );
+  }
+
+  const endMs = startMs + durationMs;
+
+  if (!Number.isSafeInteger(endMs)) {
+    throw new Error(
+      `${context} exceeds the supported safe millisecond range.`,
+    );
+  }
+
+  return endMs;
 }
 
 function getClipDurationMs(clip: Clip): number {

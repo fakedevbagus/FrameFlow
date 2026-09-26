@@ -6,7 +6,7 @@
 - Preserve existing render behavior for normal safe values.
 - Add regression coverage for safe and first-unsafe derived endpoints.
 - No project schema version change.
-- Local validation is pending implementation; do not assume lint/test/build/cargo/manual validation has passed.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 ## M3.123 — completed — 2026-09-26
 

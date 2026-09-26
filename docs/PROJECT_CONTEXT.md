@@ -12,11 +12,11 @@ Audit finding:
 - Two individually safe millisecond values can sum above `Number.MAX_SAFE_INTEGER`, yielding an unsafe derived endpoint that can flow into render/native requests.
 - Source-end reconstruction remains bounded by persisted source fields; the newly derived timeline endpoint is the remaining central export-path gap.
 
-Planned implementation:
-- Add checked safe-integer arithmetic for render-plan timeline endpoints.
-- Reject an export clip when its derived timeline end cannot be represented exactly as a JavaScript safe integer.
+Implementation:
+- Added checked safe-integer arithmetic for render-plan source and timeline endpoints.
+- Export render-plan construction now rejects derived endpoints that are not JavaScript safe integers.
 - Preserve existing normal render-plan behavior and existing source/media validations.
-- Add focused regression coverage at the safe boundary and first unsafe derived endpoint.
+- Added focused regression coverage for the maximum safe endpoint and an unsafe derived endpoint.
 - No project schema version change.
 
 Invariant / contract:
@@ -24,14 +24,14 @@ Invariant / contract:
 - The render plan must not pass an unsafe derived timeline endpoint to downstream render/native layers.
 
 Validation:
-- Pending implementation and user local validation.
+- Implementation complete; user local validation is pending.
 
 Remaining risks:
 - Other runtime helpers perform timeline arithmetic independently; this milestone protects the central export render-plan boundary.
 - Floating-point playback calculations are out of scope.
 
 Next step:
-- Implement the checked render-plan endpoint arithmetic and regression coverage, then prepare a Draft PR for user validation.
+- Complete user local validation of M3.124; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.123 — Safe Integer Millisecond Contract — completed — 2026-09-26
 
