@@ -1,12 +1,16 @@
-### M3.125 — Strict Timeline Command Endpoint Safety — active — 2026-09-26
+### M3.125 — Strict Timeline Command Endpoint Safety — completed — 2026-09-26
 
 - Branch: `fix/m3-125-timeline-command-endpoint-safety`.
-- Fresh audit found unchecked derived timeline endpoint arithmetic in timeline commands after M3.124 protected the central export render plan.
-- Guarded add-to-timeline placement, explicit add/move candidate ends, trim-start timeline shifts, trim-end candidate ends, split end checks, overlap checks, and transition adjacency endpoint checks.
-- Added focused regression coverage for unsafe derived endpoints across the affected command paths.
+- PR #140; squash-merged at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
+- Fresh audit found unchecked derived timeline endpoint arithmetic in add, move, trim-start, trim-end, split, overlap checking, and transition adjacency validation.
+- Added one checked safe-integer timeline addition helper and applied it to the affected command-level endpoint calculations.
+- Added focused regression coverage for unsafe derived endpoints across add, move, trim-start, trim-end, split, and overlap paths.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- User reported PASS.
+- PR head `ab89f60ebb6eea3448c73f23ee6a765bf3762081` was verified before merge.
+- `main` was verified after merge at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.124 — Strict Render-Plan Timeline Endpoint Safety — active — 2026-09-26
 
