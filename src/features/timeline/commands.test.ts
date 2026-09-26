@@ -61,10 +61,16 @@ describe("canvas settings", () => {
     const project = createProject({ id: "canvas-dimensions-invalid" });
 
     expect(() => updateCanvasDimensions(project, 1920.5, 1080)).toThrow(
-      "Canvas dimensions must be positive integers.",
+      "Canvas dimensions must be positive even integers.",
     );
     expect(() => updateCanvasDimensions(project, 0, 1080)).toThrow(
-      "Canvas dimensions must be positive integers.",
+      "Canvas dimensions must be positive even integers.",
+    );
+    expect(() => updateCanvasDimensions(project, 1921, 1080)).toThrow(
+      "Canvas dimensions must be positive even integers.",
+    );
+    expect(() => updateCanvasDimensions(project, 1920, 1081)).toThrow(
+      "Canvas dimensions must be positive even integers.",
     );
   });
 });
