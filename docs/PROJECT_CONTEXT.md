@@ -1,37 +1,71 @@
-## M3.130 — Strict Transform Keyframe Safe-Time Contract — active — 2026-09-26
+## M3.131 — Strict Transform Keyframe Time Normalizer — active — 2026-09-26
 
 Branch:
-`fix/m3-130-transform-keyframe-safe-times`
+`fix/m3-131-transform-keyframe-time-normalizer`
 
 Scope:
-- Prevent runtime Transform Keyframe APIs from accepting or propagating timestamps outside JavaScript's safe integer range.
+- Make the exported Transform Keyframe time normalizer itself enforce the JavaScript safe-integer millisecond contract.
 
 Audit finding:
-- Persisted Transform Keyframe `timeMs` values already require safe integers during project validation.
-- `normalizeTransformKeyframes()` accepted finite timestamps whose rounded values could be outside the safe integer range and preserve them in runtime state.
-- `upsertTransformKeyframe()` accepted finite non-negative timestamps without requiring the rounded result to be safe.
+- M3.130 hardened `normalizeTransformKeyframes()` and `upsertTransformKeyframe()`.
+- The exported primitive `normalizeTransformKeyframeTime()` still returned the rounded result directly, so a direct caller could receive an unsafe timestamp or non-finite result.
 
 Implementation:
-- Filter normalized Transform Keyframes to rounded timestamps that are JavaScript safe integers.
-- Require the rounded timestamp produced by `upsertTransformKeyframe()` to be a safe integer.
-- Preserve existing fractional-millisecond rounding behavior for valid inputs.
-- Added focused regression coverage for `Number.MAX_SAFE_INTEGER`, unsafe normalized values, and unsafe upsert input.
+- Require the normalizer input to be finite.
+- Require the normalized rounded timestamp to be a JavaScript safe integer.
+- Preserve valid non-negative rounding behavior, including fractional-millisecond input.
+- Keep collection normalization behavior unchanged for invalid/unsafe keyframes by filtering before invoking the strict primitive.
+- Added focused regression coverage for valid rounding, `Number.MAX_SAFE_INTEGER`, unsafe values, and non-finite input.
 - No project schema version change.
 
 Invariant / contract:
-- Runtime Transform Keyframe timestamps must normalize to non-negative JavaScript safe integers.
-- Valid fractional input continues to round to an integer millisecond timestamp.
-- Unsafe timestamps are rejected or discarded before they can become runtime/persisted keyframe state.
+- `normalizeTransformKeyframeTime()` returns only finite non-negative JavaScript safe integer milliseconds.
+- Invalid or unsafe direct inputs are rejected.
+- `normalizeTransformKeyframes()` continues to discard invalid/unsafe keyframes rather than throwing for the collection boundary.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
 - Floating-point transform interpolation/playhead calculations remain out of scope.
-- Other independent keyframe/runtime arithmetic remains subject to focused audits.
+- Other keyframe and timeline arithmetic may contain independent boundary cases requiring separate audits.
 
 Next step:
-- Complete user local validation of M3.130; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.131; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.130 — Strict Transform Keyframe Safe-Time Contract — completed — 2026-09-26
+
+Branch:
+`fix/m3-130-transform-keyframe-safe-times`
+
+PR:
+#145
+
+Merge SHA:
+`d4e1693480e15f0cc59acc4c18be76c820b00ec1`
+
+User validation:
+- User reported PASS for M3.130.
+- PR #145 was refreshed at head `693a874e3f3aec76f81857531ee2639ded893667`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `d4e1693480e15f0cc59acc4c18be76c820b00ec1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- Persisted Transform Keyframe timestamps were already safe, but runtime normalization and upsert could create or preserve unsafe rounded timestamps.
+
+Implementation:
+- Added safe-integer filtering to Transform Keyframe normalization.
+- Added safe-integer validation to Transform Keyframe upsert.
+- Preserved valid fractional-millisecond rounding.
+- Added focused regression coverage.
+- No project schema version change.
+
+Remaining risks:
+- The exported time-normalization primitive still required direct-boundary hardening, addressed by M3.131.
+- Floating-point playback/interpolation calculations remain out of scope.
+
+Next step:
+- Fresh audit from verified `main` for the next keyframe/runtime invariant.
 
 ## M3.129 — Strict Audio Keyframe Safe-Time Contract — completed — 2026-09-26
 
