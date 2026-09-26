@@ -1,3 +1,14 @@
+### M3.122 — Strict Single-Source Duration Semantics — active — 2026-09-26
+
+- Branch: `fix/m3-122-strict-single-source-duration-semantics`.
+- Fresh audit found that an explicitly supplied `sourceDurationMs: 0` was silently ignored by the single-source FFmpeg argument builder.
+- Tightened the shared native source-range validator so supplied source durations must be positive.
+- Omitted durations and positive durations retain their existing semantics.
+- Added focused native regression coverage for omitted duration, zero duration, exact-boundary positive duration, overrun, and overflow behavior.
+- No project schema change.
+- Implementation is complete; local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
 ### M3.121 — Strict Legacy Source-Range Bounds — completed — 2026-09-26
 
 - Branch: `fix/m3-121-strict-legacy-source-bounds`.

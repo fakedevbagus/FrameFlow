@@ -1,3 +1,37 @@
+## M3.122 — Strict Single-Source Duration Semantics — active — 2026-09-26
+
+Branch:
+`fix/m3-122-strict-single-source-duration-semantics`
+
+Scope:
+- Make the optional native single-source `source_duration_ms` contract explicit and reject zero-duration requests instead of silently ignoring them.
+
+Audit finding:
+- `NativeExportRenderRequest.source_duration_ms` is optional.
+- The single-source FFmpeg argument builder only emits `-t` for values greater than zero, so an explicitly supplied `source_duration_ms: 0` was silently treated as if no duration had been supplied.
+- The native multi-segment path already requires positive segment durations, making the single-source behavior inconsistent.
+
+Implementation:
+- Tightened the shared native source-range validator so a supplied source duration must be positive.
+- Preserved omitted duration semantics and valid positive durations.
+- Added focused native regression coverage for omitted duration, zero duration, exact-boundary positive duration, overrun, and overflow behavior.
+- No project schema version change.
+
+Invariant / contract:
+- Omitted source duration means export the remaining source range beginning at the requested start.
+- A supplied source duration must be greater than zero.
+- When supplied, `source_start_ms + source_duration_ms` must remain representable and no greater than actual source media duration.
+
+Validation:
+- Implementation complete; user local validation is pending.
+
+Remaining risks:
+- This milestone only tightens the single-source optional duration contract; broader FFmpeg execution behavior remains separately validated.
+- Native graph paths continue to have their own request contracts.
+
+Next step:
+- Complete user local validation of M3.122; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.121 — Strict Legacy Source-Range Bounds — completed — 2026-09-26
 
 Branch:
