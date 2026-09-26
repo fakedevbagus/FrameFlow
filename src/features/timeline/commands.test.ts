@@ -1672,6 +1672,22 @@ describe("clip command time normalization", () => {
     expect(() => serializeProject(endTrimmed)).not.toThrow();
   });
 
+  it("rejects a source split when the derived source timestamp exceeds the safe range", () => {
+    const project = createVideoProject();
+    const populated = addAssetToTimeline(project, "video");
+    const clip = populated.tracks[0].clips[0];
+
+    populated.tracks[0].clips[0] = {
+      ...clip,
+      sourceStartMs: Number.MAX_SAFE_INTEGER,
+      sourceEndMs: Number.MAX_SAFE_INTEGER + 2,
+    };
+
+    expect(() =>
+      splitClipAtTime(populated, clip.id, 1),
+    ).toThrow("source split exceeds the supported safe millisecond range.");
+  });
+
   it("canonicalizes fractional split times and keeps both resulting clips serializable", () => {
     const project = createVideoProject();
     const populated = addAssetToTimeline(project, "video");

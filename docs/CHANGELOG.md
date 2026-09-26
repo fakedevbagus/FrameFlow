@@ -1,13 +1,26 @@
-### M3.131 — Strict Transform Keyframe Time Normalizer — active — 2026-09-26
+### M3.132 — Strict Source Split Endpoint Safety — active — 2026-09-26
 
-- Branch: `fix/m3-131-transform-keyframe-time-normalizer`.
-- Fresh audit found the exported `normalizeTransformKeyframeTime()` primitive could return unsafe or non-finite results even though M3.130 hardened its collection/upsert callers.
-- The normalizer now requires finite input and a safe integer result after rounding.
-- Collection normalization filters unsafe/invalid timestamps before invoking the strict primitive.
-- Added focused regression coverage for valid rounding, the safe boundary, unsafe values, and non-finite input.
+- Branch: `fix/m3-132-safe-source-split-endpoint`.
+- Fresh audit found `splitClipAtTime()` deriving `sourceSplitMs` with unchecked `sourceStartMs + (timelineSplit - timelineStart)` arithmetic.
+- Reused the existing checked millisecond addition helper for the source split calculation.
+- Added focused regression coverage for an unsafe derived source split endpoint.
+- Existing valid split behavior remains unchanged.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.131 — Strict Transform Keyframe Time Normalizer — completed — 2026-09-26
+
+- Branch: `fix/m3-131-transform-keyframe-time-normalizer`.
+- PR #146; squash-merged at `5a8f98309dfd4a190828d85efdc38432b1b7b909`.
+- User reported PASS.
+- Hardened the exported Transform Keyframe timestamp normalizer to reject non-finite input and unsafe rounded results, while collection normalization filters invalid values.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `45f0405f5a217f0811244bf61efa24fd1fff2335` was verified before merge.
+- `main` was verified after merge at `5a8f98309dfd4a190828d85efdc38432b1b7b909`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.130 — Strict Transform Keyframe Safe-Time Contract — completed — 2026-09-26
 

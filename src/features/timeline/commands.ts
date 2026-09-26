@@ -1763,9 +1763,11 @@ export function splitClipAtTime(
     throw new Error("Split time must be inside the selected clip.");
   }
 
-  const sourceSplitMs =
-    clip.sourceStartMs +
-    (normalizedTimelineTimeMs - clip.timelineStartMs);
+  const sourceSplitMs = addSafeTimelineMilliseconds(
+    clip.sourceStartMs,
+    normalizedTimelineTimeMs - clip.timelineStartMs,
+    `Clip ${clipId} source split`,
+  );
 
   const splitLocalTimeMs =
     normalizedTimelineTimeMs - clip.timelineStartMs;
