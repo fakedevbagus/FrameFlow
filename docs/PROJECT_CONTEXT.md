@@ -1,37 +1,70 @@
-## M3.131 — Strict Transform Keyframe Time Normalizer — active — 2026-09-26
+## M3.132 — Strict Source Split Endpoint Safety — active — 2026-09-26
 
 Branch:
-`fix/m3-131-transform-keyframe-time-normalizer`
+`fix/m3-132-safe-source-split-endpoint`
 
 Scope:
-- Make the exported Transform Keyframe time normalizer itself enforce the JavaScript safe-integer millisecond contract.
+- Prevent `splitClipAtTime()` from producing an unsafe source timestamp when deriving the source-side split point.
 
 Audit finding:
-- M3.130 hardened `normalizeTransformKeyframes()` and `upsertTransformKeyframe()`.
-- The exported primitive `normalizeTransformKeyframeTime()` still returned the rounded result directly, so a direct caller could receive an unsafe timestamp or non-finite result.
+- M3.125 hardened timeline-derived endpoints.
+- M3.123 established safe persisted millisecond values.
+- `splitClipAtTime()` still derived `sourceSplitMs` with direct addition of `sourceStartMs + (timelineSplit - timelineStart)`.
+- A direct runtime caller with malformed/unsafe source timing could therefore derive an unsafe source split timestamp before the new clips were committed.
 
 Implementation:
-- Require the normalizer input to be finite.
-- Require the normalized rounded timestamp to be a JavaScript safe integer.
-- Preserve valid non-negative rounding behavior, including fractional-millisecond input.
-- Keep collection normalization behavior unchanged for invalid/unsafe keyframes by filtering before invoking the strict primitive.
-- Added focused regression coverage for valid rounding, `Number.MAX_SAFE_INTEGER`, unsafe values, and non-finite input.
+- Reused the existing checked millisecond addition helper for the source-side split calculation.
+- Preserved normal split behavior and keyframe/audio-automation preservation for valid values.
+- Added focused regression coverage for an unsafe derived source split endpoint.
 - No project schema version change.
 
 Invariant / contract:
-- `normalizeTransformKeyframeTime()` returns only finite non-negative JavaScript safe integer milliseconds.
-- Invalid or unsafe direct inputs are rejected.
-- `normalizeTransformKeyframes()` continues to discard invalid/unsafe keyframes rather than throwing for the collection boundary.
+- A source split timestamp produced by `splitClipAtTime()` must be a non-negative JavaScript safe integer.
+- Source split derivation must reject unsafe arithmetic before creating either resulting clip.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
-- Floating-point transform interpolation/playhead calculations remain out of scope.
-- Other keyframe and timeline arithmetic may contain independent boundary cases requiring separate audits.
+- Other direct source/timeline arithmetic outside the already hardened boundaries remains subject to focused audits.
+- Floating-point playback/timecode calculations remain out of scope.
 
 Next step:
-- Complete user local validation of M3.131; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.132; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.131 — Strict Transform Keyframe Time Normalizer — completed — 2026-09-26
+
+Branch:
+`fix/m3-131-transform-keyframe-time-normalizer`
+
+PR:
+#146
+
+Merge SHA:
+`5a8f98309dfd4a190828d85efdc38432b1b7b909`
+
+User validation:
+- User reported PASS for M3.131.
+- PR #146 was refreshed at head `45f0405f5a217f0811244bf61efa24fd1fff2335`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `5a8f98309dfd4a190828d85efdc38432b1b7b909`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- M3.130 hardened Transform Keyframe collection normalization and upsert, but the exported time normalizer itself could still return unsafe or non-finite results.
+
+Implementation:
+- Added finite-input validation and safe-integer result validation to `normalizeTransformKeyframeTime()`.
+- Preserved valid fractional-millisecond rounding.
+- Updated collection normalization to filter unsafe/invalid timestamps before invoking the strict primitive.
+- Added focused regression coverage.
+- No project schema version change.
+
+Remaining risks:
+- Source-side split arithmetic remained an independent runtime boundary, addressed by M3.132.
+- Floating-point transform interpolation/playhead calculations remain out of scope.
+
+Next step:
+- Fresh audit from verified `main` for the next source/timeline arithmetic invariant.
 
 ## M3.130 — Strict Transform Keyframe Safe-Time Contract — completed — 2026-09-26
 
