@@ -33,6 +33,47 @@ Remaining risks:
 Next step:
 - Complete user local validation of M3.124; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
+## M3.124 — Strict Render-Plan Timeline Endpoint Safety — completed — 2026-09-26
+
+Branch:
+`fix/m3-124-render-plan-safe-endpoints`
+
+PR:
+#139
+
+Merge SHA:
+`4a1254dc80d3e9241c657a767d78eb60078424d4`
+
+User validation:
+- User reported PASS for M3.124.
+- PR #139 was refreshed at head `4fd7f0d7800948010eebeaae9e0d328fdaf4da20`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `4a1254dc80d3e9241c657a767d78eb60078424d4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- M3.123 made persisted millisecond fields safe integers.
+- `createRenderPlan()` still derived `timelineEndMs` from two individually safe millisecond values without checking whether the sum remained a JavaScript safe integer.
+- An unsafe derived endpoint could therefore reach downstream render/native layers.
+
+Implementation:
+- Added checked safe-integer arithmetic for render-plan source and timeline endpoints.
+- Exact `Number.MAX_SAFE_INTEGER` boundaries remain valid.
+- Derived endpoints above the safe-integer range are rejected before entering the render plan.
+- Existing normal render-plan behavior and source/media validations remain unchanged.
+- Added focused regression coverage for the maximum safe endpoint and the first unsafe derived endpoint.
+- No project schema version change.
+
+Invariant / contract:
+- Every render-plan `timelineEndMs` must be a non-negative JavaScript safe integer.
+- The render plan must not pass an unsafe derived timeline endpoint to downstream render/native layers.
+
+Remaining risks:
+- Other timeline-edit and transition helpers perform independent timeline endpoint arithmetic; those are separate hardening boundaries.
+- Floating-point playback calculations remain out of scope.
+
+Next step:
+- Fresh audit from verified `main` for the next focused runtime/persistence timeline arithmetic gap.
+
 ## M3.123 — Safe Integer Millisecond Contract — completed — 2026-09-26
 
 Branch:
