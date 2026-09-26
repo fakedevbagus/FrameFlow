@@ -1265,8 +1265,8 @@ function validateCanvas(value: unknown): asserts value is CanvasSettings {
     throw new ProjectValidationError("Project canvas must be an object.");
   }
 
-  assertPositiveInteger(value.width, "Canvas width");
-  assertPositiveInteger(value.height, "Canvas height");
+  assertPositiveEvenInteger(value.width, "Canvas width");
+  assertPositiveEvenInteger(value.height, "Canvas height");
   assertPositiveNumber(value.frameRate, "Canvas frameRate");
 
   if (value.frameRate > MAX_CANVAS_FRAME_RATE) {
@@ -1291,6 +1291,23 @@ function assertIsoTimestamp(value: unknown, field: string): asserts value is str
   ) {
     throw new ProjectValidationError(
       `${field} must be a canonical UTC ISO timestamp.`,
+    );
+  }
+}
+
+function assertPositiveEvenInteger(
+  value: unknown,
+  field: string,
+): asserts value is number {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    !Number.isInteger(value) ||
+    value <= 0 ||
+    value % 2 !== 0
+  ) {
+    throw new ProjectValidationError(
+      `${field} must be a positive even integer.`,
     );
   }
 }
