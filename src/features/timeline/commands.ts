@@ -62,11 +62,13 @@ export function updateCanvasDimensions(
     !Number.isFinite(width) ||
     !Number.isInteger(width) ||
     width <= 0 ||
+    width % 2 !== 0 ||
     !Number.isFinite(height) ||
     !Number.isInteger(height) ||
-    height <= 0
+    height <= 0 ||
+    height % 2 !== 0
   ) {
-    throw new Error("Canvas dimensions must be positive integers.");
+    throw new Error("Canvas dimensions must be positive even integers.");
   }
 
   return {
