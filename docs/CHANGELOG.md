@@ -1,7 +1,7 @@
-### M3.129 — Strict Audio Keyframe Safe-Time Contract — active — 2026-09-26
+### M3.130 — Strict Transform Keyframe Safe-Time Contract — active — 2026-09-26
 
-- Branch: `fix/m3-129-audio-keyframe-safe-times`.
-- Fresh audit found runtime audio volume keyframe normalization could preserve rounded timestamps outside the JavaScript safe integer range, while `upsertAudioVolumeKeyframe()` accepted finite non-negative values without requiring the rounded timestamp to be safe.
+- Branch: `fix/m3-130-transform-keyframe-safe-times`.
+- Fresh audit found runtime Transform Keyframe normalization could preserve rounded timestamps outside the JavaScript safe integer range, while `upsertTransformKeyframe()` accepted finite non-negative values without requiring the rounded timestamp to be safe.
 - Normalization now filters to safe integer millisecond timestamps.
 - Upsert now rejects timestamps whose rounded result is not a safe integer.
 - Existing fractional-millisecond rounding behavior remains unchanged for valid inputs.
@@ -9,6 +9,19 @@
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.129 — Strict Audio Keyframe Safe-Time Contract — completed — 2026-09-26
+
+- Branch: `fix/m3-129-audio-keyframe-safe-times`.
+- PR #144; squash-merged at `e5b9d9aa4728ab112493e3e6fce70729673cda27`.
+- User reported PASS.
+- Fresh audit found runtime audio volume keyframe normalization could preserve unsafe rounded timestamps and `upsertAudioVolumeKeyframe()` could accept unsafe rounded timestamps.
+- Added safe-integer normalization and safe-integer upsert validation with focused regression coverage.
+- No project schema change.
+- PR head `da89d08fedeed31c7a8bc463560a35defba46a9f` was verified before merge.
+- `main` was verified after merge at `e5b9d9aa4728ab112493e3e6fce70729673cda27`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.128 — Strict Audio Fade Aggregate Safety — completed — 2026-09-26
 
