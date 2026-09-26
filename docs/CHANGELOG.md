@@ -1,3 +1,15 @@
+### M3.118 — Strict Video Graph Input Media-Type Contract — active — 2026-09-26
+
+- Branch: `fix/m3-118-strict-video-graph-media-types`.
+- Fresh audit found that native video-graph input media types were only count-checked even though FFmpeg argument construction uses them to decide image looping.
+- Native video-graph media-type metadata now accepts only `video` or `image` when supplied.
+- Native video-graph rendering now checks each supplied media-type declaration against the actual detected input file type.
+- Existing empty media-type compatibility behavior is preserved.
+- Added focused native regression coverage for invalid media types and mismatched input counts.
+- No project schema change.
+- Validation is pending user confirmation.
+- Next step: complete local validation, then merge and reconcile the documentation.
+
 ### M3.117 — Strict Export Settings Native Contract — completed — 2026-09-26
 
 - Branch: `fix/m3-117-export-settings-native-contract`.
