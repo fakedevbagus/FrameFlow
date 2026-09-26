@@ -1,3 +1,43 @@
+## M3.119 — Strict Unified AV Source-Audio Segment Contract — active — 2026-09-26
+
+Branch:
+`fix/m3-119-strict-unified-av-audio-segments`
+
+Scope:
+- Align the native unified video/audio graph request boundary with the persisted/source-audio processing invariants already enforced by the project domain.
+- Reject malformed source-audio segment processing metadata before FFmpeg filter generation.
+
+Audit finding:
+- `NativeSourceAudioSegment` deserializes track volume/pan, fades, volume keyframes, EQ, and compressor settings directly from the Tauri request.
+- `validate_video_audio_graph_request()` previously checked only segment duration, input index, and that the referenced input was a video.
+- FFmpeg filter generation then clamps or normalizes several of those values, allowing native callers to submit metadata that would be invalid in the project domain.
+- The frontend render plan normally derives these values from validated project state, so this is a native IPC boundary hardening milestone.
+
+Implementation:
+- Added native validation for track volume `0..1` at two-decimal precision.
+- Added native validation for track pan `-1..1` at two-decimal precision.
+- Added fade duration and non-overlap validation against the segment duration.
+- Added ordered, unique, in-range audio volume keyframe validation with three-decimal volume precision.
+- Added EQ gain validation matching the project `-12..12` one-decimal contract.
+- Added compressor threshold, ratio, attack, and release validation matching the project ranges and precision.
+- Added focused native regression coverage.
+- No project schema version change.
+
+Invariant / contract:
+- Native unified AV source-audio metadata must satisfy the same numeric/range/ordering contract as the project domain before filter construction.
+- Valid values are not changed by this milestone; invalid values are rejected instead of silently clamped.
+- Source start and duration remain unsigned request fields; media-duration probing remains outside this milestone.
+
+Validation:
+- Pending user local validation.
+
+Remaining risks:
+- Native source-audio validation does not verify that `source_start_ms + duration_ms` stays within the actual media duration.
+- FFmpeg graph syntax validation remains a separate concern.
+
+Next step:
+- User local validation of M3.119, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+
 ## M3.118 — Strict Video Graph Input Media-Type Contract — completed — 2026-09-26
 
 Branch:

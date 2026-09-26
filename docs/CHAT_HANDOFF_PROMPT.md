@@ -1,3 +1,13 @@
+## M3.119 — active — 2026-09-26
+
+- Branch: `fix/m3-119-strict-unified-av-audio-segments`.
+- Scope: align native unified AV source-audio segment processing metadata with the project-domain numeric/range/ordering contract.
+- Audit finding: native validation previously checked only duration, input index, and video-input type; FFmpeg helpers could silently clamp or normalize invalid audio metadata.
+- Added strict validation for track volume/pan, fades, audio volume keyframes, EQ gains, and compressor parameters.
+- Added focused native regression coverage.
+- No project schema version change.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+
 ## M3.118 — completed — 2026-09-26
 
 - Branch: `fix/m3-118-strict-video-graph-media-types`.
