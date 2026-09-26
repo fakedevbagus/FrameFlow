@@ -1319,8 +1319,8 @@ mod tests {
     build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
     build_ffmpeg_video_with_audio_graph_args, media_type,
     validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
-    NativeAudioGraphRenderRequest, NativeSourceAudioEq, NativeSourceAudioSegment,
-    NativeSourceAudioCompressor, NativeSourceAudioEq, NativeSourceAudioVolumeKeyframe,
+    NativeAudioGraphRenderRequest, NativeSourceAudioCompressor, NativeSourceAudioEq,
+    NativeSourceAudioSegment, NativeSourceAudioVolumeKeyframe,
     NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
   };
