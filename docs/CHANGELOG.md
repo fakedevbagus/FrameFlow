@@ -1,13 +1,17 @@
-### M3.126 — Strict Transition Clip Endpoint Safety — active — 2026-09-26
+### M3.126 — Strict Transition Clip Endpoint Safety — completed — 2026-09-26
 
 - Branch: `fix/m3-126-transition-endpoint-safety`.
-- Fresh audit found `getClipEndMs()` still derived clip timeline endpoints with unchecked millisecond addition after M3.125 hardened timeline commands.
+- PR #141; squash-merged at `ff8868198d76009ae998fc6e6ffeda26f8e2f837`.
+- Fresh audit found `getClipEndMs()` could derive an unsafe clip timeline endpoint by adding two individually safe millisecond values without checking the result.
 - Added checked safe-integer endpoint arithmetic to the transition clip-end helper.
-- Transition adjacency and visual-state calculations retain existing behavior for valid safe values.
+- Existing transition adjacency, dissolve, and fade-through-black behavior remains unchanged for valid safe values.
 - Added focused regression coverage at `Number.MAX_SAFE_INTEGER` and the first unsafe endpoint.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- User reported PASS.
+- PR head `f8f4861916cf65bab95fe2b3926d4e9c1d209b9d` was verified before merge.
+- `main` was verified after merge at `ff8868198d76009ae998fc6e6ffeda26f8e2f837`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused project-topology timeline arithmetic invariant.
 
 ### M3.125 — Strict Timeline Command Endpoint Safety — completed — 2026-09-26
 
@@ -22,16 +26,6 @@
 - `main` was verified after merge at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main`.
-
-### M3.124 — Strict Render-Plan Timeline Endpoint Safety — active — 2026-09-26
-
-- Branch: `fix/m3-124-render-plan-safe-endpoints`.
-- Fresh audit found that `createRenderPlan()` derives `timelineEndMs` by adding two safe millisecond values without checking whether the result remains a safe integer.
-- Added checked endpoint arithmetic at the export render-plan boundary.
-- Exact safe boundaries remain valid; unsafe derived endpoints are rejected.
-- No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
 
 ### M3.124 — Strict Render-Plan Timeline Endpoint Safety — completed — 2026-09-26
 
