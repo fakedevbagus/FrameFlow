@@ -10,8 +10,6 @@
 
 ## M3.115 — completed — 2026-09-26
 
-## M3.115 — completed — 2026-09-26
-
 - Branch: `fix/m3-115-project-framerate-range`.
 - Scope: align persisted `canvas.frameRate` with the native export upper bound of 240 FPS while preserving supported fractional rates.
 - Audit finding: project validation previously accepted any positive finite frame rate, but native export rejects values above 240 FPS; the project frame rate is also the default export frame rate.
@@ -51,7 +49,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.114 is completed and merged; the next milestone must come from a fresh audit of current `main`.
+- M3.115 is completed and merged; M3.116 is the active milestone and must be validated before merge.
 - On user `PASS` / `pass` / `lanjutkan` for a future active milestone: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
