@@ -275,16 +275,23 @@ export function normalizeTransformKeyframes(
 
   const sorted = keyframes
     .filter(
-      (keyframe) =>
-        Number.isFinite(keyframe.timeMs) &&
-        keyframe.timeMs >= 0,
+      (keyframe) => {
+        if (
+          !Number.isFinite(keyframe.timeMs) ||
+          keyframe.timeMs < 0
+        ) {
+          return false;
+        }
+
+        const normalizedTimeMs = Math.max(0, Math.round(keyframe.timeMs));
+        return Number.isSafeInteger(normalizedTimeMs);
+      },
     )
     .map((keyframe) => ({
       timeMs: normalizeTransformKeyframeTime(keyframe.timeMs),
       transform: normalizeClipTransform(keyframe.transform),
       easing: normalizeTransformEasing(keyframe.easing),
     }))
-    .filter((keyframe) => Number.isSafeInteger(keyframe.timeMs))
     .sort((a, b) => a.timeMs - b.timeMs);
 
   const deduplicated: TransformKeyframe[] = [];
@@ -303,7 +310,19 @@ export function normalizeTransformKeyframes(
 }
 
 export function normalizeTransformKeyframeTime(value: number): number {
-  return Math.max(0, Math.round(value));
+  if (!Number.isFinite(value)) {
+    throw new Error("Transform keyframe time must be finite.");
+  }
+
+  const normalizedTimeMs = Math.max(0, Math.round(value));
+
+  if (!Number.isSafeInteger(normalizedTimeMs)) {
+    throw new Error(
+      "Transform keyframe time must round to a safe integer.",
+    );
+  }
+
+  return normalizedTimeMs;
 }
 
 export function getTransformKeyframeAtTime(
