@@ -1,3 +1,14 @@
+### M3.138 — Strict Waveform Source-Range Metadata Contract — active — 2026-09-27
+
+- Branch: `fix/m3-138-strict-waveform-source-range-metadata`.
+- Fresh audit found `getWaveformPeaksForSourceRange()` accepted finite fractional or unsafe `sourceDurationMs`, `sourceStartMs`, and non-null `sourceEndMs` values.
+- Tightened source-range timing metadata validation to JavaScript safe integers.
+- Preserved safe-integer negative out-of-range clamping semantics.
+- Added focused regression coverage for unsafe and fractional source-range metadata.
+- No project schema change.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
 ### M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-137-strict-persistent-waveform-metadata`.

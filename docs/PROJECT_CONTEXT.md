@@ -1,3 +1,39 @@
+## M3.138 — Strict Waveform Source-Range Metadata Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-138-strict-waveform-source-range-metadata`
+
+Scope:
+- Ensure waveform source-range resampling only accepts safe-integer timing metadata before clamping and interpolation.
+
+Audit finding:
+- `getWaveformPeaksForSourceRange()` validated `sourceDurationMs`, `sourceStartMs`, and `sourceEndMs` only with finite-number checks.
+- Fractional or unsafe timing values could therefore enter range arithmetic and interpolation despite the project-wide integer-millisecond contract.
+- Negative integer start/end values remain supported by the existing deliberate clamping behavior.
+
+Implementation:
+- Require `sourceDurationMs` and `sourceStartMs` to be JavaScript safe integers.
+- Require non-null `sourceEndMs` to be a JavaScript safe integer.
+- Preserve existing negative out-of-range clamping semantics for safe integer values.
+- Preserve existing output-peak maximum and valid interpolation behavior.
+- Added focused regression coverage for unsafe and fractional source-duration/source-start/source-end inputs.
+- No project schema version change.
+
+Invariant / contract:
+- Waveform source-range timing metadata must be safe integer milliseconds before resampling.
+- Invalid fractional or unsafe timing metadata cannot propagate into waveform interpolation.
+- Safe integer values retain existing range clamping and rendering behavior.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Floating-point waveform interpolation itself remains out of scope.
+- Other waveform/UI synchronization behavior remains subject to broader audits when justified.
+
+Next step:
+- Complete user local validation of M3.138; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
 
 Branch:
