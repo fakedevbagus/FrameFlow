@@ -3,8 +3,8 @@
 - Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
 - Scope: require waveform peak arrays to contain at most 2048 entries before native-response acceptance or persisted-cache reuse.
 - Fresh audit found waveform metadata validation only required a non-empty `peaks` array, despite the established 2048 waveform density ceiling.
-- Tightened the shared waveform metadata validation path to enforce the 2048 peak-array maximum for both fresh and persisted waveform data.
-- Added focused regression coverage for the maximum valid length and over-limit arrays.
+- Tightened native and persisted waveform metadata validation to enforce the same 2048 peak-array maximum.
+- Added focused regression coverage for the maximum valid native length, over-limit native data, and over-limit persisted cache data.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
