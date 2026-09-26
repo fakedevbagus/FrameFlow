@@ -1,13 +1,27 @@
-### M3.120 — Strict Source-Audio Media Duration Bounds — active — 2026-09-26
+### M3.121 — Strict Legacy Source-Range Bounds — active — 2026-09-26
+
+- Branch: `fix/m3-121-strict-legacy-source-bounds`.
+- Fresh audit found that the active direct single-source and multi-segment native video export paths still pass requested source ranges to FFmpeg without checking them against actual media duration.
+- Planned shared source-range validation for `render_single_source_to_mp4` and `render_video_segments_to_mp4`.
+- Exact source-end boundaries will remain valid; overrun and arithmetic-overflow ranges will be rejected.
+- Repeated media paths in a multi-segment render will reuse duration probes.
+- Black gap segments remain unchanged.
+- No project schema change.
+- Validation is pending implementation and user confirmation.
+- Next step: implement the focused native range checks and regression coverage.
+
+### M3.120 — Strict Source-Audio Media Duration Bounds — completed — 2026-09-26
 
 - Branch: `fix/m3-120-source-audio-duration-bounds`.
-- Fresh audit found that native source-audio segments were not checked against the actual source media duration.
-- Added duration probing and checked source-range validation before FFmpeg filter construction.
-- Added source-duration caching by video input index.
+- PR #135; squash-merged at `c0b1ee692156a2b7f11cf130ba79f65efad81dd0`.
+- Fresh audit found that native unified AV source-audio segments were not checked against actual source media duration.
+- Added duration probing, checked source-range validation, and source-duration caching by video input index before FFmpeg filter construction.
 - Added regression coverage for exact boundaries, overruns, and arithmetic overflow.
 - No project schema change.
-- Validation is pending user confirmation.
-- Next step: complete local validation, then merge and reconcile the documentation.
+- User reported PASS.
+- Validation status is recorded as passed only from the user's explicit PASS; no additional local checks are inferred.
+- `main` was verified after merge at `c0b1ee692156a2b7f11cf130ba79f65efad81dd0`.
+- Next step: fresh audit from verified `main` for the next concrete persisted/runtime/native invariant.
 
 ### M3.119 — Strict Unified AV Source-Audio Segment Contract — completed — 2026-09-26
 
