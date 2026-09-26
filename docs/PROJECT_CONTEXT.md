@@ -1,3 +1,40 @@
+## M3.128 — Strict Audio Fade Aggregate Safety — active — 2026-09-26
+
+Branch:
+`fix/m3-128-audio-fade-aggregate-safety`
+
+Scope:
+- Prevent audio fade aggregate validation and command updates from overflowing JavaScript's safe integer range.
+
+Audit finding:
+- M3.123 made persisted audio fade durations individually safe integers.
+- Project validation still evaluated `fadeInMs + fadeOutMs` without checking whether the aggregate remained a safe integer.
+- Timeline `updateAudioClipFades()` also accepted any integer fade durations and summed them without a safe-integer guard.
+- Two individually safe fade durations could therefore overflow during aggregate validation.
+
+Implementation:
+- Added checked safe-integer addition for persisted audio fade aggregate validation.
+- Tightened `updateAudioClipFades()` to accept only non-negative safe-integer fade durations.
+- Added checked aggregate arithmetic before overlap validation.
+- Preserved normal fade duration and non-overlap behavior for valid safe values.
+- Added focused regression coverage for the maximum safe aggregate and unsafe aggregate/input cases.
+- No project schema version change.
+
+Invariant / contract:
+- Audio fade durations must be non-negative JavaScript safe integers.
+- Their aggregate must remain a JavaScript safe integer before overlap validation.
+- Valid aggregate values retain existing duration/non-overlap semantics.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Other audio automation arithmetic remains subject to separate audits.
+- Floating-point playback calculations remain out of scope.
+
+Next step:
+- Complete user local validation of M3.128; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.127 — Strict Project Topology Endpoint Safety — completed — 2026-09-26
 
 Branch:
