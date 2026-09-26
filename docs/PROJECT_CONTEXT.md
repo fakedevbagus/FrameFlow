@@ -1,14 +1,23 @@
-## M3.136 — Strict Waveform Local-Time Duration Contract — active — 2026-09-26
+## M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
 Branch:
 `fix/m3-136-waveform-local-time-contract`
 
-Scope:
-- Ensure waveform local-time mapping only accepts positive JavaScript safe-integer duration metadata before producing a local timestamp.
+PR:
+#151
+
+Merge SHA:
+`d7faebcc829810b88d59e027f0b30163fa1f69be`
+
+User validation:
+- User reported PASS for M3.136.
+- PR #151 was refreshed at head `73a911583ce8ed7f5bef94e9054ad91014253f87`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `d7faebcc829810b88d59e027f0b30163fa1f69be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - `getWaveformLocalTimeMs()` only required `durationMs` to be finite and positive.
-- It then returned `Math.round(progress * durationMs)`, so malformed fractional or unsafe duration input could produce a timestamp outside the established safe-integer timing contract.
+- It returned `Math.round(progress * durationMs)`, so malformed fractional or unsafe duration input could produce a timestamp outside the established safe-integer timing contract.
 
 Implementation:
 - Tightened the local-time helper to require a positive JavaScript safe-integer duration.
@@ -22,16 +31,12 @@ Invariant / contract:
 - Malformed duration values do not propagate into seek/selection timing.
 - Valid client-coordinate clamping semantics remain unchanged.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Remaining risks:
 - Waveform source-duration/source-start/source-end boundary validation remains subject to separate focused auditing.
 - Floating-point waveform interpolation remains out of scope.
 
 Next step:
-- Complete user local validation of M3.136; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
-
+- Fresh audit from verified `main` for the next concrete waveform/runtime boundary.
 ## M3.135 — Strict Waveform Output Peak-Count Contract — completed — 2026-09-26
 
 Branch:
