@@ -8,18 +8,20 @@
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
-## M3.125 — active — 2026-09-26
+## M3.125 — completed — 2026-09-26
 
 - Branch: `fix/m3-125-timeline-command-endpoint-safety`.
 - Scope: reject unsafe derived timeline endpoints at timeline-edit command boundaries.
+- PR #140; squash-merged at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
 - Fresh audit found unchecked timeline endpoint arithmetic in add, move, trim-start, trim-end, split, overlap checking, and transition adjacency validation.
 - Added one checked safe-integer timeline addition helper and applied it to the affected command-level endpoint calculations.
 - Added focused regression coverage across add, move, trim-start, trim-end, split, and overlap paths.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Remaining separate risks: transition-domain endpoint helpers and persisted topology arithmetic.
-- On user `PASS` / `pass` / `lanjutkan`: refresh PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- User reported PASS.
+- PR head `ab89f60ebb6eea3448c73f23ee6a765bf3762081` was verified before merge.
+- `main` was verified after merge at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.124 — completed — 2026-09-26
 
