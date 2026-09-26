@@ -1,15 +1,17 @@
-## M3.127 — active — 2026-09-26
+## M3.127 — completed — 2026-09-26
 
 - Branch: `fix/m3-127-project-topology-endpoint-safety`.
 - Scope: reject unsafe derived timeline endpoints during persisted project topology validation.
+- PR #142; squash-merged at `14300606826040eb69ef32f51f1e3cc98ef278a1`.
 - Fresh audit found `validateTrackTopology()` performing unchecked endpoint arithmetic for overlap and transition adjacency checks.
 - Added one checked safe-integer timeline addition helper in the project domain and applied it to both topology paths.
 - Added regression coverage for the maximum safe endpoint and unsafe derived endpoints in overlap and transition validation.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Remaining separate risk: other runtime arithmetic outside project topology.
-- On user `PASS` / `pass` / `lanjutkan`: refresh PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- User reported PASS.
+- PR head `86de5096f236e8dfbf5ce256224eb499ce896ad8` was verified before merge.
+- `main` was verified after merge at `14300606826040eb69ef32f51f1e3cc98ef278a1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.126 — completed — 2026-09-26
 
