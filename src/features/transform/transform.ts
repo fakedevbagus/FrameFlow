@@ -284,6 +284,7 @@ export function normalizeTransformKeyframes(
       transform: normalizeClipTransform(keyframe.transform),
       easing: normalizeTransformEasing(keyframe.easing),
     }))
+    .filter((keyframe) => Number.isSafeInteger(keyframe.timeMs))
     .sort((a, b) => a.timeMs - b.timeMs);
 
   const deduplicated: TransformKeyframe[] = [];
@@ -380,6 +381,13 @@ export function upsertTransformKeyframe(
 
   const normalized = normalizeTransformKeyframes(keyframes);
   const normalizedTimeMs = normalizeTransformKeyframeTime(timeMs);
+
+  if (!Number.isSafeInteger(normalizedTimeMs)) {
+    throw new Error(
+      "Transform keyframe time must round to a safe integer.",
+    );
+  }
+
   const existingIndex = normalized.findIndex(
     (keyframe) => keyframe.timeMs === normalizedTimeMs,
   );

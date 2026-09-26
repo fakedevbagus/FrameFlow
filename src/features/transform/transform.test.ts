@@ -220,6 +220,49 @@ describe("transform keyframes", () => {
     });
   });
 
+  it("preserves the safe-integer time boundary and rejects unsafe runtime times", () => {
+    expect(
+      upsertTransformKeyframe(
+        undefined,
+        Number.MAX_SAFE_INTEGER,
+        DEFAULT_CLIP_TRANSFORM,
+      ),
+    ).toEqual([
+      {
+        timeMs: Number.MAX_SAFE_INTEGER,
+        transform: DEFAULT_CLIP_TRANSFORM,
+        easing: "linear",
+      },
+    ]);
+
+    expect(
+      normalizeTransformKeyframes([
+        {
+          timeMs: Number.MAX_SAFE_INTEGER,
+          transform: DEFAULT_CLIP_TRANSFORM,
+        },
+        {
+          timeMs: Number.MAX_SAFE_INTEGER + 2,
+          transform: { ...DEFAULT_CLIP_TRANSFORM, x: 10 },
+        },
+      ]),
+    ).toEqual([
+      {
+        timeMs: Number.MAX_SAFE_INTEGER,
+        transform: DEFAULT_CLIP_TRANSFORM,
+        easing: "linear",
+      },
+    ]);
+
+    expect(() =>
+      upsertTransformKeyframe(
+        undefined,
+        Number.MAX_SAFE_INTEGER + 1,
+        DEFAULT_CLIP_TRANSFORM,
+      ),
+    ).toThrow("safe integer");
+  });
+
   it("defaults legacy keyframes to linear easing", () => {
     const normalized = normalizeTransformKeyframes([
       {

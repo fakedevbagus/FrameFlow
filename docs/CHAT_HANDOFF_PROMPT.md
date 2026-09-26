@@ -1,14 +1,27 @@
-## M3.129 — active — 2026-09-26
+## M3.130 — active — 2026-09-26
 
-- Branch: `fix/m3-129-audio-keyframe-safe-times`.
-- Scope: reject or discard runtime audio volume keyframe timestamps that cannot normalize to JavaScript safe integer milliseconds.
-- Fresh audit found `normalizeAudioVolumeKeyframes()` could preserve unsafe rounded timestamps and `upsertAudioVolumeKeyframe()` could accept unsafe rounded timestamps.
+- Branch: `fix/m3-130-transform-keyframe-safe-times`.
+- Scope: reject or discard runtime Transform Keyframe timestamps that cannot normalize to JavaScript safe integer milliseconds.
+- Fresh audit found `normalizeTransformKeyframes()` could preserve unsafe rounded timestamps and `upsertTransformKeyframe()` could accept unsafe rounded timestamps.
 - Added safe-integer normalization and safe-integer upsert validation.
 - Added focused regression coverage for the safe boundary and unsafe runtime timestamps.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.129 — completed — 2026-09-26
+
+- Branch: `fix/m3-129-audio-keyframe-safe-times`.
+- PR #144; squash-merged at `e5b9d9aa4728ab112493e3e6fce70729673cda27`.
+- User reported PASS.
+- Added safe-integer normalization and upsert validation for runtime audio volume keyframe timestamps.
+- Added focused regression coverage for the safe boundary and unsafe runtime timestamps.
+- No project schema version change.
+- PR head `da89d08fedeed31c7a8bc463560a35defba46a9f` was verified before merge.
+- `main` was verified after merge at `e5b9d9aa4728ab112493e3e6fce70729673cda27`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.128 — completed — 2026-09-26
 
