@@ -1,28 +1,14 @@
-## M3.138 — active — 2026-09-27
+## M3.139 — active — 2026-09-27
 
-- Branch: `fix/m3-138-strict-waveform-source-range-metadata`.
-- Scope: require waveform source-range timing metadata to use JavaScript safe-integer milliseconds before resampling.
-- Fresh audit found `getWaveformPeaksForSourceRange()` accepted finite fractional or unsafe source-duration/source-start/source-end timing values.
-- Tightened source-range metadata validation while preserving safe-integer negative out-of-range clamping semantics.
-- Added focused regression coverage.
+- Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
+- Scope: require waveform peak arrays to contain at most 2048 entries before native-response acceptance or persisted-cache reuse.
+- Fresh audit found waveform metadata validation only required a non-empty `peaks` array, despite the established 2048 waveform density ceiling.
+- Tightened the shared waveform metadata validation path to enforce the 2048 peak-array maximum for both fresh and persisted waveform data.
+- Added focused regression coverage for the maximum valid length and over-limit arrays.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
-
-## M3.137 — completed — 2026-09-27
-
-- Branch: `fix/m3-137-strict-persistent-waveform-metadata`.
-- PR #152; squash-merged at `816d970ac31c9b080c937b89803d3f52ebde0936`.
-- User reported PASS.
-- Tightened persisted waveform `durationMs` and `sampleRate` validation to positive JavaScript safe integers.
-- Added focused regression coverage for unsafe/fractional persisted metadata.
-- Valid persisted waveform reuse remains unchanged.
-- No project schema version change.
-- PR head `23dead40898b5a540138b943c564893c6abf9c5b` was verified before merge.
-- `main` was verified after merge at `816d970ac31c9b080c937b89803d3f52ebde0936`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main`.
 
 ## M3.136 — completed — 2026-09-26
 
