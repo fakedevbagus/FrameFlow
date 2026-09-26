@@ -1,12 +1,17 @@
-### M3.136 — Strict Waveform Local-Time Duration Contract — active — 2026-09-26
+### M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
 - Branch: `fix/m3-136-waveform-local-time-contract`.
-- Fresh audit found `getWaveformLocalTimeMs()` accepted any finite positive duration and could emit a malformed local timestamp after multiplying and rounding it.
-- Tightened duration validation to positive JavaScript safe integers.
+- PR #151; squash-merged at `d7faebcc829810b88d59e027f0b30163fa1f69be`.
+- User reported PASS.
+- Tightened `getWaveformLocalTimeMs()` to require positive JavaScript safe-integer duration metadata.
+- Invalid fractional or unsafe duration input now falls back to the existing safe result of 0.
 - Added focused regression coverage for unsafe and fractional duration input.
+- Existing valid pointer-to-time behavior remains unchanged.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- PR head `73a911583ce8ed7f5bef94e9054ad91014253f87` was verified before merge.
+- `main` was verified after merge at `d7faebcc829810b88d59e027f0b30163fa1f69be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.135 — Strict Waveform Output Peak-Count Contract — completed — 2026-09-26
 
