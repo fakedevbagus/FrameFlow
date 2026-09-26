@@ -1,3 +1,40 @@
+## M3.115 — Strict Project Canvas Frame-Rate Range — active — 2026-09-26
+
+Branch:
+`fix/m3-115-project-framerate-range`
+
+Scope:
+- Align the persisted project canvas frame-rate contract with the existing native export limit.
+- Preserve supported fractional frame rates such as 29.97.
+- Reject persisted frame rates above 240 FPS before they can enter an export-invalid project state.
+
+Audit finding:
+- `validateCanvas()` previously accepted any finite positive `frameRate`.
+- Native export validation already rejects frame rates above 240 FPS.
+- `ExportPanel` uses the project canvas frame rate as the default export frame rate, so a persisted project with a value above 240 could load successfully and later fail at native export.
+- No evidence supports converting frame rates to integers; fractional broadcast-style values must remain valid.
+
+Implementation:
+- Added `MAX_CANVAS_FRAME_RATE = 240`.
+- Extended persisted canvas validation to reject `frameRate > 240`.
+- Added regression coverage for the 240 FPS boundary and rejection of values above it.
+- No project schema version change.
+
+Invariant / contract:
+- Persisted `canvas.frameRate` must be finite, positive, and at most 240 FPS.
+- Fractional frame rates remain supported.
+- The project-domain persistence contract now aligns its upper bound with the native export contract.
+
+Validation:
+- Pending user local validation.
+
+Remaining risks:
+- Native export settings have their own normalization path; this milestone only hardens the persisted project canvas contract.
+- Existing playback/timecode calculations remain unchanged.
+
+Next step:
+- User local validation of M3.115, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+
 ## M3.114 — Canonical Clip Command Times — completed — 2026-09-26
 
 Branch:
