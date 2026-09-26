@@ -1,13 +1,27 @@
-## M3.132 — active — 2026-09-26
+## M3.133 — active — 2026-09-26
 
-- Branch: `fix/m3-132-safe-source-split-endpoint`.
-- Scope: reject unsafe derived source timestamps in `splitClipAtTime()`.
-- Fresh audit found direct source split arithmetic using `sourceStartMs + (timelineSplit - timelineStart)` without a safe-integer guard.
-- Reused the existing checked millisecond addition helper and added focused regression coverage.
+- Branch: `fix/m3-133-waveform-peak-count-contract`.
+- Scope: normalize non-finite audio waveform peak-count input before native invocation.
+- Fresh audit found `getAudioWaveform()` could propagate `NaN` as the native `peakCount` argument.
+- Added a dedicated normalizer with non-finite fallback to the default of 128 and preserved the existing finite 32..2048 range.
+- Added focused regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.132 — completed — 2026-09-26
+
+- Branch: `fix/m3-132-safe-source-split-endpoint`.
+- PR #147; squash-merged at `9b2a8edc278ed7894779b0314aa571247a433e5c`.
+- User reported PASS.
+- Hardened `splitClipAtTime()` source split arithmetic with checked safe-integer addition.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `0fbb5481dbd6691b9b97534a46235a8b32df1fb4` was verified before merge.
+- `main` was verified after merge at `9b2a8edc278ed7894779b0314aa571247a433e5c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.131 — completed — 2026-09-26
 

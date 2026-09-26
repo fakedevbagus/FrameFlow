@@ -1,13 +1,26 @@
-### M3.132 — Strict Source Split Endpoint Safety — active — 2026-09-26
+### M3.133 — Strict Audio Waveform Peak-Count Contract — active — 2026-09-26
 
-- Branch: `fix/m3-132-safe-source-split-endpoint`.
-- Fresh audit found `splitClipAtTime()` deriving `sourceSplitMs` with unchecked `sourceStartMs + (timelineSplit - timelineStart)` arithmetic.
-- Reused the existing checked millisecond addition helper for the source split calculation.
-- Added focused regression coverage for an unsafe derived source split endpoint.
-- Existing valid split behavior remains unchanged.
+- Branch: `fix/m3-133-waveform-peak-count-contract`.
+- Fresh audit found `getAudioWaveform()` could pass `NaN` as `peakCount` to the native waveform command because its clamp/round pipeline lacked a non-finite guard.
+- Added a dedicated peak-count normalizer with non-finite fallback to the existing default of 128.
+- Finite peak counts retain the existing 32..2048 clamp and rounding behavior.
+- Added focused regression coverage.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.132 — Strict Source Split Endpoint Safety — completed — 2026-09-26
+
+- Branch: `fix/m3-132-safe-source-split-endpoint`.
+- PR #147; squash-merged at `9b2a8edc278ed7894779b0314aa571247a433e5c`.
+- User reported PASS.
+- Hardened `splitClipAtTime()` source split arithmetic with the existing checked millisecond addition helper.
+- Added focused regression coverage for unsafe derived source split endpoints.
+- No project schema change.
+- PR head `0fbb5481dbd6691b9b97534a46235a8b32df1fb4` was verified before merge.
+- `main` was verified after merge at `9b2a8edc278ed7894779b0314aa571247a433e5c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.131 — Strict Transform Keyframe Time Normalizer — completed — 2026-09-26
 

@@ -1,36 +1,73 @@
-## M3.132 — Strict Source Split Endpoint Safety — active — 2026-09-26
+## M3.133 — Strict Audio Waveform Peak-Count Contract — active — 2026-09-26
 
 Branch:
-`fix/m3-132-safe-source-split-endpoint`
+`fix/m3-133-waveform-peak-count-contract`
 
 Scope:
-- Prevent `splitClipAtTime()` from producing an unsafe source timestamp when deriving the source-side split point.
+- Ensure the audio waveform request normalizes non-finite peak-count input before it reaches the native waveform command.
 
 Audit finding:
-- M3.125 hardened timeline-derived endpoints.
-- M3.123 established safe persisted millisecond values.
-- `splitClipAtTime()` still derived `sourceSplitMs` with direct addition of `sourceStartMs + (timelineSplit - timelineStart)`.
-- A direct runtime caller with malformed/unsafe source timing could therefore derive an unsafe source split timestamp before the new clips were committed.
+- `getAudioWaveform()` normalized `peakCount` with `Math.min/Math.max/Math.round` but did not guard non-finite input.
+- A `NaN` request therefore remained `NaN` and could be forwarded to the native `generate_audio_waveform` command.
 
 Implementation:
-- Reused the existing checked millisecond addition helper for the source-side split calculation.
-- Preserved normal split behavior and keyframe/audio-automation preservation for valid values.
-- Added focused regression coverage for an unsafe derived source split endpoint.
+- Added a dedicated waveform peak-count normalizer.
+- Non-finite peak-count input now falls back to the existing default of 128.
+- Finite values retain the existing clamp and rounding range of 32..2048.
+- Added focused regression coverage proving invalid input is normalized before native invocation.
 - No project schema version change.
 
 Invariant / contract:
-- A source split timestamp produced by `splitClipAtTime()` must be a non-negative JavaScript safe integer.
-- Source split derivation must reject unsafe arithmetic before creating either resulting clip.
+- Native waveform generation always receives a finite integer peak count between 32 and 2048.
+- Invalid non-finite request input does not propagate into the native boundary.
+- Existing finite peak-count behavior remains unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
-- Other direct source/timeline arithmetic outside the already hardened boundaries remains subject to focused audits.
+- Native waveform response duration/sample-rate validation may need a separate contract audit.
+- Waveform interpolation uses floating-point sampling calculations and remains out of scope.
+
+Next step:
+- Complete user local validation of M3.133; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.132 — Strict Source Split Endpoint Safety — completed — 2026-09-26
+
+Branch:
+`fix/m3-132-safe-source-split-endpoint`
+
+PR:
+#147
+
+Merge SHA:
+`9b2a8edc278ed7894779b0314aa571247a433e5c`
+
+User validation:
+- User reported PASS for M3.132.
+- PR #147 was refreshed at head `0fbb5481dbd6691b9b97534a46235a8b32df1fb4`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `9b2a8edc278ed7894779b0314aa571247a433e5c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `splitClipAtTime()` derived `sourceSplitMs` with direct source-start plus timeline-offset arithmetic without a safe-integer result check.
+
+Implementation:
+- Reused the existing checked millisecond addition helper for source split derivation.
+- Added focused regression coverage for an unsafe derived source split endpoint.
+- Existing valid split behavior and automation/keyframe preservation remain unchanged.
+- No project schema version change.
+
+Invariant / contract:
+- A source split timestamp created by `splitClipAtTime()` must be a non-negative JavaScript safe integer.
+- Unsafe source split arithmetic is rejected before either resulting clip is committed.
+
+Remaining risks:
+- Other direct runtime source-range calculations remain subject to focused audits.
 - Floating-point playback/timecode calculations remain out of scope.
 
 Next step:
-- Complete user local validation of M3.132; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete runtime/media boundary.
 
 ## M3.131 — Strict Transform Keyframe Time Normalizer — completed — 2026-09-26
 

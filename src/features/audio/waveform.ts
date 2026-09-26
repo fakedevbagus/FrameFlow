@@ -30,10 +30,7 @@ export function getAudioWaveform(
   sourcePath: string,
   peakCount = 128,
 ): Promise<AudioWaveform> {
-  const normalizedPeakCount = Math.min(
-    2048,
-    Math.max(32, Math.round(peakCount)),
-  );
+  const normalizedPeakCount = normalizeWaveformPeakCount(peakCount);
   const requestKey = sourcePath + "::" + normalizedPeakCount;
   const cachedRequest = waveformRequestCache.get(requestKey);
 
@@ -119,6 +116,14 @@ export function getAudioWaveform(
   );
 
   return request;
+}
+
+function normalizeWaveformPeakCount(peakCount: number): number {
+  if (!Number.isFinite(peakCount)) {
+    return 128;
+  }
+
+  return Math.min(2048, Math.max(32, Math.round(peakCount)));
 }
 
 export function clearAudioWaveformCache(): void {

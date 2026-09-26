@@ -151,6 +151,33 @@ describe("audio waveform", () => {
     expect(path).not.toMatch(/(?:NaN|Infinity)/);
   });
 
+  it("normalizes invalid waveform request sizes to the default", async () => {
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "1000:peak-count-default" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.5, 0.5],
+        sourceFingerprint: "1000:peak-count-default",
+      });
+
+    await expect(
+      getAudioWaveform("/peak-count.mp3", Number.NaN),
+    ).resolves.toMatchObject({
+      durationMs: 1000,
+      sampleRate: 1024,
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      "generate_audio_waveform",
+      {
+        path: "/peak-count.mp3",
+        peakCount: 128,
+      },
+    );
+  });
+
   it("clamps waveform request size and caches identical requests", async () => {
     clearAudioWaveformCache();
 
