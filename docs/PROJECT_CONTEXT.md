@@ -1,37 +1,39 @@
-## M3.123 — Safe Integer Millisecond Contract — active — 2026-09-26
+## M3.124 — active — 2026-09-26
+
+Branch:
+`fix/m3-124-native-timing-safe-integer-boundary`
+
+Next step:
+- Fresh audit from verified `main` is pending.
+
+## M3.123 — Safe Integer Millisecond Contract — completed — 2026-09-26
 
 Branch:
 `fix/m3-123-safe-integer-milliseconds`
 
-Scope:
-- Make persisted project millisecond timestamps and durations safe JavaScript integers before persistence and native IPC.
+PR:
+#138
+
+Merge SHA:
+`86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`
+
+User validation:
+- User reported PASS for M3.123.
+- PR #138 was refreshed, its head `c525520c4b3c634c51232cf854a16e7ff4cafe1d` was verified after the Ready-for-Review transition, and it was squash-merged.
+- `main` was verified after merge at `86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
-- Project timing validation currently uses `Number.isInteger` for millisecond fields but does not require `Number.isSafeInteger`.
-- JavaScript numbers cannot represent every integer above `Number.MAX_SAFE_INTEGER` exactly, so persisted timing values beyond that boundary can lose precision during JSON serialization and native IPC.
-- Affected persisted timing fields include asset durations, clip timeline/source boundaries, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
-- Existing normal-duration values remain far below this boundary and should behave identically.
+- Persisted project millisecond fields used `Number.isInteger` without requiring `Number.isSafeInteger`.
 
 Implementation:
 - Updated the shared persisted millisecond validator to require `Number.isSafeInteger`.
-- Applied the safe-integer requirement to asset durations, clip timeline/source boundaries, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
-- Preserve all existing non-negative, ordering, range, and feature-specific limits.
+- Applied it to asset durations, clip timeline/source boundaries, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
 - Added focused regression coverage at `Number.MAX_SAFE_INTEGER` and the first unsafe integer.
 - No project schema version change.
 
 Invariant / contract:
-- Every persisted integer millisecond value must be finite, non-negative, integral, and representable exactly by JavaScript as a safe integer.
-- Existing valid timing ranges and runtime semantics remain unchanged for safe values.
-
-Validation:
-- Implementation complete; user local validation is pending.
-
-Remaining risks:
-- Native Rust `u64` timing fields remain independently constrained by their request validators.
-- This milestone does not change floating-point playback interpolation or non-timing numeric controls.
-
-Next step:
-- Complete user local validation of M3.123; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Persisted integer millisecond values must be exactly representable JavaScript safe integers.
 
 ## M3.121 — Strict Legacy Source-Range Bounds — completed — 2026-09-26
 
