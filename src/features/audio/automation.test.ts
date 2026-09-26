@@ -58,6 +58,37 @@ describe("audio volume automation", () => {
     expect(removeAudioVolumeKeyframe(replaced, 1500)).toEqual([]);
   });
 
+
+
+  it("preserves the safe-integer time boundary and rejects unsafe runtime times", () => {
+    expect(
+      upsertAudioVolumeKeyframe(
+        undefined,
+        Number.MAX_SAFE_INTEGER,
+        0.5,
+      ),
+    ).toEqual([
+      { timeMs: Number.MAX_SAFE_INTEGER, volume: 0.5 },
+    ]);
+
+    expect(
+      normalizeAudioVolumeKeyframes([
+        { timeMs: Number.MAX_SAFE_INTEGER, volume: 0.5 },
+        { timeMs: Number.MAX_SAFE_INTEGER + 2, volume: 0.8 },
+      ]),
+    ).toEqual([
+      { timeMs: Number.MAX_SAFE_INTEGER, volume: 0.5 },
+    ]);
+
+    expect(() =>
+      upsertAudioVolumeKeyframe(
+        undefined,
+        Number.MAX_SAFE_INTEGER + 1,
+        0.5,
+      ),
+    ).toThrow("safe integer");
+  });
+
   it("rejects invalid keyframe values", () => {
     expect(() => upsertAudioVolumeKeyframe(undefined, -1, 0.5)).toThrow();
     expect(() => upsertAudioVolumeKeyframe(undefined, 0, 1.1)).toThrow();

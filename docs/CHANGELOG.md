@@ -1,14 +1,26 @@
-### M3.128 — Strict Audio Fade Aggregate Safety — active — 2026-09-26
+### M3.129 — Strict Audio Keyframe Safe-Time Contract — active — 2026-09-26
 
-- Branch: `fix/m3-128-audio-fade-aggregate-safety`.
-- Fresh audit found persisted audio fade durations individually safe but `fadeInMs + fadeOutMs` unchecked, and `updateAudioClipFades()` accepted integer but not explicitly safe-integer inputs.
-- Added checked aggregate safe-integer arithmetic for persisted audio fade validation.
-- Tightened `updateAudioClipFades()` to accept only non-negative safe-integer fade durations and guard the aggregate before overlap validation.
-- Preserved normal fade duration and non-overlap behavior for valid safe values.
-- Added focused regression coverage for safe maximum aggregate and unsafe aggregate/input cases.
+- Branch: `fix/m3-129-audio-keyframe-safe-times`.
+- Fresh audit found runtime audio volume keyframe normalization could preserve rounded timestamps outside the JavaScript safe integer range, while `upsertAudioVolumeKeyframe()` accepted finite non-negative values without requiring the rounded timestamp to be safe.
+- Normalization now filters to safe integer millisecond timestamps.
+- Upsert now rejects timestamps whose rounded result is not a safe integer.
+- Existing fractional-millisecond rounding behavior remains unchanged for valid inputs.
+- Added focused regression coverage for the safe boundary and unsafe runtime timestamps.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.128 — Strict Audio Fade Aggregate Safety — completed — 2026-09-26
+
+- Branch: `fix/m3-128-audio-fade-aggregate-safety`.
+- PR #143; squash-merged at `3489e416ffb97bffe1ee64cd69dd004b6ae811cf`.
+- User reported PASS.
+- PR head `349b600dc3f3e4d988f15b851061a9847fe8154a` was verified before merge, and `main` was verified after merge.
+- Added checked safe-integer aggregate validation for persisted audio fades and safe-integer inputs/aggregate checks in `updateAudioClipFades()`.
+- Added focused regression coverage.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.127 — Strict Project Topology Endpoint Safety — completed — 2026-09-26
 
