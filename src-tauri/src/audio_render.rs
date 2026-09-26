@@ -1,11 +1,14 @@
 use std::{
+  collections::HashMap,
   fs,
   path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::{export_process, probe_has_audio, validate_native_export_settings};
+use crate::{
+  export_process, probe_duration_ms, probe_has_audio, validate_native_export_settings,
+};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -208,6 +211,7 @@ pub fn render_video_audio_graph_to_mp4(
     })
     .collect::<Result<Vec<_>, String>>()?;
 
+  let mut source_duration_by_input_index = HashMap::new();
   let source_audio_segments = request
     .source_audio_segments
     .iter()
@@ -231,6 +235,17 @@ pub fn render_video_audio_graph_to_mp4(
         ));
       }
 
+      let source_duration_ms = if let Some(duration_ms) =
+        source_duration_by_input_index.get(&segment.input_index)
+      {
+        *duration_ms
+      } else {
+        let duration_ms = probe_duration_ms(video_path)?;
+        source_duration_by_input_index.insert(segment.input_index, duration_ms);
+        duration_ms
+      };
+
+      validate_source_audio_segment_bounds(segment, source_duration_ms)?;
       let has_audio = probe_has_audio(video_path)?;
 
       Ok(ResolvedSourceAudioSegment {
@@ -377,6 +392,30 @@ fn validate_video_audio_graph_request(
   )?;
 
   validate_mp4_output_path(Path::new(&request.output_path))
+}
+
+fn validate_source_audio_segment_bounds(
+  segment: &NativeSourceAudioSegment,
+  source_duration_ms: u64,
+) -> Result<(), String> {
+  let source_end_ms = segment
+    .source_start_ms
+    .checked_add(segment.duration_ms)
+    .ok_or_else(|| {
+      format!(
+        "Native unified AV graph source audio segment at input index {} exceeds the supported source timeline range.",
+        segment.input_index
+      )
+    })?;
+
+  if source_end_ms > source_duration_ms {
+    return Err(format!(
+      "Native unified AV graph source audio segment at input index {} exceeds the source media duration.",
+      segment.input_index
+    ));
+  }
+
+  Ok(())
 }
 
 fn validate_source_audio_segment(
@@ -1318,7 +1357,8 @@ mod tests {
   use super::{
     build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
     build_ffmpeg_video_with_audio_graph_args, media_type,
-    validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
+    validate_request, validate_source_audio_segment_bounds,
+    validate_video_audio_graph_request, validate_video_audio_mix_request,
     NativeAudioGraphRenderRequest, NativeSourceAudioCompressor, NativeSourceAudioEq,
     NativeSourceAudioSegment, NativeSourceAudioVolumeKeyframe,
     NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
@@ -1700,6 +1740,33 @@ mod tests {
     missing_filter.video_input_media_types = vec!["video".to_string()];
     missing_filter.output_path = "relative/final.mp4".to_string();
     assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+  }
+
+  #[test]
+  fn validates_unified_source_audio_segment_source_bounds() {
+    let valid = NativeSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 1_000,
+      timeline_start_ms: 0,
+      duration_ms: 4_000,
+      track_volume: 1.0,
+      track_pan: 0.0,
+      audio_fade_in_ms: 0,
+      audio_fade_out_ms: 0,
+      audio_volume_keyframes: Vec::new(),
+      audio_eq: None,
+      audio_compressor: None,
+    };
+
+    assert!(validate_source_audio_segment_bounds(&valid, 5_000).is_ok());
+    assert!(validate_source_audio_segment_bounds(&valid, 4_999).is_err());
+
+    let mut overrun = valid.clone();
+    overrun.source_start_ms = u64::MAX;
+    assert!(validate_source_audio_segment_bounds(&overrun, u64::MAX).is_err());
+
+    overrun.source_start_ms = 5_000;
+    assert!(validate_source_audio_segment_bounds(&overrun, 5_000).is_err());
   }
 
   #[test]

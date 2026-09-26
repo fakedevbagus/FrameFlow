@@ -1,3 +1,13 @@
+## M3.120 — active — 2026-09-26
+
+- Branch: `fix/m3-120-source-audio-duration-bounds`.
+- Scope: enforce native source-audio segment source ranges against actual video media duration.
+- Audit finding: `source_start_ms + duration_ms` was not checked against the referenced media duration at the native IPC boundary.
+- Added cached duration probing and checked source-range validation before FFmpeg filter construction.
+- Added focused regression coverage for exact boundaries, overruns, and arithmetic overflow.
+- No project schema version change.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+
 ## M3.119 — completed — 2026-09-26
 
 - Branch: `fix/m3-119-strict-unified-av-audio-segments`.

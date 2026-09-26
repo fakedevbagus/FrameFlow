@@ -1,3 +1,14 @@
+### M3.120 — Strict Source-Audio Media Duration Bounds — active — 2026-09-26
+
+- Branch: `fix/m3-120-source-audio-duration-bounds`.
+- Fresh audit found that native source-audio segments were not checked against the actual source media duration.
+- Added duration probing and checked source-range validation before FFmpeg filter construction.
+- Added source-duration caching by video input index.
+- Added regression coverage for exact boundaries, overruns, and arithmetic overflow.
+- No project schema change.
+- Validation is pending user confirmation.
+- Next step: complete local validation, then merge and reconcile the documentation.
+
 ### M3.119 — Strict Unified AV Source-Audio Segment Contract — completed — 2026-09-26
 
 - Branch: `fix/m3-119-strict-unified-av-audio-segments`.
