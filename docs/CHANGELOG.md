@@ -1,14 +1,17 @@
-### M3.121 — Strict Legacy Source-Range Bounds — active — 2026-09-26
+### M3.121 — Strict Legacy Source-Range Bounds — completed — 2026-09-26
 
 - Branch: `fix/m3-121-strict-legacy-source-bounds`.
-- Fresh audit found that the active direct single-source and multi-segment native video export paths still pass requested source ranges to FFmpeg without checking them against actual media duration.
-- Added shared source-range validation for `render_single_source_to_mp4` and `render_video_segments_to_mp4`.
-- Exact source-end boundaries remain valid; overrun and arithmetic-overflow ranges are rejected.
-- Repeated media paths in a multi-segment render reuse duration probes.
-- Black gap segments remain unchanged.
+- PR #136; squash-merged at `86ec5c5e4943a9b282aa97e9631b73fa0d9fb094`.
+- Fresh audit found that the direct single-source and multi-segment native video export paths passed file-backed source ranges to FFmpeg without checking actual source duration.
+- Added shared checked source-range validation for `render_single_source_to_mp4` and `render_video_segments_to_mp4`.
+- Exact source-end boundaries remain valid; start/duration overruns and arithmetic overflow are rejected.
+- Reused duration probes for repeated media paths in a multi-segment render and preserved black gap segments.
+- Added focused native regression coverage.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- User reported PASS.
+- Validation status is recorded as passed only from the user's explicit PASS; no additional local checks are inferred.
+- `main` was verified after merge at `86ec5c5e4943a9b282aa97e9631b73fa0d9fb094`.
+- Next step: fresh audit from verified `main` for the next concrete persisted/runtime/native invariant.
 
 ### M3.120 — Strict Source-Audio Media Duration Bounds — completed — 2026-09-26
 
