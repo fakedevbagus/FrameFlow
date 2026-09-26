@@ -20,6 +20,7 @@ export function normalizeAudioVolumeKeyframes(
       timeMs: Math.max(0, Math.round(keyframe.timeMs)),
       volume: clampAudioVolume(keyframe.volume),
     }))
+    .filter((keyframe) => Number.isSafeInteger(keyframe.timeMs))
     .sort((a, b) => a.timeMs - b.timeMs);
 
   const deduplicated: AudioVolumeKeyframe[] = [];
@@ -98,6 +99,13 @@ export function upsertAudioVolumeKeyframe(
 
   const normalized = normalizeAudioVolumeKeyframes(keyframes);
   const roundedTimeMs = Math.max(0, Math.round(timeMs));
+
+  if (!Number.isSafeInteger(roundedTimeMs)) {
+    throw new Error(
+      "Audio volume keyframe time must round to a safe integer.",
+    );
+  }
+
   const next = {
     timeMs: roundedTimeMs,
     volume: clampAudioVolume(volume),
