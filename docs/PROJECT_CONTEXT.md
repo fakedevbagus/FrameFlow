@@ -1,36 +1,43 @@
-## M3.125 — Strict Timeline Command Endpoint Safety — active — 2026-09-26
+## M3.125 — Strict Timeline Command Endpoint Safety — completed — 2026-09-26
 
 Branch:
 `fix/m3-125-timeline-command-endpoint-safety`
 
-Scope:
-- Prevent timeline-edit commands from producing or validating against derived timeline endpoints outside JavaScript's safe integer range.
+PR:
+#140
+
+Merge SHA:
+`b0dea9912be36a961d61c9f3e57b44e6a27d6888`
+
+User validation:
+- User reported PASS for M3.125.
+- PR #140 was refreshed at head `ab89f60ebb6eea3448c73f23ee6a765bf3762081`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - M3.124 hardened the central export render-plan endpoint boundary.
-- Timeline command paths still performed unchecked endpoint arithmetic in add, move, trim-start, trim-end, split, overlap checking, and transition adjacency validation.
-- Persisted millisecond operands can each be safe while a derived timeline endpoint exceeds `Number.MAX_SAFE_INTEGER`.
+- Timeline edit commands still performed unchecked endpoint arithmetic in add, move, trim-start, trim-end, split, overlap checking, and transition adjacency validation.
+- Individually safe persisted millisecond operands could still produce an unsafe derived timeline endpoint.
 
 Implementation:
-- Added one checked timeline millisecond addition helper for command-level endpoint derivation.
-- Applied it to add-to-timeline placement, explicit add/move candidate ends, trim start/end calculations, split end checks, overlap checks, and transition adjacency checks.
-- Preserve existing normal timeline-edit behavior and overlap/transition semantics.
-- Added focused regression coverage for unsafe derived endpoints across add, move, trim-start, trim-end, split, and overlap validation.
+- Added one checked safe-integer timeline addition helper for command-level endpoint derivation.
+- Applied it to add-to-timeline placement, explicit add/move candidate ends, trim-start timeline shifts, trim-end candidate ends, split end checks, overlap checks, and transition adjacency checks.
+- Preserved existing normal timeline-edit behavior and overlap/transition semantics.
+- Added focused regression coverage for unsafe derived endpoints across the affected command paths.
 - No project schema version change.
 
 Invariant / contract:
 - Timeline command-derived millisecond endpoints must be non-negative JavaScript safe integers.
-- Timeline commands must reject an operation before committing project state when a required derived endpoint cannot be represented safely.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Timeline commands reject an operation before committing project state when a required derived endpoint cannot be represented safely.
 
 Remaining risks:
 - Transition-domain helpers and persisted project topology still contain independent endpoint arithmetic outside this command boundary.
 - Floating-point playback/timecode calculations remain out of scope.
 
 Next step:
-- Complete user local validation of M3.125; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next focused timeline endpoint invariant.
+
 
 ## M3.124 — Strict Render-Plan Timeline Endpoint Safety — active — 2026-09-26
 
