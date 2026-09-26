@@ -75,6 +75,7 @@ export function getAudioWaveform(
           waveform.sampleRate <= 0 ||
           !Array.isArray(waveform.peaks) ||
           waveform.peaks.length === 0 ||
+          waveform.peaks.length > MAX_WAVEFORM_OUTPUT_PEAK_COUNT ||
           typeof waveform.sourceFingerprint !== "string" ||
           waveform.sourceFingerprint.length === 0
         ) {
@@ -240,6 +241,7 @@ function isValidAudioWaveform(
     candidate.sampleRate > 0 &&
     Array.isArray(candidate.peaks) &&
     candidate.peaks.length > 0 &&
+    candidate.peaks.length <= MAX_WAVEFORM_OUTPUT_PEAK_COUNT &&
     typeof candidate.sourceFingerprint === "string" &&
     candidate.sourceFingerprint.length > 0
   );
