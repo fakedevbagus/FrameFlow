@@ -12,11 +12,11 @@ Audit finding:
 - Affected persisted timing fields include asset durations, clip timeline/source boundaries, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
 - Existing normal-duration values remain far below this boundary and should behave identically.
 
-Planned implementation:
-- Introduce a shared safe-integer millisecond validator.
-- Apply it consistently to persisted millisecond duration/timestamp fields.
+Implementation:
+- Updated the shared persisted millisecond validator to require `Number.isSafeInteger`.
+- Applied the safe-integer requirement to asset durations, clip timeline/source boundaries, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
 - Preserve all existing non-negative, ordering, range, and feature-specific limits.
-- Add focused regression coverage at `Number.MAX_SAFE_INTEGER` and the first unsafe integer.
+- Added focused regression coverage at `Number.MAX_SAFE_INTEGER` and the first unsafe integer.
 - No project schema version change.
 
 Invariant / contract:
@@ -24,14 +24,14 @@ Invariant / contract:
 - Existing valid timing ranges and runtime semantics remain unchanged for safe values.
 
 Validation:
-- Pending implementation and user local validation.
+- Implementation complete; user local validation is pending.
 
 Remaining risks:
 - Native Rust `u64` timing fields remain independently constrained by their request validators.
 - This milestone does not change floating-point playback interpolation or non-timing numeric controls.
 
 Next step:
-- Implement the shared safe-integer millisecond contract and regression coverage, then prepare a Draft PR for user validation.
+- Complete user local validation of M3.123; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.121 — Strict Legacy Source-Range Bounds — completed — 2026-09-26
 

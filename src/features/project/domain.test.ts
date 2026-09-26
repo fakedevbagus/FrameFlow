@@ -596,6 +596,182 @@ describe("project domain", () => {
     );
   });
 
+  it("accepts safe integer millisecond boundaries and rejects unsafe values", () => {
+    const project = createProject({ id: "safe-integer-milliseconds" });
+    const safeDuration = Number.MAX_SAFE_INTEGER;
+    const unsafeDuration = Number.MAX_SAFE_INTEGER + 1;
+
+    const asset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: safeDuration,
+    };
+
+    const safeProject = {
+      ...project,
+      assets: [asset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: asset.id,
+                  timelineStartMs: safeDuration,
+                  sourceStartMs: 0,
+                  sourceEndMs: safeDuration,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(safeProject))).not.toThrow();
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...safeProject,
+          assets: [{ ...asset, durationMs: unsafeDuration }],
+        }),
+      ),
+    ).toThrow(
+      "Asset 0 durationMs must be null or a non-negative integer number of milliseconds.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...safeProject,
+          tracks: safeProject.tracks.map((track) =>
+            track.type === "video"
+              ? {
+                  ...track,
+                  clips: track.clips.map((clip) => ({
+                    ...clip,
+                    sourceStartMs: unsafeDuration,
+                  })),
+                }
+              : track,
+          ),
+        }),
+      ),
+    ).toThrow(
+      "Clip 0.0 sourceStartMs must be a non-negative integer number of milliseconds.",
+    );
+
+    const keyframeBase = {
+      ...project,
+      assets: [
+        {
+          id: "video-1",
+          name: "Video",
+          mediaType: "video" as const,
+          sourcePath: "/tmp/video.mp4",
+          durationMs: 5000,
+        },
+      ],
+    };
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...keyframeBase,
+          tracks: keyframeBase.tracks.map((track) =>
+            track.type === "video"
+              ? {
+                  ...track,
+                  clips: [
+                    {
+                      id: "clip-1",
+                      assetId: "video-1",
+                      timelineStartMs: 0,
+                      sourceStartMs: 0,
+                      sourceEndMs: 5000,
+                      transformKeyframes: [
+                        {
+                          timeMs: unsafeDuration,
+                          transform: {
+                            x: 0,
+                            y: 0,
+                            scale: 1,
+                            rotation: 0,
+                            opacity: 1,
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                }
+              : track,
+          ),
+        }),
+      ),
+    ).toThrow(
+      "transformKeyframes[0] timeMs must be an integer number of milliseconds.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...keyframeBase,
+          tracks: keyframeBase.tracks.map((track) =>
+            track.type === "video"
+              ? {
+                  ...track,
+                  clips: [
+                    {
+                      id: "clip-1",
+                      assetId: "video-1",
+                      timelineStartMs: 0,
+                      sourceStartMs: 0,
+                      sourceEndMs: 5000,
+                      audioVolumeKeyframes: [
+                        { timeMs: unsafeDuration, volume: 1 },
+                      ],
+                    },
+                  ],
+                }
+              : track,
+          ),
+        }),
+      ),
+    ).toThrow(
+      "audioVolumeKeyframes[0] timeMs must be an integer number of milliseconds.",
+    );
+
+    expect(() =>
+      parseProject(
+        JSON.stringify({
+          ...keyframeBase,
+          tracks: keyframeBase.tracks.map((track) =>
+            track.type === "video"
+              ? {
+                  ...track,
+                  clips: [
+                    {
+                      id: "clip-1",
+                      assetId: "video-1",
+                      timelineStartMs: 0,
+                      sourceStartMs: 0,
+                      sourceEndMs: 5000,
+                      audioFadeInMs: unsafeDuration,
+                    },
+                  ],
+                }
+              : track,
+          ),
+        }),
+      ),
+    ).toThrow(
+      "Clip 0.0 audioFadeInMs must be a non-negative integer.",
+    );
+  });
+
   it("rejects clips that reference missing assets", () => {
     const project = createProject({ id: "missing-asset" });
     const invalidProject = {

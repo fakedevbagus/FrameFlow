@@ -285,7 +285,7 @@ function validateAssets(value: unknown): MediaAsset[] {
     if (
       asset.durationMs !== null &&
       (!isFiniteNumber(asset.durationMs) ||
-        !Number.isInteger(asset.durationMs) ||
+        !Number.isSafeInteger(asset.durationMs) ||
         asset.durationMs < 0)
     ) {
       throw new ProjectValidationError(
@@ -911,7 +911,7 @@ function validateTransformKeyframesPayload(
 
     assertFiniteNonNegativeNumber(keyframe.timeMs, keyframeField + " timeMs");
 
-    if (!Number.isInteger(keyframe.timeMs)) {
+    if (!Number.isSafeInteger(keyframe.timeMs)) {
       throw new ProjectValidationError(
         keyframeField + " timeMs must be an integer number of milliseconds.",
       );
@@ -1019,7 +1019,7 @@ function validateOptionalAudioFields(
     const value = clip[field];
     if (
       value !== undefined &&
-      (!isFiniteNumber(value) || value < 0 || !Number.isInteger(value))
+      (!isFiniteNumber(value) || value < 0 || !Number.isSafeInteger(value))
     ) {
       throw new ProjectValidationError(
         fieldPrefix + " " + field + " must be a non-negative integer.",
@@ -1173,7 +1173,7 @@ function validateOptionalAudioFields(
         keyframe.timeMs,
         keyframePrefix + " timeMs",
       );
-      if (!Number.isInteger(keyframe.timeMs)) {
+      if (!Number.isSafeInteger(keyframe.timeMs)) {
         throw new ProjectValidationError(
           keyframePrefix + " timeMs must be an integer number of milliseconds.",
         );
@@ -1236,7 +1236,7 @@ function assertFiniteNonNegativeIntegerMilliseconds(
   value: unknown,
   field: string,
 ): asserts value is number {
-  if (!isFiniteNumber(value) || !Number.isInteger(value) || value < 0) {
+  if (!isFiniteNumber(value) || !Number.isSafeInteger(value) || value < 0) {
     throw new ProjectValidationError(
       field + " must be a non-negative integer number of milliseconds.",
     );
