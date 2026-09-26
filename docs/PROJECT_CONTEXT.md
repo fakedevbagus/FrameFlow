@@ -1,37 +1,71 @@
-## M3.129 — Strict Audio Keyframe Safe-Time Contract — active — 2026-09-26
+## M3.130 — Strict Transform Keyframe Safe-Time Contract — active — 2026-09-26
 
 Branch:
-`fix/m3-129-audio-keyframe-safe-times`
+`fix/m3-130-transform-keyframe-safe-times`
 
 Scope:
-- Prevent runtime audio volume keyframe APIs from accepting or propagating timestamps outside JavaScript's safe integer range.
+- Prevent runtime Transform Keyframe APIs from accepting or propagating timestamps outside JavaScript's safe integer range.
 
 Audit finding:
-- Persisted audio volume keyframes already require safe integer `timeMs` values during project validation.
-- `normalizeAudioVolumeKeyframes()` accepted finite timestamps outside the safe integer range and could preserve them after rounding.
-- `upsertAudioVolumeKeyframe()` accepted finite non-negative timestamps whose rounded value could be unsafe, creating invalid runtime keyframe state.
+- Persisted Transform Keyframe `timeMs` values already require safe integers during project validation.
+- `normalizeTransformKeyframes()` accepted finite timestamps whose rounded values could be outside the safe integer range and preserve them in runtime state.
+- `upsertTransformKeyframe()` accepted finite non-negative timestamps without requiring the rounded result to be safe.
 
 Implementation:
-- Filter normalized audio volume keyframes to rounded timestamps that are JavaScript safe integers.
-- Require the rounded timestamp produced by `upsertAudioVolumeKeyframe()` to be a safe integer.
+- Filter normalized Transform Keyframes to rounded timestamps that are JavaScript safe integers.
+- Require the rounded timestamp produced by `upsertTransformKeyframe()` to be a safe integer.
 - Preserve existing fractional-millisecond rounding behavior for valid inputs.
 - Added focused regression coverage for `Number.MAX_SAFE_INTEGER`, unsafe normalized values, and unsafe upsert input.
 - No project schema version change.
 
 Invariant / contract:
-- Runtime audio volume keyframe timestamps must normalize to non-negative JavaScript safe integers.
+- Runtime Transform Keyframe timestamps must normalize to non-negative JavaScript safe integers.
 - Valid fractional input continues to round to an integer millisecond timestamp.
-- Unsafe timestamps are rejected or discarded before they can become persisted/runtime keyframe state.
+- Unsafe timestamps are rejected or discarded before they can become runtime/persisted keyframe state.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
-- Audio keyframe interpolation still uses floating-point playback time calculations, which remain out of scope.
-- Other independent audio automation arithmetic remains subject to focused audits.
+- Floating-point transform interpolation/playhead calculations remain out of scope.
+- Other independent keyframe/runtime arithmetic remains subject to focused audits.
 
 Next step:
-- Complete user local validation of M3.129; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.130; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.129 — Strict Audio Keyframe Safe-Time Contract — completed — 2026-09-26
+
+Branch:
+`fix/m3-129-audio-keyframe-safe-times`
+
+PR:
+#144
+
+Merge SHA:
+`e5b9d9aa4728ab112493e3e6fce70729673cda27`
+
+User validation:
+- User reported PASS for M3.129.
+- PR #144 was refreshed at head `da89d08fedeed31c7a8bc463560a35defba46a9f`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `e5b9d9aa4728ab112493e3e6fce70729673cda27`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- Persisted audio volume keyframes already required safe integer timestamps, but runtime normalization and upsert could preserve or create unsafe rounded timestamps.
+
+Implementation:
+- Added safe-integer filtering to audio keyframe normalization.
+- Added safe-integer validation to audio keyframe upsert.
+- Preserved valid fractional-millisecond rounding behavior.
+- Added focused regression coverage.
+- No project schema version change.
+
+Remaining risks:
+- Transform Keyframe runtime normalization and upsert have a separate equivalent hardening gap addressed by M3.130.
+- Floating-point playback/interpolation calculations remain out of scope.
+
+Next step:
+- Fresh audit from verified `main` for the next keyframe/runtime invariant.
 
 ## M3.128 — Strict Audio Fade Aggregate Safety — completed — 2026-09-26
 
