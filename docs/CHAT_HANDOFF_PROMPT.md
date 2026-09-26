@@ -8,6 +8,19 @@
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
+## M3.125 — active — 2026-09-26
+
+- Branch: `fix/m3-125-timeline-command-endpoint-safety`.
+- Scope: reject unsafe derived timeline endpoints at timeline-edit command boundaries.
+- Fresh audit found unchecked timeline endpoint arithmetic in add, move, trim-start, trim-end, split, overlap checking, and transition adjacency validation.
+- Added one checked safe-integer timeline addition helper and applied it to the affected command-level endpoint calculations.
+- Added focused regression coverage across add, move, trim-start, trim-end, split, and overlap paths.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Remaining separate risks: transition-domain endpoint helpers and persisted topology arithmetic.
+- On user `PASS` / `pass` / `lanjutkan`: refresh PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.124 — completed — 2026-09-26
 
 - Branch: `fix/m3-124-render-plan-safe-endpoints`.
