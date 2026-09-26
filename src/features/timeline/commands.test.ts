@@ -2335,6 +2335,143 @@ describe("transform keyframe commands", () => {
 });
 
 
+describe("timeline endpoint safety", () => {
+  const maxSafeMs = Number.MAX_SAFE_INTEGER;
+
+  function createProjectWithClip(
+    id: string,
+    timelineStartMs: number,
+    sourceEndMs: number,
+  ) {
+    const project = createProject({ id });
+    project.assets.push({
+      id: `asset-${id}`,
+      name: `${id}.mp4`,
+      mediaType: "video",
+      sourcePath: `/${id}.mp4`,
+      durationMs: sourceEndMs,
+    });
+    project.tracks[0].clips.push({
+      id: `clip-${id}`,
+      assetId: `asset-${id}`,
+      timelineStartMs,
+      sourceStartMs: 0,
+      sourceEndMs,
+      transform: {
+        x: 0,
+        y: 0,
+        scale: 1,
+        rotation: 0,
+        opacity: 1,
+      },
+    });
+    return project;
+  }
+
+  it("rejects adding a clip whose derived timeline end is unsafe", () => {
+    const project = createProject({ id: "timeline-add-overflow" });
+    project.assets.push({
+      id: "add-overflow",
+      name: "add-overflow.mp4",
+      mediaType: "video",
+      sourcePath: "/add-overflow.mp4",
+      durationMs: 1,
+    });
+
+    expect(() =>
+      addAssetToTrack(
+        project,
+        "add-overflow",
+        "video-1",
+        maxSafeMs,
+      ),
+    ).toThrow(
+      "Clip add-overflow timeline end exceeds the supported safe millisecond range.",
+    );
+  });
+
+  it("rejects moving a clip when its derived timeline end is unsafe", () => {
+    const project = createProjectWithClip(
+      "timeline-move-overflow",
+      0,
+      1,
+    );
+    const clipId = project.tracks[0].clips[0].id;
+
+    expect(() =>
+      moveClipOnTimeline(project, clipId, maxSafeMs),
+    ).toThrow(
+      `Clip ${clipId} timeline end exceeds the supported safe millisecond range.`,
+    );
+  });
+
+  it("rejects trim-start when the shifted timeline start is unsafe", () => {
+    const project = createProjectWithClip(
+      "timeline-trim-start-overflow",
+      maxSafeMs - 1,
+      3,
+    );
+    const clipId = project.tracks[0].clips[0].id;
+
+    expect(() =>
+      trimClipStart(project, clipId, 2),
+    ).toThrow(
+      `Clip ${clipId} timeline start exceeds the supported safe millisecond range.`,
+    );
+  });
+
+  it("rejects trim-end when the derived timeline end is unsafe", () => {
+    const project = createProjectWithClip(
+      "timeline-trim-end-overflow",
+      maxSafeMs - 1,
+      1,
+    );
+    const clipId = project.tracks[0].clips[0].id;
+
+    expect(() =>
+      trimClipEnd(project, clipId, 2),
+    ).toThrow(
+      `Clip ${clipId} timeline end exceeds the supported safe millisecond range.`,
+    );
+  });
+
+  it("rejects splitting when the clip timeline end is unsafe", () => {
+    const project = createProjectWithClip(
+      "timeline-split-overflow",
+      maxSafeMs - 1,
+      3,
+    );
+    const clipId = project.tracks[0].clips[0].id;
+
+    expect(() =>
+      splitClipAtTime(project, clipId, maxSafeMs),
+    ).toThrow(
+      `Clip ${clipId} timeline end exceeds the supported safe millisecond range.`,
+    );
+  });
+
+  it("rejects overlap checks when an existing clip endpoint is unsafe", () => {
+    const project = createProjectWithClip(
+      "timeline-overlap-overflow",
+      maxSafeMs,
+      1,
+    );
+    project.assets.push({
+      id: "overlap-safe",
+      name: "overlap-safe.mp4",
+      mediaType: "video",
+      sourcePath: "/overlap-safe.mp4",
+      durationMs: 1,
+    });
+
+    expect(() =>
+      addAssetToTrack(project, "overlap-safe", "video-1", 0),
+    ).toThrow(
+      "Clip clip-timeline-overlap-overflow timeline end exceeds the supported safe millisecond range.",
+    );
+  });
+});
+
 describe("clip transitions", () => {
   it("sets a fade-through-black transition between adjacent visual clips", () => {
     const project = createProject({ id: "fade-transition-command" });
