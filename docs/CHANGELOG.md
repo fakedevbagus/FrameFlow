@@ -8,6 +8,20 @@
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
 
+### M3.124 — Strict Render-Plan Timeline Endpoint Safety — completed — 2026-09-26
+
+- Branch: `fix/m3-124-render-plan-safe-endpoints`.
+- PR #139; squash-merged at `4a1254dc80d3e9241c657a767d78eb60078424d4`.
+- Fresh audit found that `createRenderPlan()` could derive an unsafe `timelineEndMs` by adding two individually safe millisecond values without checking the result.
+- Added checked safe-integer arithmetic for render-plan source and timeline endpoints.
+- Exact `Number.MAX_SAFE_INTEGER` endpoints remain valid; derived endpoints above the safe-integer range are rejected.
+- Added focused regression coverage.
+- No project schema change.
+- User reported PASS.
+- PR head `4fd7f0d7800948010eebeaae9e0d328fdaf4da20` was verified before merge and `main` was verified after merge at `4a1254dc80d3e9241c657a767d78eb60078424d4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused runtime/persistence timeline arithmetic gap.
+
 ### M3.123 — Safe Integer Millisecond Contract — completed — 2026-09-26
 
 - Branch: `fix/m3-123-safe-integer-milliseconds`.
