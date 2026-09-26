@@ -1,3 +1,15 @@
+## M3.138 — active — 2026-09-27
+
+- Branch: `fix/m3-138-strict-waveform-source-range-metadata`.
+- Scope: require waveform source-range timing metadata to use JavaScript safe-integer milliseconds before resampling.
+- Fresh audit found `getWaveformPeaksForSourceRange()` accepted finite fractional or unsafe source-duration/source-start/source-end timing values.
+- Tightened source-range metadata validation while preserving safe-integer negative out-of-range clamping semantics.
+- Added focused regression coverage.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.137 — completed — 2026-09-27
 
 - Branch: `fix/m3-137-strict-persistent-waveform-metadata`.
