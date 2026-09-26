@@ -24,6 +24,7 @@ interface PersistentWaveformStore {
 
 const PERSISTENT_WAVEFORM_STORAGE_KEY = "frameflow.audio-waveform-cache.v1";
 const MAX_PERSISTENT_WAVEFORM_ENTRIES = 32;
+const MAX_WAVEFORM_OUTPUT_PEAK_COUNT = 2048;
 const waveformRequestCache = new Map<string, Promise<AudioWaveform>>();
 
 export function getAudioWaveform(
@@ -282,7 +283,15 @@ export function getWaveformPeaksForSourceRange(
     return [];
   }
 
-  const safeOutputCount = Math.max(1, Math.round(outputPeakCount));
+  const safeOutputCount = Math.round(outputPeakCount);
+  if (
+    !Number.isSafeInteger(safeOutputCount) ||
+    safeOutputCount <= 0 ||
+    safeOutputCount > MAX_WAVEFORM_OUTPUT_PEAK_COUNT
+  ) {
+    return [];
+  }
+
   const safeStartMs = Math.min(sourceDurationMs, Math.max(0, sourceStartMs));
   const requestedEndMs =
     sourceEndMs === null || !Number.isFinite(sourceEndMs)
