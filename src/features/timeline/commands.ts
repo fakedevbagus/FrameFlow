@@ -347,6 +347,14 @@ export function addAssetToTrack(
   }
 
   const durationMs = asset.durationMs ?? defaultImageDurationMs;
+
+  if (
+    timelineStartMs !== null &&
+    (!Number.isFinite(timelineStartMs) || timelineStartMs < 0)
+  ) {
+    throw new Error("Clip timeline position must be zero or greater.");
+  }
+
   const requestedStartMs =
     timelineStartMs === null
       ? track.clips.reduce(
@@ -354,7 +362,7 @@ export function addAssetToTrack(
             Math.max(latest, clip.timelineStartMs + clipDuration(clip)),
           0,
         )
-      : Math.max(0, timelineStartMs);
+      : Math.round(timelineStartMs);
 
   const candidateEndMs = requestedStartMs + durationMs;
 
@@ -1512,9 +1520,18 @@ export function moveClipOnTimeline(
     throw new Error("Clip timeline position must be zero or greater.");
   }
 
-  const candidateEndMs = timelineStartMs + getClipDurationMs(location.clip);
+  const normalizedTimelineStartMs = Math.round(timelineStartMs);
+  const candidateEndMs =
+    normalizedTimelineStartMs + getClipDurationMs(location.clip);
 
-  if (hasTimelineOverlap(location.track, clipId, timelineStartMs, candidateEndMs)) {
+  if (
+    hasTimelineOverlap(
+      location.track,
+      clipId,
+      normalizedTimelineStartMs,
+      candidateEndMs,
+    )
+  ) {
     throw new Error("Clip cannot overlap another clip on the same track.");
   }
 
@@ -1526,7 +1543,9 @@ export function moveClipOnTimeline(
     return sanitizeProjectTrackTransitions(project, {
       ...track,
       clips: track.clips.map((clip) =>
-        clip.id === clipId ? { ...clip, timelineStartMs } : clip,
+        clip.id === clipId
+          ? { ...clip, timelineStartMs: normalizedTimelineStartMs }
+          : clip,
       ),
     });
   });
@@ -1552,13 +1571,20 @@ export function trimClipStart(
   if (
     !Number.isFinite(newSourceStartMs) ||
     newSourceStartMs < 0 ||
-    sourceEndMs === null ||
-    newSourceStartMs >= sourceEndMs
+    sourceEndMs === null
   ) {
     throw new Error("Clip start trim would create an invalid source range.");
   }
 
-  const timelineStartMs = clip.timelineStartMs + (newSourceStartMs - clip.sourceStartMs);
+  const normalizedNewSourceStartMs = Math.round(newSourceStartMs);
+
+  if (normalizedNewSourceStartMs >= sourceEndMs) {
+    throw new Error("Clip start trim would create an invalid source range.");
+  }
+
+  const timelineStartMs =
+    clip.timelineStartMs +
+    (normalizedNewSourceStartMs - clip.sourceStartMs);
 
   if (timelineStartMs < 0) {
     throw new Error("Clip cannot be trimmed before the start of the timeline.");
@@ -1574,9 +1600,13 @@ export function trimClipStart(
     project,
     location,
     {
-      sourceStartMs: newSourceStartMs,
+      sourceStartMs: normalizedNewSourceStartMs,
       timelineStartMs,
-      ...getClampedAudioFadePatch(clip, newSourceStartMs, sourceEndMs),
+      ...getClampedAudioFadePatch(
+        clip,
+        normalizedNewSourceStartMs,
+        sourceEndMs,
+      ),
     },
     now,
   );
@@ -1607,19 +1637,26 @@ export function trimClipEnd(
 
   if (
     !Number.isFinite(newSourceEndMs) ||
-    newSourceEndMs <= clip.sourceStartMs ||
     clip.sourceEndMs === null
   ) {
     throw new Error("Clip end trim would create an invalid source range.");
   }
 
+  const normalizedNewSourceEndMs = Math.round(newSourceEndMs);
+
+  if (normalizedNewSourceEndMs <= clip.sourceStartMs) {
+    throw new Error("Clip end trim would create an invalid source range.");
+  }
+
   if (asset?.durationMs !== null && asset?.durationMs !== undefined) {
-    if (newSourceEndMs > asset.durationMs) {
+    if (normalizedNewSourceEndMs > asset.durationMs) {
       throw new Error("Clip end cannot exceed the source media duration.");
     }
   }
 
-  const candidateEndMs = clip.timelineStartMs + (newSourceEndMs - clip.sourceStartMs);
+  const candidateEndMs =
+    clip.timelineStartMs +
+    (normalizedNewSourceEndMs - clip.sourceStartMs);
 
   if (hasTimelineOverlap(location.track, clipId, clip.timelineStartMs, candidateEndMs)) {
     throw new Error("Clip cannot overlap another clip on the same track.");
@@ -1629,11 +1666,11 @@ export function trimClipEnd(
     project,
     location,
     {
-      sourceEndMs: newSourceEndMs,
+      sourceEndMs: normalizedNewSourceEndMs,
       ...getClampedAudioFadePatch(
         clip,
         clip.sourceStartMs,
-        newSourceEndMs,
+        normalizedNewSourceEndMs,
       ),
     },
     now,
@@ -1661,7 +1698,13 @@ export function splitClipAtTime(
     throw new Error("Track is locked.");
   }
 
-  if (!Number.isFinite(timelineTimeMs) || timelineTimeMs <= clip.timelineStartMs) {
+  if (!Number.isFinite(timelineTimeMs)) {
+    throw new Error("Split time must be inside the selected clip.");
+  }
+
+  const normalizedTimelineTimeMs = Math.round(timelineTimeMs);
+
+  if (normalizedTimelineTimeMs <= clip.timelineStartMs) {
     throw new Error("Split time must be inside the selected clip.");
   }
 
@@ -1672,14 +1715,16 @@ export function splitClipAtTime(
   const clipEndMs =
     clip.timelineStartMs + (clip.sourceEndMs - clip.sourceStartMs);
 
-  if (timelineTimeMs >= clipEndMs) {
+  if (normalizedTimelineTimeMs >= clipEndMs) {
     throw new Error("Split time must be inside the selected clip.");
   }
 
   const sourceSplitMs =
-    clip.sourceStartMs + (timelineTimeMs - clip.timelineStartMs);
+    clip.sourceStartMs +
+    (normalizedTimelineTimeMs - clip.timelineStartMs);
 
-  const splitLocalTimeMs = timelineTimeMs - clip.timelineStartMs;
+  const splitLocalTimeMs =
+    normalizedTimelineTimeMs - clip.timelineStartMs;
   const hasKeyframes = Boolean(clip.transformKeyframes?.length);
   const splitTransform = hasKeyframes
     ? getClipTransformAtTime(
@@ -1748,7 +1793,7 @@ export function splitClipAtTime(
   const secondClip: Clip = {
     ...clip,
     id: crypto.randomUUID(),
-    timelineStartMs: timelineTimeMs,
+    timelineStartMs: normalizedTimelineTimeMs,
     sourceStartMs: sourceSplitMs,
     audioFadeInMs: undefined,
     transformKeyframes: secondKeyframes,
