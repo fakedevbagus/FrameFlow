@@ -423,11 +423,15 @@ function validateTrackTopology(
   for (let index = 1; index < orderedClips.length; index += 1) {
     const previous = orderedClips[index - 1].clip;
     const current = orderedClips[index].clip;
-    const previousEnd =
-      Number(previous.timelineStartMs) +
-      (previous.sourceEndMs === null
+    const previousDurationMs =
+      previous.sourceEndMs === null
         ? 0
-        : Number(previous.sourceEndMs) - Number(previous.sourceStartMs));
+        : Number(previous.sourceEndMs) - Number(previous.sourceStartMs);
+    const previousEnd = addSafeTimelineMilliseconds(
+      Number(previous.timelineStartMs),
+      previousDurationMs,
+      "Track " + trackIndex + " clip " + orderedClips[index - 1].index + " end",
+    );
 
     if (previousEnd > Number(current.timelineStartMs)) {
       throw new ProjectValidationError(
@@ -487,11 +491,15 @@ function validateTrackTopology(
       );
     }
 
-    const outgoingEnd =
-      Number(clip.timelineStartMs) +
-      (clip.sourceEndMs === null
+    const outgoingDurationMs =
+      clip.sourceEndMs === null
         ? 0
-        : Number(clip.sourceEndMs) - Number(clip.sourceStartMs));
+        : Number(clip.sourceEndMs) - Number(clip.sourceStartMs);
+    const outgoingEnd = addSafeTimelineMilliseconds(
+      Number(clip.timelineStartMs),
+      outgoingDurationMs,
+      "Clip " + trackIndex + "." + index + " transition endpoint",
+    );
 
     if (outgoingEnd !== Number(next.timelineStartMs)) {
       throw new ProjectValidationError(
@@ -1224,6 +1232,32 @@ function assertMediaType(value: unknown, field: string): asserts value is MediaT
       field + " must be audio, image, or video.",
     );
   }
+}
+
+function addSafeTimelineMilliseconds(
+  startMs: number,
+  durationMs: number,
+  context: string,
+): number {
+  if (
+    !Number.isSafeInteger(startMs) ||
+    !Number.isSafeInteger(durationMs) ||
+    durationMs < 0
+  ) {
+    throw new ProjectValidationError(
+      context + " contains an unsafe millisecond value.",
+    );
+  }
+
+  const endMs = startMs + durationMs;
+
+  if (!Number.isSafeInteger(endMs) || endMs < 0) {
+    throw new ProjectValidationError(
+      context + " exceeds the supported safe millisecond range.",
+    );
+  }
+
+  return endMs;
 }
 
 function assertFiniteNonNegativeNumber(value: unknown, field: string): asserts value is number {

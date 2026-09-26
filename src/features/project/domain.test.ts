@@ -1115,6 +1115,143 @@ describe("project domain", () => {
     expect(parseProject(JSON.stringify(invalidBase))).toEqual(invalidBase);
   });
 
+  it("accepts a persisted clip endpoint at the maximum safe integer", () => {
+    const project = createProject({ id: "timeline-safe-endpoint" });
+    const videoAsset = {
+      id: "video-safe",
+      name: "Safe",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/safe.mp4",
+      durationMs: 2000,
+    };
+    const persistedProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-safe-a",
+                  assetId: videoAsset.id,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER - 2000,
+                  sourceStartMs: 0,
+                  sourceEndMs: 2000,
+                },
+                {
+                  id: "clip-safe-b",
+                  assetId: videoAsset.id,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(parseProject(JSON.stringify(persistedProject))).toEqual(
+      persistedProject,
+    );
+  });
+
+  it("rejects a persisted track when a derived overlap endpoint is unsafe", () => {
+    const project = createProject({ id: "timeline-unsafe-endpoint" });
+    const videoAsset = {
+      id: "video-unsafe",
+      name: "Unsafe",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/unsafe.mp4",
+      durationMs: 2,
+    };
+    const persistedProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-unsafe-a",
+                  assetId: videoAsset.id,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER - 1,
+                  sourceStartMs: 0,
+                  sourceEndMs: 2,
+                },
+                {
+                  id: "clip-unsafe-b",
+                  assetId: videoAsset.id,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(persistedProject))).toThrow(
+      "Track 0 clip 0 end exceeds the supported safe millisecond range.",
+    );
+  });
+
+  it("rejects a persisted transition when its derived endpoint is unsafe", () => {
+    const project = createProject({ id: "timeline-unsafe-transition-endpoint" });
+    const firstAsset = {
+      id: "video-transition-first",
+      name: "First",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/transition-first.mp4",
+      durationMs: 2,
+    };
+    const secondAsset = {
+      id: "video-transition-second",
+      name: "Second",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/transition-second.mp4",
+      durationMs: 1,
+    };
+    const persistedProject = {
+      ...project,
+      assets: [firstAsset, secondAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-transition-first",
+                  assetId: firstAsset.id,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER - 1,
+                  sourceStartMs: 0,
+                  sourceEndMs: 2,
+                  transitionOut: {
+                    type: "dissolve" as const,
+                    durationMs: 1,
+                  },
+                },
+                {
+                  id: "clip-transition-second",
+                  assetId: secondAsset.id,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(persistedProject))).toThrow(
+      "Clip 0.0 transition endpoint exceeds the supported safe millisecond range.",
+    );
+  });
+
   it("rejects overlapping clips in one persisted track", () => {
     const project = createProject({ id: "timeline-overlap" });
     const audioAssetA = {

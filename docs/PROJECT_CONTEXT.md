@@ -1,3 +1,39 @@
+## M3.127 — Strict Project Topology Endpoint Safety — active — 2026-09-26
+
+Branch:
+`fix/m3-127-project-topology-endpoint-safety`
+
+Scope:
+- Prevent persisted project topology validation from deriving unsafe timeline endpoints.
+
+Audit finding:
+- M3.124 hardened export render-plan endpoint arithmetic.
+- M3.125 hardened timeline-edit command endpoints.
+- M3.126 hardened transition clip-end arithmetic.
+- `validateTrackTopology()` still computed overlap and transition adjacency endpoints with unchecked millisecond addition during persisted project parsing.
+- Individually safe persisted timeline/source values could therefore produce an unsafe derived topology endpoint.
+
+Implementation:
+- Added one checked safe-integer timeline addition helper in the project-domain validation layer.
+- Applied it to persisted track overlap endpoint validation and transition adjacency endpoint validation.
+- Preserved existing ordering, overlap, and transition semantics for valid safe values.
+- Added focused regression coverage for the maximum safe endpoint and unsafe derived endpoints in both topology paths.
+- No project schema version change.
+
+Invariant / contract:
+- Persisted topology-derived clip endpoints must be non-negative JavaScript safe integers.
+- Project parsing must reject a topology whose required derived endpoint cannot be represented safely.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Other runtime arithmetic outside project topology remains subject to separate audits.
+- Floating-point playback/timecode calculations remain out of scope.
+
+Next step:
+- Complete user local validation of M3.127; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.126 — Strict Transition Clip Endpoint Safety — completed — 2026-09-26
 
 Branch:
