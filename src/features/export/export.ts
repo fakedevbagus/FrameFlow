@@ -1,4 +1,4 @@
-import type { Project } from "../project/domain";
+import { MAX_CANVAS_FRAME_RATE, type Project } from "../project/domain";
 
 export type ExportFormat = "mp4";
 export type ExportQuality = "source" | "1080p" | "720p";
@@ -35,16 +35,19 @@ export function normalizeExportSettings(
   settings: ExportSettings,
   project: Project,
 ): ExportSettings {
-  const frameRate = Number.isFinite(settings.frameRate) && settings.frameRate > 0
-    ? settings.frameRate
-    : project.canvas.frameRate;
+  const frameRate =
+    Number.isFinite(settings.frameRate) &&
+    settings.frameRate > 0 &&
+    settings.frameRate <= MAX_CANVAS_FRAME_RATE
+      ? settings.frameRate
+      : project.canvas.frameRate;
 
   const width = Number.isFinite(settings.width) && settings.width > 0
-    ? Math.round(settings.width)
+    ? normalizeExportDimension(settings.width)
     : project.canvas.width;
 
   const height = Number.isFinite(settings.height) && settings.height > 0
-    ? Math.round(settings.height)
+    ? normalizeExportDimension(settings.height)
     : project.canvas.height;
 
   return {
@@ -85,6 +88,11 @@ export function sanitizeExportFileName(value: string): string {
   return normalized.toLowerCase().endsWith(".mp4")
     ? normalized
     : normalized + ".mp4";
+}
+
+function normalizeExportDimension(value: number): number {
+  const rounded = Math.max(2, Math.round(value));
+  return rounded % 2 === 0 ? rounded : rounded + 1;
 }
 
 function fitWithinHeight(

@@ -63,6 +63,65 @@ describe("export settings", () => {
     });
   });
 
+  it("normalizes export dimensions to positive even values", () => {
+    const project = createProject({ id: "normalize-export-dimensions" });
+    project.canvas = { width: 1080, height: 1920, frameRate: 30 };
+
+    expect(
+      normalizeExportSettings(
+        {
+          format: "mp4",
+          quality: "source",
+          width: 1921,
+          height: 1079,
+          frameRate: 30,
+          fileName: "output.mp4",
+        },
+        project,
+      ),
+    ).toEqual({
+      format: "mp4",
+      quality: "source",
+      width: 1922,
+      height: 1080,
+      frameRate: 30,
+      fileName: "output.mp4",
+    });
+
+    expect(
+      normalizeExportSettings(
+        {
+          format: "mp4",
+          quality: "source",
+          width: 1,
+          height: 0.5,
+          frameRate: 30,
+          fileName: "output.mp4",
+        },
+        project,
+      ).width,
+    ).toBe(2);
+  });
+
+  it("falls back to the project frame rate when export FPS exceeds the native limit", () => {
+    const project = createProject({ id: "normalize-export-framerate" });
+    project.canvas = { width: 1080, height: 1920, frameRate: 29.97 };
+
+    expect(
+      normalizeExportSettings(
+        {
+          format: "mp4",
+          quality: "source",
+          width: 1080,
+          height: 1920,
+          frameRate: 240.001,
+          fileName: "output.mp4",
+        },
+        project,
+      ).frameRate,
+    ).toBe(29.97);
+  });
+
   it("sanitizes export file names", () => {
     expect(sanitizeExportFileName("My / Final:Edit")).toBe(
       "My - Final-Edit.mp4",

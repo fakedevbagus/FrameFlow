@@ -1,3 +1,40 @@
+## M3.117 — Strict Export Settings Native Contract — active — 2026-09-26
+
+Branch:
+`fix/m3-117-export-settings-native-contract`
+
+Scope:
+- Align frontend export-setting normalization with the native export requirements for dimensions and frame rate.
+- Keep fractional frame rates supported while preventing export settings from carrying values the native layer rejects.
+
+Audit finding:
+- `normalizeExportSettings()` previously rounded positive width/height values without ensuring they were even.
+- The same function accepted any positive finite frame rate.
+- Native export requires positive even dimensions and a frame rate between 0 and 240 FPS.
+- Therefore, direct export-setting normalization could produce or preserve a native-invalid request even though the normal preset UI currently supplies safe values.
+
+Implementation:
+- Added shared use of `MAX_CANVAS_FRAME_RATE = 240` for export frame-rate normalization.
+- Invalid or over-limit export FPS now falls back to the validated project canvas frame rate.
+- Positive export dimensions are rounded, floored to the native minimum of 2, and canonicalized to even values.
+- Added focused export-setting regression coverage.
+- No project schema version change.
+
+Invariant / contract:
+- Normalized export dimensions are positive even integers.
+- Normalized export frame rate is finite, positive, and at most 240 FPS.
+- Fractional supported frame rates remain unchanged.
+
+Validation:
+- Pending user local validation.
+
+Remaining risks:
+- Native export still performs its own final validation; M3.117 hardens the frontend normalization boundary.
+- Output-path and media-source validation remain native responsibilities.
+
+Next step:
+- User local validation of M3.117, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+
 ## M3.116 — Strict Project Canvas Dimension Contract — completed — 2026-09-26
 
 Branch:
