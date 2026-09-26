@@ -1,14 +1,27 @@
-## M3.133 — active — 2026-09-26
+## M3.134 — active — 2026-09-26
 
-- Branch: `fix/m3-133-waveform-peak-count-contract`.
-- Scope: normalize non-finite audio waveform peak-count input before native invocation.
-- Fresh audit found `getAudioWaveform()` could propagate `NaN` as the native `peakCount` argument.
-- Added a dedicated normalizer with non-finite fallback to the default of 128 and preserved the existing finite 32..2048 range.
+- Branch: `fix/m3-134-strict-waveform-response-contract`.
+- Scope: require native waveform `durationMs` and `sampleRate` to be positive JavaScript safe integers before cache/render use.
+- Fresh audit found response metadata was validated only as finite positive numbers and then silently rounded.
+- Tightened the response and persistent-cache numeric contract; malformed fractional and unsafe metadata is rejected.
 - Added focused regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.133 — completed — 2026-09-26
+
+- Branch: `fix/m3-133-waveform-peak-count-contract`.
+- PR #148; squash-merged at `ce35441e801d7f2a240a2a2535cc39b9d1bc6139`.
+- User reported PASS.
+- Hardened waveform peak-count normalization against non-finite request input.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `5f3cdf6dd4274e9438bce7ef4cd77bbd2f2feae9` was verified before merge.
+- `main` was verified after merge at `ce35441e801d7f2a240a2a2535cc39b9d1bc6139`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.132 — completed — 2026-09-26
 

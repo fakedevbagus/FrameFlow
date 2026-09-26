@@ -1,36 +1,74 @@
-## M3.133 — Strict Audio Waveform Peak-Count Contract — active — 2026-09-26
+## M3.134 — Strict Audio Waveform Response Contract — active — 2026-09-26
 
 Branch:
-`fix/m3-133-waveform-peak-count-contract`
+`fix/m3-134-strict-waveform-response-contract`
 
 Scope:
-- Ensure the audio waveform request normalizes non-finite peak-count input before it reaches the native waveform command.
+- Ensure native waveform duration and sample-rate metadata are validated as positive JavaScript safe integers before caching or rendering.
 
 Audit finding:
-- `getAudioWaveform()` normalized `peakCount` with `Math.min/Math.max/Math.round` but did not guard non-finite input.
-- A `NaN` request therefore remained `NaN` and could be forwarded to the native `generate_audio_waveform` command.
+- `getAudioWaveform()` only required native `durationMs` and `sampleRate` to be finite positive numbers.
+- It then rounded those values, so malformed fractional metadata could be silently accepted and native `u64/u32` duration/rate values outside the JavaScript safe-integer range could be represented imprecisely.
+- Persistent waveform validation reused the same weak numeric contract.
 
 Implementation:
-- Added a dedicated waveform peak-count normalizer.
-- Non-finite peak-count input now falls back to the existing default of 128.
-- Finite values retain the existing clamp and rounding range of 32..2048.
-- Added focused regression coverage proving invalid input is normalized before native invocation.
+- Tightened native waveform response validation to require positive JavaScript safe integers for `durationMs` and `sampleRate`.
+- Removed redundant rounding of metadata that is now required to already satisfy the integer contract.
+- Persistent waveform cache validation inherits the same strict `AudioWaveform` contract.
+- Added focused regression coverage for unsafe and fractional native metadata.
 - No project schema version change.
 
 Invariant / contract:
-- Native waveform generation always receives a finite integer peak count between 32 and 2048.
-- Invalid non-finite request input does not propagate into the native boundary.
-- Existing finite peak-count behavior remains unchanged.
+- Native waveform `durationMs` and `sampleRate` must be positive JavaScript safe integers before entering the persistent/cache/render path.
+- Malformed fractional or unsafe timing metadata is rejected instead of normalized silently.
+- Native Rust `u64/u32` values must not be accepted when their JavaScript representation is unsafe.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
-- Native waveform response duration/sample-rate validation may need a separate contract audit.
+- Waveform source-range/output-peak-count arithmetic remains subject to separate focused audits.
+- Floating-point waveform interpolation remains out of scope.
+
+Next step:
+- Complete user local validation of M3.134; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.133 — Strict Audio Waveform Peak-Count Contract — completed — 2026-09-26
+
+Branch:
+`fix/m3-133-waveform-peak-count-contract`
+
+PR:
+#148
+
+Merge SHA:
+`ce35441e801d7f2a240a2a2535cc39b9d1bc6139`
+
+User validation:
+- User reported PASS for M3.133.
+- PR #148 was refreshed at head `5f3cdf6dd4274e9438bce7ef4cd77bbd2f2feae9`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `ce35441e801d7f2a240a2a2535cc39b9d1bc6139`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `getAudioWaveform()` could propagate a non-finite peak-count input, including `NaN`, into the native waveform command.
+
+Implementation:
+- Added a dedicated peak-count normalizer with non-finite fallback to the default 128.
+- Preserved the existing finite 32..2048 clamp and rounding behavior.
+- Added focused regression coverage proving invalid input is normalized before native invocation.
+- No project schema version change.
+
+Invariant / contract:
+- Native waveform generation receives a finite integer peak count between 32 and 2048.
+
+Remaining risks:
+- Native waveform response duration/sample-rate validation required the follow-up hardening implemented in M3.134.
 - Waveform interpolation uses floating-point sampling calculations and remains out of scope.
 
 Next step:
-- Complete user local validation of M3.133; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete runtime/media boundary.
+
 
 ## M3.132 — Strict Source Split Endpoint Safety — completed — 2026-09-26
 

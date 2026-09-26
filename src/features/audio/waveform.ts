@@ -68,9 +68,9 @@ export function getAudioWaveform(
       }).then((waveform) => {
         if (
           !waveform ||
-          !Number.isFinite(waveform.durationMs) ||
+          !Number.isSafeInteger(waveform.durationMs) ||
           waveform.durationMs <= 0 ||
-          !Number.isFinite(waveform.sampleRate) ||
+          !Number.isSafeInteger(waveform.sampleRate) ||
           waveform.sampleRate <= 0 ||
           !Array.isArray(waveform.peaks) ||
           waveform.peaks.length === 0 ||
@@ -81,8 +81,8 @@ export function getAudioWaveform(
         }
 
         const normalizedWaveform = {
-          durationMs: Math.max(0, Math.round(waveform.durationMs)),
-          sampleRate: Math.max(1, Math.round(waveform.sampleRate)),
+          durationMs: waveform.durationMs,
+          sampleRate: waveform.sampleRate,
           peaks: waveform.peaks.map(normalizeWaveformPeak),
           sourceFingerprint: waveform.sourceFingerprint,
         };
