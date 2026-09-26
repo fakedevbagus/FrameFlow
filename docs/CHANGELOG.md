@@ -1,13 +1,16 @@
-### M3.119 — Strict Unified AV Source-Audio Segment Contract — active — 2026-09-26
+### M3.119 — Strict Unified AV Source-Audio Segment Contract — completed — 2026-09-26
 
 - Branch: `fix/m3-119-strict-unified-av-audio-segments`.
+- PR #134; squash-merged at `91179b94d6b986e9c687ef768a23277088abfc28`.
 - Fresh audit found that native unified AV source-audio segment metadata was only partially validated before FFmpeg filter construction.
-- Added native range/precision checks for track volume/pan, fades, volume keyframes, EQ, and compressor settings.
+- Added native range/precision checks for track volume/pan, fades, volume keyframes, EQ gains, and compressor parameters.
 - Invalid values are now rejected instead of being silently clamped by filter-generation helpers.
 - Added focused native regression coverage.
 - No project schema change.
-- Validation is pending user confirmation.
-- Next step: complete local validation, then merge and reconcile the documentation.
+- User reported PASS.
+- Validation status is recorded as passed only from the user's explicit PASS; no additional local checks are inferred.
+- `main` was verified after merge.
+- Next step: fresh audit from verified `main` for the next concrete persisted/runtime/native invariant.
 
 ### M3.118 — Strict Video Graph Input Media-Type Contract — completed — 2026-09-26
 
