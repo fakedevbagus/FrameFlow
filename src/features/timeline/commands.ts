@@ -718,13 +718,13 @@ export function updateAudioClipFades(
 
   if (
     !Number.isFinite(fadeInMs) ||
-    !Number.isInteger(fadeInMs) ||
+    !Number.isSafeInteger(fadeInMs) ||
     fadeInMs < 0 ||
     !Number.isFinite(fadeOutMs) ||
-    !Number.isInteger(fadeOutMs) ||
+    !Number.isSafeInteger(fadeOutMs) ||
     fadeOutMs < 0
   ) {
-    throw new Error("Audio fade durations must be non-negative integers.");
+    throw new Error("Audio fade durations must be non-negative safe integers.");
   }
 
   const durationMs = getClipDurationMs(location.clip);
@@ -733,7 +733,13 @@ export function updateAudioClipFades(
     throw new Error("Audio fade duration cannot exceed the clip duration.");
   }
 
-  if (fadeInMs + fadeOutMs > durationMs) {
+  const fadeTotalMs = addSafeTimelineMilliseconds(
+    fadeInMs,
+    fadeOutMs,
+    "Audio fade total",
+  );
+
+  if (fadeTotalMs > durationMs) {
     throw new Error("Audio fade-in and fade-out cannot overlap.");
   }
 

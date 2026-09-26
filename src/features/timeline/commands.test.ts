@@ -1209,6 +1209,51 @@ describe("updateAudioClipFades", () => {
     ).toThrow("cannot overlap");
   });
 
+  it("rejects unsafe audio fade values and unsafe aggregate totals", () => {
+    const project = createProject({ id: "audio-fade-safe-command" });
+    project.assets.push({
+      id: "audio-safe",
+      name: "safe.mp3",
+      mediaType: "audio",
+      sourcePath: "/safe.mp3",
+      durationMs: Number.MAX_SAFE_INTEGER,
+    });
+    const populated = addAssetToTrack(
+      project,
+      "audio-safe",
+      "audio-1",
+      0,
+    );
+    const clipId = populated.tracks[1].clips[0].id;
+
+    expect(() =>
+      updateAudioClipFades(
+        populated,
+        clipId,
+        Number.MAX_SAFE_INTEGER,
+        1,
+      ),
+    ).toThrow("safe integers");
+
+    expect(() =>
+      updateAudioClipFades(
+        populated,
+        clipId,
+        Number.MAX_SAFE_INTEGER - 1,
+        1,
+      ),
+    ).not.toThrow();
+
+    expect(() =>
+      updateAudioClipFades(
+        populated,
+        clipId,
+        Number.MAX_SAFE_INTEGER,
+        1,
+      ),
+    ).toThrow("safe integers");
+  });
+
   it("updates audio fades for a video clip with embedded source audio", () => {
     const project = createProject({ id: "video-fade-command" });
     project.assets.push({

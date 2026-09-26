@@ -1,3 +1,15 @@
+### M3.128 — Strict Audio Fade Aggregate Safety — active — 2026-09-26
+
+- Branch: `fix/m3-128-audio-fade-aggregate-safety`.
+- Fresh audit found persisted audio fade durations individually safe but `fadeInMs + fadeOutMs` unchecked, and `updateAudioClipFades()` accepted integer but not explicitly safe-integer inputs.
+- Added checked aggregate safe-integer arithmetic for persisted audio fade validation.
+- Tightened `updateAudioClipFades()` to accept only non-negative safe-integer fade durations and guard the aggregate before overlap validation.
+- Preserved normal fade duration and non-overlap behavior for valid safe values.
+- Added focused regression coverage for safe maximum aggregate and unsafe aggregate/input cases.
+- No project schema change.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
 ### M3.127 — Strict Project Topology Endpoint Safety — completed — 2026-09-26
 
 - Branch: `fix/m3-127-project-topology-endpoint-safety`.

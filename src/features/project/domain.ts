@@ -1054,7 +1054,13 @@ function validateOptionalAudioFields(
         );
       }
 
-      if (fadeInMs + fadeOutMs > durationMs) {
+      const fadeTotalMs = addSafeMilliseconds(
+        fadeInMs,
+        fadeOutMs,
+        fieldPrefix + " audio fade total",
+      );
+
+      if (fadeTotalMs > durationMs) {
         throw new ProjectValidationError(
           fieldPrefix + " audio fade-in and fade-out cannot overlap.",
         );
@@ -1258,6 +1264,33 @@ function addSafeTimelineMilliseconds(
   }
 
   return endMs;
+}
+
+function addSafeMilliseconds(
+  leftMs: number,
+  rightMs: number,
+  field: string,
+): number {
+  if (
+    !Number.isSafeInteger(leftMs) ||
+    !Number.isSafeInteger(rightMs) ||
+    leftMs < 0 ||
+    rightMs < 0
+  ) {
+    throw new ProjectValidationError(
+      field + " contains an unsafe millisecond value.",
+    );
+  }
+
+  const totalMs = leftMs + rightMs;
+
+  if (!Number.isSafeInteger(totalMs)) {
+    throw new ProjectValidationError(
+      field + " exceeds the supported safe millisecond range.",
+    );
+  }
+
+  return totalMs;
 }
 
 function assertFiniteNonNegativeNumber(value: unknown, field: string): asserts value is number {
