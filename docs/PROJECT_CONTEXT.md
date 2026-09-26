@@ -1,3 +1,37 @@
+## M3.126 — Strict Transition Clip Endpoint Safety — active — 2026-09-26
+
+Branch:
+`fix/m3-126-transition-endpoint-safety`
+
+Scope:
+- Prevent transition helpers from producing clip timeline endpoints outside JavaScript's safe integer range.
+
+Audit finding:
+- M3.125 hardened timeline-edit command endpoint arithmetic.
+- `src/features/transition/transition.ts` still derived `getClipEndMs()` with unchecked `timelineStartMs + durationMs`.
+- Transition adjacency and visual-state evaluation consume this helper, so an unsafe derived endpoint could still enter transition logic independently of timeline commands.
+
+Implementation:
+- Added checked safe-integer arithmetic to `getClipEndMs()`.
+- Preserve normal transition adjacency, dissolve, and fade-through-black behavior for valid safe values.
+- Reject unsafe derived clip endpoints before transition logic consumes them.
+- Added focused regression coverage for the maximum safe endpoint and the first unsafe endpoint.
+- No project schema version change.
+
+Invariant / contract:
+- A transition clip end returned by `getClipEndMs()` must be a non-negative JavaScript safe integer whenever the source end is known.
+- Transition adjacency and visual-state calculations must not consume an unsafe derived clip endpoint.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Project topology validation still performs independent endpoint arithmetic.
+- Floating-point playback/timecode calculations remain out of scope.
+
+Next step:
+- Complete user local validation of M3.126; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.125 — Strict Timeline Command Endpoint Safety — completed — 2026-09-26
 
 Branch:
