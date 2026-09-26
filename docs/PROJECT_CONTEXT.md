@@ -1,37 +1,48 @@
-## M3.114 — Canonical Clip Command Times — active — 2026-09-25
+## M3.114 — Canonical Clip Command Times — completed — 2026-09-26
 
 Branch:
 `fix/m3-114-canonical-clip-command-times`
 
-Scope:
-- Close the command-boundary gap left by M3.101.
-- Canonicalize clip timeline/source timing inputs before mutation so editor commands cannot create fractional clip timing in memory.
-- Cover add, move, trim-start, trim-end, and split operations.
-- Preserve the existing integer-millisecond persistence contract from M3.101.
+PR:
+#129
+
+Merge SHA:
+`be77ca4e2966f1ac65268b3886f64a9ade40c2e7`
 
 Audit finding:
-- M3.101 validates persisted `timelineStartMs`, `sourceStartMs`, and non-null `sourceEndMs` as integers, but several timeline commands still accepted and wrote fractional values.
-- `splitClipAtTime` was especially capable of creating fractional clip boundaries and derived keyframe/audio timing.
-- Timeline UI already rounds/snap-aligns these interactions, but command APIs are reusable boundaries and must enforce the same invariant.
+- M3.101 enforced integer clip timing at persistence, but reusable timeline commands could still create fractional clip timing in memory.
+- The affected command boundaries were add, move, trim-start, trim-end, and split.
+- Split timing could also propagate fractional values into derived source boundaries and related keyframe/audio automation timing.
 
 Implementation:
-- Round valid non-negative timeline placement inputs in `addAssetToTrack` and `moveClipOnTimeline`.
-- Round valid source trim boundaries in `trimClipStart` and `trimClipEnd`.
-- Round split time before deriving both resulting clip source/timeline boundaries.
-- Preserve existing validation behavior for negative, non-finite, empty, out-of-range, overlap, and adjacency cases.
-- Added regression coverage and serialization checks for command-produced projects.
+- Canonicalized valid non-negative timeline placement inputs in `addAssetToTrack` and `moveClipOnTimeline`.
+- Canonicalized source trim boundaries in `trimClipStart` and `trimClipEnd`.
+- Canonicalized split timing before deriving both resulting clip boundaries and related automation/keyframe timing.
+- Kept existing validation for non-finite, negative, empty, out-of-range, overlap, and adjacency conditions.
+- Kept audio fade clamping aligned with canonicalized trim boundaries.
+- Added focused regression and serialization coverage.
 - No project schema version change.
 
-Previous milestone:
-- M3.113 completed and squash-merged as PR #128 at `7672e1d9d603ab573178f3c908bd0807d0bfa4f1`; user reported PASS.
+Invariant / contract:
+- Reusable clip timeline/source timing command paths now produce integer millisecond clip boundaries.
+- Persisted clip timing remains compatible with the strict integer-millisecond project-domain contract.
+- Fractional runtime/playback precision outside the persisted clip timing contract remains unaffected.
 
 Validation:
-- Pending user local validation.
+- User reported PASS for M3.114.
+- PR #129 was refreshed, marked Ready for Review, and squash-merged.
+- Actual merge SHA verified as `be77ca4e2966f1ac65268b3886f64a9ade40c2e7`.
+- `main` was verified after merge.
+- No additional local validation claims are inferred beyond the user's PASS.
+
+Remaining risks:
+- The current audit found no separate persisted/runtime invariant with enough evidence to justify immediately creating M3.115.
+- Continue auditing current `main` before introducing the next focused milestone.
 
 Next step:
-- Open Draft PR and hand off local validation.
+- Fresh repository audit from current `main` to identify the next concrete engineering gap.
 
-
+## M3.113 — Canonical Transform Keyframe Times — completed — 2026-09-25
 
 Branch:
 `fix/m3-113-canonical-transform-keyframe-times`
