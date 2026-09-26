@@ -36,6 +36,8 @@ Next step:
 - User local validation of M3.116, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
 
 
+## M3.115 — Strict Project Canvas Frame-Rate Range — completed — 2026-09-26
+
 Branch:
 `fix/m3-115-project-framerate-range`
 
