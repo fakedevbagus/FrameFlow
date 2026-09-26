@@ -1,25 +1,17 @@
-## M3.124 — active — 2026-09-26
-
-- Branch: `fix/m3-124-render-plan-safe-endpoints`.
-- Scope: reject unsafe derived `timelineEndMs` values in the central export render plan.
-- Fresh audit found that `timelineStartMs + clipDurationMs` is calculated without checking the result for JavaScript safe-integer precision.
-- Preserve existing render behavior for normal safe values.
-- Add regression coverage for safe and first-unsafe derived endpoints.
-- No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
-## M3.126 — active — 2026-09-26
+## M3.126 — completed — 2026-09-26
 
 - Branch: `fix/m3-126-transition-endpoint-safety`.
 - Scope: reject unsafe derived clip endpoints inside transition helpers.
+- PR #141; squash-merged at `ff8868198d76009ae998fc6e6ffeda26f8e2f837`.
 - Fresh audit found `getClipEndMs()` performing unchecked `timelineStartMs + durationMs`; transition adjacency and visual-state code depend on this helper.
 - Added one checked safe-integer endpoint helper inside the transition module.
 - Added regression coverage for the maximum safe endpoint and the first unsafe endpoint.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Remaining separate risk: project topology validation performs independent endpoint arithmetic.
-- On user `PASS` / `pass` / `lanjutkan`: refresh PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- User reported PASS.
+- PR head `f8f4861916cf65bab95fe2b3926d4e9c1d209b9d` was verified before merge.
+- `main` was verified after merge at `ff8868198d76009ae998fc6e6ffeda26f8e2f837`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.125 — completed — 2026-09-26
 
