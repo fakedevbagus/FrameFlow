@@ -1,14 +1,26 @@
-## M3.135 — active — 2026-09-26
+## M3.136 — active — 2026-09-26
 
-- Branch: `fix/m3-135-waveform-source-range-contract`.
-- Scope: bound `getWaveformPeaksForSourceRange()` output peak count before array allocation.
-- Fresh audit found extreme finite output counts could be rounded and passed to `Array.from()`, creating an uncontrolled allocation boundary.
-- Added a strict 2048 maximum and safe-integer validation before allocation.
-- Added focused regression coverage.
+- Branch: `fix/m3-136-waveform-local-time-contract`.
+- Scope: require waveform local-time mapping duration to be a positive JavaScript safe integer.
+- Fresh audit found `getWaveformLocalTimeMs()` accepted finite positive duration values without safe-integer validation.
+- Tightened duration validation and added focused regression coverage for unsafe/fractional duration input.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.135 — completed — 2026-09-26
+
+- Branch: `fix/m3-135-waveform-source-range-contract`.
+- PR #150; squash-merged at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
+- User reported PASS.
+- Added strict 2048 output-peak and safe-integer validation before waveform source-range allocation.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `56dcc66dccbf14bad2a3f5c5716f00b746c7ecdf` was verified before merge.
+- `main` was verified after merge at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.134 — completed — 2026-09-26
 
