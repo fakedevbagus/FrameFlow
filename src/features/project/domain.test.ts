@@ -1889,6 +1889,29 @@ describe("project domain", () => {
     expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
   });
 
+  it("rejects persisted frame rates above the native export limit", () => {
+    const project = createProject({ id: "frame-rate-range" });
+    const atLimit = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        frameRate: 240,
+      },
+    };
+    const aboveLimit = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        frameRate: 240.001,
+      },
+    };
+
+    expect(parseProject(JSON.stringify(atLimit))).toEqual(atLimit);
+    expect(() => parseProject(JSON.stringify(aboveLimit))).toThrow(
+      "Canvas frameRate must be at most 240 fps.",
+    );
+  });
+
   it("accepts canonical UTC project timestamps and equal timestamps", () => {
     const project = createProject({
       id: "timestamp-valid",
