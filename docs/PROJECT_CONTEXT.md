@@ -1,3 +1,37 @@
+## M3.125 — Strict Timeline Command Endpoint Safety — active — 2026-09-26
+
+Branch:
+`fix/m3-125-timeline-command-endpoint-safety`
+
+Scope:
+- Prevent timeline-edit commands from producing or validating against derived timeline endpoints outside JavaScript's safe integer range.
+
+Audit finding:
+- M3.124 hardened the central export render-plan endpoint boundary.
+- Timeline command paths still performed unchecked endpoint arithmetic in add, move, trim-start, trim-end, split, overlap checking, and transition adjacency validation.
+- Persisted millisecond operands can each be safe while a derived timeline endpoint exceeds `Number.MAX_SAFE_INTEGER`.
+
+Implementation:
+- Added one checked timeline millisecond addition helper for command-level endpoint derivation.
+- Applied it to add-to-timeline placement, explicit add/move candidate ends, trim start/end calculations, split end checks, overlap checks, and transition adjacency checks.
+- Preserve existing normal timeline-edit behavior and overlap/transition semantics.
+- Added focused regression coverage for unsafe derived endpoints across add, move, trim-start, trim-end, split, and overlap validation.
+- No project schema version change.
+
+Invariant / contract:
+- Timeline command-derived millisecond endpoints must be non-negative JavaScript safe integers.
+- Timeline commands must reject an operation before committing project state when a required derived endpoint cannot be represented safely.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Transition-domain helpers and persisted project topology still contain independent endpoint arithmetic outside this command boundary.
+- Floating-point playback/timecode calculations remain out of scope.
+
+Next step:
+- Complete user local validation of M3.125; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.124 — Strict Render-Plan Timeline Endpoint Safety — active — 2026-09-26
 
 Branch:
