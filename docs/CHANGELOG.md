@@ -1,13 +1,16 @@
-### M3.115 — Strict Project Canvas Frame-Rate Range — active — 2026-09-26
+### M3.115 — Strict Project Canvas Frame-Rate Range — completed — 2026-09-26
 
 - Branch: `fix/m3-115-project-framerate-range`.
+- PR #130; squash-merged at `05a474a2525d51bf51099e4f335081728652b2e8`.
 - Fresh audit found that persisted project canvas frame rates accepted any positive finite value while native export rejects values above 240 FPS.
 - The project canvas frame rate is used as the default export frame rate, so values above 240 could create an export-invalid project state.
 - Added a persisted upper bound of 240 FPS while preserving fractional rates such as 29.97.
 - Added regression coverage for the 240 FPS boundary and values above it.
 - No project schema change.
-- Validation is pending user confirmation.
-- Next step: complete local validation, then merge and reconcile the documentation.
+- User reported PASS.
+- Validation status is recorded as passed only from the user's explicit PASS; no additional local checks are inferred.
+- `main` was verified after merge.
+- Next step: fresh audit from verified `main` for the next concrete persisted/runtime invariant.
 
 ### M3.114 — Canonical Clip Command Times — completed — 2026-09-26
 
