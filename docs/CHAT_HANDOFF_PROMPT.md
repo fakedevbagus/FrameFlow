@@ -1,14 +1,26 @@
-## M3.131 — active — 2026-09-26
+## M3.132 — active — 2026-09-26
 
-- Branch: `fix/m3-131-transform-keyframe-time-normalizer`.
-- Scope: make the exported Transform Keyframe time normalizer enforce finite safe-integer millisecond results.
-- Fresh audit found `normalizeTransformKeyframeTime()` could return unsafe or non-finite results directly.
-- Added strict finite/safe-integer validation to the primitive and pre-filtered collection inputs before invoking it.
-- Added focused regression coverage.
+- Branch: `fix/m3-132-safe-source-split-endpoint`.
+- Scope: reject unsafe derived source timestamps in `splitClipAtTime()`.
+- Fresh audit found direct source split arithmetic using `sourceStartMs + (timelineSplit - timelineStart)` without a safe-integer guard.
+- Reused the existing checked millisecond addition helper and added focused regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.131 — completed — 2026-09-26
+
+- Branch: `fix/m3-131-transform-keyframe-time-normalizer`.
+- PR #146; squash-merged at `5a8f98309dfd4a190828d85efdc38432b1b7b909`.
+- User reported PASS.
+- Hardened the Transform Keyframe time normalizer against non-finite input and unsafe rounded timestamps.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `45f0405f5a217f0811244bf61efa24fd1fff2335` was verified before merge.
+- `main` was verified after merge at `5a8f98309dfd4a190828d85efdc38432b1b7b909`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.130 — completed — 2026-09-26
 
