@@ -1,16 +1,25 @@
-## M3.127 — Strict Project Topology Endpoint Safety — active — 2026-09-26
+## M3.127 — Strict Project Topology Endpoint Safety — completed — 2026-09-26
 
 Branch:
 `fix/m3-127-project-topology-endpoint-safety`
 
-Scope:
-- Prevent persisted project topology validation from deriving unsafe timeline endpoints.
+PR:
+#142
+
+Merge SHA:
+`14300606826040eb69ef32f51f1e3cc98ef278a1`
+
+User validation:
+- User reported PASS for M3.127.
+- PR #142 was refreshed at head `86de5096f236e8dfbf5ce256224eb499ce896ad8`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `14300606826040eb69ef32f51f1e3cc98ef278a1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - M3.124 hardened export render-plan endpoint arithmetic.
 - M3.125 hardened timeline-edit command endpoints.
 - M3.126 hardened transition clip-end arithmetic.
-- `validateTrackTopology()` still computed overlap and transition adjacency endpoints with unchecked millisecond addition during persisted project parsing.
+- `validateTrackTopology()` still derived overlap and transition adjacency endpoints with unchecked millisecond addition during persisted project parsing.
 - Individually safe persisted timeline/source values could therefore produce an unsafe derived topology endpoint.
 
 Implementation:
@@ -22,17 +31,14 @@ Implementation:
 
 Invariant / contract:
 - Persisted topology-derived clip endpoints must be non-negative JavaScript safe integers.
-- Project parsing must reject a topology whose required derived endpoint cannot be represented safely.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Project parsing rejects a topology whose required derived endpoint cannot be represented safely.
 
 Remaining risks:
 - Other runtime arithmetic outside project topology remains subject to separate audits.
 - Floating-point playback/timecode calculations remain out of scope.
 
 Next step:
-- Complete user local validation of M3.127; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next focused runtime arithmetic invariant.
 
 ## M3.126 — Strict Transition Clip Endpoint Safety — completed — 2026-09-26
 
