@@ -3,11 +3,11 @@
 - Branch: `fix/m3-123-safe-integer-milliseconds`.
 - Fresh audit found that persisted millisecond fields use `Number.isInteger` without requiring `Number.isSafeInteger`.
 - Unsafe JavaScript integers can lose exact timing precision during JSON serialization and native IPC.
-- Planned a shared safe-integer millisecond validator for asset durations, clip timing, keyframe times, and audio fade durations.
+- Added a shared safe-integer millisecond validator for asset durations, clip timing, keyframe times, and audio fade durations.
 - Existing safe timing values and feature-specific range rules remain unchanged.
 - No project schema change.
-- Validation is pending implementation and user confirmation.
-- Next step: implement the focused validator and regression coverage.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
 
 ### M3.122 — Strict Single-Source Duration Semantics — completed — 2026-09-26
 
