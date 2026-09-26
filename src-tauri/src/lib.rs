@@ -4,6 +4,7 @@ mod audio_waveform;
 mod export_process;
 
 use std::{
+  collections::HashMap,
   fs,
   path::{Path, PathBuf},
   process::Command,
@@ -207,6 +208,17 @@ fn render_single_source_to_mp4(
     return Err("Native export currently requires a video source.".to_string());
   }
 
+  let source_start_ms = request.source_start_ms.unwrap_or(0);
+  if request.source_start_ms.is_some() || request.source_duration_ms.is_some() {
+    let source_media_duration_ms = probe_duration_ms(&source_path)?;
+    validate_native_source_range(
+      source_start_ms,
+      request.source_duration_ms,
+      source_media_duration_ms,
+      "Native export",
+    )?;
+  }
+
   validate_native_export_settings(
     request.width,
     request.height,
@@ -271,12 +283,32 @@ fn render_video_segments_to_mp4(
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
 
-  for segment in &request.segments {
+  let mut source_duration_by_path = HashMap::new();
+
+  for (index, segment) in request.segments.iter().enumerate() {
     if let Some(source_path) = &segment.source_path {
       let source = media_path(source_path)?;
+
       if same_path(&source, &output_path) {
         return Err("Export output must differ from every segment source.".to_string());
       }
+
+      let source_media_duration_ms = if let Some(duration_ms) =
+        source_duration_by_path.get(&source)
+      {
+        *duration_ms
+      } else {
+        let duration_ms = probe_duration_ms(&source)?;
+        source_duration_by_path.insert(source.clone(), duration_ms);
+        duration_ms
+      };
+
+      validate_native_source_range(
+        segment.source_start_ms.unwrap_or(0),
+        Some(segment.duration_ms),
+        source_media_duration_ms,
+        &format!("Native multi-segment source at index {index}"),
+      )?;
     }
   }
 
@@ -515,6 +547,39 @@ fn validate_native_video_segments_request_metadata(
         return Err("Native multi-segment render supports video sources only.".to_string());
       }
     }
+  }
+
+  Ok(())
+}
+
+fn validate_native_source_range(
+  source_start_ms: u64,
+  source_duration_ms: Option<u64>,
+  source_media_duration_ms: u64,
+  context: &str,
+) -> Result<(), String> {
+  if source_start_ms > source_media_duration_ms {
+    return Err(format!(
+      "{context} source start exceeds the source media duration."
+    ));
+  }
+
+  let Some(source_duration_ms) = source_duration_ms else {
+    return Ok(());
+  };
+
+  let source_end_ms = source_start_ms
+    .checked_add(source_duration_ms)
+    .ok_or_else(|| {
+      format!(
+        "{context} source range exceeds the supported source timeline range."
+      )
+    })?;
+
+  if source_end_ms > source_media_duration_ms {
+    return Err(format!(
+      "{context} source range exceeds the source media duration."
+    ));
   }
 
   Ok(())
@@ -1471,6 +1536,44 @@ mod tests {
     assert!(super::validate_native_export_settings(1280, 719, 30.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 0.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 241.0).is_err());
+  }
+
+  #[test]
+  fn validates_native_source_ranges() {
+    assert!(super::validate_native_source_range(
+      1_000,
+      Some(4_000),
+      5_000,
+      "Native test",
+    ).is_ok());
+
+    assert!(super::validate_native_source_range(
+      5_000,
+      None,
+      5_000,
+      "Native test",
+    ).is_ok());
+
+    assert!(super::validate_native_source_range(
+      5_001,
+      None,
+      5_000,
+      "Native test",
+    ).is_err());
+
+    assert!(super::validate_native_source_range(
+      1_000,
+      Some(4_001),
+      5_000,
+      "Native test",
+    ).is_err());
+
+    assert!(super::validate_native_source_range(
+      u64::MAX,
+      Some(1),
+      u64::MAX,
+      "Native test",
+    ).is_err());
   }
 
   #[test]
