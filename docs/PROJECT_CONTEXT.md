@@ -1,18 +1,25 @@
-## M3.115 — Strict Project Canvas Frame-Rate Range — active — 2026-09-26
+## M3.115 — Strict Project Canvas Frame-Rate Range — completed — 2026-09-26
 
 Branch:
 `fix/m3-115-project-framerate-range`
 
-Scope:
-- Align the persisted project canvas frame-rate contract with the existing native export limit.
-- Preserve supported fractional frame rates such as 29.97.
-- Reject persisted frame rates above 240 FPS before they can enter an export-invalid project state.
+PR:
+#130
+
+Merge SHA:
+`05a474a2525d51bf51099e4f335081728652b2e8`
+
+User validation:
+- User reported PASS for M3.115.
+- PR #130 was refreshed from `main`, verified at head `c6b4fd1a454663d6ff2ac38055b444018304b228`, marked Ready for Review, and squash-merged.
+- `main` was verified after the merge at `05a474a2525d51bf51099e4f335081728652b2e8`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - `validateCanvas()` previously accepted any finite positive `frameRate`.
 - Native export validation already rejects frame rates above 240 FPS.
 - `ExportPanel` uses the project canvas frame rate as the default export frame rate, so a persisted project with a value above 240 could load successfully and later fail at native export.
-- No evidence supports converting frame rates to integers; fractional broadcast-style values must remain valid.
+- No evidence supported converting frame rates to integers; fractional rates such as 29.97 remain valid.
 
 Implementation:
 - Added `MAX_CANVAS_FRAME_RATE = 240`.
@@ -25,15 +32,12 @@ Invariant / contract:
 - Fractional frame rates remain supported.
 - The project-domain persistence contract now aligns its upper bound with the native export contract.
 
-Validation:
-- Pending user local validation.
-
 Remaining risks:
-- Native export settings have their own normalization path; this milestone only hardens the persisted project canvas contract.
+- Native export settings have their own normalization path; M3.115 only hardens the persisted project canvas contract.
 - Existing playback/timecode calculations remain unchanged.
 
 Next step:
-- User local validation of M3.115, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+- Fresh repository audit from verified `main` to identify the next concrete engineering gap.
 
 ## M3.114 — Canonical Clip Command Times — completed — 2026-09-26
 
