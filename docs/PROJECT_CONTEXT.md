@@ -1,3 +1,40 @@
+## M3.118 — Strict Video Graph Input Media-Type Contract — active — 2026-09-26
+
+Branch:
+`fix/m3-118-strict-video-graph-media-types`
+
+Scope:
+- Align the native video-graph request boundary with the actual visual input media types used by FFmpeg argument construction.
+- Prevent graph requests from declaring unsupported or mismatched media types for their input files.
+
+Audit finding:
+- `render_video_graph_to_mp4` already validates that input files are visual media, but `input_media_types` was only checked for count.
+- `build_ffmpeg_video_graph_args()` uses `input_media_types` to decide whether an input is looped as an image, so an incorrect declared type could change FFmpeg behavior.
+- The unified AV graph already validates both the allowed values and actual-file/media-type match, exposing an inconsistency in the native video-graph boundary.
+
+Implementation:
+- Native video-graph metadata validation now permits only `video` or `image` entries when media types are supplied.
+- Native video-graph rendering now compares each declared media type with the detected type of the corresponding input file.
+- Preserved the existing optional-empty media-type behavior for compatibility with the current request builder.
+- Added focused native regression coverage for invalid media types and mismatched input counts.
+- No project schema version change.
+
+Invariant / contract:
+- Supplied video-graph input media types must be `video` or `image`.
+- When supplied, media-type metadata must match the input count.
+- When supplied, each media-type entry must match the actual detected media type of its corresponding input.
+- Image declarations may continue to trigger image-specific FFmpeg input handling; incorrect declarations are rejected before FFmpeg execution.
+
+Validation:
+- Pending user local validation.
+
+Remaining risks:
+- The native layer still performs independent filesystem/output validation.
+- Empty `input_media_types` remains accepted for compatibility and defaults to video behavior in the FFmpeg argument builder.
+
+Next step:
+- User local validation of M3.118, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+
 ## M3.117 — Strict Export Settings Native Contract — completed — 2026-09-26
 
 Branch:
