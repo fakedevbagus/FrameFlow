@@ -391,6 +391,91 @@ describe("audio waveform", () => {
     );
   });
 
+  it("rejects unsafe persisted waveform timing metadata as a cache hit", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/unsafe-cache.mp3::512::unsafe",
+            waveform: {
+              durationMs: Number.MAX_SAFE_INTEGER + 1,
+              sampleRate: 1024,
+              peaks: [0.5],
+              sourceFingerprint: "unsafe",
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "unsafe" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1000,
+        peaks: [0.75],
+        sourceFingerprint: "unsafe",
+      });
+
+    await expect(getAudioWaveform("/unsafe-cache.mp3", 512)).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1000,
+      peaks: [0.75],
+      sourceFingerprint: "unsafe",
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      "generate_audio_waveform",
+      {
+        path: "/unsafe-cache.mp3",
+        peakCount: 512,
+      },
+    );
+  });
+
+  it("rejects fractional persisted waveform timing metadata as a cache hit", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/fractional-cache.mp3::512::fractional",
+            waveform: {
+              durationMs: 1000.5,
+              sampleRate: 1024.5,
+              peaks: [0.5],
+              sourceFingerprint: "fractional",
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "fractional" })
+      .mockResolvedValueOnce({
+        durationMs: 1200,
+        sampleRate: 1200,
+        peaks: [0.25],
+        sourceFingerprint: "fractional",
+      });
+
+    await expect(
+      getAudioWaveform("/fractional-cache.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1200,
+      sampleRate: 1200,
+      peaks: [0.25],
+      sourceFingerprint: "fractional",
+    });
+  });
+
   it("regenerates when the source fingerprint changes", async () => {
     vi.mocked(invoke)
       .mockResolvedValueOnce({ sourceFingerprint: "2048:600" })
