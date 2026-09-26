@@ -35,6 +35,89 @@ function projectWithAssets() {
 }
 
 describe("render plan", () => {
+  it("keeps a derived timeline end at the maximum safe integer", () => {
+    const project = projectWithAssets();
+    const videoTrack = project.tracks.find((track) => track.type === "video");
+    if (!videoTrack) throw new Error("Expected video track.");
+
+    const projectWithBoundaryClip = {
+      ...project,
+      assets: project.assets.map((asset) =>
+        asset.id === "video-a"
+          ? { ...asset, durationMs: 1 }
+          : asset,
+      ),
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrack.id
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "safe-boundary",
+                  assetId: "video-a",
+                  timelineStartMs: Number.MAX_SAFE_INTEGER - 1,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    const plan = createRenderPlan(
+      projectWithBoundaryClip,
+      createDefaultExportSettings(projectWithBoundaryClip),
+    );
+
+    expect(plan.durationMs).toBe(Number.MAX_SAFE_INTEGER);
+    expect(plan.segments[0].timelineEndMs).toBe(Number.MAX_SAFE_INTEGER);
+  });
+
+  it("rejects a derived timeline end above the maximum safe integer", () => {
+    const project = projectWithAssets();
+    const videoTrack = project.tracks.find((track) => track.type === "video");
+    if (!videoTrack) throw new Error("Expected video track.");
+
+    const projectWithUnsafeEndpoint = {
+      ...project,
+      assets: project.assets.map((asset) =>
+        asset.id === "video-a"
+          ? {
+              ...asset,
+              durationMs: Number.MAX_SAFE_INTEGER,
+            }
+          : asset,
+      ),
+      tracks: project.tracks.map((track) =>
+        track.id === videoTrack.id
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "unsafe-endpoint",
+                  assetId: "video-a",
+                  timelineStartMs: Number.MAX_SAFE_INTEGER,
+                  sourceStartMs: 0,
+                  sourceEndMs: Number.MAX_SAFE_INTEGER,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() =>
+      createRenderPlan(
+        projectWithUnsafeEndpoint,
+        createDefaultExportSettings(projectWithUnsafeEndpoint),
+      ),
+    ).toThrow(
+      "Render clip unsafe-endpoint timeline end exceeds the supported safe millisecond range.",
+    );
+  });
+
+
   it("propagates audio volume keyframes for audio segments", () => {
     const project = projectWithAssets();
     const audioTrack = project.tracks.find((track) => track.type === "audio");
