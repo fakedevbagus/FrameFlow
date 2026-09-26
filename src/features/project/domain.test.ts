@@ -1252,6 +1252,80 @@ describe("project domain", () => {
     );
   });
 
+  it("accepts audio fades whose safe aggregate reaches the maximum integer", () => {
+    const project = createProject({ id: "audio-fade-safe-total" });
+    const videoAsset = {
+      id: "video-fade-safe",
+      name: "Fade Safe",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/fade-safe.mp4",
+      durationMs: Number.MAX_SAFE_INTEGER,
+    };
+    const persistedProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-fade-safe",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: Number.MAX_SAFE_INTEGER,
+                  audioFadeInMs: Number.MAX_SAFE_INTEGER - 1,
+                  audioFadeOutMs: 1,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(parseProject(JSON.stringify(persistedProject))).toEqual(
+      persistedProject,
+    );
+  });
+
+  it("rejects audio fades when their aggregate exceeds the safe integer range", () => {
+    const project = createProject({ id: "audio-fade-unsafe-total" });
+    const videoAsset = {
+      id: "video-fade-unsafe",
+      name: "Fade Unsafe",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/fade-unsafe.mp4",
+      durationMs: Number.MAX_SAFE_INTEGER,
+    };
+    const persistedProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-fade-unsafe",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: Number.MAX_SAFE_INTEGER,
+                  audioFadeInMs: Number.MAX_SAFE_INTEGER,
+                  audioFadeOutMs: 1,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(persistedProject))).toThrow(
+      "Clip 0.0 audio fade total exceeds the supported safe millisecond range.",
+    );
+  });
+
   it("rejects overlapping clips in one persisted track", () => {
     const project = createProject({ id: "timeline-overlap" });
     const audioAssetA = {
