@@ -1,3 +1,15 @@
+## M3.137 — active — 2026-09-27
+
+- Branch: `fix/m3-137-strict-persistent-waveform-metadata`.
+- Scope: require persisted waveform `durationMs` and `sampleRate` metadata to be positive JavaScript safe integers before cache reuse.
+- Fresh audit found `isValidAudioWaveform()` still accepted finite fractional or unsafe persisted timing metadata from `localStorage`.
+- Tightened persisted waveform validation and added focused regression coverage for unsafe/fractional metadata.
+- Valid persisted waveform reuse remains unchanged.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.136 — completed — 2026-09-26
 
 - Branch: `fix/m3-136-waveform-local-time-contract`.

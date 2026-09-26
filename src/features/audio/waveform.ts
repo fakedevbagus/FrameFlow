@@ -233,10 +233,10 @@ function isValidAudioWaveform(
   const candidate = waveform as Partial<AudioWaveform>;
   return (
     candidate.durationMs !== undefined &&
-    Number.isFinite(candidate.durationMs) &&
+    Number.isSafeInteger(candidate.durationMs) &&
     candidate.durationMs > 0 &&
     candidate.sampleRate !== undefined &&
-    Number.isFinite(candidate.sampleRate) &&
+    Number.isSafeInteger(candidate.sampleRate) &&
     candidate.sampleRate > 0 &&
     Array.isArray(candidate.peaks) &&
     candidate.peaks.length > 0 &&

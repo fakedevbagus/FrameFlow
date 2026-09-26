@@ -1,3 +1,37 @@
+## M3.137 — Strict Persistent Waveform Metadata Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-137-strict-persistent-waveform-metadata`
+
+Scope:
+- Ensure persisted waveform cache entries use the same positive JavaScript safe-integer timing metadata contract already enforced for fresh native waveform responses.
+
+Audit finding:
+- `readPersistentWaveform()` validates cached waveform metadata through `isValidAudioWaveform()`.
+- That validator still accepted finite fractional or unsafe `durationMs` and `sampleRate` values from `localStorage`.
+- A malformed persisted cache entry could therefore bypass the strict native-response boundary and re-enter waveform rendering/selection logic.
+
+Implementation:
+- Tightened `isValidAudioWaveform()` to require positive JavaScript safe integers for `durationMs` and `sampleRate`.
+- Added focused regression coverage proving unsafe and fractional persisted timing metadata is treated as a cache miss and regenerated.
+- Preserved valid persisted waveform reuse.
+- No project schema version change.
+
+Invariant / contract:
+- Persisted waveform duration and sample rate must be positive JavaScript safe integers before cache reuse.
+- Invalid persisted timing metadata cannot enter waveform render/selection paths.
+- Valid cached waveform behavior remains unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Waveform source-range `sourceDurationMs` / `sourceStartMs` / `sourceEndMs` numeric validation remains subject to a separate focused audit.
+- Floating-point waveform interpolation remains out of scope.
+
+Next step:
+- Complete user local validation of M3.137; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
 Branch:
