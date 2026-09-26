@@ -1,36 +1,37 @@
-## M3.122 — Strict Single-Source Duration Semantics — active — 2026-09-26
+## M3.123 — Safe Integer Millisecond Contract — active — 2026-09-26
 
 Branch:
-`fix/m3-122-strict-single-source-duration-semantics`
+`fix/m3-123-safe-integer-milliseconds`
 
 Scope:
-- Make the optional native single-source `source_duration_ms` contract explicit and reject zero-duration requests instead of silently ignoring them.
+- Make persisted project millisecond timestamps and durations safe JavaScript integers before persistence and native IPC.
 
 Audit finding:
-- `NativeExportRenderRequest.source_duration_ms` is optional.
-- The single-source FFmpeg argument builder only emits `-t` for values greater than zero, so an explicitly supplied `source_duration_ms: 0` was silently treated as if no duration had been supplied.
-- The native multi-segment path already requires positive segment durations, making the single-source behavior inconsistent.
+- Project timing validation currently uses `Number.isInteger` for millisecond fields but does not require `Number.isSafeInteger`.
+- JavaScript numbers cannot represent every integer above `Number.MAX_SAFE_INTEGER` exactly, so persisted timing values beyond that boundary can lose precision during JSON serialization and native IPC.
+- Affected persisted timing fields include asset durations, clip timeline/source boundaries, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
+- Existing normal-duration values remain far below this boundary and should behave identically.
 
-Implementation:
-- Tightened the shared native source-range validator so a supplied source duration must be positive.
-- Preserved omitted duration semantics and valid positive durations.
-- Added focused native regression coverage for omitted duration, zero duration, exact-boundary positive duration, overrun, and overflow behavior.
+Planned implementation:
+- Introduce a shared safe-integer millisecond validator.
+- Apply it consistently to persisted millisecond duration/timestamp fields.
+- Preserve all existing non-negative, ordering, range, and feature-specific limits.
+- Add focused regression coverage at `Number.MAX_SAFE_INTEGER` and the first unsafe integer.
 - No project schema version change.
 
 Invariant / contract:
-- Omitted source duration means export the remaining source range beginning at the requested start.
-- A supplied source duration must be greater than zero.
-- When supplied, `source_start_ms + source_duration_ms` must remain representable and no greater than actual source media duration.
+- Every persisted integer millisecond value must be finite, non-negative, integral, and representable exactly by JavaScript as a safe integer.
+- Existing valid timing ranges and runtime semantics remain unchanged for safe values.
 
 Validation:
-- Implementation complete; user local validation is pending.
+- Pending implementation and user local validation.
 
 Remaining risks:
-- This milestone only tightens the single-source optional duration contract; broader FFmpeg execution behavior remains separately validated.
-- Native graph paths continue to have their own request contracts.
+- Native Rust `u64` timing fields remain independently constrained by their request validators.
+- This milestone does not change floating-point playback interpolation or non-timing numeric controls.
 
 Next step:
-- Complete user local validation of M3.122; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Implement the shared safe-integer millisecond contract and regression coverage, then prepare a Draft PR for user validation.
 
 ## M3.121 — Strict Legacy Source-Range Bounds — completed — 2026-09-26
 
