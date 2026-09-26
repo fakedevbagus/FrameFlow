@@ -1,8 +1,12 @@
 ## M3.124 — active — 2026-09-26
 
-- Fresh audit of verified `main` is beginning.
-- M3.124 branch will be selected only after the next concrete invariant is confirmed from current code.
-- Local validation remains user-driven; do not infer lint/test/build/cargo/manual success.
+- Branch: `fix/m3-124-render-plan-safe-endpoints`.
+- Scope: reject unsafe derived `timelineEndMs` values in the central export render plan.
+- Fresh audit found that `timelineStartMs + clipDurationMs` is calculated without checking the result for JavaScript safe-integer precision.
+- Preserve existing render behavior for normal safe values.
+- Add regression coverage for safe and first-unsafe derived endpoints.
+- No project schema version change.
+- Local validation is pending implementation; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## M3.123 — completed — 2026-09-26
 
