@@ -156,7 +156,39 @@ export function getClipEndMs(clip: Clip): number | null {
     return null;
   }
 
-  return clip.timelineStartMs + Math.max(0, clip.sourceEndMs - clip.sourceStartMs);
+  const durationMs = Math.max(
+    0,
+    clip.sourceEndMs - clip.sourceStartMs,
+  );
+
+  return addSafeTimelineMilliseconds(
+    clip.timelineStartMs,
+    durationMs,
+    `Clip ${clip.id} end`,
+  );
+}
+
+function addSafeTimelineMilliseconds(
+  startMs: number,
+  durationMs: number,
+  context: string,
+): number {
+  if (
+    !Number.isSafeInteger(startMs) ||
+    !Number.isSafeInteger(durationMs)
+  ) {
+    throw new Error(`${context} contains an unsafe millisecond value.`);
+  }
+
+  const endMs = startMs + durationMs;
+
+  if (!Number.isSafeInteger(endMs) || endMs < 0) {
+    throw new Error(
+      `${context} exceeds the supported safe millisecond range.`,
+    );
+  }
+
+  return endMs;
 }
 
 export function isTransitionAdjacent(
