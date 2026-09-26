@@ -1,12 +1,25 @@
-### M3.135 — Strict Waveform Output Peak-Count Contract — active — 2026-09-26
+### M3.136 — Strict Waveform Local-Time Duration Contract — active — 2026-09-26
 
-- Branch: `fix/m3-135-waveform-source-range-contract`.
-- Fresh audit found `getWaveformPeaksForSourceRange()` could accept an extreme finite output peak count and use it directly as an array length.
-- Added a strict 2048 maximum plus safe-integer validation before allocation.
-- Added focused regression coverage for unsafe/over-limit counts and the maximum valid count.
+- Branch: `fix/m3-136-waveform-local-time-contract`.
+- Fresh audit found `getWaveformLocalTimeMs()` accepted any finite positive duration and could emit a malformed local timestamp after multiplying and rounding it.
+- Tightened duration validation to positive JavaScript safe integers.
+- Added focused regression coverage for unsafe and fractional duration input.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.135 — Strict Waveform Output Peak-Count Contract — completed — 2026-09-26
+
+- Branch: `fix/m3-135-waveform-source-range-contract`.
+- PR #150; squash-merged at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
+- User reported PASS.
+- Added a strict 2048 output-peak maximum plus safe-integer validation before waveform source-range array allocation.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `56dcc66dccbf14bad2a3f5c5716f00b746c7ecdf` was verified before merge.
+- `main` was verified after merge at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.134 — Strict Audio Waveform Response Contract — completed — 2026-09-26
 
