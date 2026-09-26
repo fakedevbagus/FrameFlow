@@ -1,14 +1,28 @@
-## M3.128 — active — 2026-09-26
+## M3.129 — active — 2026-09-26
 
-- Branch: `fix/m3-128-audio-fade-aggregate-safety`.
-- Scope: reject unsafe aggregate audio fade durations in project validation and the timeline fade command.
-- Fresh audit found persisted fade values individually safe but `fadeInMs + fadeOutMs` unchecked, and `updateAudioClipFades()` accepted integer but not explicitly safe-integer inputs.
-- Added checked aggregate safe-integer arithmetic and safe-integer command validation.
-- Added focused regression coverage for safe maximum aggregate and unsafe aggregate/input cases.
+- Branch: `fix/m3-129-audio-keyframe-safe-times`.
+- Scope: reject or discard runtime audio volume keyframe timestamps that cannot normalize to JavaScript safe integer milliseconds.
+- Fresh audit found `normalizeAudioVolumeKeyframes()` could preserve unsafe rounded timestamps and `upsertAudioVolumeKeyframe()` could accept unsafe rounded timestamps.
+- Added safe-integer normalization and safe-integer upsert validation.
+- Added focused regression coverage for the safe boundary and unsafe runtime timestamps.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.128 — completed — 2026-09-26
+
+- Branch: `fix/m3-128-audio-fade-aggregate-safety`.
+- PR #143; squash-merged at `3489e416ffb97bffe1ee64cd69dd004b6ae811cf`.
+- Fresh audit found individually safe fade durations whose aggregate could overflow the safe integer range, plus a timeline fade command that did not require safe-integer inputs.
+- Added checked safe-integer aggregate arithmetic in project validation and timeline fade updates.
+- Added focused regression coverage.
+- No project schema version change.
+- User reported PASS.
+- PR head `349b600dc3f3e4d988f15b851061a9847fe8154a` was verified before merge.
+- `main` was verified after merge at `3489e416ffb97bffe1ee64cd69dd004b6ae811cf`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.127 — completed — 2026-09-26
 
