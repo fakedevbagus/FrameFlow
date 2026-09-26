@@ -3,10 +3,10 @@
 - Branch: `fix/m3-123-safe-integer-milliseconds`.
 - Scope: require persisted project millisecond timestamps/durations to be JavaScript safe integers.
 - Fresh audit found that millisecond fields use `Number.isInteger` without `Number.isSafeInteger`, allowing values above `Number.MAX_SAFE_INTEGER` that cannot be represented exactly.
-- Planned coverage includes asset durations, clip timeline/source times, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
+- Applied the safe-integer requirement to asset durations, clip timeline/source times, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
 - Preserve existing non-negative/range/ordering/feature-specific contracts.
 - No project schema version change.
-- Local validation is pending implementation; do not assume lint/test/build/cargo/manual validation has passed.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 ## M3.122 — completed — 2026-09-26
 
