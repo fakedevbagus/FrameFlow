@@ -1,28 +1,13 @@
-### M3.138 — Strict Waveform Source-Range Metadata Contract — active — 2026-09-27
+### M3.139 — Strict Waveform Peak-Array Contract — active — 2026-09-27
 
-- Branch: `fix/m3-138-strict-waveform-source-range-metadata`.
-- Fresh audit found `getWaveformPeaksForSourceRange()` accepted finite fractional or unsafe `sourceDurationMs`, `sourceStartMs`, and non-null `sourceEndMs` values.
-- Tightened source-range timing metadata validation to JavaScript safe integers.
-- Preserved safe-integer negative out-of-range clamping semantics.
-- Added focused regression coverage for unsafe and fractional source-range metadata.
+- Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
+- Fresh audit found waveform metadata validation accepted any non-empty `peaks` array without enforcing the established 2048 maximum.
+- Tightened fresh native and persisted waveform validation to reject peak arrays above 2048 entries.
+- Added focused regression coverage for the maximum valid length and over-limit arrays.
+- Preserved existing valid waveform behavior.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
-
-### M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
-
-- Branch: `fix/m3-137-strict-persistent-waveform-metadata`.
-- PR #152; squash-merged at `816d970ac31c9b080c937b89803d3f52ebde0936`.
-- User reported PASS.
-- Tightened `isValidAudioWaveform()` to require positive JavaScript safe integers for persisted `durationMs` and `sampleRate`.
-- Invalid fractional or unsafe persisted timing metadata is treated as a cache miss and regenerated.
-- Added focused regression coverage for unsafe and fractional persisted metadata.
-- Preserved valid persisted waveform reuse.
-- No project schema change.
-- PR head `23dead40898b5a540138b943c564893c6abf9c5b` was verified before merge.
-- `main` was verified after merge at `816d970ac31c9b080c937b89803d3f52ebde0936`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main`.
 
 ### M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
