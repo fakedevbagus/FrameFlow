@@ -1,13 +1,21 @@
-### M3.123 — Safe Integer Millisecond Contract — active — 2026-09-26
+### M3.124 — active — 2026-09-26
+
+- Fresh audit of verified `main` is beginning.
+- M3.124 branch will be selected only after the concrete next invariant is confirmed from current code.
+- M3.123 was completed in PR #138 and remains documented below with its actual merge SHA.
+
+### M3.123 — Safe Integer Millisecond Contract — completed — 2026-09-26
 
 - Branch: `fix/m3-123-safe-integer-milliseconds`.
-- Fresh audit found that persisted millisecond fields use `Number.isInteger` without requiring `Number.isSafeInteger`.
-- Unsafe JavaScript integers can lose exact timing precision during JSON serialization and native IPC.
-- Added a shared safe-integer millisecond validator for asset durations, clip timing, keyframe times, and audio fade durations.
-- Existing safe timing values and feature-specific range rules remain unchanged.
+- PR #138; squash-merged at `86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`.
+- Fresh audit found that persisted millisecond fields used `Number.isInteger` without requiring `Number.isSafeInteger`.
+- Applied the safe-integer requirement to asset durations, clip timeline/source boundaries, Transform Keyframe times, Audio Volume Keyframe times, and audio fade durations.
+- Added focused regression coverage.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- User reported PASS.
+- `main` was verified after merge at `86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`.
+- Validation is recorded from the user's explicit PASS only; no additional local checks are inferred.
+- Next step: fresh audit from verified `main`.
 
 ### M3.122 — Strict Single-Source Duration Semantics — completed — 2026-09-26
 
