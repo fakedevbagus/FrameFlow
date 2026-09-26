@@ -1,40 +1,42 @@
-## M3.120 — Strict Source-Audio Media Duration Bounds — active — 2026-09-26
+## M3.121 — Strict Legacy Source-Range Bounds — active — 2026-09-26
 
 Branch:
-`fix/m3-120-source-audio-duration-bounds`
+`fix/m3-121-strict-legacy-source-bounds`
 
 Scope:
-- Align native unified AV source-audio segment source ranges with the actual duration of their referenced video media.
-- Reject source-audio segments whose requested source range extends beyond the media file before FFmpeg filter construction.
+- Align the remaining direct single-source and multi-segment native video export paths with the source-media range invariant already enforced for unified AV source audio.
+- Reject requested video source ranges that begin beyond media duration or extend past media duration before FFmpeg execution.
 
 Audit finding:
-- M3.119 aligned native source-audio processing metadata with the project-domain numeric/range contract.
-- A remaining native boundary gap was that `source_start_ms + duration_ms` was not checked against the actual source media duration.
-- The project render plan derives source end from validated clip timing, while native direct callers could still request an out-of-range source span.
-- FFmpeg could otherwise trim beyond EOF instead of receiving the same source-range invariant enforced by the project domain.
+- M3.120 added actual source-duration validation for native unified AV source-audio segments.
+- The simpler native export path `render_single_source_to_mp4` still passed optional `source_start_ms` / `source_duration_ms` directly into FFmpeg without checking the requested range against the actual source duration.
+- The native multi-segment path `render_video_segments_to_mp4` likewise validated segment structure and media type but did not validate each requested video source range against the actual source duration.
+- These paths remain active in the frontend render pipeline for simple single-clip and single-video-track exports.
 
-Implementation:
-- Reused the existing native media-duration probing path through `probe_duration_ms()`.
-- Added source-duration caching by video input index to avoid repeated duration probes for multiple segments referencing the same source.
-- Reject source-range overflow using checked integer addition.
-- Reject source ranges whose end exceeds the probed media duration.
-- Added focused native regression coverage for exact-boundary, overrun, and arithmetic-overflow cases.
+Planned implementation:
+- Add a shared native source-range validation helper based on checked addition.
+- Validate single-source `source_start_ms` and optional `source_duration_ms` against the probed source duration.
+- Validate each file-backed multi-segment source range against its probed duration.
+- Reuse duration probes for repeated paths within one multi-segment render.
+- Keep black gap segments (`source_path: None`) unchanged.
+- Add focused native regression coverage for exact boundaries, overruns, overflow, and start-only requests.
 - No project schema version change.
 
 Invariant / contract:
-- For every unified AV source-audio segment, `source_start_ms + duration_ms` must be representable and no greater than the actual source media duration.
-- Exact end-at-duration boundaries remain valid.
-- Invalid source ranges are rejected before audio filter generation/FFmpeg execution.
+- A file-backed native video source range must have a non-negative start not beyond the source media duration.
+- When a duration is requested, `source_start_ms + duration_ms` must be representable and no greater than the actual source media duration.
+- Exact source-end boundaries remain valid.
+- Invalid ranges are rejected before FFmpeg execution.
 
 Validation:
-- Pending user local validation.
+- Pending implementation and user local validation.
 
 Remaining risks:
-- Duration probing adds native I/O for unified AV exports that use embedded source audio.
-- FFmpeg graph syntax validation remains a separate concern.
+- Duration probing adds native I/O to direct video export paths.
+- FFmpeg behavior and graph/filter syntax remain separate validation concerns.
 
 Next step:
-- User local validation of M3.120, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
+- Implement the focused native source-range checks, add regression coverage, update the three docs, and prepare a Draft PR for user validation.
 
 ## M3.119 — Strict Unified AV Source-Audio Segment Contract — completed — 2026-09-26
 
