@@ -307,13 +307,13 @@ export function addAssetToTimeline(
   const timelineStartMs = track.clips.reduce(
     (latest, clip) =>
       Math.max(
-      latest,
-      addSafeTimelineMilliseconds(
-        clip.timelineStartMs,
-        clipDuration(clip),
-        `Timeline clip ${clip.id} end`,
+        latest,
+        addSafeTimelineMilliseconds(
+          clip.timelineStartMs,
+          clipDuration(clip),
+          `Timeline clip ${clip.id} end`,
+        ),
       ),
-    ),
     0,
   );
 
@@ -369,13 +369,13 @@ export function addAssetToTrack(
       ? track.clips.reduce(
           (latest, clip) =>
             Math.max(
-      latest,
-      addSafeTimelineMilliseconds(
-        clip.timelineStartMs,
-        clipDuration(clip),
-        `Timeline clip ${clip.id} end`,
-      ),
-    ),
+              latest,
+              addSafeTimelineMilliseconds(
+                clip.timelineStartMs,
+                clipDuration(clip),
+                `Timeline clip ${clip.id} end`,
+              ),
+            ),
           0,
         )
       : Math.round(timelineStartMs);
