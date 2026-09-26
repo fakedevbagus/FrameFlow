@@ -10,6 +10,7 @@ import {
   compensateTransformForAnchorChange,
   getTransformKeyframeAtTime,
   normalizeClipTransform,
+  normalizeTransformKeyframeTime,
   normalizeTransformKeyframes,
   removeTransformKeyframe,
   upsertTransformKeyframe,
@@ -218,6 +219,21 @@ describe("transform keyframes", () => {
       timeMs: 2000,
       transform: { ...DEFAULT_CLIP_TRANSFORM, scale: 2 },
     });
+  });
+
+  it("enforces the safe-integer contract at the time normalizer", () => {
+    expect(normalizeTransformKeyframeTime(1000.4)).toBe(1000);
+    expect(
+      normalizeTransformKeyframeTime(Number.MAX_SAFE_INTEGER),
+    ).toBe(Number.MAX_SAFE_INTEGER);
+
+    expect(() =>
+      normalizeTransformKeyframeTime(Number.MAX_SAFE_INTEGER + 1),
+    ).toThrow("safe integer");
+
+    expect(() => normalizeTransformKeyframeTime(Number.POSITIVE_INFINITY)).toThrow(
+      "finite",
+    );
   });
 
   it("preserves the safe-integer time boundary and rejects unsafe runtime times", () => {
