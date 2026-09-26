@@ -1,40 +1,43 @@
-## M3.116 — Strict Project Canvas Dimension Contract — active — 2026-09-26
+## M3.116 — Strict Project Canvas Dimension Contract — completed — 2026-09-26
 
 Branch:
 `fix/m3-116-project-canvas-dimensions`
 
-Scope:
-- Align persisted project canvas width/height with the native export dimension contract.
-- Preserve all existing valid even dimensions.
-- Reject odd or sub-minimum canvas dimensions before they can enter an export-invalid project state.
+PR:
+#131
+
+Merge SHA:
+`95f5268708f0250e3305d318410ccdbe47d54309`
+
+User validation:
+- User reported PASS for M3.116.
+- PR #131 was refreshed, its head `0adf81c1120562dab395d366140f589dc743621a` was verified, the PR was marked Ready for Review, and it was squash-merged.
+- `main` was verified after merge at `95f5268708f0250e3305d318410ccdbe47d54309`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - Project-domain validation previously accepted any positive integer canvas width/height.
 - `updateCanvasDimensions()` likewise accepted any positive integer.
 - Native export validation requires both dimensions to be positive even numbers.
-- Therefore, a project could contain odd or sub-minimum dimensions that remain valid until native export rejects them.
+- A project could therefore remain valid in persistence/runtime and fail only when native export started.
 
 Implementation:
-- Added strict positive-even integer validation for persisted canvas width/height.
+- Added strict positive-even integer validation for persisted `canvas.width` and `canvas.height`.
 - Tightened `updateCanvasDimensions()` to enforce the same invariant at command time.
-- Added regression coverage for the native minimum boundary and odd dimensions.
+- Added regression coverage for the minimum valid boundary and odd dimensions.
 - No project schema version change.
 
 Invariant / contract:
 - Persisted `canvas.width` and `canvas.height` must be positive even integers.
 - Runtime canvas dimension updates must satisfy the same contract.
-- Existing supported frame-rate behavior remains unchanged.
-
-Validation:
-- Pending user local validation.
+- Existing frame-rate behavior remains unchanged.
 
 Remaining risks:
 - Native export has additional media/FFmpeg constraints outside the project canvas dimension contract.
-- No new upper dimension limit is introduced by this milestone beyond the existing native command type/FFmpeg behavior.
+- M3.116 introduces no new upper canvas-dimension limit beyond the existing native command/FFmpeg behavior.
 
 Next step:
-- User local validation of M3.116, followed by the standard PASS → verify head → merge → documentation reconciliation workflow.
-
+- Fresh repository audit from verified `main` to identify the next concrete engineering gap.
 
 ## M3.115 — Strict Project Canvas Frame-Rate Range — completed — 2026-09-26
 
