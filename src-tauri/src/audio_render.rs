@@ -354,6 +354,8 @@ fn validate_video_audio_graph_request(
         segment.input_index
       ));
     }
+
+    validate_source_audio_segment(segment)?;
   }
 
   if request.duration_ms == 0 {
@@ -375,6 +377,155 @@ fn validate_video_audio_graph_request(
   )?;
 
   validate_mp4_output_path(Path::new(&request.output_path))
+}
+
+fn validate_source_audio_segment(
+  segment: &NativeSourceAudioSegment,
+) -> Result<(), String> {
+  if segment.duration_ms == 0 {
+    return Err(
+      format!(
+        "Native unified AV graph source audio segment at input index {} requires a positive duration.",
+        segment.input_index
+      )
+    );
+  }
+
+  if !segment.track_volume.is_finite()
+    || !(0.0..=1.0).contains(&segment.track_volume)
+    || round_decimal(segment.track_volume, 2) != segment.track_volume
+  {
+    return Err(
+      format!(
+        "Native unified AV graph source audio segment at input index {} has an invalid track volume.",
+        segment.input_index
+      )
+    );
+  }
+
+  if !segment.track_pan.is_finite()
+    || !(-1.0..=1.0).contains(&segment.track_pan)
+    || round_decimal(segment.track_pan, 2) != segment.track_pan
+  {
+    return Err(
+      format!(
+        "Native unified AV graph source audio segment at input index {} has an invalid track pan.",
+        segment.input_index
+      )
+    );
+  }
+
+  if segment.audio_fade_in_ms > segment.duration_ms
+    || segment.audio_fade_out_ms > segment.duration_ms
+    || segment
+      .audio_fade_in_ms
+      .saturating_add(segment.audio_fade_out_ms)
+      > segment.duration_ms
+  {
+    return Err(
+      format!(
+        "Native unified AV graph source audio segment at input index {} has overlapping or oversized audio fades.",
+        segment.input_index
+      )
+    );
+  }
+
+  let mut previous_time_ms = None;
+  for (index, keyframe) in segment.audio_volume_keyframes.iter().enumerate() {
+    if keyframe.time_ms > segment.duration_ms {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} has an audio volume keyframe outside the segment duration at index {}.",
+        segment.input_index,
+        index
+      ));
+    }
+
+    if !keyframe.volume.is_finite()
+      || !(0.0..=1.0).contains(&keyframe.volume)
+      || round_decimal(keyframe.volume, 3) != keyframe.volume
+    {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} has an invalid audio volume keyframe value at index {}.",
+        segment.input_index,
+        index
+      ));
+    }
+
+    if previous_time_ms.is_some_and(|previous| keyframe.time_ms <= previous) {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} has unordered or duplicate audio volume keyframes at index {}.",
+        segment.input_index,
+        index
+      ));
+    }
+
+    previous_time_ms = Some(keyframe.time_ms);
+  }
+
+  if let Some(eq) = segment.audio_eq.as_ref() {
+    for (name, value) in [
+      ("lowGainDb", eq.low_gain_db),
+      ("midGainDb", eq.mid_gain_db),
+      ("highGainDb", eq.high_gain_db),
+    ] {
+      if !value.is_finite() || !(-12.0..=12.0).contains(&value) || round_decimal(value, 1) != value {
+        return Err(format!(
+          "Native unified AV graph source audio segment at input index {} has an invalid audio EQ {} value.",
+          segment.input_index,
+          name
+        ));
+      }
+    }
+  }
+
+  if let Some(compressor) = segment.audio_compressor.as_ref() {
+    if !compressor.threshold_db.is_finite()
+      || !(-60.0..=0.0).contains(&compressor.threshold_db)
+      || round_decimal(compressor.threshold_db, 1) != compressor.threshold_db
+    {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} has an invalid compressor threshold.",
+        segment.input_index
+      ));
+    }
+
+    if !compressor.ratio.is_finite()
+      || !(1.0..=20.0).contains(&compressor.ratio)
+      || round_decimal(compressor.ratio, 1) != compressor.ratio
+    {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} has an invalid compressor ratio.",
+        segment.input_index
+      ));
+    }
+
+    if !compressor.attack_ms.is_finite()
+      || !(0.01..=2000.0).contains(&compressor.attack_ms)
+      || round_decimal(compressor.attack_ms, 2) != compressor.attack_ms
+    {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} has an invalid compressor attack.",
+        segment.input_index
+      ));
+    }
+
+    if !compressor.release_ms.is_finite()
+      || !(0.01..=9000.0).contains(&compressor.release_ms)
+      || round_decimal(compressor.release_ms, 2) != compressor.release_ms
+    {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} has an invalid compressor release.",
+        segment.input_index
+      ));
+    }
+  }
+
+  Ok(())
+}
+
+fn round_decimal(value: f64, places: u32) -> f64 {
+  let factor = 10_f64.powi(places as i32);
+  (value * factor).round() / factor
 }
 
 fn build_ffmpeg_video_audio_graph_args(
@@ -1169,8 +1320,8 @@ mod tests {
     build_ffmpeg_video_with_audio_graph_args, media_type,
     validate_request, validate_video_audio_graph_request, validate_video_audio_mix_request,
     NativeAudioGraphRenderRequest, NativeSourceAudioEq, NativeSourceAudioSegment,
-    NativeSourceAudioVolumeKeyframe, NativeVideoAudioGraphRenderRequest,
-    NativeVideoWithAudioGraphRenderRequest,
+    NativeSourceAudioCompressor, NativeSourceAudioEq, NativeSourceAudioVolumeKeyframe,
+    NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
   };
   use std::path::{Path, PathBuf};
@@ -1549,6 +1700,78 @@ mod tests {
     missing_filter.video_input_media_types = vec!["video".to_string()];
     missing_filter.output_path = "relative/final.mp4".to_string();
     assert!(validate_video_audio_graph_request(&missing_filter).is_err());
+  }
+
+  #[test]
+  fn validates_unified_source_audio_processing_metadata() {
+    let mut valid = NativeSourceAudioSegment {
+      input_index: 0,
+      source_start_ms: 1_000,
+      timeline_start_ms: 2_000,
+      duration_ms: 5_000,
+      track_volume: 0.85,
+      track_pan: -0.25,
+      audio_fade_in_ms: 500,
+      audio_fade_out_ms: 750,
+      audio_volume_keyframes: vec![
+        NativeSourceAudioVolumeKeyframe {
+          time_ms: 0,
+          volume: 0.8,
+        },
+        NativeSourceAudioVolumeKeyframe {
+          time_ms: 2_500,
+          volume: 1.0,
+        },
+      ],
+      audio_eq: Some(NativeSourceAudioEq {
+        enabled: true,
+        low_gain_db: -2.5,
+        mid_gain_db: 1.0,
+        high_gain_db: 3.5,
+      }),
+      audio_compressor: Some(NativeSourceAudioCompressor {
+        enabled: true,
+        threshold_db: -24.0,
+        ratio: 4.0,
+        attack_ms: 20.0,
+        release_ms: 250.0,
+      }),
+    };
+
+    assert!(super::validate_source_audio_segment(&valid).is_ok());
+
+    valid.track_volume = 1.001;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
+    valid.track_volume = 0.85;
+
+    valid.track_pan = -1.001;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
+    valid.track_pan = -0.25;
+
+    valid.audio_fade_in_ms = 4_500;
+    valid.audio_fade_out_ms = 1_000;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
+    valid.audio_fade_in_ms = 500;
+    valid.audio_fade_out_ms = 750;
+
+    valid.audio_volume_keyframes[1].time_ms = 5_001;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
+    valid.audio_volume_keyframes[1].time_ms = 2_500;
+
+    valid.audio_volume_keyframes[1].volume = 1.001;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
+    valid.audio_volume_keyframes[1].volume = 1.0;
+
+    valid.audio_eq.as_mut().unwrap().low_gain_db = 12.01;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
+    valid.audio_eq.as_mut().unwrap().low_gain_db = -2.5;
+
+    valid.audio_compressor.as_mut().unwrap().attack_ms = 0.009;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
+    valid.audio_compressor.as_mut().unwrap().attack_ms = 20.0;
+
+    valid.audio_volume_keyframes[1].time_ms = 0;
+    assert!(super::validate_source_audio_segment(&valid).is_err());
   }
 
   #[test]
