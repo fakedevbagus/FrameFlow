@@ -1,3 +1,15 @@
+## M3.128 — active — 2026-09-26
+
+- Branch: `fix/m3-128-audio-fade-aggregate-safety`.
+- Scope: reject unsafe aggregate audio fade durations in project validation and the timeline fade command.
+- Fresh audit found persisted fade values individually safe but `fadeInMs + fadeOutMs` unchecked, and `updateAudioClipFades()` accepted integer but not explicitly safe-integer inputs.
+- Added checked aggregate safe-integer arithmetic and safe-integer command validation.
+- Added focused regression coverage for safe maximum aggregate and unsafe aggregate/input cases.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.127 — completed — 2026-09-26
 
 - Branch: `fix/m3-127-project-topology-endpoint-safety`.
