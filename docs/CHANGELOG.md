@@ -1,3 +1,14 @@
+### M3.117 — Strict Export Settings Native Contract — active — 2026-09-26
+
+- Branch: `fix/m3-117-export-settings-native-contract`.
+- Fresh audit found that `normalizeExportSettings()` could preserve odd positive dimensions and frame rates above the native 240 FPS ceiling.
+- Normalized positive dimensions are now canonicalized to even values with a minimum of 2.
+- Export frame rates above 240 FPS now fall back to the validated project frame rate.
+- Added focused export normalization regression coverage.
+- No project schema change.
+- Validation is pending user confirmation.
+- Next step: complete local validation, then merge and reconcile the documentation.
+
 ### M3.116 — Strict Project Canvas Dimension Contract — completed — 2026-09-26
 
 - Branch: `fix/m3-116-project-canvas-dimensions`.
