@@ -1,13 +1,26 @@
-### M3.133 — Strict Audio Waveform Peak-Count Contract — active — 2026-09-26
+### M3.134 — Strict Audio Waveform Response Contract — active — 2026-09-26
 
-- Branch: `fix/m3-133-waveform-peak-count-contract`.
-- Fresh audit found `getAudioWaveform()` could pass `NaN` as `peakCount` to the native waveform command because its clamp/round pipeline lacked a non-finite guard.
-- Added a dedicated peak-count normalizer with non-finite fallback to the existing default of 128.
-- Finite peak counts retain the existing 32..2048 clamp and rounding behavior.
-- Added focused regression coverage.
+- Branch: `fix/m3-134-strict-waveform-response-contract`.
+- Fresh audit found native waveform `durationMs` and `sampleRate` were validated only as finite positive numbers and then silently rounded.
+- Tightened the response contract to require positive JavaScript safe integers before cache/render use.
+- Added focused regression coverage for unsafe and fractional native metadata.
+- Persistent waveform validation now uses the same strict numeric contract.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.133 — Strict Audio Waveform Peak-Count Contract — completed — 2026-09-26
+
+- Branch: `fix/m3-133-waveform-peak-count-contract`.
+- PR #148; squash-merged at `ce35441e801d7f2a240a2a2535cc39b9d1bc6139`.
+- User reported PASS.
+- Hardened waveform request normalization so non-finite peak counts fall back to 128 while finite values retain the existing 32..2048 range.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `5f3cdf6dd4274e9438bce7ef4cd77bbd2f2feae9` was verified before merge.
+- `main` was verified after merge at `ce35441e801d7f2a240a2a2535cc39b9d1bc6139`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.132 — Strict Source Split Endpoint Safety — completed — 2026-09-26
 
