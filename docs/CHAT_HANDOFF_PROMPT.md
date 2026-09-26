@@ -1,12 +1,27 @@
-## M3.120 — active — 2026-09-26
+## M3.121 — active — 2026-09-26
+
+- Branch: `fix/m3-121-strict-legacy-source-bounds`.
+- Scope: align the remaining direct single-source and multi-segment native video export paths with the actual source media duration contract.
+- Fresh audit found that `render_single_source_to_mp4` and `render_video_segments_to_mp4` still pass file-backed source ranges directly to FFmpeg without native duration-bound validation.
+- Planned shared checked source-range validation for single-source optional ranges and file-backed multi-segment ranges.
+- Exact source-end boundaries remain valid; start/duration overruns and arithmetic overflow are rejected.
+- Duration probes are reused for repeated media paths in a multi-segment render.
+- Black gap segments remain unchanged.
+- No project schema version change.
+- Local validation is pending implementation; do not assume lint/test/build/cargo/manual validation has passed.
+
+## M3.120 — completed — 2026-09-26
 
 - Branch: `fix/m3-120-source-audio-duration-bounds`.
-- Scope: enforce native source-audio segment source ranges against actual video media duration.
-- Audit finding: `source_start_ms + duration_ms` was not checked against the referenced media duration at the native IPC boundary.
+- Scope: enforce native unified AV source-audio ranges against actual source video duration.
+- PR #135; squash-merged at `c0b1ee692156a2b7f11cf130ba79f65efad81dd0`.
 - Added cached duration probing and checked source-range validation before FFmpeg filter construction.
 - Added focused regression coverage for exact boundaries, overruns, and arithmetic overflow.
 - No project schema version change.
-- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
+- User reported PASS.
+- `main` was verified after merge at `c0b1ee692156a2b7f11cf130ba79f65efad81dd0`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: M3.121 implementation on a fresh branch from verified `main`.
 
 ## M3.119 — completed — 2026-09-26
 
@@ -108,8 +123,8 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.119 is completed and merged; the next milestone must come from a fresh audit of verified `main`.
-- On user `PASS` / `pass` / `lanjutkan` for a future active milestone: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- M3.120 is completed and merged; M3.121 is the active milestone and must remain tightly scoped to the audited native source-range gap.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
