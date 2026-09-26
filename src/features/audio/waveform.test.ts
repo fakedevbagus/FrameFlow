@@ -237,6 +237,36 @@ describe("audio waveform", () => {
     });
   });
 
+  it("rejects a native waveform duration outside the safe integer range", async () => {
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "safe-boundary-duration" })
+      .mockResolvedValueOnce({
+        durationMs: Number.MAX_SAFE_INTEGER + 1,
+        sampleRate: 1024,
+        peaks: [0.5],
+        sourceFingerprint: "safe-boundary-duration",
+      });
+
+    await expect(
+      getAudioWaveform("/unsafe-duration.mp3"),
+    ).rejects.toThrow("Native waveform data is invalid.");
+  });
+
+  it("rejects non-integer native waveform timing metadata", async () => {
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "fractional-metadata" })
+      .mockResolvedValueOnce({
+        durationMs: 1000.5,
+        sampleRate: 1024.5,
+        peaks: [0.5],
+        sourceFingerprint: "fractional-metadata",
+      });
+
+    await expect(
+      getAudioWaveform("/fractional-metadata.mp3"),
+    ).rejects.toThrow("Native waveform data is invalid.");
+  });
+
   it("rejects an empty native peak array", async () => {
     vi.mocked(invoke)
       .mockResolvedValueOnce({ sourceFingerprint: "1000:300" })
