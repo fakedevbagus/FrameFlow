@@ -1,13 +1,13 @@
 ## M3.122 — active — 2026-09-26
 
 - Branch: `fix/m3-122-strict-single-source-duration-semantics`.
-- Fresh audit found that `NativeExportRenderRequest.sourceDurationMs` is optional, but the single-source FFmpeg builder filters out `0` and therefore silently ignores an explicitly supplied zero duration.
-- M3.121 established source-range duration bounds for the legacy video export paths; M3.122 tightens the request semantics at the same native boundary.
-- Planned change: reject an explicitly supplied zero `sourceDurationMs` instead of silently treating it as “no duration”.
-- Preserve omitted duration semantics and valid positive durations.
-- Add focused native regression coverage for omitted duration, zero duration, and positive duration behavior.
+- Scope: reject an explicitly supplied zero native single-source duration instead of silently treating it as omitted.
+- Fresh audit found that `build_ffmpeg_export_args` only emitted `-t` when `source_duration_ms > 0`, so `Some(0)` was ignored.
+- Tightened the shared source-range validator so supplied durations must be positive.
+- Preserved omitted duration semantics and valid positive durations.
+- Added focused native regression coverage.
 - No project schema version change.
-- Local validation is pending implementation; do not assume lint/test/build/cargo/manual validation has passed.
+- Local validation is pending; do not assume lint/test/build/cargo/manual validation has passed.
 
 ## M3.121 — completed — 2026-09-26
 
