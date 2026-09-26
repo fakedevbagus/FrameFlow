@@ -1,13 +1,25 @@
-### M3.134 — Strict Audio Waveform Response Contract — active — 2026-09-26
+### M3.135 — Strict Waveform Output Peak-Count Contract — active — 2026-09-26
 
-- Branch: `fix/m3-134-strict-waveform-response-contract`.
-- Fresh audit found native waveform `durationMs` and `sampleRate` were validated only as finite positive numbers and then silently rounded.
-- Tightened the response contract to require positive JavaScript safe integers before cache/render use.
-- Added focused regression coverage for unsafe and fractional native metadata.
-- Persistent waveform validation now uses the same strict numeric contract.
+- Branch: `fix/m3-135-waveform-source-range-contract`.
+- Fresh audit found `getWaveformPeaksForSourceRange()` could accept an extreme finite output peak count and use it directly as an array length.
+- Added a strict 2048 maximum plus safe-integer validation before allocation.
+- Added focused regression coverage for unsafe/over-limit counts and the maximum valid count.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 - Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
+### M3.134 — Strict Audio Waveform Response Contract — completed — 2026-09-26
+
+- Branch: `fix/m3-134-strict-waveform-response-contract`.
+- PR #149; squash-merged at `077d8d7b78ca92d466a960110d9fca8ad5e58be6`.
+- User reported PASS.
+- Tightened native waveform duration/sample-rate metadata validation to positive safe integers and removed silent rounding.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `1b35e57f3673541e1bf8db1e8024083d7944c6e6` was verified before merge.
+- `main` was verified after merge at `077d8d7b78ca92d466a960110d9fca8ad5e58be6`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.133 — Strict Audio Waveform Peak-Count Contract — completed — 2026-09-26
 

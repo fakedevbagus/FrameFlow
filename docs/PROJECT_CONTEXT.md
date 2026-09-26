@@ -1,37 +1,73 @@
-## M3.134 — Strict Audio Waveform Response Contract — active — 2026-09-26
+## M3.135 — Strict Waveform Output Peak-Count Contract — active — 2026-09-26
 
 Branch:
-`fix/m3-134-strict-waveform-response-contract`
+`fix/m3-135-waveform-source-range-contract`
 
 Scope:
-- Ensure native waveform duration and sample-rate metadata are validated as positive JavaScript safe integers before caching or rendering.
+- Bound the waveform source-range helper's derived output peak count before it reaches `Array.from()`.
 
 Audit finding:
-- `getAudioWaveform()` only required native `durationMs` and `sampleRate` to be finite positive numbers.
-- It then rounded those values, so malformed fractional metadata could be silently accepted and native `u64/u32` duration/rate values outside the JavaScript safe-integer range could be represented imprecisely.
-- Persistent waveform validation reused the same weak numeric contract.
+- `getWaveformPeaksForSourceRange()` accepted any finite positive `outputPeakCount`.
+- It rounded that value and immediately used it as an array length, so a very large finite request could cause an extreme allocation or runtime failure.
+- The native waveform generator already caps source waveform density at 2048 peaks.
 
 Implementation:
-- Tightened native waveform response validation to require positive JavaScript safe integers for `durationMs` and `sampleRate`.
-- Removed redundant rounding of metadata that is now required to already satisfy the integer contract.
-- Persistent waveform cache validation inherits the same strict `AudioWaveform` contract.
-- Added focused regression coverage for unsafe and fractional native metadata.
+- Added a 2048 maximum for waveform source-range output peak counts.
+- Unsafe, non-positive, or over-limit rounded counts now return an empty result before allocation.
+- Preserved existing fractional rounding behavior within the supported range.
+- Added regression coverage for unsafe/over-limit counts and the maximum valid count.
 - No project schema version change.
 
 Invariant / contract:
-- Native waveform `durationMs` and `sampleRate` must be positive JavaScript safe integers before entering the persistent/cache/render path.
-- Malformed fractional or unsafe timing metadata is rejected instead of normalized silently.
-- Native Rust `u64/u32` values must not be accepted when their JavaScript representation is unsafe.
+- `getWaveformPeaksForSourceRange()` may allocate at most 2048 output peaks.
+- The rounded output count must be a positive JavaScript safe integer within the supported waveform bound.
+- Existing valid source-range interpolation behavior remains unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Remaining risks:
-- Waveform source-range/output-peak-count arithmetic remains subject to separate focused audits.
+- Waveform source-duration/source-end numeric validation remains subject to separate focused auditing.
 - Floating-point waveform interpolation remains out of scope.
 
 Next step:
-- Complete user local validation of M3.134; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.135; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.134 — Strict Audio Waveform Response Contract — completed — 2026-09-26
+
+Branch:
+`fix/m3-134-strict-waveform-response-contract`
+
+PR:
+#149
+
+Merge SHA:
+`077d8d7b78ca92d466a960110d9fca8ad5e58be6`
+
+User validation:
+- User reported PASS for M3.134.
+- PR #149 was refreshed at head `1b35e57f3673541e1bf8db1e8024083d7944c6e6`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `077d8d7b78ca92d466a960110d9fca8ad5e58be6`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- Native waveform `durationMs` and `sampleRate` were previously accepted as finite positive numbers and silently rounded.
+
+Implementation:
+- Tightened response and persistent-cache validation to require positive JavaScript safe integers.
+- Removed redundant response metadata rounding.
+- Added focused regression coverage for unsafe and fractional native metadata.
+- No project schema version change.
+
+Invariant / contract:
+- Native waveform timing metadata must be safe integers before cache/render use.
+
+Remaining risks:
+- Source-range output peak-count allocation remained subject to a separate focused audit, addressed by M3.135.
+- Floating-point waveform interpolation remains out of scope.
+
+Next step:
+- Fresh audit from verified `main` for the next concrete runtime/media boundary.
 
 ## M3.133 — Strict Audio Waveform Peak-Count Contract — completed — 2026-09-26
 

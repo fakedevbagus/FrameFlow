@@ -61,6 +61,40 @@ describe("audio waveform", () => {
     ).toEqual([0, 0.5, 1, 0.5]);
   });
 
+  it("rejects unsafe waveform output peak counts before allocation", () => {
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        10_000,
+        0,
+        null,
+        Number.MAX_SAFE_INTEGER,
+      ),
+    ).toEqual([]);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 0.5, 1],
+        10_000,
+        0,
+        null,
+        2049,
+      ),
+    ).toEqual([]);
+  });
+
+  it("accepts the maximum waveform output peak count", () => {
+    expect(
+      getWaveformPeaksForSourceRange(
+        [0, 1],
+        10_000,
+        0,
+        null,
+        2048,
+      ),
+    ).toHaveLength(2048);
+  });
+
   it("clamps an out-of-range source window safely", () => {
     expect(
       getWaveformPeaksForSourceRange(

@@ -1,14 +1,27 @@
-## M3.134 — active — 2026-09-26
+## M3.135 — active — 2026-09-26
 
-- Branch: `fix/m3-134-strict-waveform-response-contract`.
-- Scope: require native waveform `durationMs` and `sampleRate` to be positive JavaScript safe integers before cache/render use.
-- Fresh audit found response metadata was validated only as finite positive numbers and then silently rounded.
-- Tightened the response and persistent-cache numeric contract; malformed fractional and unsafe metadata is rejected.
+- Branch: `fix/m3-135-waveform-source-range-contract`.
+- Scope: bound `getWaveformPeaksForSourceRange()` output peak count before array allocation.
+- Fresh audit found extreme finite output counts could be rounded and passed to `Array.from()`, creating an uncontrolled allocation boundary.
+- Added a strict 2048 maximum and safe-integer validation before allocation.
 - Added focused regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.134 — completed — 2026-09-26
+
+- Branch: `fix/m3-134-strict-waveform-response-contract`.
+- PR #149; squash-merged at `077d8d7b78ca92d466a960110d9fca8ad5e58be6`.
+- User reported PASS.
+- Tightened native waveform response metadata to positive safe integers and removed silent rounding.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `1b35e57f3673541e1bf8db1e8024083d7944c6e6` was verified before merge.
+- `main` was verified after merge at `077d8d7b78ca92d466a960110d9fca8ad5e58be6`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.133 — completed — 2026-09-26
 
