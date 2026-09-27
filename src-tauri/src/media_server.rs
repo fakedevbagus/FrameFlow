@@ -91,12 +91,24 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   let request = read_request(&mut stream)?;
 
   let Some((method, remainder)) = request.split_once(' ') else {
-    write_status(&mut stream, 400, "Bad Request", b"Invalid request.")?;
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      b"Invalid request.",
+      true,
+    )?;
     return Ok(());
   };
 
   let Some((target, _version)) = remainder.split_once(' ') else {
-    write_status(&mut stream, 400, "Bad Request", b"Invalid request.")?;
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      b"Invalid request.",
+      method != "HEAD",
+    )?;
     return Ok(());
   };
 
@@ -113,12 +125,24 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   }
 
   if method != "GET" && method != "HEAD" {
-    write_status(&mut stream, 405, "Method Not Allowed", b"Method not allowed.")?;
+    write_status(
+      &mut stream,
+      405,
+      "Method Not Allowed",
+      b"Method not allowed.",
+      true,
+    )?;
     return Ok(());
   }
 
   let Some(query) = target.strip_prefix("/media?") else {
-    write_status(&mut stream, 404, "Not Found", b"Media endpoint not found.")?;
+    write_status(
+      &mut stream,
+      404,
+      "Not Found",
+      b"Media endpoint not found.",
+      method != "HEAD",
+    )?;
     return Ok(());
   };
 
@@ -126,7 +150,13 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
     .split('&')
     .find_map(|part| part.strip_prefix("path="))
   else {
-    write_status(&mut stream, 400, "Bad Request", b"Missing media path.")?;
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      b"Missing media path.",
+      method != "HEAD",
+    )?;
     return Ok(());
   };
 
@@ -138,6 +168,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
         400,
         "Bad Request",
         error.as_bytes(),
+        method != "HEAD",
       )?;
       return Ok(());
     }
@@ -146,7 +177,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   let path = match validate_media_path(Path::new(&decoded_path)) {
     Ok(path) => path,
     Err(error) => {
-      write_media_path_error(&mut stream, error)?;
+      write_media_path_error(&mut stream, error, method != "HEAD")?;
       return Ok(());
     }
   };
@@ -159,13 +190,20 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
         404,
         "Not Found",
         b"Media file could not be found.",
+        method != "HEAD",
       )?;
       return Ok(());
     }
   };
 
   if !metadata.is_file() {
-    write_status(&mut stream, 404, "Not Found", b"Media file not found.")?;
+    write_status(
+      &mut stream,
+      404,
+      "Not Found",
+      b"Media file not found.",
+      method != "HEAD",
+    )?;
     return Ok(());
   }
 
@@ -182,6 +220,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
         416,
         "Range Not Satisfiable",
         b"Multiple byte ranges are not supported.",
+        method != "HEAD",
       )?;
     }
     RangeResult::Single(start, end) => {
@@ -379,6 +418,7 @@ fn write_status(
   status: u16,
   reason: &str,
   body: &[u8],
+  include_body: bool,
 ) -> Result<(), String> {
   write_headers(
     stream,
@@ -389,9 +429,13 @@ fn write_status(
     None,
   )?;
 
-  stream
-    .write_all(body)
-    .map_err(|error| format!("Could not write media response: {error}"))
+  if include_body {
+    stream
+      .write_all(body)
+      .map_err(|error| format!("Could not write media response: {error}"))?;
+  }
+
+  Ok(())
 }
 
 fn write_range_not_satisfiable(
@@ -446,11 +490,12 @@ fn validate_media_path(path: &Path) -> Result<PathBuf, MediaPathError> {
 fn write_media_path_error(
   stream: &mut TcpStream,
   error: MediaPathError,
+  include_body: bool,
 ) -> Result<(), String> {
   let (status, reason) = error.status();
   let body = error.to_string();
 
-  write_status(stream, status, reason, body.as_bytes())
+  write_status(stream, status, reason, body.as_bytes(), include_body)
 }
 
 fn percent_encode_path(path: &Path) -> String {
@@ -537,6 +582,41 @@ mod tests {
     parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
   };
   use std::path::Path;
+
+  #[test]
+  fn suppresses_body_for_head_error_responses() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+    let expected_body = b"Media endpoint not found.";
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(b"HEAD /missing HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n")
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 404 Not Found\r\n"));
+    assert!(response_text.contains(&format!(
+      "Content-Length: {}\r\n",
+      expected_body.len()
+    )));
+    assert!(response_text.ends_with("\r\n\r\n"));
+    assert!(!response_text.ends_with(&String::from_utf8_lossy(expected_body)));
+
+    server.join().unwrap();
+  }
 
   #[test]
   fn maps_media_path_validation_errors_to_http_statuses() {
