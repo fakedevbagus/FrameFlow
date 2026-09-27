@@ -1,23 +1,9 @@
-### M3.157 — Video Graph Source Consistency Contract — completed — 2026-09-27
+### M3.158 — Multi-Segment Source Consistency Contract — active — 2026-09-27
 
-- Branch: `fix/m3-157-video-graph-source-consistency`.
-- PR #172; squash-merged at `4f516556ffd18e2e172d38b13793d10a7c5fecb5`.
-- User reported PASS.
-- Captured and re-checked Linux source identity for every resolved video/image graph input around FFmpeg rendering.
-- Source mutation/removal now rejects finalization and cleans the generated output.
-- Added focused Rust regression coverage.
-- No project schema version change.
-- PR head `7272d5113b9646b7f97db62eec64e08486b25b37` was verified before merge.
-- `main` was verified at merge commit `4f516556ffd18e2e172d38b13793d10a7c5fecb5`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main` for the next concrete native render consistency gap.
-
- — Video Graph Source Consistency Contract — active — 2026-09-27
-
-- Branch: `fix/m3-157-video-graph-source-consistency`.
-- Fresh audit found `render_video_graph_to_mp4()` lacking source identity snapshot/revalidation around its FFmpeg render window.
-- Reuse the established Linux source identity contract from native AV rendering.
-- Capture and re-check every resolved video/image input around FFmpeg; reject and clean output on mutation/removal.
+- Branch: `fix/m3-158-video-segments-source-consistency`.
+- Fresh audit found `render_video_segments_to_mp4()` probing sources before rendering but not preserving source identity across segment renders and final concat.
+- Capture identity for every unique resolved video source and re-check all sources after successful rendering before accepting output.
+- Remove the final output and return a retryable error on source mutation/removal.
 - Added focused Rust regression coverage.
 - No project schema change.
 - Implementation is complete; user local validation is pending.

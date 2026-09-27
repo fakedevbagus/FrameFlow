@@ -1,66 +1,33 @@
-## M3.157 — Video Graph Source Consistency Contract — completed — 2026-09-27
+## M3.158 — Multi-Segment Source Consistency Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-157-video-graph-source-consistency`
-
-PR:
-#172
-
-Merge SHA:
-`4f516556ffd18e2e172d38b13793d10a7c5fecb5`
-
-User validation:
-- User reported PASS for M3.157.
-- PR #172 was refreshed at head `7272d5113b9646b7f97db62eec64e08486b25b37`, verified ahead of `main`, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `4f516556ffd18e2e172d38b13793d10a7c5fecb5`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-
-Implementation:
-- Reused the established Linux source identity contract from native AV rendering.
-- Captured source identity for every resolved video graph input before FFmpeg.
-- Re-checked all graph input identities after successful FFmpeg generation and before accepting output metadata.
-- Removed the generated output and returned a retryable error when a video/image input changed or became unavailable.
-- Added focused Rust regression coverage.
-- No project schema version change.
-
-Invariant / contract:
-- Video graph output is finalized only when all resolved visual input identities remain unchanged across the FFmpeg render window.
-- Source mutation or removal cannot leave a finalized graph export derived from a different source snapshot.
-- Existing graph inputs, media-type validation, filter graph, output mapping, frame rate, and export settings remain unchanged.
-
-Next step:
-- Fresh audit from verified `main` for the next concrete native render consistency gap.
-
- — Video Graph Source Consistency Contract — active — 2026-09-27
-
-Branch:
-`fix/m3-157-video-graph-source-consistency`
+`fix/m3-158-video-segments-source-consistency`
 
 Scope:
-- Prevent native video graph exports from finalizing when any resolved video/image input source changes or becomes unavailable during FFmpeg rendering.
+- Prevent native multi-segment video exports from finalizing when any resolved video source changes or becomes unavailable during segment rendering or final concatenation.
 
 Audit finding:
-- `render_video_graph_to_mp4()` validated every input before FFmpeg and checked the output afterward, but did not snapshot source filesystem identity around the long-running render.
-- A source could therefore change during rendering while the generated graph export was still accepted.
+- `render_video_segments_to_mp4()` validated source existence and duration before rendering, then delegated multiple FFmpeg segment renders and a final concat without preserving source filesystem identity across the full render window.
+- A source could change after the initial probe while a generated segment/output was still accepted.
 
 Implementation:
-- Reuse the established Linux source identity function from the native AV render contract.
-- Capture source identity for every resolved video graph input before building/running FFmpeg.
-- Re-check all captured input identities after successful FFmpeg generation and before accepting output metadata.
-- Remove the generated output and return a retryable error when any video/image input changes or becomes unavailable.
-- Add focused Rust regression coverage for video graph source mutation.
+- Capture Linux source identity for every unique resolved video segment source after initial validation and duration probing.
+- Re-check every captured source after successful segment rendering and final concatenation, before accepting the generated output.
+- Remove the generated final output and return a retryable error when any source changes or becomes unavailable.
+- Reuse the established native source identity contract from the AV render path.
+- Add focused Rust regression coverage for multi-segment source mutation.
 - No project schema version change.
 
 Invariant / contract:
-- Video graph output is finalized only when all resolved visual input identities remain unchanged across the FFmpeg render window.
-- Source mutation or removal cannot leave a finalized graph export derived from a different source snapshot.
-- Existing graph inputs, media-type validation, filter graph, output mapping, frame rate, and export settings remain unchanged.
+- Multi-segment output is finalized only when all unique resolved video source identities remain unchanged across the complete FFmpeg render window.
+- Source mutation or removal cannot leave a finalized multi-segment export derived from a different source snapshot.
+- Black-gap segments and existing segment timing/render settings remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.157; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.158; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
