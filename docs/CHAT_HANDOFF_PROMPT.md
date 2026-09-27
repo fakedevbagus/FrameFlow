@@ -1,93 +1,42 @@
-## M3.155 — active — 2026-09-27
+## M3.156 — active — 2026-09-27
 
-- Branch: `fix/m3-155-video-audio-mix-source-consistency`.
-- Scope: prevent legacy video+audio mix export from finalizing when its resolved sources change or become unavailable during FFmpeg rendering.
-- Fresh audit found `render_video_with_audio_graph_to_mp4()` validates its video/audio paths before a long-running FFmpeg operation but does not re-check source identity before finalizing the temporary output.
-- Reuse the established Linux source identity contract: snapshot the video source and all independent audio sources before rendering, then re-check them after FFmpeg.
-- Remove the temporary output and return a retryable error on source mutation or removal.
-- Added a focused Rust regression test proving mutation is detected before finalization.
-- No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
-
-## M3.154 — completed — 2026-09-27
-
-- Branch: `fix/m3-154-unified-av-source-consistency`.
-- PR #169; squash-merged at `9e33591f220125008b6d64930b79b37f381f9ecc`.
-- User reported PASS.
-- Added source identity snapshots/rechecks around unified video+audio FFmpeg rendering.
-- Changed or unavailable sources now prevent output finalization.
-- Added focused Rust regression coverage.
-- No project schema version change.
-- PR head `c63874f95d6cf5efec3b3a780cb2825e02374ca5` was verified before merge.
-- `main` was verified after merge at `9e33591f220125008b6d64930b79b37f381f9ecc`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main`.
-
-## M3.153 — completed — 2026-09-27
-
-- Branch: `fix/m3-153-video-graph-input-index-validation`.
-- PR #168; squash-merged at `4f2ad5268df82be89d72077837dce26864636244`.
-- User reported PASS.
-- Restored indexed native video-graph input validation and added focused Rust regression coverage.
-- No project schema change.
-- PR head `601fd88a5b9fdac4beea56996bd539b7f2f393c4` was verified before merge.
-- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main`.
+- Fresh audit from verified `main` after M3.155.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.154 is completed and merged; M3.155 is the active milestone.
+- M3.155 is completed and merged; M3.156 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
-## M3.152 — completed — 2026-09-27
+## M3.155 — Legacy Video/Audio Source Consistency Contract — completed — 2026-09-27
 
-- Branch: `fix/m3-152-preview-generation-source-consistency`.
-- PR #167; squash-merged at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
-- User reported PASS.
-- Re-checked preview source identity after FFmpeg generation and rejected changed sources before cache finalization.
-- Removed temporary output when source identity changed.
+- Branch:
+`fix/m3-155-video-audio-mix-source-consistency`
+
+- PR:
+#170
+
+- Merge SHA:
+`fc655f82cc37284ab58d3bb3ad527d283313fd25`
+
+- User validation:
+- User reported PASS for M3.155.
+- PR #170 was refreshed at head `78b70cfb50542146e70d84d2f8d56f761e23b1ec`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `fc655f82cc37284ab58d3bb3ad527d283313fd25`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+- Implementation:
+- Reused the native Linux source identity contract established by M3.154.
+- Snapshotted the legacy video source and all resolved independent audio inputs before rendering.
+- Re-checked all sources after successful FFmpeg generation.
+- Removed temporary output and returned a retryable error when a source changed or became unavailable.
 - Added focused Rust regression coverage.
 - No project schema version change.
-- PR head `a5a3e1f125fd44d44128330ec284d30e8d4147f7` was verified before merge.
-- `main` was verified after merge at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: complete user local validation of M3.153.
 
-## Workflow for this chat
-
-- Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.152 is completed and merged; M3.153 is the active milestone.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
-- Keep parked PR #76 and unrelated PR #22 untouched.
-
-## M3.152 — completed — 2026-09-27
-
-- Branch: `fix/m3-152-preview-generation-source-consistency`.
-- PR #167; squash-merged at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
-- User reported PASS.
-- Re-checked preview source identity after FFmpeg generation and rejected changed sources before cache finalization.
-- Removed temporary output when source identity changed.
-- Added focused Rust regression coverage.
-- No project schema version change.
-- PR head `a5a3e1f125fd44d44128330ec284d30e8d4147f7` was verified before merge.
-- `main` was verified after merge at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main`.
-
-## Workflow for this chat
-
-- Inspect actual `main` SHA, branch state, and open PRs before acting.
-- The latest completed milestone is M3.152; the next step is a fresh audit from verified `main`.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- Next step:
+- Fresh audit from verified `main` for M3.156.
 
 ## M3.151 — completed — 2026-09-27
 
