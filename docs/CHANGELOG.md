@@ -1,3 +1,15 @@
+### M3.168 — Media Server Range Header Uniqueness Contract — active — 2026-09-27
+
+- Branch: `fix/m3-168-media-range-header-uniqueness`.
+- Fresh audit found `parse_range_header()` silently ignoring duplicate `Range:` headers.
+- Duplicate `Range:` headers now receive HTTP 400.
+- Existing multiple ranges within a single `Range:` field remain HTTP 416.
+- Added focused regression coverage.
+- Existing HTTP version, method, query/path, canonicalization, media-type, range, and HEAD contracts are preserved.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.168; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+
 ### M3.167 — Media Server Request Header Termination Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-167-media-request-header-termination`.
