@@ -1,4 +1,4 @@
-## M3.162 — Media Server Request Validation Error Responses — active — 2026-09-27
+## M3.162 — Media Server Request Validation Error Responses — completed — 2026-09-27
 
 Branch:
 `fix/m3-162-media-server-request-errors`
@@ -6,33 +6,31 @@ Branch:
 PR:
 #177
 
-Scope:
-- Ensure malformed media requests and media-path validation failures receive explicit HTTP error responses instead of silently terminating the local media connection.
+Merge SHA:
+`f4455f08360565dfc65c6b15b36f210c8624a76a`
 
-Fresh audit finding:
-- M3.161 correctly canonicalizes the validated path, but `percent_decode()` and `validate_media_path()` errors still propagate from `handle_connection()`.
-- The per-connection thread discards that `Result`, so invalid encoded paths or rejected media paths can close the connection without an HTTP response.
-- This weakens the local media server's request/error contract and makes client-visible failures nondeterministic.
+User validation:
+- User reported PASS for M3.162.
+- PR #177 was refreshed at head `957e9fd6cba7b30d6f8d45f7113e8122e040fe5a`, verified ahead of `main` with 0 commits behind, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `f4455f08360565dfc65c6b15b36f210c8624a76a`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Introduce explicit media-path validation error variants with stable HTTP classifications.
-- Preserve existing validation messages and path/security rules while mapping them to HTTP 400, 403, 404, and 415 responses.
-- Handle filesystem lookup failure after successful canonical validation as HTTP 404.
-- Preserve the existing `url_for_path() -> Result<String, String>` API.
-- Add focused Rust regression coverage for validation error status mapping and stable messages.
+- Added typed media-path validation errors with stable HTTP status classifications.
+- Mapped malformed percent encoding and relative paths to HTTP 400.
+- Mapped out-of-allowlist paths to HTTP 403.
+- Mapped unresolved media paths and post-validation filesystem lookup failures to HTTP 404.
+- Mapped unsupported media types to HTTP 415.
+- Preserved the existing `url_for_path() -> Result<String, String>` API.
+- Added focused Rust regression coverage for status mapping and stable error messages.
 - No project schema version change.
 
 Invariant / contract:
-- Every client-supplied media-path validation failure handled by the HTTP endpoint produces an explicit HTTP response.
+- Client-supplied media-path validation failures handled by the HTTP endpoint now receive explicit HTTP responses.
 - Existing canonical-path enforcement, supported media-type boundaries, directory allowlist, range handling, and MIME mappings remain unchanged.
-- Internal URL generation continues to expose validation failures through the existing `Result<String, String>` API.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.162; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
-
+- Fresh audit from verified `main` for the next narrowly-scoped security or correctness gap.
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 Branch:
