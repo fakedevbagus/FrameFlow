@@ -358,6 +358,13 @@ fn validate_media_path(path: &Path) -> Result<(), String> {
   let canonical = fs::canonicalize(path)
     .map_err(|_| "Media file could not be resolved.".to_string())?;
 
+  if !canonical.is_file() {
+    return Err("Media file could not be resolved.".to_string());
+  }
+
+  crate::media_type(&canonical)
+    .map_err(|_| "Media file type is not supported.".to_string())?;
+
   if canonical.starts_with("/media/")
     || canonical.starts_with("/mnt/")
     || canonical.starts_with("/run/media/")
@@ -430,15 +437,24 @@ fn content_type_for_path(path: &Path) -> &'static str {
     .to_ascii_lowercase()
     .as_str()
   {
-    "mp4" | "m4v" => "video/mp4",
-    "webm" => "video/webm",
-    "mov" => "video/quicktime",
-    "mkv" => "video/x-matroska",
-    "avi" => "video/x-msvideo",
+    "avif" => "image/avif",
+    "bmp" => "image/bmp",
+    "gif" => "image/gif",
+    "jpeg" | "jpg" => "image/jpeg",
+    "png" => "image/png",
+    "webp" => "image/webp",
+    "aac" => "audio/aac",
+    "flac" => "audio/flac",
     "mp3" => "audio/mpeg",
-    "wav" => "audio/wav",
-    "ogg" | "opus" => "audio/ogg",
     "m4a" => "audio/mp4",
+    "ogg" | "opus" => "audio/ogg",
+    "wav" => "audio/wav",
+    "avi" => "video/x-msvideo",
+    "mkv" => "video/x-matroska",
+    "mov" => "video/quicktime",
+    "mp4" => "video/mp4",
+    "mpeg" | "mpg" => "video/mpeg",
+    "webm" => "video/webm",
     _ => "application/octet-stream",
   }
 }
@@ -447,6 +463,18 @@ fn content_type_for_path(path: &Path) -> &'static str {
 mod tests {
   use super::{parse_range_header, percent_decode, percent_encode_path, RangeResult};
   use std::path::Path;
+
+  #[test]
+  fn rejects_unsupported_media_extensions() {
+    let path = std::env::temp_dir().join("frameflow-secret.txt");
+    std::fs::write(&path, b"not media").unwrap();
+
+    let error = super::validate_media_path(&path)
+      .expect_err("unsupported file extensions must be rejected");
+    assert!(error.contains("Media file type is not supported"));
+
+    std::fs::remove_file(path).unwrap();
+  }
 
   #[test]
   fn round_trips_encoded_media_paths() {

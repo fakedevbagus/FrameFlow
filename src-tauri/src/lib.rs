@@ -1313,7 +1313,7 @@ fn media_path(value: &str) -> Result<PathBuf, String> {
   Ok(path)
 }
 
-fn media_type(path: &Path) -> Result<String, String> {
+pub(crate) fn media_type(path: &Path) -> Result<String, String> {
   let extension = path
     .extension()
     .and_then(|value| value.to_str())
