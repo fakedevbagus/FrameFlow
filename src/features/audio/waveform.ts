@@ -28,80 +28,76 @@ const MAX_WAVEFORM_OUTPUT_PEAK_COUNT = 2048;
 const MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH = 128;
 const waveformRequestCache = new Map<string, Promise<AudioWaveform>>();
 
-export function getAudioWaveform(
+export async function getAudioWaveform(
   sourcePath: string,
   peakCount = 128,
 ): Promise<AudioWaveform> {
   const normalizedPeakCount = normalizeWaveformPeakCount(peakCount);
-  const requestKey = sourcePath + "::" + normalizedPeakCount;
+
+  const fingerprintResponse = await invoke<AudioWaveformSourceFingerprint>(
+    "get_audio_waveform_source_fingerprint",
+    { path: sourcePath },
+  );
+
+  if (
+    !fingerprintResponse ||
+    typeof fingerprintResponse.sourceFingerprint !== "string" ||
+    fingerprintResponse.sourceFingerprint.length === 0 ||
+    fingerprintResponse.sourceFingerprint.length > MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
+  ) {
+    throw new Error("Native waveform source fingerprint is invalid.");
+  }
+
+  const fingerprint = fingerprintResponse.sourceFingerprint;
+  const requestKey =
+    sourcePath + "::" + normalizedPeakCount + "::" + fingerprint;
   const cachedRequest = waveformRequestCache.get(requestKey);
 
   if (cachedRequest) {
     return cachedRequest;
   }
 
-  const request = invoke<AudioWaveformSourceFingerprint>(
-    "get_audio_waveform_source_fingerprint",
-    { path: sourcePath },
-  )
-    .then((fingerprint) => {
-      if (
-        !fingerprint ||
-        typeof fingerprint.sourceFingerprint !== "string" ||
-        fingerprint.sourceFingerprint.length === 0 ||
-        fingerprint.sourceFingerprint.length > MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
-      ) {
-        throw new Error("Native waveform source fingerprint is invalid.");
-      }
+  const persistent = readPersistentWaveform(requestKey);
+  if (persistent) {
+    return persistent;
+  }
 
-      return fingerprint.sourceFingerprint;
-    })
-    .then((fingerprint) => {
-      const cacheKey =
-        sourcePath + "::" + normalizedPeakCount + "::" + fingerprint;
-      const persistent = readPersistentWaveform(cacheKey);
+  const request = invoke<AudioWaveform>("generate_audio_waveform", {
+    path: sourcePath,
+    peakCount: normalizedPeakCount,
+  }).then((waveform) => {
+    if (
+      !waveform ||
+      !Number.isSafeInteger(waveform.durationMs) ||
+      waveform.durationMs <= 0 ||
+      !Number.isSafeInteger(waveform.sampleRate) ||
+      waveform.sampleRate <= 0 ||
+      !isValidWaveformPeakArray(waveform.peaks) ||
+      typeof waveform.sourceFingerprint !== "string" ||
+      waveform.sourceFingerprint.length === 0 ||
+      waveform.sourceFingerprint.length > MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
+    ) {
+      throw new Error("Native waveform data is invalid.");
+    }
 
-      if (persistent) {
-        return persistent;
-      }
+    const normalizedWaveform = {
+      durationMs: waveform.durationMs,
+      sampleRate: waveform.sampleRate,
+      peaks: waveform.peaks.map(normalizeWaveformPeak),
+      sourceFingerprint: waveform.sourceFingerprint,
+    };
 
-      return invoke<AudioWaveform>("generate_audio_waveform", {
-        path: sourcePath,
-        peakCount: normalizedPeakCount,
-      }).then((waveform) => {
-        if (
-          !waveform ||
-          !Number.isSafeInteger(waveform.durationMs) ||
-          waveform.durationMs <= 0 ||
-          !Number.isSafeInteger(waveform.sampleRate) ||
-          waveform.sampleRate <= 0 ||
-          !isValidWaveformPeakArray(waveform.peaks) ||
-          typeof waveform.sourceFingerprint !== "string" ||
-          waveform.sourceFingerprint.length === 0 ||
-          waveform.sourceFingerprint.length > MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
-        ) {
-          throw new Error("Native waveform data is invalid.");
-        }
+    const generatedCacheKey =
+      sourcePath +
+      "::" +
+      normalizedPeakCount +
+      "::" +
+      normalizedWaveform.sourceFingerprint;
 
-        const normalizedWaveform = {
-          durationMs: waveform.durationMs,
-          sampleRate: waveform.sampleRate,
-          peaks: waveform.peaks.map(normalizeWaveformPeak),
-          sourceFingerprint: waveform.sourceFingerprint,
-        };
+    writePersistentWaveform(generatedCacheKey, normalizedWaveform);
 
-        writePersistentWaveform(
-          sourcePath +
-            "::" +
-            normalizedPeakCount +
-            "::" +
-            normalizedWaveform.sourceFingerprint,
-          normalizedWaveform,
-        );
-
-        return normalizedWaveform;
-      });
-    });
+    return normalizedWaveform;
+  });
 
   waveformRequestCache.set(requestKey, request);
 

@@ -1,25 +1,26 @@
-## M3.147 — active — 2026-09-27
+## M3.148 — active — 2026-09-27
 
-- Branch: `fix/m3-147-waveform-render-peak-contract`.
-- Scope: enforce the established dense, bounded, numeric waveform peak-array contract at the exported SVG render boundary.
-- Fresh audit after M3.146 found `buildWaveformPath()` still accepted arbitrary non-empty arrays independently of the shared validator.
-- Reused `isValidWaveformPeakArray()` before normalization/path construction and added regressions for sparse, over-limit, and non-number render arrays.
-- Existing numeric `NaN`/`Infinity` normalization remains unchanged.
+- Branch: `fix/m3-148-waveform-request-fingerprint-key`.
+- Scope: prevent in-flight waveform request deduplication from sharing a request across different source fingerprints.
+- Fresh audit after M3.147 found the in-memory request cache was keyed only by source path and normalized peak count before native source fingerprint resolution.
+- Resolve and validate the source fingerprint first, then key the in-flight request cache by source path, normalized peak count, and fingerprint.
+- Added a focused regression for a source fingerprint change during an in-flight generation request.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
-## M3.146 — completed — 2026-09-27
+## M3.147 — completed — 2026-09-27
 
-- Branch: `fix/m3-146-dense-waveform-peak-array-contract`.
-- PR #161; squash-merged at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- Branch: `fix/m3-147-waveform-render-peak-contract`.
+- PR #162; squash-merged at `8778e7787535ec6b473c78a782ef596819b4d1b4`.
 - User reported PASS.
-- Replaced hole-skipping peak validation with explicit index checks and added sparse-array regression coverage.
-- Existing numeric `NaN`/`Infinity` normalization and the 2048-element bound remain intact.
+- Reused the shared peak validator at the exported waveform SVG render boundary.
+- Added regressions for sparse, over-limit, and non-number render arrays.
+- Existing valid rendering and numeric `NaN`/`Infinity` normalization remain unchanged.
 - No project schema version change.
-- PR head `9c547abcd8a8d16dbb59b31f5f869deac5bee3b7` was verified before merge.
-- `main` was verified after merge at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- PR head `1949355fe2b03a58fb7928a6d391e69274bd8016` was verified before merge.
+- `main` was verified after merge at `8778e7787535ec6b473c78a782ef596819b4d1b4`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main`.
 

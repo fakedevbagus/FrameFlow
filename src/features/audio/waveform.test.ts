@@ -5,6 +5,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 import {
+  type AudioWaveform,
   buildWaveformPath,
   clearAudioWaveformCache,
   getAudioWaveform,
@@ -305,10 +306,11 @@ describe("audio waveform", () => {
     );
   });
 
-  it("clamps waveform request size and caches identical requests", async () => {
+  it("deduplicates generation after resolving the source fingerprint", async () => {
     clearAudioWaveformCache();
 
     vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "5000:100" })
       .mockResolvedValueOnce({ sourceFingerprint: "5000:100" })
       .mockResolvedValueOnce({
         durationMs: 5000,
@@ -320,11 +322,9 @@ describe("audio waveform", () => {
     const first = getAudioWaveform("/music.mp3", 10);
     const second = getAudioWaveform("/music.mp3", 10);
 
-    expect(first).toBe(second);
+    const [firstWaveform, secondWaveform] = await Promise.all([first, second]);
 
-    const waveform = await first;
-
-    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke).toHaveBeenCalledTimes(3);
     expect(invoke).toHaveBeenNthCalledWith(
       1,
       "get_audio_waveform_source_fingerprint",
@@ -332,17 +332,97 @@ describe("audio waveform", () => {
     );
     expect(invoke).toHaveBeenNthCalledWith(
       2,
+      "get_audio_waveform_source_fingerprint",
+      { path: "/music.mp3" },
+    );
+    expect(invoke).toHaveBeenNthCalledWith(
+      3,
       "generate_audio_waveform",
       {
         path: "/music.mp3",
         peakCount: 32,
       },
     );
-    expect(waveform).toEqual({
+    expect(firstWaveform).toEqual({
       durationMs: 5000,
       sampleRate: 1024,
       peaks: [0, 0.25, 0.75, 1],
       sourceFingerprint: "5000:100",
+    });
+    expect(secondWaveform).toEqual(firstWaveform);
+  });
+
+  it("does not share an in-flight waveform request across changed source fingerprints", async () => {
+    let resolveFirstGeneration: ((waveform: AudioWaveform) => void) | null = null;
+    const firstGeneration = new Promise<AudioWaveform>((resolve) => {
+      resolveFirstGeneration = resolve;
+    });
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "source-v1" })
+      .mockReturnValueOnce(firstGeneration)
+      .mockResolvedValueOnce({ sourceFingerprint: "source-v2" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.25],
+        sourceFingerprint: "source-v2",
+      });
+
+    const first = getAudioWaveform("/changed-while-loading.mp3", 128);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const second = getAudioWaveform("/changed-while-loading.mp3", 128);
+    const secondWaveform = await second;
+
+    expect(secondWaveform).toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.25],
+      sourceFingerprint: "source-v2",
+    });
+
+    expect(invoke).toHaveBeenCalledTimes(4);
+    expect(invoke).toHaveBeenNthCalledWith(
+      1,
+      "get_audio_waveform_source_fingerprint",
+      { path: "/changed-while-loading.mp3" },
+    );
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      "generate_audio_waveform",
+      {
+        path: "/changed-while-loading.mp3",
+        peakCount: 128,
+      },
+    );
+    expect(invoke).toHaveBeenNthCalledWith(
+      3,
+      "get_audio_waveform_source_fingerprint",
+      { path: "/changed-while-loading.mp3" },
+    );
+    expect(invoke).toHaveBeenNthCalledWith(
+      4,
+      "generate_audio_waveform",
+      {
+        path: "/changed-while-loading.mp3",
+        peakCount: 128,
+      },
+    );
+
+    resolveFirstGeneration?.({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.9],
+      sourceFingerprint: "source-v1",
+    });
+
+    await expect(first).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.9],
+      sourceFingerprint: "source-v1",
     });
   });
 
