@@ -1,29 +1,34 @@
-## M3.153 — Native Video Graph Input Index Validation — completed — 2026-09-27
+## M3.154 — Unified AV Source Consistency Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-153-video-graph-input-index-validation`
+`fix/m3-154-unified-av-source-consistency`
 
-PR:
-#168
+Scope:
+- Prevent unified video+audio exports from finalizing when any resolved source changes or becomes unavailable during FFmpeg rendering.
 
-Merge SHA:
-`4f2ad5268df82be89d72077837dce26864636244`
-
-User validation:
-- User reported PASS for M3.153.
-- PR #168 was refreshed at head `601fd88a5b9fdac4beea56996bd539b7f2f393c4`, verified ahead of `main`, marked Ready for Review, and squash-merged.
-- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+Audit finding:
+- `render_video_audio_graph_to_mp4()` resolves and probes every video/audio source before invoking FFmpeg.
+- The command then rendered from those paths without capturing source filesystem identity and without re-checking the sources after the long-running FFmpeg operation.
+- A source could therefore change while rendering and the resulting export could be finalized from a different source snapshot than the one that passed initial validation.
 
 Implementation:
-- Restored indexed iteration for native video-graph inputs with `.enumerate().map(|(index, value)| ...)`.
-- Extracted indexed media-type comparison into a focused helper.
-- Added focused Rust regression coverage for matching, omitted, and mismatched indexed media types.
+- Capture a Linux source identity snapshot for every resolved video and audio input before probing/rendering.
+- Re-check every captured source after successful FFmpeg generation.
+- Remove the generated output and return a retryable error when any source changes or becomes unavailable.
+- Include file size, modification time, ctime, ctime nanoseconds, device ID, and inode in the source identity.
+- Add focused Rust regression coverage for source mutation between snapshot and finalization.
 - No project schema version change.
 
-Next step:
-- Fresh audit from verified `main` for the next concrete engineering gap.
+Invariant / contract:
+- Unified AV output is finalized only when all resolved source filesystem identities remain unchanged across the FFmpeg render window.
+- Source removal or mutation during rendering cannot leave a finalized export based on a different source snapshot.
+- Existing filter graphs, media routing, output format, and render settings remain unchanged.
 
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.154; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.154 — active — 2026-09-27
 
