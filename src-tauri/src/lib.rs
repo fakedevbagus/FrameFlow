@@ -318,6 +318,10 @@ fn render_video_segments_to_mp4(
     }
   }
 
+  let source_identity_snapshot = capture_video_segments_source_identity_snapshot(
+    &source_duration_by_path,
+  )?;
+
   let temp_root = create_video_segments_temp_dir(&output_path)?;
   let result = render_video_segments_to_output(
     &app,
@@ -330,7 +334,53 @@ fn render_video_segments_to_mp4(
 
   let _ = fs::remove_dir_all(&temp_root);
 
+  if let Ok(_) = result {
+    if let Err(error) =
+      validate_video_segments_source_identity_snapshot(&source_identity_snapshot)
+    {
+      let _ = fs::remove_file(&output_path);
+      return Err(error);
+    }
+  }
+
   result
+}
+
+fn capture_video_segments_source_identity_snapshot(
+  source_duration_by_path: &HashMap<PathBuf, u64>,
+) -> Result<Vec<(PathBuf, String)>, String> {
+  source_duration_by_path
+    .keys()
+    .map(|path| {
+      let identity = audio_render::source_identity(path).map_err(|error| {
+        format!(
+          "Multi-segment source could not be snapshotted before rendering: {error}"
+        )
+      })?;
+      Ok((path.clone(), identity))
+    })
+    .collect()
+}
+
+fn validate_video_segments_source_identity_snapshot(
+  snapshot: &[(PathBuf, String)],
+) -> Result<(), String> {
+  for (path, expected_identity) in snapshot {
+    let current_identity = audio_render::source_identity(path).map_err(|error| {
+      format!(
+        "Multi-segment source changed or became unavailable during rendering: {error}"
+      )
+    })?;
+
+    if &current_identity != expected_identity {
+      return Err(format!(
+        "Multi-segment source changed during rendering; please retry: {}",
+        path.display()
+      ));
+    }
+  }
+
+  Ok(())
 }
 
 #[tauri::command]
@@ -1969,6 +2019,39 @@ mod tests {
     assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "1:a:0".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
+  }
+
+  #[test]
+  fn video_segments_source_identity_snapshot_detects_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-video-segments-source-{unique_suffix}.tmp"
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let mut durations = HashMap::new();
+    durations.insert(path.clone(), 1_000);
+    let snapshot =
+      super::capture_video_segments_source_identity_snapshot(&durations).unwrap();
+    assert!(
+      super::validate_video_segments_source_identity_snapshot(&snapshot).is_ok()
+    );
+
+    fs::write(&path, b"second").unwrap();
+    let error = super::validate_video_segments_source_identity_snapshot(&snapshot)
+      .expect_err("changed multi-segment sources must invalidate the render");
+    assert!(error.contains("Multi-segment source changed during rendering"));
+    assert!(error.contains(&path.to_string_lossy()));
+
+    fs::remove_file(path).unwrap();
   }
 
   #[test]
