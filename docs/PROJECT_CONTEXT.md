@@ -1,10 +1,57 @@
-## M3.140 — Strict Persistent Waveform Store Size Contract — active — 2026-09-27
+## M3.141 — Strict Persistent Waveform Entry Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-141-strict-persistent-waveform-entry-contract`
+
+Scope:
+- Validate every persisted waveform cache entry structurally before lookup, sorting, mutation, or reuse.
+
+Audit finding:
+- M3.140 bounded the persisted store to at most 32 entries, but the store validator still accepted malformed individual entries.
+- `readPersistentWaveform()` could therefore reach `find()` and `touchPersistentWaveform()` with entries whose `cacheKey` or `lastUsedAt` metadata was malformed.
+- `writePersistentWaveform()` could also inherit malformed entry metadata until the next successful bounded rewrite.
+- This left the per-entry persistence contract weaker than the store-level size contract.
+
+Implementation:
+- Added `isValidPersistentWaveformEntry()` to require a non-empty string `cacheKey`.
+- Require each persisted entry waveform to satisfy the existing strict `isValidAudioWaveform()` contract.
+- Require `lastUsedAt` to be a non-negative JavaScript safe integer.
+- Require every entry in a persisted store to pass the entry validator before the store is accepted.
+- Added focused regression coverage for malformed persisted timestamps and invalid cache keys.
+- No project schema version change.
+
+Invariant / contract:
+- Every persisted waveform entry is structurally valid before any cache lookup or sorting occurs.
+- Persisted entry timestamps are non-negative safe integers.
+- Invalid entry metadata invalidates the persisted store and triggers normal waveform regeneration.
+- Existing valid stores, including the 32-entry boundary, remain reusable.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Floating-point waveform interpolation remains out of scope.
+- Other independent persistence boundaries remain subject to fresh focused audits.
+
+Next step:
+- Complete user local validation of M3.141; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.140 — Strict Persistent Waveform Store Size Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-140-strict-persistent-waveform-store-size`
 
-Scope:
-- Bound the number of persisted waveform cache entries before lookup, sorting, or reuse.
+PR:
+#155
+
+Merge SHA:
+`a43175c89856a34e3f684a27430aca883e27dd32`
+
+User validation:
+- User reported PASS for M3.140.
+- PR #155 was refreshed at head `314df08dc71bd157f5ac7afc0e1de8dca6f09224`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `a43175c89856a34e3f684a27430aca883e27dd32`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - `isPersistentWaveformStore()` previously accepted any array of entries when `version === 1`.
@@ -25,15 +72,14 @@ Invariant / contract:
 - Existing valid 32-entry cache behavior remains unchanged.
 
 Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- User reported PASS for M3.140.
 
 Remaining risks:
-- Individual persisted entry structural metadata remains subject to further focused auditing.
+- Individual persisted entry structural metadata is addressed by M3.141.
 - Floating-point waveform interpolation remains out of scope.
 
 Next step:
-- Complete user local validation of M3.140; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
-
+- Fresh audit from verified `main` for M3.141.
 ## M3.139 — Strict Waveform Peak-Array Contract — completed — 2026-09-27
 
 Branch:
