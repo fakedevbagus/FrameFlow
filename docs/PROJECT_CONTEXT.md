@@ -17,7 +17,6 @@ Implementation:
 - Re-check every source after successful FFmpeg generation.
 - Remove the temporary output and return a retryable error when a source changes or becomes unavailable.
 - Added a focused Rust regression test proving a legacy video/audio mix source mutation is detected between snapshot and finalization.
-- Add focused Rust regression coverage for source mutation during the legacy video/audio mix render.
 - No project schema version change.
 
 Invariant / contract:
