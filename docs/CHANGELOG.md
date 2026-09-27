@@ -1,12 +1,20 @@
-### M3.153 — Native Video Graph Input Index Validation — active — 2026-09-27
+### M3.153 — Native Video Graph Input Index Validation — completed — 2026-09-27
 
 - Branch: `fix/m3-153-video-graph-input-index-validation`.
-- Fresh audit found `render_video_graph_to_mp4()` referencing `index` inside an input mapping closure without enumerating the iterator.
-- Changed the iterator to `.enumerate().map(|(index, value)| ...)` and extracted indexed media-type validation into a focused helper.
-- Added focused Rust regression coverage for matching, omitted, and mismatched indexed media types.
+- PR #168; squash-merged at `4f2ad5268df82be89d72077837dce26864636244`.
+- User reported PASS.
+- Restored indexed native video-graph input validation with `.enumerate().map(|(index, value)| ...)`.
+- Extracted indexed media-type comparison into a focused helper.
+- Added focused Rust regression coverage.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
+- PR head `601fd88a5b9fdac4beea56996bd539b7f2f393c4` was verified before merge.
+- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
+### M3.154 — active — 2026-09-27
+
+- Fresh audit from verified `main` is in progress.
 ### M3.152 — Preview Generation Source Consistency Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-152-preview-generation-source-consistency`.
