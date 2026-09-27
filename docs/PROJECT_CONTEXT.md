@@ -1,59 +1,58 @@
-## M3.172 — Media Server Query Parameter Strictness — completed — 2026-09-27
+## M3.173 — Media Server OPTIONS Target Contract — completed — 2026-09-28
 
 Branch:
-`fix/m3-172-media-query-parameters`
+`fix/m3-173-media-options-target`
 
 PR:
-#187
+#188
 
 Merge SHA:
-`b78f73310ce1ff006bcb938f346aa138e6e5fdfd`
+`bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`
 
 User validation:
-- User reported PASS for M3.172.
-- PR #187 was refreshed at head `c9c6f9a74c9d5443ac638faa7a84837487c8e089`, verified against `main`, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
+- User reported PASS for M3.173.
+- PR #188 was refreshed at head `9f5e23ca86fc2aa9e57f4a3ec5563c72ece6dbd8`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Scope:
-- Make the media-server query contract closed and deterministic.
+- Scope successful media-server `OPTIONS` handling to the media endpoint target.
 
 Implementation:
-- Accept only `path=` and `token=` query parameters.
-- Reject unknown query parameters with HTTP 400.
-- Preserve duplicate-path and duplicate-token rejection and capability-token authorization.
-- Preserve path, media-type, range, HTTP-version, method, and HEAD contracts.
-- Added focused regression coverage.
+- Reject non-media `OPTIONS` targets with HTTP 404.
+- Preserve HTTP 204 for `/media?` targets.
+- Added focused TCP regression coverage.
+- Preserved query, capability-token, path, media-type, range, HTTP-version, method, and HEAD contracts.
 - No project schema change.
 
 Next step:
 - Fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
-## M3.173 — Media Server OPTIONS Target Contract — active — 2026-09-27
+## M3.174 — Media Server Request Read Timeout — active — 2026-09-28
 
 Branch:
-`fix/m3-173-media-options-target`
+`fix/m3-174-media-request-read-timeout`
 
 Fresh audit finding:
-- The media server returned HTTP 204 for every HTTP/1.1 `OPTIONS` target before checking whether the target was the media endpoint.
-- This made unrelated local-server targets appear to support the media-server CORS/preflight endpoint.
-- The fix scopes successful `OPTIONS` handling to targets beginning with `/media?`, while leaving valid media preflight behavior unchanged.
+- Each accepted media-server connection creates a dedicated thread.
+- `read_request()` previously blocked without a deadline until the request headers were completed or the peer closed the connection.
+- A local client could therefore hold server threads indefinitely by keeping a connection open without completing the request headers.
 
 Scope:
-- Reject `OPTIONS` requests to non-media targets with HTTP 404.
+- Bound the request-header read phase with a fixed 15-second read timeout.
 
 Implementation:
-- Add an endpoint-target guard for `OPTIONS` before the existing 204 response.
-- Preserve 204 handling for `/media?` targets.
-- Add focused TCP regression coverage for non-media `OPTIONS` requests.
-- Preserve all existing query, capability-token, path, media-type, range, HTTP-version, method, and HEAD contracts.
+- Apply a 15-second `TcpStream` read timeout before parsing request headers.
+- Preserve the existing 32 KiB header limit, framing errors, HTTP parsing, query/token authorization, media path validation, range handling, and streaming behavior.
+- Timeouts surface through the existing request I/O error path, closing the idle connection without changing valid request responses.
+- Add focused regression coverage for the configured timeout.
 - No project schema change.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Validate M3.173 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Validate M3.174 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
 ## M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 
