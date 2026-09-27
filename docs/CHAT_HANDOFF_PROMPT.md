@@ -5,7 +5,7 @@
 - Fresh audit found `render_video_with_audio_graph_to_mp4()` validates its video/audio paths before a long-running FFmpeg operation but does not re-check source identity before finalizing the temporary output.
 - Reuse the established Linux source identity contract: snapshot the video source and all independent audio sources before rendering, then re-check them after FFmpeg.
 - Remove the temporary output and return a retryable error on source mutation or removal.
-- Add focused Rust regression coverage.
+- Added a focused Rust regression test proving mutation is detected before finalization.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.

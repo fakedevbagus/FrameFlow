@@ -1022,6 +1022,10 @@ pub fn render_video_with_audio_graph_to_mp4(
     })
     .collect::<Result<Vec<_>, String>>()?;
 
+  let mut source_paths_for_consistency = vec![video_path.clone()];
+  source_paths_for_consistency.extend(audio_paths.iter().cloned());
+  let source_identity_snapshot = capture_source_identity_snapshot(&source_paths_for_consistency)?;
+
   let has_video_audio = probe_has_audio(&video_path)?;
   let temporary_path = temporary_audio_mix_path(&output_path);
   let args = build_ffmpeg_video_with_audio_graph_args(
@@ -1045,6 +1049,13 @@ pub fn render_video_with_audio_graph_to_mp4(
     None,
     "the project video and audio graph",
   ) {
+    let _ = fs::remove_file(&temporary_path);
+    return Err(error);
+  }
+
+  if let Err(error) =
+    validate_source_identity_snapshot(&source_identity_snapshot)
+  {
     let _ = fs::remove_file(&temporary_path);
     return Err(error);
   }
@@ -1529,6 +1540,38 @@ mod tests {
     ]));
     assert!(values.iter().any(|value| value == "/tmp/FrameFlow Audio.mp4"));
   }
+  #[test]
+  fn legacy_video_audio_mix_source_identity_snapshot_detects_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-video-audio-mix-source-{}-{unique_suffix}.tmp",
+      std::process::id(),
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let snapshot = super::capture_source_identity_snapshot(&[path.clone()]).unwrap();
+
+    assert!(super::validate_source_identity_snapshot(&snapshot).is_ok());
+
+    fs::write(&path, b"second").unwrap();
+
+    let error = super::validate_source_identity_snapshot(&snapshot)
+      .expect_err("changed legacy video/audio sources must invalidate the render");
+
+    assert!(error.contains("Unified AV source changed during rendering"));
+    assert!(error.contains(&path.to_string_lossy()));
+
+    fs::remove_file(path).unwrap();
+  }
+
   #[test]
   fn validates_video_audio_mix_request_metadata() {
     let valid = NativeVideoWithAudioGraphRenderRequest {
