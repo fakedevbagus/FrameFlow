@@ -1,12 +1,17 @@
-### M3.152 — Preview Generation Source Consistency Contract — active — 2026-09-27
+### M3.152 — Preview Generation Source Consistency Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-152-preview-generation-source-consistency`.
-- Fresh audit found preview generation captured the source cache key before FFmpeg but never revalidated source identity after generation.
-- Added a post-generation source identity check using the same metadata-backed preview cache key.
-- Changed sources are rejected and temporary preview output is removed rather than finalized under a stale key.
-- Added focused Rust regression coverage for stable and changed source identity.
+- PR #167; squash-merged at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- User reported PASS.
+- Re-checked preview source identity after FFmpeg generation and rejected changed sources before cache finalization.
+- Removed temporary output when source identity changed.
+- Added focused Rust regression coverage.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
+- PR head `a5a3e1f125fd44d44128330ec284d30e8d4147f7` was verified before merge.
+- `main` was verified after merge at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
 
 ### M3.151 — Linux Preview Cache Source Identity Contract — completed — 2026-09-27
 
