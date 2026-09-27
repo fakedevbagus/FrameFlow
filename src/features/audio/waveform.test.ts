@@ -398,6 +398,25 @@ describe("audio waveform", () => {
     });
   });
 
+  it("rejects a sparse native waveform peak array", async () => {
+    const sparsePeaks = new Array<number>(3);
+    sparsePeaks[0] = 0.5;
+    sparsePeaks[2] = 0.75;
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "sparse-peaks" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: sparsePeaks,
+        sourceFingerprint: "sparse-peaks",
+      });
+
+    await expect(
+      getAudioWaveform("/sparse-peaks.mp3"),
+    ).rejects.toThrow("Native waveform data is invalid.");
+  });
+
   it("rejects a native waveform peak array containing non-number values", async () => {
     vi.mocked(invoke)
       .mockResolvedValueOnce({ sourceFingerprint: "invalid-peak-type" })
