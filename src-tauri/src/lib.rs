@@ -355,7 +355,8 @@ fn render_video_graph_to_mp4(
   let input_paths = request
     .inputs
     .iter()
-    .map(|value| {
+    .enumerate()
+    .map(|(index, value)| {
       let path = media_path(value)?;
 
       if !path.is_absolute() {
@@ -370,13 +371,11 @@ fn render_video_graph_to_mp4(
         );
       }
 
-      if let Some(expected_type) = request.input_media_types.get(index) {
-        if source_type != expected_type {
-          return Err(format!(
-            "Native video graph input media type mismatch at index {index}."
-          ));
-        }
-      }
+      validate_native_video_graph_input_media_type(
+        index,
+        &source_type,
+        request.input_media_types.get(index).map(String::as_str),
+      )?;
 
       if same_path(&path, &output_path) {
         return Err("Export output must differ from every graph input.".to_string());
@@ -1008,6 +1007,22 @@ fn validate_native_video_graph_request_metadata(
   for media_type in &request.input_media_types {
     if media_type != "video" && media_type != "image" {
       return Err("Native video graph input media types must be video or image.".to_string());
+    }
+  }
+
+  Ok(())
+}
+
+fn validate_native_video_graph_input_media_type(
+  index: usize,
+  source_type: &str,
+  expected_type: Option<&str>,
+) -> Result<(), String> {
+  if let Some(expected_type) = expected_type {
+    if source_type != expected_type {
+      return Err(format!(
+        "Native video graph input media type mismatch at index {index}."
+      ));
     }
   }
 
@@ -1923,6 +1938,33 @@ mod tests {
     assert!(super::project_path("/tmp/first-edit.json").is_err());
     assert!(super::project_path("/tmp/first-edit.mp4").is_err());
     assert!(super::project_path("/tmp").is_err());
+  }
+
+  #[test]
+  fn validates_native_video_graph_input_media_type_by_index() {
+    assert!(
+      super::validate_native_video_graph_input_media_type(0, "video", Some("video"))
+        .is_ok()
+    );
+    assert!(
+      super::validate_native_video_graph_input_media_type(1, "image", Some("image"))
+        .is_ok()
+    );
+    assert!(
+      super::validate_native_video_graph_input_media_type(2, "video", None).is_ok()
+    );
+
+    let error = super::validate_native_video_graph_input_media_type(
+      1,
+      "video",
+      Some("image"),
+    )
+    .expect_err("mismatched graph input media types must be rejected by index");
+
+    assert_eq!(
+      error,
+      "Native video graph input media type mismatch at index 1."
+    );
   }
 
   #[test]
