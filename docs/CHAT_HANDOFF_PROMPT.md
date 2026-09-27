@@ -1,16 +1,20 @@
-## M3.153 — active — 2026-09-27
+## M3.153 — completed — 2026-09-27
 
 - Branch: `fix/m3-153-video-graph-input-index-validation`.
-- Scope: restore indexed native video-graph input validation so declared media types are matched against their corresponding input indexes.
-- Fresh audit found `render_video_graph_to_mp4()` using `index` inside an input mapping closure without enumerating the iterator, leaving the native Rust command path with an unresolved index binding.
-- Changed the iterator to `.enumerate().map(|(index, value)| ...)`.
-- Extracted indexed media-type comparison into `validate_native_video_graph_input_media_type()`.
-- Added focused Rust regression coverage for matching, omitted, and mismatched indexed media types.
+- PR #168; squash-merged at `4f2ad5268df82be89d72077837dce26864636244`.
+- User reported PASS.
+- Restored indexed native video-graph input validation with `.enumerate().map(|(index, value)| ...)`.
+- Extracted indexed media-type comparison into a focused helper.
+- Added focused Rust regression coverage.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- PR head `601fd88a5b9fdac4beea56996bd539b7f2f393c4` was verified before merge.
+- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
+## M3.154 — active — 2026-09-27
+
+- Fresh audit from verified `main` after M3.153.
 ## M3.152 — completed — 2026-09-27
 
 - Branch: `fix/m3-152-preview-generation-source-consistency`.
