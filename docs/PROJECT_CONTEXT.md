@@ -1,33 +1,61 @@
-## M3.148 — Fingerprint-Aware Waveform Request Deduplication — active — 2026-09-27
+## M3.149 — Waveform Generation Fingerprint Consistency Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-148-waveform-request-fingerprint-key`
+`fix/m3-149-waveform-generation-fingerprint-consistency`
 
 Scope:
-- Prevent in-flight waveform request deduplication from sharing a request across different source fingerprints.
+- Prevent a waveform generated from one source fingerprint from being returned or persisted under a different fingerprint when the media file changes during FFmpeg generation.
 
 Audit finding:
-- M3.147 completed the exported render boundary contract, but `getAudioWaveform()` still keyed its in-memory request cache only by `sourcePath + normalizedPeakCount` before the native source fingerprint was known.
-- If the underlying media changed while a waveform generation request was still in flight, a later caller for the same path and peak count could reuse the earlier Promise and receive waveform data for the stale fingerprint.
-- This is a source-consistency issue at the asynchronous request-coalescing boundary.
+- M3.148 made in-flight request deduplication fingerprint-aware, but `generate_audio_waveform()` computes the returned fingerprint after the decode step while `getAudioWaveform()` keys the request using the fingerprint captured before generation.
+- If the source file changes during generation, the native response can carry a different fingerprint from the request key.
+- Without an explicit consistency check, that mismatched waveform could be returned to the caller and persisted under its newer fingerprint even though the request represented an older source snapshot.
 
 Implementation:
-- Resolve and validate the native source fingerprint before consulting the in-memory request cache.
-- Use `sourcePath + normalizedPeakCount + sourceFingerprint` as the in-flight request key.
-- Preserve request deduplication for callers that resolve to the same source fingerprint.
-- Add focused regression coverage proving changed fingerprints do not share an in-flight generation request.
+- Require the generated waveform fingerprint to exactly match the validated pre-generation fingerprint.
+- Reject generation results whose source fingerprint changed during generation.
+- Ensure mismatched results never enter persistent waveform caching.
+- Add focused regression coverage for fingerprint drift during generation followed by successful regeneration for the new fingerprint.
 - No project schema version change.
 
 Invariant / contract:
-- An in-flight waveform generation Promise is reusable only for the same source path, normalized peak count, and validated source fingerprint.
-- A changed source fingerprint must create or reuse only a request keyed to the new source version.
-- Existing persistent-cache behavior remains fingerprint-aware.
+- A generated waveform is accepted only when its source fingerprint matches the fingerprint captured immediately before generation.
+- Fingerprint drift during generation is treated as invalid native waveform state.
+- Mismatched generation results are not persisted.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.148; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.149; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.148 — Fingerprint-Aware Waveform Request Deduplication — completed — 2026-09-27
+
+Branch:
+`fix/m3-148-waveform-request-fingerprint-key`
+
+PR:
+#163
+
+Merge SHA:
+`39073936f701476dd8bd31690199b2236f7d083a`
+
+User validation:
+- User reported PASS for M3.148.
+- PR #163 was refreshed at head `36ceee7913ba11fd7e6944385c530950f905e82d`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `39073936f701476dd8bd31690199b2236f7d083a`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Resolved and validated the native source fingerprint before checking the in-memory waveform request cache.
+- Keyed in-flight requests by source path, normalized peak count, and source fingerprint.
+- Preserved deduplication for identical fingerprints while preventing stale in-flight request reuse across changed source fingerprints.
+- Added focused regression coverage.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.149.
+
 
 ## M3.147 — Strict Waveform Render Peak Input Contract — completed — 2026-09-27
 
