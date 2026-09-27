@@ -102,7 +102,13 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   };
 
   let Some((target, _version)) = remainder.split_once(' ') else {
-    write_status(&mut stream, 400, "Bad Request", b"Invalid request.")?;
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      b"Invalid request.",
+      method != "HEAD",
+    )?;
     return Ok(());
   };
 
@@ -119,7 +125,13 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   }
 
   if method != "GET" && method != "HEAD" {
-    write_status(&mut stream, 405, "Method Not Allowed", b"Method not allowed.")?;
+    write_status(
+      &mut stream,
+      405,
+      "Method Not Allowed",
+      b"Method not allowed.",
+      true,
+    )?;
     return Ok(());
   }
 
