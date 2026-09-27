@@ -90,7 +90,7 @@ impl MediaServerState {
 fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   let request = read_request(&mut stream)?;
 
-  let Some((method, remainder)) = request.split_once(' ') else {
+  let Some(request_line) = request.lines().next() else {
     write_status(
       &mut stream,
       400,
@@ -101,7 +101,19 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
     return Ok(());
   };
 
-  let Some((target, _version)) = remainder.split_once(' ') else {
+  let mut request_parts = request_line.split(' ');
+  let Some(method) = request_parts.next().filter(|value| !value.is_empty()) else {
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      b"Invalid request.",
+      true,
+    )?;
+    return Ok(());
+  };
+
+  let Some(target) = request_parts.next().filter(|value| !value.is_empty()) else {
     write_status(
       &mut stream,
       400,
@@ -111,6 +123,39 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
     )?;
     return Ok(());
   };
+
+  let Some(version) = request_parts.next().filter(|value| !value.is_empty()) else {
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      b"Invalid request.",
+      method != "HEAD",
+    )?;
+    return Ok(());
+  };
+
+  if request_parts.next().is_some() {
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      b"Invalid request.",
+      method != "HEAD",
+    )?;
+    return Ok(());
+  }
+
+  if version != "HTTP/1.1" {
+    write_status(
+      &mut stream,
+      505,
+      "HTTP Version Not Supported",
+      b"HTTP version is not supported.",
+      method != "HEAD",
+    )?;
+    return Ok(());
+  }
 
   if method == "OPTIONS" {
     write_headers(
@@ -598,6 +643,35 @@ mod tests {
     parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
   };
   use std::path::Path;
+
+  #[test]
+  fn rejects_unsupported_http_versions() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(b"GET /missing HTTP/2.0\r\nHost: 127.0.0.1\r\n\r\n")
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 505 HTTP Version Not Supported\r\n"));
+    assert!(response_text.ends_with("HTTP version is not supported."));
+
+    server.join().unwrap();
+  }
 
   #[test]
   fn rejects_duplicate_media_path_parameters() {
