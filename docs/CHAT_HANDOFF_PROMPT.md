@@ -1,6 +1,16 @@
 ## M3.156 — active — 2026-09-27
 
-- Fresh audit from verified `main` after M3.155.
+- Branch: `fix/m3-156-audio-graph-source-consistency`.
+- Scope: prevent audio-only graph export from finalizing when a resolved input source changes or becomes unavailable during FFmpeg rendering.
+- Fresh audit found `render_audio_graph_to_mp4()` validating audio paths before FFmpeg but not re-checking source identity before accepting the generated output.
+- Capture Linux source identity for every resolved audio graph input before rendering.
+- Re-check all sources after successful FFmpeg generation; remove output and return a retryable error on mutation or removal.
+- Reuse the existing M3.154 source identity contract.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## Workflow for this chat
 
