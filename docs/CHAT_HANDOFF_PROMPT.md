@@ -1,12 +1,12 @@
 ## M3.162 — active — 2026-09-27
 
 - Branch: `fix/m3-162-media-server-request-errors`.
+- PR #177.
 - Scope: ensure malformed media requests and media-path validation failures receive explicit HTTP error responses instead of silently terminating the local media connection.
-- Fresh audit found `percent_decode()` and `validate_media_path()` errors propagating out of `handle_connection()`, while the per-connection thread discarded the returned `Result`.
-- Add explicit validation error classifications mapped to HTTP 400/403/404/415 while preserving existing validation rules and messages.
-- Added focused Rust regression coverage.
-- No project schema version change.
+- Fresh audit found `percent_decode()` and `validate_media_path()` errors propagating from `handle_connection()` while the per-connection thread discarded the returned `Result`.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Added focused Rust regression coverage for validation error status mapping and stable messages.
+- No project schema version change.
 
 ## Workflow for this chat
 
