@@ -1,3 +1,21 @@
+## M3.168 — active — 2026-09-27
+
+- Branch: `fix/m3-168-media-range-header-uniqueness`.
+- Scope: reject duplicate `Range:` request headers instead of silently using only the first one.
+- Fresh audit found that only the first `Range:` header was processed; additional duplicates were ignored.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Added HTTP 400 mapping for duplicate range headers and focused regression coverage.
+- Existing single/multiple range, HTTP-version, path/query, canonicalization, media-type, and HEAD contracts remain preserved.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.168 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.167 — completed — 2026-09-27
 
 - Branch: `fix/m3-167-media-request-header-termination`.
