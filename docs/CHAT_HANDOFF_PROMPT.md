@@ -1,16 +1,16 @@
-## M3.153 — completed — 2026-09-27
+## M3.154 — active — 2026-09-27
 
-- Branch: `fix/m3-153-video-graph-input-index-validation`.
-- PR #168; squash-merged at `4f2ad5268df82be89d72077837dce26864636244`.
-- User reported PASS.
-- Restored indexed native video-graph input validation with `.enumerate().map(|(index, value)| ...)`.
-- Extracted indexed media-type comparison into a focused helper.
+- Branch: `fix/m3-154-unified-av-source-consistency`.
+- Scope: prevent unified video+audio export from finalizing when a resolved source changes or becomes unavailable during FFmpeg rendering.
+- Fresh audit found `render_video_audio_graph_to_mp4()` probes resolved video/audio sources before FFmpeg but did not capture or re-check source filesystem identity across the render window.
+- Capture Linux source identity for every resolved video/audio input before rendering.
+- Re-check every source after successful FFmpeg generation; remove output and return a retryable error on mutation or source removal.
+- Identity includes size, mtime, ctime, ctime nanoseconds, device ID, and inode.
 - Added focused Rust regression coverage.
 - No project schema version change.
-- PR head `601fd88a5b9fdac4beea56996bd539b7f2f393c4` was verified before merge.
-- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main`.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.154 — active — 2026-09-27
 
