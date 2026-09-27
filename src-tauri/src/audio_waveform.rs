@@ -305,6 +305,51 @@ mod tests {
   }
 
   #[test]
+  fn source_fingerprint_includes_linux_file_identity_and_change_metadata() {
+    use std::{
+      fs::{self, File},
+      io::Write,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-waveform-fingerprint-{}-{unique_suffix}.tmp",
+      std::process::id(),
+    ));
+
+    let mut file = File::create(&path).unwrap();
+    file.write_all(b"waveform").unwrap();
+    file.sync_all().unwrap();
+
+    let metadata = fs::metadata(&path).unwrap();
+    let fingerprint = source_fingerprint(&path).unwrap();
+    let modified_nanos = metadata
+      .modified()
+      .ok()
+      .and_then(|value| value.duration_since(UNIX_EPOCH).ok())
+      .map(|value| value.as_nanos())
+      .unwrap_or_default();
+
+    assert_eq!(
+      fingerprint,
+      format!(
+        "{}:{modified_nanos}:{}:{}:{}:{}",
+        metadata.len(),
+        metadata.ctime(),
+        metadata.ctime_nsec(),
+        metadata.dev(),
+        metadata.ino(),
+      ),
+    );
+
+    fs::remove_file(path).unwrap();
+  }
+
+  #[test]
   fn reduces_samples_into_normalized_peak_buckets() {
     let mut peaks = vec![0.0_f32; 4];
 
