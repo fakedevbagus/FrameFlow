@@ -1930,18 +1930,31 @@ mod tests {
   }
 
   #[test]
-  fn preview_cache_key_changes_when_media_changes() {
-    let first = preview_cache_key(
-      Path::new("/media/video.mp4"),
-      10,
-      Some(std::time::UNIX_EPOCH),
-    );
-    let second = preview_cache_key(
-      Path::new("/media/video.mp4"),
-      20,
-      Some(std::time::UNIX_EPOCH),
-    );
+  fn preview_cache_key_changes_when_source_metadata_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-preview-cache-{}-{unique_suffix}.tmp",
+      std::process::id(),
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let first_metadata = fs::metadata(&path).unwrap();
+    let first = preview_cache_key(&path, &first_metadata);
+
+    fs::write(&path, b"second").unwrap();
+    let second_metadata = fs::metadata(&path).unwrap();
+    let second = preview_cache_key(&path, &second_metadata);
 
     assert_ne!(first, second);
+
+    fs::remove_file(path).unwrap();
   }
 }
