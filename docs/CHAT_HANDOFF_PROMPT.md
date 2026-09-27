@@ -1,14 +1,15 @@
-## M3.139 — active — 2026-09-27
+## M3.139 — completed — 2026-09-27
 
 - Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
-- Scope: require waveform peak arrays to contain at most 2048 entries before native-response acceptance or persisted-cache reuse.
-- Fresh audit found waveform metadata validation only required a non-empty `peaks` array, despite the established 2048 waveform density ceiling.
-- Tightened native and persisted waveform metadata validation to enforce the same 2048 peak-array maximum.
-- Added focused regression coverage for the maximum valid native length, over-limit native data, and over-limit persisted cache data.
+- PR #154; squash-merged at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- User reported PASS.
+- Tightened native and persisted waveform metadata validation to enforce the 2048 peak-array maximum.
+- Added focused regression coverage for maximum-valid and over-limit peak arrays.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- PR head `eda1a4201a6c86f6a4e6ac10a53d7fd054f472de` was verified before merge.
+- `main` was verified after merge at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ## M3.136 — completed — 2026-09-26
 
