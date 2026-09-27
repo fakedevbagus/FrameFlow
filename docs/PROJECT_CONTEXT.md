@@ -1,33 +1,92 @@
-## M3.143 — Persistent Waveform Cache-Key Consistency — active — 2026-09-27
+## M3.144 — Strict Waveform Peak Element Type Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-143-persistent-waveform-key-consistency`
+`fix/m3-144-strict-waveform-peak-element-contract`
 
 Scope:
-- Ensure a persisted waveform entry's cache key is consistent with the source fingerprint stored in its waveform payload before reuse.
+- Require every runtime waveform peak array element to be a JavaScript number before cache or render processing.
 
 Audit finding:
-- M3.141 validated the persisted entry structure, and M3.142 bounded source fingerprint length.
-- The cache lookup still matched only the entry `cacheKey`; it did not verify that the key's fingerprint suffix matched `entry.waveform.sourceFingerprint`.
-- Corrupted persisted data could therefore pair a valid cache key with a different valid waveform fingerprint and return the wrong cached waveform for a source.
+- M3.139 bounded waveform peak-array length, but runtime validation did not validate element types.
+- Native or persisted payloads containing strings, objects, or null values could therefore enter normalization and be silently converted to zero instead of being rejected as malformed waveform data.
+- Existing `NaN`/`Infinity` sanitization is preserved because those values are numeric and the established normalizer maps them to zero.
 
 Implementation:
-- Added `isPersistentWaveformEntryKeyConsistent()` for the lookup boundary.
-- Require the requested cache key to end with the exact persisted waveform `sourceFingerprint`.
-- Treat inconsistent entries as cache misses and regenerate the waveform.
-- Added focused regression coverage for a mismatched key/payload fingerprint pair.
+- Added `isValidWaveformPeakArray()` requiring a non-empty array of at most 2048 elements, with every element having type `number`.
+- Reused the validator for native waveform response validation and persisted waveform validation.
+- Preserved existing numeric peak normalization, including `NaN`/`Infinity` handling.
+- Added focused regression coverage for non-number native and persisted peak elements.
 - No project schema version change.
 
 Invariant / contract:
-- A persisted waveform cache entry may be reused only when its cache key is consistent with its waveform source fingerprint.
-- Mismatched persisted metadata cannot produce a cache hit.
-- Existing valid cache reuse remains unchanged.
+- Every waveform peak array entering cache or render logic contains only numeric elements.
+- Malformed non-number peak elements cannot be silently converted into waveform data.
+- Existing valid numeric and non-finite-number normalization semantics remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.143; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.144; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.143 — Persistent Waveform Cache-Key Consistency — completed — 2026-09-27
+
+Branch:
+`fix/m3-143-persistent-waveform-key-consistency`
+
+PR:
+#158
+
+Merge SHA:
+`be3f872637a26414fd37e8f62fa4ae8a538de58e`
+
+User validation:
+- User reported PASS for M3.143.
+- PR #158 was refreshed at head `07faea424ace642c0270c23291562fe93c6e897b`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `be3f872637a26414fd37e8f62fa4ae8a538de58e`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- M3.141 validated persisted entry structure and M3.142 bounded source fingerprint length, but lookup did not verify that the cache-key fingerprint matched the payload fingerprint.
+
+Implementation:
+- Added `isPersistentWaveformEntryKeyConsistent()` at the cache lookup boundary.
+- Treat mismatched key/payload fingerprints as cache misses and regenerate the waveform.
+- Added focused regression coverage.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.144.
+
+## M3.142 — Strict Waveform Source Fingerprint Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-142-strict-waveform-fingerprint-contract`
+
+PR:
+#157
+
+Merge SHA:
+`0135723cf9986824d34cb07c95b38db5c13c4da1`
+
+User validation:
+- User reported PASS for M3.142.
+- PR #157 was refreshed at head `954107b41151adb024a666b7986a5128b773a0f0`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `0135723cf9986824d34cb07c95b38db5c13c4da1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- Native and persisted waveform source fingerprints were previously required to be non-empty strings without an upper length bound.
+
+Implementation:
+- Added `MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH = 128`.
+- Applied the fingerprint bound to native fingerprint responses, generated waveform payloads, and persisted waveform validation.
+- Added focused regression coverage for the maximum valid length and over-limit fingerprints.
+- Preserved the existing fingerprint format.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.143.
 ## M3.141 — Strict Persistent Waveform Entry Contract — completed — 2026-09-27
 
 Branch:
