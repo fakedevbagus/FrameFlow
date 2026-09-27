@@ -1264,6 +1264,8 @@ pub fn render_audio_graph_to_mp4(
     })
     .collect::<Result<Vec<_>, String>>()?;
 
+  let source_identity_snapshot = capture_source_identity_snapshot(&input_paths)?;
+
   let args = build_ffmpeg_audio_graph_args(
     &input_paths,
     &request.filter_complex,
@@ -1286,7 +1288,13 @@ pub fn render_audio_graph_to_mp4(
     return Err(error);
   }
 
+  if let Err(error) = validate_source_identity_snapshot(&source_identity_snapshot) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
+  }
+
   let metadata = fs::metadata(&output_path).map_err(|error| {
+    let _ = fs::remove_file(&output_path);
     format!(
       "FFmpeg completed but the audio graph export file could not be inspected: {error}"
     )
@@ -1616,6 +1624,38 @@ mod tests {
     invalid_duration.duration_ms = 5_000;
     invalid_duration.output_path = "/tmp/final.mov".to_string();
     assert!(validate_video_audio_mix_request(&invalid_duration).is_err());
+  }
+
+  #[test]
+  fn audio_graph_source_identity_snapshot_detects_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-audio-graph-source-{}-{unique_suffix}.tmp",
+      std::process::id(),
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let snapshot = super::capture_source_identity_snapshot(&[path.clone()]).unwrap();
+
+    assert!(super::validate_source_identity_snapshot(&snapshot).is_ok());
+
+    fs::write(&path, b"second").unwrap();
+
+    let error = super::validate_source_identity_snapshot(&snapshot)
+      .expect_err("changed audio graph sources must invalidate the render");
+
+    assert!(error.contains("Unified AV source changed during rendering"));
+    assert!(error.contains(&path.to_string_lossy()));
+
+    fs::remove_file(path).unwrap();
   }
 
   #[test]
