@@ -1,12 +1,25 @@
-### M3.161 — Media Server Canonical Path Enforcement — active — 2026-09-27
+### M3.162 — Media Server Request Validation Error Responses — active — 2026-09-27
 
-- Branch: `fix/m3-161-media-server-canonical-path`.
-- Fresh audit found media-server validation returning no canonical path, allowing callers to validate an alias and later reopen the original path.
-- Make validation return the canonical path and use it for URL generation, HTTP metadata access, and streaming.
-- Preserve supported media types, directory allowlist, range handling, and MIME mappings.
-- Added focused Rust regression coverage.
+- Branch: `fix/m3-162-media-server-request-errors`.
+- Fresh audit found media-path validation and percent-decoding errors bubbling out of the connection handler without an HTTP response because the per-connection thread discards the returned error.
+- Add explicit media-path validation error classifications and map them to HTTP 400, 403, 404, and 415 responses while preserving existing error messages and validation rules.
+- Add focused Rust regression coverage for the validation error-to-status contract.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
+
+### M3.161 — Media Server Canonical Path Enforcement — completed — 2026-09-27
+
+- Branch: `fix/m3-161-media-server-canonical-path`.
+- PR #176; squash-merged at `8caa4232bf03843972968c944cfdc69235e6c549`.
+- User reported PASS.
+- Made media-path validation return the canonical path and reused it for URL generation, metadata access, and streaming.
+- Preserved supported media types, directory allowlist, range handling, and MIME mappings.
+- Added focused Rust regression coverage.
+- No project schema change.
+- PR head `1908dbbd830601ee3d1687140afb2597555c56e6` was verified before merge.
+- `main` was verified at merge commit `8caa4232bf03843972968c944cfdc69235e6c549`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next concrete security or correctness gap.
 
 ### M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
