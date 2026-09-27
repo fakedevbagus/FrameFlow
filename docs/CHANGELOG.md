@@ -1,11 +1,26 @@
-### M3.146 — Dense Waveform Peak Array Contract — active — 2026-09-27
+### M3.147 — Strict Waveform Render Peak Input Contract — active — 2026-09-27
 
-- Branch: `fix/m3-146-dense-waveform-peak-array-contract`.
-- Fresh audit found the shared peak validator used `Array.prototype.every()`, which skips sparse-array holes.
-- Replaced hole-skipping validation with explicit index coverage so every declared peak position must contain a number.
-- Added focused regression coverage for a sparse native waveform peak array.
+- Branch: `fix/m3-147-waveform-render-peak-contract`.
+- Fresh audit found exported `buildWaveformPath()` validated only array non-emptiness and SVG dimensions, while the shared waveform peak contract was already stricter.
+- Reused `isValidWaveformPeakArray()` at the rendering boundary so sparse, over-limit, and non-number arrays are rejected before SVG point/path construction.
+- Preserved numeric `NaN`/`Infinity` normalization for valid render input.
+- Added focused regression coverage for malformed render peak arrays.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
+
+### M3.146 — Dense Waveform Peak Array Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-146-dense-waveform-peak-array-contract`.
+- PR #161; squash-merged at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- User reported PASS.
+- Replaced sparse-hole-skipping peak validation with explicit index coverage.
+- Added focused regression coverage for a sparse native waveform peak array.
+- Preserved numeric `NaN`/`Infinity` normalization and the established 2048-element maximum.
+- No project schema change.
+- PR head `9c547abcd8a8d16dbb59b31f5f869deac5bee3b7` was verified before merge.
+- `main` was verified after merge at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for M3.147.
 
 ### M3.145 — Strict Source-Range Waveform Peak Input Contract — completed — 2026-09-27
 
