@@ -316,7 +316,7 @@ export function getWaveformPeaksForSourceRange(
   outputPeakCount = peaks.length,
 ): number[] {
   if (
-    peaks.length === 0 ||
+    !isValidWaveformPeakArray(peaks) ||
     !Number.isSafeInteger(sourceDurationMs) ||
     sourceDurationMs <= 0 ||
     !Number.isSafeInteger(sourceStartMs) ||
