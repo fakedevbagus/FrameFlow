@@ -1,21 +1,25 @@
-## M3.159 — Single-Source Export Consistency Contract — active — 2026-09-27
+## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-159-single-source-consistency`
 
-Scope:
-- Prevent native single-source video exports from finalizing when the source media changes or becomes unavailable during FFmpeg rendering.
+PR:
+#174
 
-Audit finding:
-- `render_single_source_to_mp4()` validated the source and optional range before rendering, then accepted the output without revalidating source filesystem identity.
-- A source could change during the long-running export while the generated file was still accepted.
+Merge SHA:
+`0dfd00f97245d8c59546598a6fcc2be1dfe2420f`
+
+User validation:
+- User reported PASS for M3.159.
+- PR #174 was refreshed at head `79249168e35113c563d696e2f473d59fefbc5904`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `0dfd00f97245d8c59546598a6fcc2be1dfe2420f`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Capture the Linux source identity immediately before FFmpeg rendering.
-- Re-check source identity after successful FFmpeg generation and before accepting output metadata.
-- Remove the generated output and return a retryable error when the source changes or becomes unavailable.
-- Reuse the established native source identity contract.
-- Add focused Rust regression coverage.
+- Captured the Linux source identity immediately before FFmpeg rendering.
+- Re-checked source identity after successful FFmpeg generation and before accepting output metadata.
+- Removed the generated output and returned a retryable error when the source changed or became unavailable.
+- Added focused Rust regression coverage for source mutation and removal.
 - No project schema version change.
 
 Invariant / contract:
@@ -23,11 +27,8 @@ Invariant / contract:
 - Source mutation or removal cannot leave a finalized export derived from a different source snapshot.
 - Existing source-range validation, include-audio behavior, dimensions, frame rate, and FFmpeg arguments remain unchanged.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.159; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete security or correctness gap.
 
 ## M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
