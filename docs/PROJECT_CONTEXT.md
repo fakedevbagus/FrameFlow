@@ -1,4 +1,37 @@
-## M3.157 — Video Graph Source Consistency Contract — active — 2026-09-27
+## M3.157 — Video Graph Source Consistency Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-157-video-graph-source-consistency`
+
+PR:
+#172
+
+Merge SHA:
+`4f516556ffd18e2e172d38b13793d10a7c5fecb5`
+
+User validation:
+- User reported PASS for M3.157.
+- PR #172 was refreshed at head `7272d5113b9646b7f97db62eec64e08486b25b37`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `4f516556ffd18e2e172d38b13793d10a7c5fecb5`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Reused the established Linux source identity contract from native AV rendering.
+- Captured source identity for every resolved video graph input before FFmpeg.
+- Re-checked all graph input identities after successful FFmpeg generation and before accepting output metadata.
+- Removed the generated output and returned a retryable error when a video/image input changed or became unavailable.
+- Added focused Rust regression coverage.
+- No project schema version change.
+
+Invariant / contract:
+- Video graph output is finalized only when all resolved visual input identities remain unchanged across the FFmpeg render window.
+- Source mutation or removal cannot leave a finalized graph export derived from a different source snapshot.
+- Existing graph inputs, media-type validation, filter graph, output mapping, frame rate, and export settings remain unchanged.
+
+Next step:
+- Fresh audit from verified `main` for the next concrete native render consistency gap.
+
+ — Video Graph Source Consistency Contract — active — 2026-09-27
 
 Branch:
 `fix/m3-157-video-graph-source-consistency`
