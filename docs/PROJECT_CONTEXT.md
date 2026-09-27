@@ -1,90 +1,35 @@
-## M3.155 — Legacy Video/Audio Source Consistency Contract — active — 2026-09-27
+## M3.156 — Audio Graph Source Consistency Contract — active — 2026-09-27
+
+Scope:
+- Fresh audit from verified `main` after M3.155.
+
+## M3.155 — Legacy Video/Audio Source Consistency Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-155-video-audio-mix-source-consistency`
 
-Scope:
-- Prevent the legacy video+audio mix export from finalizing when its video or independent audio sources change or become unavailable during FFmpeg rendering.
-
-Audit finding:
-- M3.154 protected unified video+audio graph rendering with source identity snapshots.
-- Fresh audit found `render_video_with_audio_graph_to_mp4()` still validates its video/audio paths before a long-running FFmpeg operation but does not re-check those source identities before finalizing the temporary output.
-- A source could therefore change or disappear during rendering while the generated temporary export is still finalized.
-
-Implementation:
-- Reuse the native Linux source identity contract already established for unified AV rendering.
-- Snapshot the video source and all resolved independent audio sources before rendering.
-- Re-check every source after successful FFmpeg generation.
-- Remove the temporary output and return a retryable error when a source changes or becomes unavailable.
-- Added a focused Rust regression test proving a legacy video/audio mix source mutation is detected between snapshot and finalization.
-- No project schema version change.
-
-Invariant / contract:
-- Legacy video/audio mix output is finalized only when all resolved source filesystem identities remain unchanged across the FFmpeg render window.
-- Source mutation or removal cannot produce a finalized output from a different source snapshot.
-- Existing filter graph, audio mapping, output format, and render settings remain unchanged.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
-Next step:
-- Complete user local validation of M3.155; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
-
-
-## M3.154 — Unified AV Source Consistency Contract — completed — 2026-09-27
-
-Branch:
-`fix/m3-154-unified-av-source-consistency`
-
 PR:
-#169
+#170
 
 Merge SHA:
-`9e33591f220125008b6d64930b79b37f381f9ecc`
+`fc655f82cc37284ab58d3bb3ad527d283313fd25`
 
 User validation:
-- User reported PASS for M3.154.
-- PR #169 was refreshed at head `c63874f95d6cf5efec3b3a780cb2825e02374ca5`, verified ahead of `main`, marked Ready for Review, and squash-merged.
-- `main` was verified after merge at `9e33591f220125008b6d64930b79b37f381f9ecc`.
+- User reported PASS for M3.155.
+- PR #170 was refreshed at head `78b70cfb50542146e70d84d2f8d56f761e23b1ec`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `fc655f82cc37284ab58d3bb3ad527d283313fd25`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Captured Linux source identity for every resolved unified AV video/audio input before rendering.
-- Re-checked all captured sources after FFmpeg generation.
-- Removed output and returned a retryable error when a source changed or became unavailable.
+- Reused the native Linux source identity contract established by M3.154.
+- Snapshotted the legacy video source and all resolved independent audio inputs before rendering.
+- Re-checked all sources after successful FFmpeg generation.
+- Removed temporary output and returned a retryable error when a source changed or became unavailable.
 - Added focused Rust regression coverage.
 - No project schema version change.
 
 Next step:
-- Fresh audit from verified `main` for the next concrete engineering gap.
-
-
-## M3.153 — Native Video Graph Input Index Validation — completed — 2026-09-27
-
-Branch:
-`fix/m3-153-video-graph-input-index-validation`
-
-PR:
-#168
-
-Merge SHA:
-`4f2ad5268df82be89d72077837dce26864636244`
-
-User validation:
-- User reported PASS for M3.153.
-- PR #168 was refreshed at head `601fd88a5b9fdac4beea56996bd539b7f2f393c4`, verified ahead of `main`, marked Ready for Review, and squash-merged.
-- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-
-Implementation:
-- Restored indexed iteration for native video-graph inputs with `.enumerate().map(|(index, value)| ...)`.
-- Extracted indexed media-type comparison into a focused helper.
-- Added focused Rust regression coverage.
-- No project schema version change.
-
-Next step:
-- Fresh audit from verified `main` identified M3.154, followed by M3.155 above.
-
+- Fresh audit from verified `main` for M3.156.
 
 ## M3.151 — Linux Preview Cache Source Identity Contract — completed — 2026-09-27
 
