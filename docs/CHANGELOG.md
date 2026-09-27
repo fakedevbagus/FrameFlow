@@ -1,26 +1,25 @@
-### M3.173 — Media Server OPTIONS Target Contract — active — 2026-09-27
+### M3.174 — Media Server Request Read Timeout — active — 2026-09-28
 
-- Branch: `fix/m3-173-media-options-target`.
-- Fresh audit found HTTP 204 was returned for every HTTP/1.1 `OPTIONS` target before media-endpoint routing was checked.
-- Non-media `OPTIONS` targets now return HTTP 404; `/media?` targets retain HTTP 204 handling.
-- Added focused TCP regression coverage.
-- Existing query, capability-token, path, media-type, range, HTTP-version, method, and HEAD contracts are preserved.
+- Branch: `fix/m3-174-media-request-read-timeout`.
+- Fresh audit found accepted media-server connections could block a dedicated thread indefinitely while waiting for request headers to finish.
+- Added a fixed 15-second read timeout before request-header parsing.
+- Existing header-size/framing, HTTP parsing, query/token, path, media-type, range, and streaming behavior remain preserved.
+- Added focused regression coverage for the configured timeout.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.173; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- Next step: complete user local validation of M3.174; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
 
-### M3.172 — Media Server Query Parameter Strictness — completed — 2026-09-27
+### M3.173 — Media Server OPTIONS Target Contract — completed — 2026-09-28
 
-- Branch: `fix/m3-172-media-query-parameters`.
-- PR #187; squash-merged at `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
-- User reported PASS for M3.172.
-- The media-server query contract now accepts only `path=` and `token=`; unknown parameters return HTTP 400.
-- Existing duplicate path/token checks and capability authorization remain unchanged.
-- Added focused regression coverage.
-- Existing path, media-type, range, HTTP-version, method, and HEAD contracts are preserved.
+- Branch: `fix/m3-173-media-options-target`.
+- PR #188; squash-merged at `bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`.
+- User reported PASS for M3.173.
+- Non-media `OPTIONS` targets now return HTTP 404; `/media?` retains HTTP 204 handling.
+- Added focused TCP regression coverage.
+- Existing query, capability-token, path, media-type, range, HTTP-version, method, and HEAD contracts remain preserved.
 - No project schema change.
-- PR head `c9c6f9a74c9d5443ac638faa7a84837487c8e089` was verified before merge.
-- `main` was verified at merge commit `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
+- PR head `9f5e23ca86fc2aa9e57f4a3ec5563c72ece6dbd8` was verified before merge.
+- `main` was verified at merge commit `bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
