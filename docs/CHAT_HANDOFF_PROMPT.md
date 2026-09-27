@@ -1,3 +1,21 @@
+## M3.170 — active — 2026-09-27
+
+- Branch: `fix/m3-170-media-head-framing-errors`.
+- Scope: preserve HEAD body suppression for media-server request-framing errors.
+- Fresh audit found framing errors were handled before the request method was parsed, so malformed HEAD requests could receive error bodies.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Added raw-method detection for framing errors and focused TCP tests covering oversized, invalid-UTF-8, and incomplete HEAD requests.
+- Existing M3.160–M3.169 media-server contracts remain preserved.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.170 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.169 — completed — 2026-09-27
 
 - Branch: `fix/m3-169-media-range-header-syntax`.
