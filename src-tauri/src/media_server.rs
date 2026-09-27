@@ -8,6 +8,7 @@ use std::{
 
 pub struct MediaServerState {
   base_url: String,
+  capability_token: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,18 +54,23 @@ impl MediaServerState {
       .local_addr()
       .map_err(|error| format!("Could not determine the local media server port: {error}"))?
       .port();
+    let capability_token = generate_capability_token()?;
 
     thread::Builder::new()
       .name("frameflow-media-server".to_string())
-      .spawn(move || {
-        for stream in listener.incoming() {
-          match stream {
-            Ok(stream) => {
-              thread::spawn(|| {
-                let _ = handle_connection(stream);
-              });
+      .spawn({
+        let capability_token = capability_token.clone();
+        move || {
+          for stream in listener.incoming() {
+            match stream {
+              Ok(stream) => {
+                let capability_token = capability_token.clone();
+                thread::spawn(move || {
+                  let _ = handle_connection(stream, &capability_token);
+                });
+              }
+              Err(_) => break,
             }
-            Err(_) => break,
           }
         }
       })
@@ -72,6 +78,7 @@ impl MediaServerState {
 
     Ok(Self {
       base_url: format!("http://127.0.0.1:{port}"),
+      capability_token,
     })
   }
 
@@ -80,14 +87,18 @@ impl MediaServerState {
       .map_err(|error| error.to_string())?;
 
     Ok(format!(
-      "{}/media?path={}",
+      "{}/media?path={}&token={}",
       self.base_url,
       percent_encode_path(&path),
+      self.capability_token,
     ))
   }
 }
 
-fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
+fn handle_connection(
+  mut stream: TcpStream,
+  capability_token: &str,
+) -> Result<(), String> {
   let request = match read_request(&mut stream) {
     Ok(request) => request,
     Err(MediaRequestError::HeadersTooLarge { suppress_body }) => {
@@ -224,8 +235,8 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
     return Ok(());
   };
 
-  let encoded_path = match extract_media_path(query) {
-    Ok(path) => path,
+  let (encoded_path, request_token) = match extract_media_request(query) {
+    Ok(values) => values,
     Err(error) => {
       write_status(
         &mut stream,
@@ -237,6 +248,17 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
       return Ok(());
     }
   };
+
+  if !constant_time_eq(request_token.as_bytes(), capability_token.as_bytes()) {
+    write_status(
+      &mut stream,
+      403,
+      "Forbidden",
+      b"Media server capability token is invalid.",
+      method != "HEAD",
+    )?;
+    return Ok(());
+  }
 
   let decoded_path = match percent_decode(encoded_path) {
     Ok(path) => path,
@@ -630,8 +652,9 @@ fn write_media_path_error(
   write_status(stream, status, reason, body.as_bytes(), include_body)
 }
 
-fn extract_media_path(query: &str) -> Result<&str, &'static str> {
+fn extract_media_request(query: &str) -> Result<(&str, &str), &'static str> {
   let mut encoded_path = None;
+  let mut token = None;
 
   for part in query.split('&') {
     if let Some(path) = part.strip_prefix("path=") {
@@ -640,10 +663,49 @@ fn extract_media_path(query: &str) -> Result<&str, &'static str> {
       }
 
       encoded_path = Some(path);
+      continue;
+    }
+
+    if let Some(value) = part.strip_prefix("token=") {
+      if token.is_some() {
+        return Err("Duplicate media server capability token.");
+      }
+
+      token = Some(value);
     }
   }
 
-  encoded_path.ok_or("Missing media path.")
+  let encoded_path = encoded_path.ok_or("Missing media path.")?;
+  let token = token.ok_or("Missing media server capability token.")?;
+
+  Ok((encoded_path, token))
+}
+
+fn generate_capability_token() -> Result<String, String> {
+  const TOKEN_BYTES: usize = 32;
+  let mut bytes = [0_u8; TOKEN_BYTES];
+  let mut file = File::open("/dev/urandom")
+    .map_err(|error| format!("Could not open the system random source: {error}"))?;
+
+  file
+    .read_exact(&mut bytes)
+    .map_err(|error| format!("Could not read the system random source: {error}"))?;
+
+  Ok(bytes.iter().map(|byte| format!("{byte:02x}")).collect())
+}
+
+fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
+  if left.len() != right.len() {
+    return false;
+  }
+
+  let mut difference = 0_u8;
+
+  for (&left, &right) in left.iter().zip(right.iter()) {
+    difference |= left ^ right;
+  }
+
+  difference == 0
 }
 
 fn percent_encode_path(path: &Path) -> String {
@@ -742,7 +804,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let request = format!(
@@ -920,6 +982,37 @@ mod tests {
   }
 
   #[test]
+  fn rejects_invalid_media_server_capability_tokens() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream, "expected-token").unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(
+        b"GET /media?path=%2Fmedia%2Fvideo.mp4&token=wrong-token HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n",
+      )
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+    assert!(response_text.ends_with("Media server capability token is invalid."));
+
+    server.join().unwrap();
+  }
+
+  #[test]
   fn rejects_unsupported_http_versions() {
     use std::io::{Read, Write};
     use std::net::{TcpListener, TcpStream};
@@ -951,7 +1044,7 @@ mod tests {
   #[test]
   fn rejects_duplicate_media_path_parameters() {
     assert_eq!(
-      super::extract_media_path("path=%2Fmedia%2Fone.mp4&path=%2Fmedia%2Ftwo.mp4")
+      super::extract_media_request("path=%2Fmedia%2Fone.mp4&path=%2Fmedia%2Ftwo.mp4&token=test")
         .expect_err("duplicate media path parameters must be rejected"),
       "Duplicate media path parameter."
     );
@@ -960,10 +1053,45 @@ mod tests {
   #[test]
   fn rejects_missing_media_path_parameter() {
     assert_eq!(
-      super::extract_media_path("foo=bar")
+      super::extract_media_request("foo=bar&token=test")
         .expect_err("missing media path parameters must be rejected"),
       "Missing media path."
     );
+  }
+
+  #[test]
+  fn rejects_missing_media_server_capability_token() {
+    assert_eq!(
+      super::extract_media_request("path=%2Fmedia%2Fvideo.mp4")
+        .expect_err("missing capability token must be rejected"),
+      "Missing media server capability token."
+    );
+  }
+
+  #[test]
+  fn rejects_duplicate_media_server_capability_tokens() {
+    assert_eq!(
+      super::extract_media_request("path=%2Fmedia%2Fvideo.mp4&token=one&token=two")
+        .expect_err("duplicate capability tokens must be rejected"),
+      "Duplicate media server capability token."
+    );
+  }
+
+  #[test]
+  fn compares_capability_tokens_without_early_exit() {
+    assert!(super::constant_time_eq(b"secret-token", b"secret-token"));
+    assert!(!super::constant_time_eq(b"secret-token", b"secret-tokeN"));
+    assert!(!super::constant_time_eq(b"secret-token", b"short"));
+  }
+
+  #[test]
+  fn generates_non_empty_capability_tokens() {
+    let first = super::generate_capability_token().unwrap();
+    let second = super::generate_capability_token().unwrap();
+
+    assert_eq!(first.len(), 64);
+    assert_eq!(second.len(), 64);
+    assert_ne!(first, second);
   }
 
   #[test]
