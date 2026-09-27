@@ -1,3 +1,59 @@
+## M3.146 — Dense Waveform Peak Array Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-146-dense-waveform-peak-array-contract`
+
+Scope:
+- Require waveform peak arrays to be dense as well as bounded and numeric before cache or interpolation processing.
+
+Audit finding:
+- M3.144 introduced `isValidWaveformPeakArray()` using `Array.prototype.every()` for element-type validation.
+- `every()` skips sparse-array holes, so an in-memory native response or utility input containing missing indices could still satisfy the validator.
+- Sparse waveform data can then flow into normalization/interpolation with implicit fallback values, weakening the strict peak-array contract.
+
+Implementation:
+- Replaced hole-skipping `every()` validation with an explicit index loop over every declared array position.
+- Retain the established non-empty and maximum-2048 bounds and numeric element requirement.
+- Preserve numeric `NaN`/`Infinity` normalization semantics.
+- Added focused regression coverage for a sparse native peak array.
+- No project schema version change.
+
+Invariant / contract:
+- Every declared waveform peak index contains a numeric value.
+- Sparse peak arrays are rejected before waveform cache/render processing.
+- Existing valid dense peak arrays and normalization behavior remain unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.146; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.145 — Strict Source-Range Waveform Peak Input Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-145-strict-source-range-peak-input-contract`
+
+PR:
+#160
+
+Merge SHA:
+`6f1ae4e2ec7c90a1581a2c34119459717b93ab12`
+
+User validation:
+- User reported PASS for M3.145.
+- PR #160 was refreshed at head `535f858f76788dca7882ed22e259694f0a4a6cf3`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `6f1ae4e2ec7c90a1581a2c34119459717b93ab12`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Reused `isValidWaveformPeakArray()` at `getWaveformPeaksForSourceRange()`.
+- Over-limit, empty, or non-number source-range peak arrays are rejected before interpolation.
+- Added focused regression coverage.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.146.
 ## M3.145 — Strict Source-Range Waveform Peak Input Contract — active — 2026-09-27
 
 Branch:
