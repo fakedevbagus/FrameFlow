@@ -175,6 +175,20 @@ fn prepare_media_preview(
     });
   }
 
+  let current_metadata = fs::metadata(&source_path)
+    .map_err(|error| {
+      let _ = fs::remove_file(&temporary_path);
+      format!("Could not re-check media metadata after preview generation: {error}")
+    })?;
+
+  let current_cache_key = preview_cache_key(&source_path, &current_metadata);
+  if current_cache_key != cache_key {
+    let _ = fs::remove_file(&temporary_path);
+    return Err(
+      "Selected media changed during preview generation; please retry.".to_string(),
+    );
+  }
+
   let metadata = fs::metadata(&temporary_path).map_err(|error| {
     let _ = fs::remove_file(&temporary_path);
     format!("Generated preview file could not be inspected: {error}")
