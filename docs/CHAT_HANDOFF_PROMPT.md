@@ -1,10 +1,10 @@
-## M3.160 — active — 2026-09-27
+## M3.161 — active — 2026-09-27
 
-- Branch: `fix/m3-160-media-server-media-type-boundary`.
-- Scope: prevent the local media server from exposing arbitrary non-media files from otherwise allowed directories.
-- Fresh audit found `validate_media_path()` restricting directories but not enforcing the supported FrameFlow media-type contract.
-- Require an existing regular file and validate its supported media type before serving.
-- Add explicit MIME mappings for supported image/audio/video extensions.
+- Branch: `fix/m3-161-media-server-canonical-path`.
+- Scope: ensure the validated canonical media path is the exact path used for media URL generation and HTTP streaming.
+- Fresh audit found the media server validating canonical paths but then continuing with the original path alias.
+- Return the canonical path from validation and reuse it throughout URL generation and request handling.
+- Preserve the existing supported media-type and directory boundaries plus range behavior.
 - Added focused Rust regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
@@ -14,7 +14,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, active branch state, and open PRs before acting.
-- M3.159 is completed and merged; M3.160 is the active milestone.
+- M3.160 is completed and merged; M3.161 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
