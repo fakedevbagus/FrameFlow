@@ -384,6 +384,21 @@ describe("audio waveform", () => {
     });
   });
 
+  it("rejects a native waveform peak array containing non-number values", async () => {
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "invalid-peak-type" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.5, "0.75", null],
+        sourceFingerprint: "invalid-peak-type",
+      });
+
+    await expect(
+      getAudioWaveform("/invalid-peak-type.mp3"),
+    ).rejects.toThrow("Native waveform data is invalid.");
+  });
+
   it("rejects an over-limit native waveform peak array", async () => {
     const peaks = Array.from({ length: 2049 }, () => 0.5);
 
@@ -725,6 +740,54 @@ describe("audio waveform", () => {
     });
 
     expect(invoke).toHaveBeenCalledTimes(4);
+  });
+
+  it("rejects a persisted waveform peak array containing non-number values as a cache miss", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/invalid-persisted-peak-type.mp3::512::invalid-peak-type",
+            waveform: {
+              durationMs: 1000,
+              sampleRate: 1024,
+              peaks: [0.5, "0.75", null],
+              sourceFingerprint: "invalid-peak-type",
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "invalid-peak-type" })
+      .mockResolvedValueOnce({
+        durationMs: 1200,
+        sampleRate: 1200,
+        peaks: [0.25],
+        sourceFingerprint: "invalid-peak-type",
+      });
+
+    await expect(
+      getAudioWaveform("/invalid-persisted-peak-type.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1200,
+      sampleRate: 1200,
+      peaks: [0.25],
+      sourceFingerprint: "invalid-peak-type",
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      "generate_audio_waveform",
+      {
+        path: "/invalid-persisted-peak-type.mp3",
+        peakCount: 512,
+      },
+    );
   });
 
   it("rejects an over-limit persisted waveform peak array as a cache miss", async () => {
