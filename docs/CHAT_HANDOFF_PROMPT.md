@@ -1,3 +1,25 @@
+## M3.157 — active — 2026-09-27
+
+- Branch: `fix/m3-157-video-graph-source-consistency`.
+- Scope: prevent native video graph export from finalizing when a resolved video/image input source changes or becomes unavailable during FFmpeg rendering.
+- Fresh audit found `render_video_graph_to_mp4()` validating inputs before FFmpeg but not re-checking source identity before accepting generated output.
+- Capture Linux source identity for every resolved graph input before rendering.
+- Re-check all sources after successful FFmpeg generation; remove output and return a retryable error on mutation or removal.
+- Reuse the established native source identity function from the AV render contract.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, active branch state, and open PRs before acting.
+- M3.156 is completed and merged; M3.157 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.156 — completed — 2026-09-27
 
 - Branch: `fix/m3-156-audio-graph-source-consistency`.
