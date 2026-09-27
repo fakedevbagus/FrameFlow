@@ -1,11 +1,25 @@
-### M3.150 — Linux Waveform Source Fingerprint Identity Contract — active — 2026-09-27
+### M3.151 — Linux Preview Cache Source Identity Contract — active — 2026-09-27
 
-- Branch: `fix/m3-150-linux-waveform-source-fingerprint`.
-- Fresh audit found the Linux waveform fingerprint used only file size and modification time, leaving a theoretical collision when contents change while those two values are preserved.
-- Extended the fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and mtime.
-- Added a focused Rust regression test for the expanded Linux fingerprint metadata.
+- Branch: `fix/m3-151-preview-cache-source-identity`.
+- Fresh audit found `prepare_media_preview()` still used path + size + mtime while waveform source identity had been strengthened with ctime, ctime nanoseconds, device ID, and inode.
+- Extended the preview cache key with the same Linux source identity/change metadata while retaining the existing path, size, and mtime inputs.
+- Added focused Rust regression coverage for preview cache key changes after source metadata changes.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
+
+### M3.150 — Linux Waveform Source Fingerprint Identity Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-150-linux-waveform-source-fingerprint`.
+- PR #165; squash-merged at `704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`.
+- User reported PASS.
+- Extended the Linux waveform source fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and mtime.
+- Added focused Rust regression coverage.
+- No project schema change.
+- PR head `fa150b444935e7de7f66fe0062ca942f2b57d8ff` was verified before merge.
+- `main` was verified after merge at `704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for M3.151.
+
 
 ### M3.149 — Waveform Generation Fingerprint Consistency Contract — completed — 2026-09-27
 

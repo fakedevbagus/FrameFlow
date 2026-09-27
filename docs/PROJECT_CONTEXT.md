@@ -1,33 +1,59 @@
-## M3.150 — Linux Waveform Source Fingerprint Identity Contract — active — 2026-09-27
+## M3.151 — Linux Preview Cache Source Identity Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-150-linux-waveform-source-fingerprint`
+`fix/m3-151-preview-cache-source-identity`
 
 Scope:
-- Strengthen the Linux-native waveform source fingerprint against stale-cache reuse when file contents change without a corresponding size or mtime difference.
+- Align the native media-preview cache key with the stronger Linux source-identity metadata contract used by waveform caching.
 
 Audit finding:
-- M3.149 now rejects waveform results whose pre-generation and post-generation fingerprints differ.
-- The underlying Linux fingerprint still used only file size and modification timestamp.
-- A file can theoretically change while preserving both values, especially when metadata is restored or a file is replaced with matching size and timestamp metadata.
-- Such a collision can make persistent waveform cache validation believe an old waveform belongs to the current source.
+- M3.150 strengthened waveform source identity with size, mtime, ctime, ctime nanoseconds, device ID, and inode.
+- `prepare_media_preview()` still generated its cache key from only path, size, and modification time.
+- A preview cache entry could therefore have weaker source invalidation semantics than waveform data for the same media file.
 
 Implementation:
-- Extend the Linux-native fingerprint with change and file-identity metadata: ctime, ctime nanoseconds, device ID, and inode.
-- Preserve the existing size and mtime components.
-- Add a focused Rust regression test asserting the fingerprint contains all Linux identity/change metadata.
+- Extend `preview_cache_key()` to include Linux ctime, ctime nanoseconds, device ID, and inode.
+- Preserve the existing path, size, and modification-time inputs.
+- Keep the preview key as a compact 64-bit FNV-1a-derived value.
+- Add focused Rust regression coverage proving the preview key changes when the source metadata changes.
 - No project schema version change.
 
 Invariant / contract:
-- The Linux waveform fingerprint contains both content-change-adjacent filesystem metadata and file identity data in addition to size and mtime.
-- Replacing or mutating a source with a different inode/device/ctime produces a distinct fingerprint even when size and mtime collide.
-- Existing fingerprint-aware request and persistent-cache consistency checks remain unchanged.
+- Native media previews and waveform caches use the same class of Linux filesystem identity/change metadata for source invalidation.
+- Rewriting a source file with changed metadata produces a distinct preview cache key.
+- Existing preview output format and cache directory behavior remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.150; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.151; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.150 — Linux Waveform Source Fingerprint Identity Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-150-linux-waveform-source-fingerprint`
+
+PR:
+#165
+
+Merge SHA:
+`704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`
+
+User validation:
+- User reported PASS for M3.150.
+- PR #165 was refreshed at head `fa150b444935e7de7f66fe0062ca942f2b57d8ff`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Extended the Linux waveform fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and modification time.
+- Added focused Rust regression coverage for the complete fingerprint metadata.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.151.
+
 
 ## M3.149 — Waveform Generation Fingerprint Consistency Contract — completed — 2026-09-27
 

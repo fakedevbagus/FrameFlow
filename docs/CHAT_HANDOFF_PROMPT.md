@@ -1,14 +1,28 @@
-## M3.150 — active — 2026-09-27
+## M3.151 — active — 2026-09-27
 
-- Branch: `fix/m3-150-linux-waveform-source-fingerprint`.
-- Scope: strengthen Linux waveform source identity against filesystem metadata collisions.
-- Fresh audit after M3.149 found the underlying source fingerprint still used only file size and modification time.
-- Extended the fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and mtime.
-- Added a focused Rust regression asserting the complete Linux fingerprint metadata contract.
+- Branch: `fix/m3-151-preview-cache-source-identity`.
+- Scope: align native media-preview cache identity with the strengthened Linux source metadata contract.
+- Fresh audit after M3.150 found `prepare_media_preview()` still keyed preview cache entries from path + size + modification time only.
+- Extended `preview_cache_key()` with ctime, ctime nanoseconds, device ID, and inode while retaining path, size, and mtime.
+- Added focused Rust regression coverage for preview key invalidation after source metadata changes.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.150 — completed — 2026-09-27
+
+- Branch: `fix/m3-150-linux-waveform-source-fingerprint`.
+- PR #165; squash-merged at `704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`.
+- User reported PASS.
+- Extended the Linux waveform source fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and mtime.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- PR head `fa150b444935e7de7f66fe0062ca942f2b57d8ff` was verified before merge.
+- `main` was verified after merge at `704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
 
 ## M3.149 — completed — 2026-09-27
 
