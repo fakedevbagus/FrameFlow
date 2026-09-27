@@ -1,36 +1,34 @@
-## M3.162 — Media Server Request Validation Error Responses — completed — 2026-09-27
+## M3.163 — Media Server HEAD Response Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-162-media-server-request-errors`
+`fix/m3-163-media-server-head-response-contract`
 
-PR:
-#177
+Scope:
+- Ensure HTTP HEAD requests return the same response headers as the corresponding response while suppressing response bodies for media-server error responses.
 
-Merge SHA:
-`f4455f08360565dfc65c6b15b36f210c8624a76a`
-
-User validation:
-- User reported PASS for M3.162.
-- PR #177 was refreshed at head `957e9fd6cba7b30d6f8d45f7113e8122e040fe5a`, verified ahead of `main` with 0 commits behind, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `f4455f08360565dfc65c6b15b36f210c8624a76a`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+Fresh audit finding:
+- Successful HEAD media responses already omit the file body.
+- Error responses routed through `write_status()` still unconditionally wrote their body.
+- A client issuing HEAD against a malformed or rejected media request could therefore receive a response body, violating the endpoint's HEAD semantics.
 
 Implementation:
-- Added typed media-path validation errors with stable HTTP status classifications.
-- Mapped malformed percent encoding and relative paths to HTTP 400.
-- Mapped out-of-allowlist paths to HTTP 403.
-- Mapped unresolved media paths and post-validation filesystem lookup failures to HTTP 404.
-- Mapped unsupported media types to HTTP 415.
-- Preserved the existing `url_for_path() -> Result<String, String>` API.
-- Added focused Rust regression coverage for status mapping and stable error messages.
+- Make `write_status()` explicitly control whether the response body is emitted while preserving the declared `Content-Length`.
+- Pass HEAD-aware body suppression through media-server error paths that already know the request method.
+- Preserve existing GET, OPTIONS, range, status, and error-message behavior.
+- Add focused TCP-level regression coverage for a HEAD error response.
 - No project schema version change.
 
 Invariant / contract:
-- Client-supplied media-path validation failures handled by the HTTP endpoint now receive explicit HTTP responses.
-- Existing canonical-path enforcement, supported media-type boundaries, directory allowlist, range handling, and MIME mappings remain unchanged.
+- HEAD responses contain no response body.
+- HEAD error responses retain the same status and representation headers, including `Content-Length`, without transmitting the body.
+- Existing GET error responses continue to include their bodies.
+- Existing media validation, canonical-path, media-type, allowlist, and range contracts remain unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Fresh audit from verified `main` for the next narrowly-scoped security or correctness gap.
+- Complete user local validation of M3.163; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 Branch:
