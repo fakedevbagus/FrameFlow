@@ -4,7 +4,7 @@
 - Fresh audit found `render_video_with_audio_graph_to_mp4()` validating video/audio sources before FFmpeg but lacking source identity revalidation before finalizing its temporary output.
 - Reuse the established Linux source identity contract, snapshot the video and independent audio sources before rendering, and re-check them after FFmpeg.
 - Remove output and return a retryable error on source mutation or removal.
-- Add focused Rust regression coverage.
+- Added a focused Rust regression test for mutation between source snapshot and render finalization.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 
