@@ -3,28 +3,29 @@
 Branch:
 `fix/m3-162-media-server-request-errors`
 
+PR:
+#177
+
 Scope:
 - Ensure malformed media requests and media-path validation failures receive explicit HTTP error responses instead of silently terminating the local media connection.
 
 Fresh audit finding:
-- M3.161 correctly canonicalizes the validated path, but `percent_decode()` and `validate_media_path()` errors still propagate with `?` from `handle_connection()`.
+- M3.161 correctly canonicalizes the validated path, but `percent_decode()` and `validate_media_path()` errors still propagate from `handle_connection()`.
 - The per-connection thread discards that `Result`, so invalid encoded paths or rejected media paths can close the connection without an HTTP response.
 - This weakens the local media server's request/error contract and makes client-visible failures nondeterministic.
 
 Implementation:
 - Introduce explicit media-path validation error variants with stable HTTP classifications.
-- Keep the existing validation messages and path/security rules while mapping them to appropriate HTTP statuses.
-- Return HTTP 400 for malformed percent encoding and relative-path requests.
-- Return HTTP 403 for paths outside the allowed local media directories.
-- Return HTTP 404 for media paths that cannot be resolved.
-- Return HTTP 415 for unsupported media file types.
-- Add focused Rust regression coverage for the validation error-to-status contract.
+- Preserve existing validation messages and path/security rules while mapping them to HTTP 400, 403, 404, and 415 responses.
+- Handle filesystem lookup failure after successful canonical validation as HTTP 404.
+- Preserve the existing `url_for_path() -> Result<String, String>` API.
+- Add focused Rust regression coverage for validation error status mapping and stable messages.
 - No project schema version change.
 
 Invariant / contract:
 - Every client-supplied media-path validation failure handled by the HTTP endpoint produces an explicit HTTP response.
 - Existing canonical-path enforcement, supported media-type boundaries, directory allowlist, range handling, and MIME mappings remain unchanged.
-- Internal URL generation continues to expose validation failures as the existing `Result<String, String>` API.
+- Internal URL generation continues to expose validation failures through the existing `Result<String, String>` API.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
@@ -32,38 +33,7 @@ Validation:
 Next step:
 - Complete user local validation of M3.162; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
-## M3.161 — Media Server Canonical Path Enforcement — completed — 2026-09-27
-
-Branch:
-`fix/m3-161-media-server-canonical-path`
-
-PR:
-#176
-
-Merge SHA:
-`8caa4232bf03843972968c944cfdc69235e6c549`
-
-User validation:
-- User reported PASS for M3.161.
-- PR #176 was refreshed at head `1908dbbd830601ee3d1687140afb2597555c56e6`, verified ahead of `main`, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `8caa4232bf03843972968c944cfdc69235e6c549`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-
-Implementation:
-- Made `validate_media_path()` return the validated canonical `PathBuf`.
-- Reused the canonical path for media URL generation, HTTP metadata access, and streaming.
-- Preserved supported media types, allowed directories, range behavior, and MIME mappings.
-- Added focused regression coverage for relative-path rejection.
-- No project schema version change.
-
-Invariant / contract:
-- The path validated by the local media server is the same canonical filesystem path used for URL generation and streaming.
-- Symlink/path-alias changes after validation cannot redirect streaming to a different target.
-- Existing supported media types, allowed directories, range handling, and MIME mappings remain unchanged.
-
-Next step:
-- Fresh audit from verified `main` for the next concrete security or correctness gap.
-
+main=>""
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 Branch:
