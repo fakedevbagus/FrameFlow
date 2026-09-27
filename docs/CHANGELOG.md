@@ -1,13 +1,23 @@
-### M3.142 — Strict Waveform Source Fingerprint Contract — active — 2026-09-27
+### M3.143 — Persistent Waveform Cache-Key Consistency — active — 2026-09-27
 
-- Branch: `fix/m3-142-strict-waveform-fingerprint-contract`.
-- Fresh audit found native and persisted waveform source fingerprints were only required to be non-empty strings before entering cache keys and local persistence.
-- Added a 128-character fingerprint ceiling and reused it across native fingerprint, generated waveform, and persisted-entry validation.
-- Added focused regression coverage for the maximum valid length and over-limit native/persisted fingerprints.
-- Preserved the existing fingerprint format and valid behavior.
+- Branch: `fix/m3-143-persistent-waveform-key-consistency`.
+- Fresh audit found persisted waveform lookup did not verify that the cache-key fingerprint matched the payload fingerprint.
+- Added lookup-time consistency validation so mismatched key/payload pairs become cache misses.
+- Added focused regression coverage for a mismatched persisted fingerprint.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 
+### M3.142 — Strict Waveform Source Fingerprint Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-142-strict-waveform-fingerprint-contract`.
+- PR #157; squash-merged at `0135723cf9986824d34cb07c95b38db5c13c4da1`.
+- User reported PASS.
+- Added a 128-character maximum for native and persisted source fingerprints.
+- Added focused regression coverage and preserved the existing fingerprint format.
+- PR head `954107b41151adb024a666b7986a5128b773a0f0` was verified before merge.
+- `main` was verified after merge at `0135723cf9986824d34cb07c95b38db5c13c4da1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next waveform persistence boundary.
 ### M3.141 — Strict Persistent Waveform Entry Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-141-strict-persistent-waveform-entry-contract`.
