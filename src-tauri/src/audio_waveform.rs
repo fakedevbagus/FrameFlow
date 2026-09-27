@@ -3,7 +3,7 @@ use std::{
   io::Read,
   os::unix::fs::MetadataExt,
   path::Path,
-  process::{Command, Stdio},
+  process::{Child, Command, Stdio},
   time::UNIX_EPOCH,
 };
 
@@ -77,6 +77,19 @@ pub fn generate_audio_waveform(
   })
 }
 
+fn spawn_stderr_reader(child: &mut Child) -> Result<std::thread::JoinHandle<Vec<u8>>, String> {
+  let mut stderr = child
+    .stderr
+    .take()
+    .ok_or_else(|| "FFmpeg waveform error output could not be opened.".to_string())?;
+
+  Ok(std::thread::spawn(move || {
+    let mut output = Vec::new();
+    let _ = stderr.read_to_end(&mut output);
+    output
+  }))
+}
+
 fn validate_audio_source(source_path: &Path) -> Result<(), String> {
   let media_type = super::media_type(source_path)?;
 
@@ -137,20 +150,14 @@ fn decode_and_reduce_waveform(
     }
   };
 
-  let mut stderr = match child.stderr.take() {
-    Some(stderr) => stderr,
-    None => {
+  let stderr_reader = match spawn_stderr_reader(&mut child) {
+    Ok(reader) => reader,
+    Err(error) => {
       let _ = child.kill();
       let _ = child.wait();
-      return Err("FFmpeg waveform error output could not be opened.".to_string());
+      return Err(error);
     }
   };
-
-  let stderr_reader = std::thread::spawn(move || {
-    let mut output = Vec::new();
-    let _ = stderr.read_to_end(&mut output);
-    output
-  });
 
   let mut peaks = vec![0.0_f32; peak_count];
   let expected_samples = ((duration_ms as f64 / 1000.0) * sample_rate as f64)
@@ -410,6 +417,28 @@ mod tests {
     update_peak(&mut peaks, f32::INFINITY, 0, 1);
 
     assert_eq!(peaks, vec![0.25]);
+  }
+
+  #[test]
+  fn drains_large_ffmpeg_stderr_without_deadlocking_child_wait() {
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new("sh")
+      .args([
+        "-c",
+        "i=0; while [ $i -lt 4096 ]; do printf 'frameflow-waveform-error-output-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n' >&2; i=$((i + 1)); done",
+      ])
+      .stdout(Stdio::null())
+      .stderr(Stdio::piped())
+      .spawn()
+      .unwrap();
+
+    let stderr_reader = spawn_stderr_reader(&mut child).unwrap();
+    let status = child.wait().unwrap();
+    let stderr_output = stderr_reader.join().unwrap();
+
+    assert!(status.success());
+    assert!(stderr_output.len() > 64 * 1024);
   }
 
   #[test]
