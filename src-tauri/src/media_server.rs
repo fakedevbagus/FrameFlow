@@ -3,16 +3,57 @@ use std::{
   io::{self, Read, Seek, SeekFrom, Write},
   net::{TcpListener, TcpStream},
   path::{Path, PathBuf},
+  sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
+  },
   thread,
   time::Duration,
 };
 
 const MEDIA_REQUEST_READ_TIMEOUT: Duration = Duration::from_secs(15);
 const MEDIA_RESPONSE_WRITE_TIMEOUT: Duration = Duration::from_secs(15);
+const MAX_MEDIA_CONNECTIONS: usize = 32;
 
 pub struct MediaServerState {
   base_url: String,
   capability_token: String,
+}
+
+struct MediaConnectionGuard {
+  active_connections: Arc<AtomicUsize>,
+}
+
+impl MediaConnectionGuard {
+  fn try_acquire(active_connections: Arc<AtomicUsize>) -> Option<Self> {
+    let mut current = active_connections.load(Ordering::Acquire);
+
+    loop {
+      if current >= MAX_MEDIA_CONNECTIONS {
+        return None;
+      }
+
+      match active_connections.compare_exchange_weak(
+        current,
+        current + 1,
+        Ordering::AcqRel,
+        Ordering::Acquire,
+      ) {
+        Ok(_) => {
+          return Some(Self {
+            active_connections,
+          });
+        }
+        Err(observed) => current = observed,
+      }
+    }
+  }
+}
+
+impl Drop for MediaConnectionGuard {
+  fn drop(&mut self) {
+    self.active_connections.fetch_sub(1, Ordering::Release);
+  }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,19 +100,35 @@ impl MediaServerState {
       .map_err(|error| format!("Could not determine the local media server port: {error}"))?
       .port();
     let capability_token = generate_capability_token()?;
+    let active_connections = Arc::new(AtomicUsize::new(0));
 
     thread::Builder::new()
       .name("frameflow-media-server".to_string())
       .spawn({
         let capability_token = capability_token.clone();
+        let active_connections = Arc::clone(&active_connections);
         move || {
           for stream in listener.incoming() {
             match stream {
               Ok(stream) => {
+                let Some(connection_slot) =
+                  MediaConnectionGuard::try_acquire(Arc::clone(&active_connections))
+                else {
+                  continue;
+                };
+
                 let capability_token = capability_token.clone();
-                thread::spawn(move || {
-                  let _ = handle_connection(stream, &capability_token);
-                });
+
+                let spawn_result = thread::Builder::new()
+                  .name("frameflow-media-connection".to_string())
+                  .spawn(move || {
+                    let _connection_slot = connection_slot;
+                    let _ = handle_connection(stream, &capability_token);
+                  });
+
+                if spawn_result.is_err() {
+                  continue;
+                }
               }
               Err(_) => break,
             }
@@ -877,7 +934,13 @@ mod tests {
   use super::{
     parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
   };
-  use std::path::Path;
+  use std::{
+    path::Path,
+    sync::{
+      atomic::{AtomicUsize, Ordering},
+      Arc,
+    },
+  };
 
   #[test]
   fn configures_media_request_read_timeout() {
@@ -959,6 +1022,36 @@ mod tests {
     assert!(!response_text.ends_with("Malformed media request header."));
 
     server.join().unwrap();
+  }
+
+  #[test]
+  fn enforces_media_server_connection_limit_and_releases_slots() {
+    let active_connections = Arc::new(AtomicUsize::new(0));
+    let mut guards = Vec::with_capacity(super::MAX_MEDIA_CONNECTIONS);
+
+    for _ in 0..super::MAX_MEDIA_CONNECTIONS {
+      guards.push(
+        super::MediaConnectionGuard::try_acquire(Arc::clone(&active_connections))
+          .expect("connection slot should be available"),
+      );
+    }
+
+    assert_eq!(
+      active_connections.load(Ordering::Acquire),
+      super::MAX_MEDIA_CONNECTIONS
+    );
+    assert!(
+      super::MediaConnectionGuard::try_acquire(Arc::clone(&active_connections)).is_none(),
+      "connections beyond the configured cap must be rejected"
+    );
+
+    drop(guards);
+
+    assert_eq!(active_connections.load(Ordering::Acquire), 0);
+    assert!(
+      super::MediaConnectionGuard::try_acquire(Arc::clone(&active_connections)).is_some(),
+      "released connection slots must be reusable"
+    );
   }
 
   #[test]
