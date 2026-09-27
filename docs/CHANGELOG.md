@@ -1,14 +1,26 @@
-### M3.140 — Strict Persistent Waveform Store Size Contract — active — 2026-09-27
+### M3.141 — Strict Persistent Waveform Entry Contract — active — 2026-09-27
 
-- Branch: `fix/m3-140-strict-persistent-waveform-store-size`.
-- Fresh audit found persisted waveform stores accepted an arbitrary entry-array length before lookup/sort, despite an existing retention limit of 32 entries.
-- Tightened store validation to reject more than 32 persisted entries.
-- Reused the same size guard in the write path so oversized stores are discarded rather than sorted and trimmed.
-- Added focused regression coverage for the maximum valid 32-entry store and an oversized store.
+- Branch: `fix/m3-141-strict-persistent-waveform-entry-contract`.
+- Fresh audit found that the M3.140 store-size guard still allowed malformed individual persisted entries to reach lookup and sorting.
+- Added strict persisted-entry validation for non-empty `cacheKey`, valid waveform payload, and non-negative safe-integer `lastUsedAt`.
+- Persisted stores are accepted only when every entry passes the entry contract.
+- Added focused regression coverage for malformed timestamps and invalid cache keys.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
 
+### M3.140 — Strict Persistent Waveform Store Size Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-140-strict-persistent-waveform-store-size`.
+- PR #155; squash-merged at `a43175c89856a34e3f684a27430aca883e27dd32`.
+- User reported PASS.
+- Tightened persisted waveform store validation to reject more than 32 entries before lookup or mutation.
+- Reused the same store-size guard in the write path so oversized stores are discarded rather than sorted and trimmed.
+- Added focused regression coverage for the maximum valid 32-entry store and oversized-store rejection.
+- No project schema change.
+- PR head `314df08dc71bd157f5ac7afc0e1de8dca6f09224` was verified before merge.
+- `main` was verified after merge at `a43175c89856a34e3f684a27430aca883e27dd32`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next concrete waveform persistence boundary.
 ### M3.139 — Strict Waveform Peak-Array Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
