@@ -1,13 +1,16 @@
-### M3.170 — Media Server HEAD Framing Error Contract — active — 2026-09-27
+### M3.170 — Media Server HEAD Framing Error Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-170-media-head-framing-errors`.
-- Fresh audit found request-framing failures could write an error body before normal method-aware HEAD handling.
-- Oversized, invalid-UTF-8, and incomplete `HEAD` requests now suppress the response body while preserving the existing HTTP status and headers.
-- Added focused TCP regression coverage for the three framing-error categories.
-- Existing request-line, range, path, media-type, and normal GET/HEAD contracts are preserved.
+- PR #185; squash-merged at `3fb60428a79877de9cb89ad73043718a130c19b6`.
+- User reported PASS for M3.170.
+- Oversized, invalid-UTF-8, and incomplete HEAD request framing errors now suppress response bodies while preserving status/headers.
+- Added focused TCP regression coverage for all three framing-error categories.
+- Existing request-line, range, path, media-type, and normal GET/HEAD contracts remain preserved.
 - No project schema change.
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.170; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- PR head `f20d6399652509ec1b920800714283125e9d9d1d` was verified before merge.
+- `main` was verified at merge commit `3fb60428a79877de9cb89ad73043718a130c19b6`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
 ### M3.169 — Media Server Range Header Syntax Contract — completed — 2026-09-27
 
