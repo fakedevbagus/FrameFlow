@@ -1,15 +1,19 @@
-## M3.168 — Media Server Range Header Uniqueness Contract — active — 2026-09-27
+## M3.168 — Media Server Range Header Uniqueness Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-168-media-range-header-uniqueness`
 
 PR:
-Draft PR to be created after implementation/documentation synchronization.
+#183
 
-Fresh audit finding:
-- `parse_range_header()` previously selected only the first `Range:` request header.
-- A second `Range:` header was silently ignored, making the accepted request semantics dependent on which duplicate field appeared first.
-- The media server supports a single range only, so duplicate range header fields need an explicit deterministic rejection.
+Merge SHA:
+`e79f09e7cf370f40a29b779adecbd5529e8d14b4`
+
+User validation:
+- User reported PASS for M3.168.
+- PR #183 was refreshed at head `7bd9ffe8fd6d031320fc17904c1e96992c04035b`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `e79f09e7cf370f40a29b779adecbd5529e8d14b4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Scope:
 - Reject duplicate `Range:` request headers at the media-server boundary.
@@ -17,16 +21,13 @@ Scope:
 Implementation:
 - Detect more than one `Range:` header before parsing the range value.
 - Map duplicate range headers to HTTP 400.
-- Preserve the existing HTTP 416 behavior for multiple ranges inside one `Range:` field.
+- Preserve HTTP 416 behavior for multiple ranges inside one `Range:` field.
 - Preserve HTTP version, method, query/path, canonicalization, media-type, and HEAD contracts.
-- Add focused regression coverage for duplicate `Range:` headers.
+- Added focused regression coverage.
 - No project schema change.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.168; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Fresh audit from verified `main` for the next focused media-server protocol/correctness gap.
 
 ## M3.167 — Media Server Request Header Termination Contract — completed — 2026-09-27
 
