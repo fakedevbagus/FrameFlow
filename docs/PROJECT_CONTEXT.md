@@ -1,34 +1,34 @@
-## M3.160 — Media Server Media-Type Boundary — active — 2026-09-27
+## M3.161 — Media Server Canonical Path Enforcement — active — 2026-09-27
 
 Branch:
-`fix/m3-160-media-server-media-type-boundary`
+`fix/m3-161-media-server-canonical-path`
 
 Scope:
-- Prevent the local media server from exposing arbitrary non-media files from otherwise allowed local directories.
+- Ensure the local media server validates and serves the same canonical media path, preventing path-alias/symlink changes between validation and file access.
 
 Audit finding:
-- `validate_media_path()` restricted canonical paths to selected local directories but did not require the target to be a supported FrameFlow media type.
-- The local HTTP endpoint could therefore resolve and serve arbitrary files such as text/configuration files under an allowed directory.
-- `content_type_for_path()` also lacked explicit MIME mappings for several supported image/audio formats.
+- M3.160 tightened supported media type and directory validation, but `validate_media_path()` returned no canonical path to callers.
+- `url_for_path()` and the HTTP handler therefore validated one path representation and subsequently operated on the original alias.
+- A path alias could change after validation and before streaming.
 
 Implementation:
-- Require the canonical target to be an actual file.
-- Reuse the central FrameFlow media-type contract from `lib.rs` so the media server cannot drift from supported application formats.
-- Reject unsupported extensions before the path is accepted by the local HTTP server.
-- Add explicit MIME mappings for supported AV/image extensions.
-- Add focused Rust regression coverage for unsupported file extensions.
+- Make `validate_media_path()` return the validated canonical `PathBuf`.
+- Use the canonical path when generating media URLs.
+- Use the canonical path directly for HTTP metadata checks and streaming.
+- Preserve the existing directory allowlist and supported media-type boundary.
+- Add focused regression coverage for relative-path rejection while preserving existing validation semantics.
 - No project schema version change.
 
 Invariant / contract:
-- The local media server serves only existing files whose extension matches FrameFlow's supported audio, image, or video media contract.
-- Canonical path restrictions for `/media`, `/mnt`, `/run/media`, and the user's home directory remain unchanged.
-- Existing supported media streaming and range behavior remain unchanged.
+- The path validated by the local media server is the same canonical filesystem path used for media URL generation and streaming.
+- Symlink/path-alias changes after validation cannot redirect streaming to a different target.
+- Existing supported media types, allowed directories, range handling, and MIME mappings remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.160; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.161; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 

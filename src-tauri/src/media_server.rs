@@ -42,8 +42,7 @@ impl MediaServerState {
   }
 
   pub fn url_for_path(&self, value: &str) -> Result<String, String> {
-    let path = PathBuf::from(value);
-    validate_media_path(&path)?;
+    let path = validate_media_path(Path::new(value))?;
 
     Ok(format!(
       "{}/media?path={}",
@@ -96,8 +95,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
     return Ok(());
   };
 
-  let path = PathBuf::from(percent_decode(encoded_path)?);
-  validate_media_path(&path)?;
+  let path = validate_media_path(Path::new(&percent_decode(encoded_path)?))?;
 
   let metadata = fs::metadata(&path)
     .map_err(|_| "Media file could not be found.".to_string())?;
@@ -350,7 +348,7 @@ Connection: close\r\n\
     .map_err(|error| format!("Could not write range error: {error}"))
 }
 
-fn validate_media_path(path: &Path) -> Result<(), String> {
+fn validate_media_path(path: &Path) -> Result<PathBuf, String> {
   if path.is_relative() {
     return Err("Media path must be absolute.".to_string());
   }
@@ -369,12 +367,12 @@ fn validate_media_path(path: &Path) -> Result<(), String> {
     || canonical.starts_with("/mnt/")
     || canonical.starts_with("/run/media/")
   {
-    return Ok(());
+    return Ok(canonical);
   }
 
   if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
     if canonical.starts_with(&home) {
-      return Ok(());
+      return Ok(canonical);
     }
   }
 
@@ -463,6 +461,13 @@ fn content_type_for_path(path: &Path) -> &'static str {
 mod tests {
   use super::{parse_range_header, percent_decode, percent_encode_path, RangeResult};
   use std::path::Path;
+
+  #[test]
+  fn rejects_relative_media_paths_before_resolution() {
+    let error = super::validate_media_path(Path::new("relative/file.mp4"))
+      .expect_err("relative media paths must be rejected");
+    assert!(error.contains("Media path must be absolute"));
+  }
 
   #[test]
   fn rejects_unsupported_media_extensions() {

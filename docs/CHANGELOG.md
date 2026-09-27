@@ -1,10 +1,10 @@
-### M3.160 — Media Server Media-Type Boundary — active — 2026-09-27
+### M3.161 — Media Server Canonical Path Enforcement — active — 2026-09-27
 
-- Branch: `fix/m3-160-media-server-media-type-boundary`.
-- Fresh audit found the local media server allowing arbitrary file types inside permitted canonical directories.
-- Require the canonical target to be an existing file and a supported FrameFlow media type.
-- Add explicit MIME mappings for supported image/audio/video extensions.
-- Added focused Rust regression coverage for unsupported extensions.
+- Branch: `fix/m3-161-media-server-canonical-path`.
+- Fresh audit found media-server validation returning no canonical path, allowing callers to validate an alias and later reopen the original path.
+- Make validation return the canonical path and use it for URL generation, HTTP metadata access, and streaming.
+- Preserve supported media types, directory allowlist, range handling, and MIME mappings.
+- Added focused Rust regression coverage.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 
