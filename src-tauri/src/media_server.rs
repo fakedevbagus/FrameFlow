@@ -206,6 +206,17 @@ fn handle_connection(
     return Ok(());
   }
 
+  if let Err(error) = validate_request_headers(&request) {
+    write_status(
+      &mut stream,
+      400,
+      "Bad Request",
+      error.as_bytes(),
+      method != "HEAD",
+    )?;
+    return Ok(());
+  }
+
   if method == "OPTIONS" && !target.starts_with("/media?") {
     write_status(
       &mut stream,
@@ -410,6 +421,48 @@ enum RangeResult {
   DuplicateHeaders,
   MalformedHeader,
   Invalid,
+}
+
+fn validate_request_headers(request: &str) -> Result<(), &'static str> {
+  for line in request.lines().skip(1) {
+    if line.is_empty() {
+      break;
+    }
+
+    let Some((name, _)) = line.split_once(':') else {
+      return Err("Malformed media request header.");
+    };
+
+    if name.is_empty() || !name.bytes().all(is_http_token_byte) {
+      return Err("Malformed media request header.");
+    }
+  }
+
+  Ok(())
+}
+
+fn is_http_token_byte(byte: u8) -> bool {
+  matches!(
+    byte,
+    b'0'..=b'9'
+      | b'a'..=b'z'
+      | b'A'..=b'Z'
+      | b'!'
+      | b'#'
+      | b'$'
+      | b'%'
+      | b'&'
+      | 0x27
+      | b'*'
+      | b'+'
+      | b'-'
+      | b'.'
+      | b'^'
+      | b'_'
+      | 0x60
+      | b'|'
+      | b'~'
+  )
 }
 
 fn parse_range_header(request: &str, len: u64) -> RangeResult {
@@ -835,6 +888,69 @@ mod tests {
     );
 
     drop(client);
+  }
+
+  #[test]
+  fn rejects_malformed_media_request_header_lines() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(
+        b"GET /missing HTTP/1.1\r\nHost: 127.0.0.1\r\nBroken-Header\r\n\r\n",
+      )
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+    assert!(response_text.ends_with("Malformed media request header."));
+
+    server.join().unwrap();
+  }
+
+  #[test]
+  fn suppresses_body_for_head_malformed_media_request_headers() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(
+        b"HEAD /missing HTTP/1.1\r\nHost: 127.0.0.1\r\nBroken-Header\r\n\r\n",
+      )
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+    assert!(response_text.ends_with("\r\n\r\n"));
+    assert!(!response_text.ends_with("Malformed media request header."));
+
+    server.join().unwrap();
   }
 
   #[test]
