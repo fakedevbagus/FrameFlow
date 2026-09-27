@@ -310,6 +310,15 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
         method != "HEAD",
       )?;
     }
+    RangeResult::MalformedHeader => {
+      write_status(
+        &mut stream,
+        400,
+        "Bad Request",
+        b"Malformed Range header.",
+        method != "HEAD",
+      )?;
+    }
     RangeResult::Single(start, end) => {
       let length = end - start + 1;
 
@@ -361,6 +370,7 @@ enum RangeResult {
   Single(u64, u64),
   Multiple,
   DuplicateHeaders,
+  MalformedHeader,
   Invalid,
 }
 
@@ -368,12 +378,21 @@ fn parse_range_header(request: &str, len: u64) -> RangeResult {
   let mut range_line = None;
 
   for line in request.lines() {
-    if line.to_ascii_lowercase().starts_with("range:") {
+    let Some((name, _)) = line.split_once(':') else {
+      continue;
+    };
+
+    if name.eq_ignore_ascii_case("range") {
       if range_line.is_some() {
         return RangeResult::DuplicateHeaders;
       }
 
       range_line = Some(line);
+      continue;
+    }
+
+    if name.trim().eq_ignore_ascii_case("range") {
+      return RangeResult::MalformedHeader;
     }
   }
 
@@ -977,6 +996,17 @@ mod tests {
         1000
       ),
       RangeResult::DuplicateHeaders
+    ));
+  }
+
+  #[test]
+  fn rejects_malformed_range_header_name() {
+    assert!(matches!(
+      parse_range_header(
+        "GET /media HTTP/1.1\r\nRange : bytes=0-99\r\n\r\n",
+        1000
+      ),
+      RangeResult::MalformedHeader
     ));
   }
 }
