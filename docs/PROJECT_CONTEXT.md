@@ -1,3 +1,70 @@
+## M3.153 — Native Video Graph Input Index Validation — active — 2026-09-27
+
+Branch:
+`fix/m3-153-video-graph-input-index-validation`
+
+Scope:
+- Restore indexed iteration at the native video-graph input validation boundary so each declared media type is checked against the corresponding input.
+
+Audit finding:
+- `render_video_graph_to_mp4()` referenced `index` inside the input mapping closure without enumerating the input iterator.
+- The source on verified `main` therefore had an unresolved local `index` binding at this native Rust boundary, making the implementation inconsistent with a compilable command path.
+- The intended per-input media-type validation was present but could not be evaluated correctly without a stable input index.
+
+Implementation:
+- Changed the input iterator to `.enumerate().map(|(index, value)| ...)`.
+- Extracted the indexed media-type comparison into `validate_native_video_graph_input_media_type()`.
+- Added focused Rust regression coverage for matching, omitted, and mismatched indexed media types.
+- No project schema version change.
+
+Invariant / contract:
+- Each native video-graph input is validated against the media type declared at the same index.
+- Omitted media-type metadata remains compatible with the existing empty-list behavior.
+- Mismatched indexed media types return the existing error contract.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.153; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.152 — Preview Generation Source Consistency Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-152-preview-generation-source-consistency`
+
+PR:
+#167
+
+Merge SHA:
+`9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`
+
+User validation:
+- User reported PASS for M3.152.
+- PR #167 was refreshed at head `a5a3e1f125fd44d44128330ec284d30e8d4147f7`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Re-checked source filesystem metadata after successful FFmpeg preview generation.
+- Recomputed the preview cache key and required it to match the pre-generation key before finalizing the temporary preview.
+- Removed temporary preview output and returned a retryable error when source identity changed during generation.
+- Added focused Rust regression coverage for stable and changed source identity.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` found the M3.153 gap below.
+
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.152 is completed and merged; M3.153 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+
 ## M3.152 — Preview Generation Source Consistency Contract — completed — 2026-09-27
 
 Branch:
