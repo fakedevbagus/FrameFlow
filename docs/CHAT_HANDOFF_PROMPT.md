@@ -1,3 +1,21 @@
+## M3.172 — active — 2026-09-27
+
+- Branch: `fix/m3-172-media-query-parameters`.
+- Scope: make the media-server query contract closed and deterministic.
+- Fresh audit found `path=` and `token=` were recognized while unknown query parameters were ignored.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Added HTTP 400 rejection for unknown query parameters and focused regression coverage.
+- Existing M3.160–M3.171 media-server contracts remain preserved.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.172 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.171 — completed — 2026-09-27
 
 - Branch: `fix/m3-171-media-server-capability-token`.
