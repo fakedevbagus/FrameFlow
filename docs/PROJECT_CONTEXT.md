@@ -72,41 +72,45 @@ Remaining risks:
 Next step:
 - Fresh audit from verified `main` for the next concrete waveform/runtime boundary.
 
-## M3.138 — Strict Waveform Source-Range Metadata Contract — active — 2026-09-27
+## M3.138 — Strict Waveform Source-Range Metadata Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-138-strict-waveform-source-range-metadata`
 
-Scope:
-- Ensure waveform source-range resampling only accepts safe-integer timing metadata before clamping and interpolation.
+PR:
+#153
+
+Merge SHA:
+`4cc633946bf49ec4dd9efcc017d342075fccf015`
+
+User validation:
+- User reported PASS for M3.138.
+- PR #153 was refreshed at head `d0314b1925593ecbf7a5c43fc7fefc3e32358d36`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `4cc633946bf49ec4dd9efcc017d342075fccf015`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - `getWaveformPeaksForSourceRange()` validated `sourceDurationMs`, `sourceStartMs`, and `sourceEndMs` only with finite-number checks.
 - Fractional or unsafe timing values could therefore enter range arithmetic and interpolation despite the project-wide integer-millisecond contract.
-- Negative integer start/end values remain supported by the existing deliberate clamping behavior.
 
 Implementation:
 - Require `sourceDurationMs` and `sourceStartMs` to be JavaScript safe integers.
 - Require non-null `sourceEndMs` to be a JavaScript safe integer.
 - Preserve existing negative out-of-range clamping semantics for safe integer values.
-- Preserve existing output-peak maximum and valid interpolation behavior.
-- Added focused regression coverage for unsafe and fractional source-duration/source-start/source-end inputs.
+- Added focused regression coverage for unsafe and fractional source-range timing.
 - No project schema version change.
 
 Invariant / contract:
 - Waveform source-range timing metadata must be safe integer milliseconds before resampling.
 - Invalid fractional or unsafe timing metadata cannot propagate into waveform interpolation.
-- Safe integer values retain existing range clamping and rendering behavior.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Safe integer range clamping behavior remains unchanged.
 
 Remaining risks:
-- Floating-point waveform interpolation itself remains out of scope.
-- Other waveform/UI synchronization behavior remains subject to broader audits when justified.
+- Floating-point waveform interpolation remains out of scope.
+- Other waveform/UI synchronization behavior remains subject to separate audits when justified.
 
 Next step:
-- Complete user local validation of M3.138; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete waveform/runtime boundary.
 
 ## M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
 
