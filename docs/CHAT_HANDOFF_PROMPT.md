@@ -1,20 +1,50 @@
-## M3.154 — active — 2026-09-27
+## M3.155 — active — 2026-09-27
 
-- Branch: `fix/m3-154-unified-av-source-consistency`.
-- Scope: prevent unified video+audio export from finalizing when a resolved source changes or becomes unavailable during FFmpeg rendering.
-- Fresh audit found `render_video_audio_graph_to_mp4()` probes resolved video/audio sources before FFmpeg but did not capture or re-check source filesystem identity across the render window.
-- Capture Linux source identity for every resolved video/audio input before rendering.
-- Re-check every source after successful FFmpeg generation; remove output and return a retryable error on mutation or source removal.
-- Identity includes size, mtime, ctime, ctime nanoseconds, device ID, and inode.
-- Added focused Rust regression coverage.
+- Branch: `fix/m3-155-video-audio-mix-source-consistency`.
+- Scope: prevent legacy video+audio mix export from finalizing when its resolved sources change or become unavailable during FFmpeg rendering.
+- Fresh audit found `render_video_with_audio_graph_to_mp4()` validates its video/audio paths before a long-running FFmpeg operation but does not re-check source identity before finalizing the temporary output.
+- Reuse the established Linux source identity contract: snapshot the video source and all independent audio sources before rendering, then re-check them after FFmpeg.
+- Remove the temporary output and return a retryable error on source mutation or removal.
+- Add focused Rust regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
-## M3.154 — active — 2026-09-27
+## M3.154 — completed — 2026-09-27
 
-- Fresh audit from verified `main` after M3.153.
+- Branch: `fix/m3-154-unified-av-source-consistency`.
+- PR #169; squash-merged at `9e33591f220125008b6d64930b79b37f381f9ecc`.
+- User reported PASS.
+- Added source identity snapshots/rechecks around unified video+audio FFmpeg rendering.
+- Changed or unavailable sources now prevent output finalization.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- PR head `c63874f95d6cf5efec3b3a780cb2825e02374ca5` was verified before merge.
+- `main` was verified after merge at `9e33591f220125008b6d64930b79b37f381f9ecc`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.153 — completed — 2026-09-27
+
+- Branch: `fix/m3-153-video-graph-input-index-validation`.
+- PR #168; squash-merged at `4f2ad5268df82be89d72077837dce26864636244`.
+- User reported PASS.
+- Restored indexed native video-graph input validation and added focused Rust regression coverage.
+- No project schema change.
+- PR head `601fd88a5b9fdac4beea56996bd539b7f2f393c4` was verified before merge.
+- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.154 is completed and merged; M3.155 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.152 — completed — 2026-09-27
 
 - Branch: `fix/m3-152-preview-generation-source-consistency`.
