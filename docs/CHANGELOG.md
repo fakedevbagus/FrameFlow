@@ -1,3 +1,13 @@
+### M3.157 — Video Graph Source Consistency Contract — active — 2026-09-27
+
+- Branch: `fix/m3-157-video-graph-source-consistency`.
+- Fresh audit found `render_video_graph_to_mp4()` lacking source identity snapshot/revalidation around its FFmpeg render window.
+- Reuse the established Linux source identity contract from native AV rendering.
+- Capture and re-check every resolved video/image input around FFmpeg; reject and clean output on mutation/removal.
+- Added focused Rust regression coverage.
+- No project schema change.
+- Implementation is complete; user local validation is pending.
+
 ### M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-156-audio-graph-source-consistency`.
