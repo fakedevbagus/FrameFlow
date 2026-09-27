@@ -720,6 +720,99 @@ describe("audio waveform", () => {
     expect(invoke).toHaveBeenCalledTimes(1);
   });
 
+  it("rejects malformed persisted waveform entry timestamps before sorting", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/valid-entry.mp3::512::valid",
+            waveform: {
+              durationMs: 1000,
+              sampleRate: 1024,
+              peaks: [0.5],
+              sourceFingerprint: "valid",
+            },
+            lastUsedAt: 1,
+          },
+          {
+            cacheKey: "/malformed-entry.mp3::512::malformed",
+            waveform: {
+              durationMs: 1000,
+              sampleRate: 1024,
+              peaks: [0.25],
+              sourceFingerprint: "malformed",
+            },
+            lastUsedAt: Number.MAX_SAFE_INTEGER + 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "valid" })
+      .mockResolvedValueOnce({
+        durationMs: 1200,
+        sampleRate: 1200,
+        peaks: [0.75],
+        sourceFingerprint: "valid",
+      });
+
+    await expect(getAudioWaveform("/valid-entry.mp3", 512)).resolves.toEqual({
+      durationMs: 1200,
+      sampleRate: 1200,
+      peaks: [0.75],
+      sourceFingerprint: "valid",
+    });
+
+    const persisted = JSON.parse(
+      localStorage.getItem("frameflow.audio-waveform-cache.v1") ?? "null",
+    ) as { version: number; entries: unknown[] };
+
+    expect(persisted.version).toBe(1);
+    expect(persisted.entries).toHaveLength(1);
+  });
+
+  it("rejects persisted waveform entries with an invalid cache key", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "",
+            waveform: {
+              durationMs: 1000,
+              sampleRate: 1024,
+              peaks: [0.5],
+              sourceFingerprint: "invalid-cache-key",
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "invalid-cache-key" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.75],
+        sourceFingerprint: "invalid-cache-key",
+      });
+
+    await expect(
+      getAudioWaveform("/invalid-cache-key.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.75],
+      sourceFingerprint: "invalid-cache-key",
+    });
+  });
+
   it("treats malformed persisted waveform data as a cache miss", async () => {
     localStorage.setItem(
       "frameflow.audio-waveform-cache.v1",
