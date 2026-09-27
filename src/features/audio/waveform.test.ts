@@ -252,6 +252,20 @@ describe("audio waveform", () => {
     expect(buildWaveformPath([1], 100, 0)).toBe("");
   });
 
+  it("rejects sparse, over-limit, and non-number render peak arrays", () => {
+    const sparsePeaks = new Array<number>(3);
+    sparsePeaks[0] = 0.5;
+    sparsePeaks[2] = 0.75;
+
+    expect(buildWaveformPath(sparsePeaks, 100, 20)).toBe("");
+    expect(buildWaveformPath(Array.from({ length: 2049 }, () => 0.5), 100, 20)).toBe(
+      "",
+    );
+    expect(buildWaveformPath([0.5, "0.75" as unknown as number], 100, 20)).toBe(
+      "",
+    );
+  });
+
   it("creates a predictable path for a large valid peak array", () => {
     const peaks = Array.from({ length: 512 }, (_, index) =>
       (index % 32) / 31,

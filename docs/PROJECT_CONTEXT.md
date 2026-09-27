@@ -1,33 +1,61 @@
-## M3.146 — Dense Waveform Peak Array Contract — active — 2026-09-27
+## M3.147 — Strict Waveform Render Peak Input Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-146-dense-waveform-peak-array-contract`
+`fix/m3-147-waveform-render-peak-contract`
 
 Scope:
-- Require waveform peak arrays to be dense as well as bounded and numeric before cache or interpolation processing.
+- Enforce the established waveform peak-array contract at the exported SVG waveform rendering boundary.
 
 Audit finding:
-- M3.144 introduced `isValidWaveformPeakArray()` using `Array.prototype.every()` for element-type validation.
-- `every()` skips sparse-array holes, so an in-memory native response or utility input containing missing indices could still satisfy the validator.
-- Sparse waveform data can then flow into normalization/interpolation with implicit fallback values, weakening the strict peak-array contract.
+- M3.146 made the shared peak validator dense, bounded, and numeric, and native/persisted/source-range paths already reused it.
+- `buildWaveformPath()` remained an independent exported rendering boundary that only checked non-empty arrays and SVG dimensions.
+- A sparse, oversized, or non-number caller-provided render array could therefore reach normalization and SVG path construction without the shared 2048-element peak contract.
 
 Implementation:
-- Replaced hole-skipping `every()` validation with an explicit index loop over every declared array position.
-- Retain the established non-empty and maximum-2048 bounds and numeric element requirement.
-- Preserve numeric `NaN`/`Infinity` normalization semantics.
-- Added focused regression coverage for a sparse native peak array.
+- Reuse `isValidWaveformPeakArray()` at `buildWaveformPath()` before normalization and path allocation.
+- Preserve existing empty-path behavior for empty or invalid dimensions.
+- Preserve numeric `NaN`/`Infinity` normalization for valid peak arrays.
+- Add focused regression coverage for sparse, over-limit, and non-number render peak arrays.
 - No project schema version change.
 
 Invariant / contract:
-- Every declared waveform peak index contains a numeric value.
-- Sparse peak arrays are rejected before waveform cache/render processing.
-- Existing valid dense peak arrays and normalization behavior remain unchanged.
+- The exported waveform renderer accepts only dense, non-empty, numeric peak arrays of at most 2048 elements.
+- Malformed render inputs are rejected before waveform point mapping and SVG path construction.
+- Existing valid rendering output remains unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.146; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.147; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+
+## M3.146 — Dense Waveform Peak Array Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-146-dense-waveform-peak-array-contract`
+
+PR:
+#161
+
+Merge SHA:
+`731eb8d453c44c5c609abc458b8a09b9f50b5021`
+
+User validation:
+- User reported PASS for M3.146.
+- PR #161 was refreshed at head `9c547abcd8a8d16dbb59b31f5f869deac5bee3b7`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Replaced hole-skipping peak validation with explicit index coverage so sparse arrays are rejected.
+- Retained the established non-empty, maximum-2048, numeric peak-array contract.
+- Preserved numeric `NaN`/`Infinity` normalization.
+- Added focused regression coverage for a sparse native peak array.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.147.
 
 ## M3.145 — Strict Source-Range Waveform Peak Input Contract — completed — 2026-09-27
 

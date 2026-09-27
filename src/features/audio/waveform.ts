@@ -455,7 +455,7 @@ export function buildWaveformPath(
   height = 1,
 ): string {
   if (
-    !peaks.length ||
+    !isValidWaveformPeakArray(peaks) ||
     !Number.isFinite(width) ||
     !Number.isFinite(height) ||
     width <= 0 ||
