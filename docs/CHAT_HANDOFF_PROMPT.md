@@ -1,17 +1,17 @@
-## M3.166 — active — 2026-09-27
+## M3.166 — completed — 2026-09-27
 
 - Branch: `fix/m3-166-media-request-framing-errors`.
-- Scope: explicit HTTP responses for media-server request framing rejection.
-- Fresh audit found oversized-header and invalid-UTF-8 request errors were propagated out of the connection handler without an HTTP response; the worker discarded the error.
-- The intended 32 KiB header limit was checked after terminator detection, so an oversized complete request could bypass the limit.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Added typed read errors, early size enforcement, HTTP 431/400 mapping, and focused TCP regression tests.
-- No project schema version change.
+- PR #181; squash-merged at `e717ad8244b71146ea719997c37b1efe6ec510b3`.
+- User reported PASS.
+- Added typed request-read errors, early request-header size enforcement, HTTP 431/400 mapping, and focused TCP regression tests.
+- No project schema change.
+- `main` was verified at `e717ad8244b71146ea719997c37b1efe6ec510b3`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.165 is completed and merged; M3.166 is the active milestone.
+- M3.166 is completed and merged; the next step is a fresh audit from verified `main`.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
