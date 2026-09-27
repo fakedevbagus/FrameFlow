@@ -1,3 +1,13 @@
+### M3.160 — Media Server Media-Type Boundary — active — 2026-09-27
+
+- Branch: `fix/m3-160-media-server-media-type-boundary`.
+- Fresh audit found the local media server allowing arbitrary file types inside permitted canonical directories.
+- Require the canonical target to be an existing file and a supported FrameFlow media type.
+- Add explicit MIME mappings for supported image/audio/video extensions.
+- Added focused Rust regression coverage for unsupported extensions.
+- No project schema change.
+- Implementation is complete; user local validation is pending.
+
 ### M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-159-single-source-consistency`.
