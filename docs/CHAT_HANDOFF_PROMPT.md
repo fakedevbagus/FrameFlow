@@ -1,14 +1,29 @@
-## M3.149 — active — 2026-09-27
+## M3.150 — active — 2026-09-27
 
-- Branch: `fix/m3-149-waveform-generation-fingerprint-consistency`.
-- Scope: require the generated waveform fingerprint to match the pre-generation source fingerprint.
-- Fresh audit after M3.148 found that a source file can change while FFmpeg is generating waveform data, allowing the returned native fingerprint to differ from the fingerprint used to key the request.
-- Reject generated waveform data when its fingerprint differs from the captured fingerprint, so mismatched results are never returned or persisted.
-- Added focused regression coverage for fingerprint drift and subsequent regeneration with the new fingerprint.
+- Branch: `fix/m3-150-linux-waveform-source-fingerprint`.
+- Scope: strengthen Linux waveform source identity against filesystem metadata collisions.
+- Fresh audit after M3.149 found the underlying source fingerprint still used only file size and modification time.
+- Extended the fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and mtime.
+- Added a focused Rust regression asserting the complete Linux fingerprint metadata contract.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.149 — completed — 2026-09-27
+
+- Branch: `fix/m3-149-waveform-generation-fingerprint-consistency`.
+- PR #164; squash-merged at `9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`.
+- User reported PASS.
+- Required the generated waveform fingerprint to match the pre-generation fingerprint exactly.
+- Mismatched generation results are rejected and not persisted.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `8692e79935650142962635300c5638625a410dc1` was verified before merge.
+- `main` was verified after merge at `9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
 
 ## M3.148 — completed — 2026-09-27
 

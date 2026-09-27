@@ -1,33 +1,61 @@
-## M3.149 — Waveform Generation Fingerprint Consistency Contract — active — 2026-09-27
+## M3.150 — Linux Waveform Source Fingerprint Identity Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-149-waveform-generation-fingerprint-consistency`
+`fix/m3-150-linux-waveform-source-fingerprint`
 
 Scope:
-- Prevent a waveform generated from one source fingerprint from being returned or persisted under a different fingerprint when the media file changes during FFmpeg generation.
+- Strengthen the Linux-native waveform source fingerprint against stale-cache reuse when file contents change without a corresponding size or mtime difference.
 
 Audit finding:
-- M3.148 made in-flight request deduplication fingerprint-aware, but `generate_audio_waveform()` computes the returned fingerprint after the decode step while `getAudioWaveform()` keys the request using the fingerprint captured before generation.
-- If the source file changes during generation, the native response can carry a different fingerprint from the request key.
-- Without an explicit consistency check, that mismatched waveform could be returned to the caller and persisted under its newer fingerprint even though the request represented an older source snapshot.
+- M3.149 now rejects waveform results whose pre-generation and post-generation fingerprints differ.
+- The underlying Linux fingerprint still used only file size and modification timestamp.
+- A file can theoretically change while preserving both values, especially when metadata is restored or a file is replaced with matching size and timestamp metadata.
+- Such a collision can make persistent waveform cache validation believe an old waveform belongs to the current source.
 
 Implementation:
-- Require the generated waveform fingerprint to exactly match the validated pre-generation fingerprint.
-- Reject generation results whose source fingerprint changed during generation.
-- Ensure mismatched results never enter persistent waveform caching.
-- Add focused regression coverage for fingerprint drift during generation followed by successful regeneration for the new fingerprint.
+- Extend the Linux-native fingerprint with change and file-identity metadata: ctime, ctime nanoseconds, device ID, and inode.
+- Preserve the existing size and mtime components.
+- Add a focused Rust regression test asserting the fingerprint contains all Linux identity/change metadata.
 - No project schema version change.
 
 Invariant / contract:
-- A generated waveform is accepted only when its source fingerprint matches the fingerprint captured immediately before generation.
-- Fingerprint drift during generation is treated as invalid native waveform state.
-- Mismatched generation results are not persisted.
+- The Linux waveform fingerprint contains both content-change-adjacent filesystem metadata and file identity data in addition to size and mtime.
+- Replacing or mutating a source with a different inode/device/ctime produces a distinct fingerprint even when size and mtime collide.
+- Existing fingerprint-aware request and persistent-cache consistency checks remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.149; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.150; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.149 — Waveform Generation Fingerprint Consistency Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-149-waveform-generation-fingerprint-consistency`
+
+PR:
+#164
+
+Merge SHA:
+`9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`
+
+User validation:
+- User reported PASS for M3.149.
+- PR #164 was refreshed at head `8692e79935650142962635300c5638625a410dc1`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Required the generated waveform fingerprint to match the pre-generation fingerprint exactly.
+- Rejected generation results whose source changed during waveform generation.
+- Prevented mismatched generation results from being persisted.
+- Added focused regression coverage.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.150.
+
 
 ## M3.148 — Fingerprint-Aware Waveform Request Deduplication — completed — 2026-09-27
 
