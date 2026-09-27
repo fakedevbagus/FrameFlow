@@ -1,31 +1,17 @@
-## M3.161 — completed — 2026-09-27
+## M3.162 — active — 2026-09-27
 
-- Branch: `fix/m3-161-media-server-canonical-path`.
-- PR #176; squash-merged at `8caa4232bf03843972968c944cfdc69235e6c549`.
-- User reported PASS.
-- Implementation: canonical media paths are now reused for URL generation and HTTP metadata/range/streaming access.
-- Preserved supported media types, directory allowlist, range handling, and MIME mappings.
-- Added focused Rust regression coverage.
+- Branch: `fix/m3-162-media-server-request-errors`.
+- PR #177.
+- Scope: ensure malformed media requests and media-path validation failures receive explicit HTTP error responses instead of silently terminating the local media connection.
+- Fresh audit found `percent_decode()` and `validate_media_path()` errors propagating from `handle_connection()` while the per-connection thread discarded the returned `Result`.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Added focused Rust regression coverage for validation error status mapping and stable messages.
 - No project schema version change.
-- `main` was verified at merge commit `8caa4232bf03843972968c944cfdc69235e6c549`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh M3.162 audit from the verified `main`.
-
-## M3.160 — completed — 2026-09-27
-
-- Branch: `fix/m3-160-media-server-media-type-boundary`.
-- PR #175; squash-merged at `14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`.
-- User reported PASS.
-- Reused the central media-type contract, rejected unsupported files at the media-server boundary, and preserved existing range/allowlist behavior.
-- Added focused Rust regression coverage.
-- No project schema version change.
-- `main` was verified at merge commit `14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 ## Workflow for this chat
 
-- Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.161 is completed and merged; the next step is a fresh audit from verified `main` for M3.162.
+- Inspect actual `main` SHA, active branch state, and open PRs before acting.
+- M3.161 is completed and merged; M3.162 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.

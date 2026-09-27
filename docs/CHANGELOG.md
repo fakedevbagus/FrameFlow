@@ -1,38 +1,15 @@
-### M3.161 — Media Server Canonical Path Enforcement — completed — 2026-09-27
+### M3.162 — Media Server Request Validation Error Responses — active — 2026-09-27
 
-- Branch: `fix/m3-161-media-server-canonical-path`.
-- PR #176; squash-merged at `8caa4232bf03843972968c944cfdc69235e6c549`.
-- User reported PASS.
-- Made `validate_media_path()` return the canonical path and reused it for media URL generation, HTTP metadata access, range handling, and streaming.
-- Preserved the existing supported media-type and directory boundaries.
-- Added focused Rust regression coverage for relative-path rejection.
+- Branch: `fix/m3-162-media-server-request-errors`.
+- PR #177.
+- Fresh audit found media-path percent-decoding and validation errors propagating out of the HTTP connection handler without an explicit response.
+- Added typed media-path error classifications mapped to HTTP 400, 403, 404, and 415 while preserving existing validation messages and security rules.
+- Added HTTP 404 handling for filesystem lookup failure after canonical validation.
+- Preserved the existing `url_for_path() -> Result<String, String>` API and media-serving behavior.
+- Added focused Rust regression coverage for validation error status mapping and stable messages.
 - No project schema change.
-- PR head `1908dbbd830601ee3d1687140afb2597555c56e6` was the verified head at merge.
-- `main` is verified at merge commit `8caa4232bf03843972968c944cfdc69235e6c549`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main` for M3.162.
-
-### M3.160 — Media Server Media-Type Boundary — completed — 2026-09-27
-
-- Branch:
-`fix/m3-160-media-server-media-type-boundary`.
-
-- PR:
-# 175
-
-- Merge SHA:
-`14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`
-
-- User reported PASS.\n- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.\n\n- Implementation:
-- Required the canonical target to be an existing regular file.
-- Reused the central FrameFlow media-type contract from `lib.rs`.
-- Rejected unsupported media types at the media-server boundary.
-- Added explicit MIME mappings for supported image/audio/video formats.
-- Added focused Rust regression coverage for unsupported extensions.
-- No project schema version change.
-
-- Invariant / contract and supported media-server behavior remain unchanged.\n\n- Next step:
-- Fresh audit from verified `main` for the next concrete security or correctness gap.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.162; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ### M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
