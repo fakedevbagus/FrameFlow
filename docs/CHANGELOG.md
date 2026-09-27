@@ -1,12 +1,26 @@
-### M3.149 — Waveform Generation Fingerprint Consistency Contract — active — 2026-09-27
+### M3.150 — Linux Waveform Source Fingerprint Identity Contract — active — 2026-09-27
 
-- Branch: `fix/m3-149-waveform-generation-fingerprint-consistency`.
-- Fresh audit found that the fingerprint captured before waveform generation could differ from the fingerprint returned after FFmpeg decoding when the source file changed during generation.
-- Added an exact pre-generation/post-generation fingerprint consistency check.
-- Mismatched generated results are rejected and never persisted.
-- Added focused regression coverage for fingerprint drift followed by regeneration for the new source fingerprint.
+- Branch: `fix/m3-150-linux-waveform-source-fingerprint`.
+- Fresh audit found the Linux waveform fingerprint used only file size and modification time, leaving a theoretical collision when contents change while those two values are preserved.
+- Extended the fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and mtime.
+- Added a focused Rust regression test for the expanded Linux fingerprint metadata.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
+
+### M3.149 — Waveform Generation Fingerprint Consistency Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-149-waveform-generation-fingerprint-consistency`.
+- PR #164; squash-merged at `9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`.
+- User reported PASS.
+- Added an exact pre-generation/post-generation source fingerprint consistency check.
+- Mismatched generated waveform data is rejected and never persisted.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `8692e79935650142962635300c5638625a410dc1` was verified before merge.
+- `main` was verified after merge at `9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for M3.150.
+
 
 ### M3.148 — Fingerprint-Aware Waveform Request Deduplication — completed — 2026-09-27
 
