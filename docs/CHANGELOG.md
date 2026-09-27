@@ -1,17 +1,13 @@
-### M3.162 — Media Server Request Validation Error Responses — completed — 2026-09-27
+### M3.163 — Media Server HEAD Response Contract — active — 2026-09-27
 
-- Branch: `fix/m3-162-media-server-request-errors`.
-- PR #177; squash-merged at `f4455f08360565dfc65c6b15b36f210c8624a76a`.
-- User reported PASS.
-- Added typed media-path error classifications mapped to HTTP 400, 403, 404, and 415 while preserving existing validation messages and path/security rules.
-- Added HTTP 404 handling for filesystem lookup failure after canonical validation.
-- Preserved the existing `url_for_path() -> Result<String, String>` API.
-- Added focused Rust regression coverage for validation error status mapping and stable messages.
-- No project schema version change.
-- PR head `957e9fd6cba7b30d6f8d45f7113e8122e040fe5a` was verified before merge.
-- `main` was verified at merge commit `f4455f08360565dfc65c6b15b36f210c8624a76a`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main` for the next concrete security or correctness gap.
+- Branch: `fix/m3-163-media-server-head-response-contract`.
+- Fresh audit found `write_status()` sending response bodies for error paths even when the media request method was HEAD.
+- Added explicit body-emission control for status responses while preserving `Content-Length`.
+- Applied HEAD-aware suppression to media-server error paths without changing GET behavior.
+- Added focused TCP-level regression coverage for a HEAD 404 response.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.163; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ### M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
