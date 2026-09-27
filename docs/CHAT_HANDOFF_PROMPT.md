@@ -1,12 +1,21 @@
-## M3.174 — active — 2026-09-28
+## M3.175 — active — 2026-09-28
+
+- Branch: `fix/m3-175-media-request-header-syntax`.
+- Scope: reject malformed media-server request header lines instead of silently skipping them.
+- Fresh audit found generic request header lines without a colon or valid field-name syntax were not validated.
+- Validate each request header field name before endpoint routing.
+- Preserve valid header values, existing Range parsing, query/token, path, media-type, HTTP-version, method, and HEAD contracts.
+- Added focused TCP regression coverage for malformed GET and HEAD headers.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- No project schema version change.
+
+## M3.174 — completed — 2026-09-28
 
 - Branch: `fix/m3-174-media-request-read-timeout`.
-- Scope: bound the media-server request-header read phase so idle local connections cannot hold server threads indefinitely.
-- Fresh audit found `read_request()` had no read deadline even though each accepted connection gets a dedicated thread.
-- Apply a fixed 15-second `TcpStream` read timeout before request parsing.
-- Existing request size/framing, HTTP, query/token, path, range, media-type, and streaming behavior remain preserved.
-- Added focused regression coverage for the configured timeout.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- PR #189; squash-merged at `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
+- User reported PASS.
+- Added a fixed 15-second request-header read timeout.
+- Existing request framing and media streaming behavior remain preserved.
 - No project schema version change.
 
 ## M3.173 — completed — 2026-09-28
@@ -14,9 +23,26 @@
 - Branch: `fix/m3-173-media-options-target`.
 - PR #188; squash-merged at `bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`.
 - User reported PASS.
-- Non-media `OPTIONS` targets now return HTTP 404; valid `/media?` targets retain HTTP 204.
+- Non-media OPTIONS targets now return HTTP 404; valid /media? targets retain HTTP 204.
 - Added focused TCP regression coverage.
 - No project schema version change.
+
+## M3.172 — completed — 2026-09-27
+
+- Branch: `fix/m3-172-media-query-parameters`.
+- PR #187; squash-merged at `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
+- User reported PASS.
+- Closed the media-server query contract to explicit `path=` and `token=` parameters.
+- Unknown query parameters now return HTTP 400 with focused regression coverage.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.175 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 
 ## M3.171 — completed — 2026-09-27
