@@ -1,16 +1,15 @@
-### M3.153 — Native Video Graph Input Index Validation — completed — 2026-09-27
+### M3.154 — Unified AV Source Consistency Contract — active — 2026-09-27
 
-- Branch: `fix/m3-153-video-graph-input-index-validation`.
-- PR #168; squash-merged at `4f2ad5268df82be89d72077837dce26864636244`.
-- User reported PASS.
-- Restored indexed native video-graph input validation with `.enumerate().map(|(index, value)| ...)`.
-- Extracted indexed media-type comparison into a focused helper.
+- Branch: `fix/m3-154-unified-av-source-consistency`.
+- Fresh audit found unified video+audio export probing sources before FFmpeg but lacking a source-identity snapshot/recheck around the render window.
+- Capture Linux source identity for each resolved video/audio input before rendering.
+- Re-check all sources after successful FFmpeg generation; remove output and return a retryable error on mutation or source removal.
+- Identity includes size, mtime, ctime, ctime nanoseconds, device ID, and inode.
 - Added focused Rust regression coverage.
 - No project schema change.
-- PR head `601fd88a5b9fdac4beea56996bd539b7f2f393c4` was verified before merge.
-- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main`.
+- Implementation is complete; user local validation is pending.
+
+### M3.153 — Native Video Graph Input Index Validation — completed — 2026-09-27
 
 ### M3.154 — active — 2026-09-27
 

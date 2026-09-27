@@ -1,6 +1,7 @@
 use std::{
   collections::HashMap,
   fs,
+  os::unix::fs::MetadataExt,
   path::{Path, PathBuf},
 };
 
@@ -211,6 +212,10 @@ pub fn render_video_audio_graph_to_mp4(
     })
     .collect::<Result<Vec<_>, String>>()?;
 
+  let mut source_paths_for_consistency = video_paths.clone();
+  source_paths_for_consistency.extend(audio_paths.iter().cloned());
+  let source_identity_snapshot = capture_source_identity_snapshot(&source_paths_for_consistency)?;
+
   let mut source_duration_by_input_index = HashMap::new();
   let source_audio_segments = request
     .source_audio_segments
@@ -296,6 +301,13 @@ pub fn render_video_audio_graph_to_mp4(
     return Err(error);
   }
 
+  if let Err(error) =
+    validate_source_identity_snapshot(&source_identity_snapshot)
+  {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
+  }
+
   let metadata = fs::metadata(&output_path).map_err(|error| {
     let _ = fs::remove_file(&output_path);
     format!(
@@ -311,6 +323,62 @@ pub fn render_video_audio_graph_to_mp4(
   Ok(NativeAudioRenderResult {
     output_path: output_path.to_string_lossy().into_owned(),
   })
+}
+
+fn capture_source_identity_snapshot(
+  source_paths: &[PathBuf],
+) -> Result<Vec<(PathBuf, String)>, String> {
+  source_paths
+    .iter()
+    .map(|path| {
+      let identity = source_identity(path)?;
+      Ok((path.clone(), identity))
+    })
+    .collect()
+}
+
+fn validate_source_identity_snapshot(
+  snapshot: &[(PathBuf, String)],
+) -> Result<(), String> {
+  for (path, expected_identity) in snapshot {
+    let current_identity = source_identity(path).map_err(|error| {
+      format!(
+        "Unified AV source changed or became unavailable during rendering: {error}"
+      )
+    })?;
+
+    if &current_identity != expected_identity {
+      return Err(format!(
+        "Unified AV source changed during rendering; please retry: {}",
+        path.display()
+      ));
+    }
+  }
+
+  Ok(())
+}
+
+fn source_identity(path: &Path) -> Result<String, String> {
+  let metadata = fs::metadata(path).map_err(|error| {
+    format!("Could not inspect source metadata '{}': {error}", path.display())
+  })?;
+
+  let modified_nanos = metadata
+    .modified()
+    .ok()
+    .and_then(|value| value.duration_since(std::time::UNIX_EPOCH).ok())
+    .map(|value| value.as_nanos().to_string())
+    .unwrap_or_else(|| "unknown".to_string());
+
+  Ok(format!(
+    "{}:{}:{}:{}:{}:{}",
+    metadata.len(),
+    modified_nanos,
+    metadata.ctime(),
+    metadata.ctime_nsec(),
+    metadata.dev(),
+    metadata.ino(),
+  ))
 }
 
 fn validate_video_audio_graph_request(
@@ -1505,6 +1573,38 @@ mod tests {
     invalid_duration.duration_ms = 5_000;
     invalid_duration.output_path = "/tmp/final.mov".to_string();
     assert!(validate_video_audio_mix_request(&invalid_duration).is_err());
+  }
+
+  #[test]
+  fn source_identity_snapshot_detects_unified_av_source_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-unified-av-source-{}-{unique_suffix}.tmp",
+      std::process::id(),
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let snapshot = super::capture_source_identity_snapshot(&[path.clone()]).unwrap();
+
+    assert!(super::validate_source_identity_snapshot(&snapshot).is_ok());
+
+    fs::write(&path, b"second").unwrap();
+
+    let error = super::validate_source_identity_snapshot(&snapshot)
+      .expect_err("changed unified AV sources must invalidate the render");
+
+    assert!(error.contains("Unified AV source changed during rendering"));
+    assert!(error.contains(&path.to_string_lossy()));
+
+    fs::remove_file(path).unwrap();
   }
 
   #[test]
