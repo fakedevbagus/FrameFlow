@@ -478,6 +478,92 @@ describe("audio waveform", () => {
     );
   });
 
+  it("rejects an over-limit native waveform source fingerprint", async () => {
+    const oversizedFingerprint = "x".repeat(129);
+
+    vi.mocked(invoke).mockResolvedValueOnce({
+      sourceFingerprint: oversizedFingerprint,
+    });
+
+    await expect(
+      getAudioWaveform("/oversized-fingerprint.mp3", 512),
+    ).rejects.toThrow("Native waveform source fingerprint is invalid.");
+
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts the maximum waveform source fingerprint length", async () => {
+    const maximumFingerprint = "x".repeat(128);
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({
+        sourceFingerprint: maximumFingerprint,
+      })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.5],
+        sourceFingerprint: maximumFingerprint,
+      });
+
+    await expect(
+      getAudioWaveform("/maximum-fingerprint.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.5],
+      sourceFingerprint: maximumFingerprint,
+    });
+  });
+
+  it("rejects an over-limit persisted waveform source fingerprint as a cache miss", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/malformed-fingerprint.mp3::512::short",
+            waveform: {
+              durationMs: 1000,
+              sampleRate: 1024,
+              peaks: [0.5],
+              sourceFingerprint: "x".repeat(129),
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "short" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.75],
+        sourceFingerprint: "short",
+      });
+
+    await expect(
+      getAudioWaveform("/malformed-fingerprint.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.75],
+      sourceFingerprint: "short",
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      "generate_audio_waveform",
+      {
+        path: "/malformed-fingerprint.mp3",
+        peakCount: 512,
+      },
+    );
+  });
+
   it("rejects unsafe persisted waveform timing metadata as a cache hit", async () => {
     localStorage.setItem(
       "frameflow.audio-waveform-cache.v1",
