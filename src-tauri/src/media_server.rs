@@ -838,7 +838,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let mut client = TcpStream::connect(address).unwrap();
@@ -867,7 +867,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let mut client = TcpStream::connect(address).unwrap();
@@ -899,7 +899,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let request = format!(
@@ -933,7 +933,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let mut client = TcpStream::connect(address).unwrap();
@@ -962,7 +962,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let mut client = TcpStream::connect(address).unwrap();
@@ -1023,7 +1023,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let mut client = TcpStream::connect(address).unwrap();
@@ -1106,7 +1106,7 @@ mod tests {
 
     let server = thread::spawn(move || {
       let (stream, _) = listener.accept().unwrap();
-      super::handle_connection(stream).unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
     });
 
     let mut client = TcpStream::connect(address).unwrap();
