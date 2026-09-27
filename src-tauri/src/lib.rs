@@ -175,18 +175,9 @@ fn prepare_media_preview(
     });
   }
 
-  let current_metadata = fs::metadata(&source_path)
-    .map_err(|error| {
-      let _ = fs::remove_file(&temporary_path);
-      format!("Could not re-check media metadata after preview generation: {error}")
-    })?;
-
-  let current_cache_key = preview_cache_key(&source_path, &current_metadata);
-  if current_cache_key != cache_key {
+  if let Err(error) = validate_preview_source_identity(&source_path, &cache_key) {
     let _ = fs::remove_file(&temporary_path);
-    return Err(
-      "Selected media changed during preview generation; please retry.".to_string(),
-    );
+    return Err(error);
   }
 
   let metadata = fs::metadata(&temporary_path).map_err(|error| {
@@ -1415,6 +1406,22 @@ fn parse_duration_ms(output: &[u8]) -> Option<u64> {
         None
       }
     })
+}
+
+fn validate_preview_source_identity(
+  source_path: &Path,
+  expected_cache_key: &str,
+) -> Result<(), String> {
+  let metadata = fs::metadata(source_path)
+    .map_err(|error| format!("Could not re-check media metadata after preview generation: {error}"))?;
+
+  if preview_cache_key(source_path, &metadata) != expected_cache_key {
+    return Err(
+      "Selected media changed during preview generation; please retry.".to_string(),
+    );
+  }
+
+  Ok(())
 }
 
 fn preview_cache_key(path: &Path, metadata: &fs::Metadata) -> String {
