@@ -80,6 +80,12 @@ export async function getAudioWaveform(
       throw new Error("Native waveform data is invalid.");
     }
 
+    if (waveform.sourceFingerprint !== fingerprint) {
+      throw new Error(
+        "Native waveform source fingerprint changed during generation.",
+      );
+    }
+
     const normalizedWaveform = {
       durationMs: waveform.durationMs,
       sampleRate: waveform.sampleRate,

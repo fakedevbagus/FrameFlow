@@ -1,12 +1,26 @@
-### M3.148 — Fingerprint-Aware Waveform Request Deduplication — active — 2026-09-27
+### M3.149 — Waveform Generation Fingerprint Consistency Contract — active — 2026-09-27
 
-- Branch: `fix/m3-148-waveform-request-fingerprint-key`.
-- Fresh audit found in-memory waveform request deduplication keyed only by source path and normalized peak count before source fingerprint resolution.
-- Resolve and validate the source fingerprint before checking the request cache, then key in-flight generation requests by path, peak count, and fingerprint.
-- Preserve deduplication for identical fingerprints while preventing stale requests from being reused across changed source fingerprints.
-- Added focused regression coverage for a source change during an in-flight waveform generation request.
+- Branch: `fix/m3-149-waveform-generation-fingerprint-consistency`.
+- Fresh audit found that the fingerprint captured before waveform generation could differ from the fingerprint returned after FFmpeg decoding when the source file changed during generation.
+- Added an exact pre-generation/post-generation fingerprint consistency check.
+- Mismatched generated results are rejected and never persisted.
+- Added focused regression coverage for fingerprint drift followed by regeneration for the new source fingerprint.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
+
+### M3.148 — Fingerprint-Aware Waveform Request Deduplication — completed — 2026-09-27
+
+- Branch: `fix/m3-148-waveform-request-fingerprint-key`.
+- PR #163; squash-merged at `39073936f701476dd8bd31690199b2236f7d083a`.
+- User reported PASS.
+- Resolved the source fingerprint before in-memory request deduplication and included it in the request key.
+- Added focused regression coverage for changed fingerprints during in-flight generation.
+- No project schema change.
+- PR head `36ceee7913ba11fd7e6944385c530950f905e82d` was verified before merge.
+- `main` was verified after merge at `39073936f701476dd8bd31690199b2236f7d083a`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for M3.149.
+
 
 ### M3.147 — Strict Waveform Render Peak Input Contract — completed — 2026-09-27
 

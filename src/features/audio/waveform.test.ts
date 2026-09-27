@@ -426,6 +426,50 @@ describe("audio waveform", () => {
     });
   });
 
+  it("rejects a generated waveform when its fingerprint changed during generation", async () => {
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "source-v1" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.9],
+        sourceFingerprint: "source-v2",
+      })
+      .mockResolvedValueOnce({ sourceFingerprint: "source-v2" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.25],
+        sourceFingerprint: "source-v2",
+      });
+
+    await expect(
+      getAudioWaveform("/changed-during-generation.mp3", 128),
+    ).rejects.toThrow(
+      "Native waveform source fingerprint changed during generation.",
+    );
+
+    expect(localStorage.getItem("frameflow.audio-waveform-cache.v1")).toBeNull();
+
+    await expect(
+      getAudioWaveform("/changed-during-generation.mp3", 128),
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.25],
+      sourceFingerprint: "source-v2",
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      4,
+      "generate_audio_waveform",
+      {
+        path: "/changed-during-generation.mp3",
+        peakCount: 128,
+      },
+    );
+  });
+
   it("preserves waveform bucket positions when native peaks contain invalid values", async () => {
     vi.mocked(invoke)
       .mockResolvedValueOnce({ sourceFingerprint: "1000:200" })
