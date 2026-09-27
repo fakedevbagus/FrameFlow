@@ -76,7 +76,8 @@ impl MediaServerState {
   }
 
   pub fn url_for_path(&self, value: &str) -> Result<String, String> {
-    let path = validate_media_path(Path::new(value))?;
+    let path = validate_media_path(Path::new(value))
+      .map_err(|error| error.to_string())?;
 
     Ok(format!(
       "{}/media?path={}",
