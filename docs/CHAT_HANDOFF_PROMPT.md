@@ -1,21 +1,20 @@
-## M3.156 — active — 2026-09-27
+## M3.156 — completed — 2026-09-27
 
 - Branch: `fix/m3-156-audio-graph-source-consistency`.
-- Scope: prevent audio-only graph export from finalizing when a resolved input source changes or becomes unavailable during FFmpeg rendering.
-- Fresh audit found `render_audio_graph_to_mp4()` validating audio paths before FFmpeg but not re-checking source identity before accepting the generated output.
-- Capture Linux source identity for every resolved audio graph input before rendering.
-- Re-check all sources after successful FFmpeg generation; remove output and return a retryable error on mutation or removal.
-- Reuse the existing M3.154 source identity contract.
+- PR #171; squash-merged at `3301123d13c254dc850b35ed8d1d1bdbe838d6ac`.
+- User reported PASS.
+- Captured and re-checked Linux source identity for all resolved audio graph inputs around FFmpeg rendering.
+- Source mutation/removal now prevents finalization and cleans the generated output.
 - Added focused Rust regression coverage.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
+- PR head `38af9e3ab9e6f20ac3bb833b896bf515f33378f9` was verified before merge.
+- `main` was verified after merge at `3301123d13c254dc850b35ed8d1d1bdbe838d6ac`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 ## Workflow for this chat
 
-- Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.155 is completed and merged; M3.156 is the active milestone.
+- Inspect actual `main` SHA, active branch state, and open PRs before acting.
+- M3.156 is completed and merged; the next step is a fresh audit from verified `main`.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
