@@ -1,3 +1,33 @@
+## M3.169 — Media Server Range Header Syntax Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-169-media-range-header-syntax`
+
+PR:
+Draft PR to be created after implementation/documentation synchronization.
+
+Fresh audit finding:
+- `parse_range_header()` recognized a `Range:` field only when the field name was followed immediately by `:`.
+- A malformed field such as `Range : bytes=0-99` was therefore ignored as though no range header existed, allowing a full 200 response instead of explicit rejection.
+- The media-server range contract requires deterministic handling of malformed range fields.
+
+Scope:
+- Reject malformed `Range` header field names instead of silently ignoring them.
+
+Implementation:
+- Parse header names around the colon explicitly.
+- Detect a field name whose trimmed value is `Range` but whose actual name is malformed, such as whitespace before the colon.
+- Map malformed `Range` headers to HTTP 400.
+- Preserve duplicate-header rejection, single/multiple range semantics, HTTP version, method, query/path, canonicalization, media-type, and HEAD contracts.
+- Add focused regression coverage for malformed range header syntax.
+- No project schema change.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.169; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
 ## M3.168 — Media Server Range Header Uniqueness Contract — completed — 2026-09-27
 
 Branch:
