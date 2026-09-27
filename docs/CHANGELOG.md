@@ -1,11 +1,26 @@
-### M3.151 — Linux Preview Cache Source Identity Contract — active — 2026-09-27
+### M3.152 — Preview Generation Source Consistency Contract — active — 2026-09-27
 
-- Branch: `fix/m3-151-preview-cache-source-identity`.
-- Fresh audit found `prepare_media_preview()` still used path + size + mtime while waveform source identity had been strengthened with ctime, ctime nanoseconds, device ID, and inode.
-- Extended the preview cache key with the same Linux source identity/change metadata while retaining the existing path, size, and mtime inputs.
-- Added focused Rust regression coverage for preview cache key changes after source metadata changes.
+- Branch: `fix/m3-152-preview-generation-source-consistency`.
+- Fresh audit found preview generation captured the source cache key before FFmpeg but never revalidated source identity after generation.
+- Added a post-generation source identity check using the same metadata-backed preview cache key.
+- Changed sources are rejected and temporary preview output is removed rather than finalized under a stale key.
+- Added focused Rust regression coverage for stable and changed source identity.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
+
+### M3.151 — Linux Preview Cache Source Identity Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-151-preview-cache-source-identity`.
+- PR #166; squash-merged at `4f451f9f17d3273ef1622ce008fb5deeaaa8e859`.
+- User reported PASS.
+- Extended preview cache keys with ctime, ctime nanoseconds, device ID, and inode while retaining path, size, and mtime.
+- Added focused Rust regression coverage.
+- No project schema change.
+- PR head `0885ffdca058a03b1a8ef320cd573bff417f8a55` was verified before merge.
+- `main` was verified after merge at `4f451f9f17d3273ef1622ce008fb5deeaaa8e859`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for M3.152.
+
 
 ### M3.150 — Linux Waveform Source Fingerprint Identity Contract — completed — 2026-09-27
 

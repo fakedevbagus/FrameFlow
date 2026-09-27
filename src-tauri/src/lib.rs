@@ -175,6 +175,11 @@ fn prepare_media_preview(
     });
   }
 
+  if let Err(error) = validate_preview_source_identity(&source_path, &cache_key) {
+    let _ = fs::remove_file(&temporary_path);
+    return Err(error);
+  }
+
   let metadata = fs::metadata(&temporary_path).map_err(|error| {
     let _ = fs::remove_file(&temporary_path);
     format!("Generated preview file could not be inspected: {error}")
@@ -1403,6 +1408,22 @@ fn parse_duration_ms(output: &[u8]) -> Option<u64> {
     })
 }
 
+fn validate_preview_source_identity(
+  source_path: &Path,
+  expected_cache_key: &str,
+) -> Result<(), String> {
+  let metadata = fs::metadata(source_path)
+    .map_err(|error| format!("Could not re-check media metadata after preview generation: {error}"))?;
+
+  if preview_cache_key(source_path, &metadata) != expected_cache_key {
+    return Err(
+      "Selected media changed during preview generation; please retry.".to_string(),
+    );
+  }
+
+  Ok(())
+}
+
 fn preview_cache_key(path: &Path, metadata: &fs::Metadata) -> String {
   let mut hash = 0xcbf29ce484222325u64;
 
@@ -1927,6 +1948,40 @@ mod tests {
     assert!(values.windows(2).any(|pair| pair == ["-framerate".to_string(), "30".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/title.png".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-i".to_string(), "/media/video.mp4".to_string()]));
+  }
+
+  #[test]
+  fn detects_preview_source_changes_before_cache_finalization() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-preview-source-change-{}-{unique_suffix}.tmp",
+      std::process::id(),
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let initial_metadata = fs::metadata(&path).unwrap();
+    let initial_key = preview_cache_key(&path, &initial_metadata);
+
+    assert!(super::validate_preview_source_identity(&path, &initial_key).is_ok());
+
+    fs::write(&path, b"second").unwrap();
+
+    let error = super::validate_preview_source_identity(&path, &initial_key)
+      .expect_err("changed preview sources must invalidate the generation");
+    assert_eq!(
+      error,
+      "Selected media changed during preview generation; please retry."
+    );
+
+    fs::remove_file(path).unwrap();
   }
 
   #[test]
