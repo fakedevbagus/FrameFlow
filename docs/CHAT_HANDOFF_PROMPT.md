@@ -1,3 +1,38 @@
+## M3.153 — active — 2026-09-27
+
+- Branch: `fix/m3-153-video-graph-input-index-validation`.
+- Scope: restore indexed native video-graph input validation so declared media types are matched against their corresponding input indexes.
+- Fresh audit found `render_video_graph_to_mp4()` using `index` inside an input mapping closure without enumerating the iterator, leaving the native Rust command path with an unresolved index binding.
+- Changed the iterator to `.enumerate().map(|(index, value)| ...)`.
+- Extracted indexed media-type comparison into `validate_native_video_graph_input_media_type()`.
+- Added focused Rust regression coverage for matching, omitted, and mismatched indexed media types.
+- No project schema version change.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.152 — completed — 2026-09-27
+
+- Branch: `fix/m3-152-preview-generation-source-consistency`.
+- PR #167; squash-merged at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- User reported PASS.
+- Re-checked preview source identity after FFmpeg generation and rejected changed sources before cache finalization.
+- Removed temporary output when source identity changed.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- PR head `a5a3e1f125fd44d44128330ec284d30e8d4147f7` was verified before merge.
+- `main` was verified after merge at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: complete user local validation of M3.153.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.152 is completed and merged; M3.153 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.152 — completed — 2026-09-27
 
 - Branch: `fix/m3-152-preview-generation-source-consistency`.
