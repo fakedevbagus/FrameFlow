@@ -1,3 +1,60 @@
+## M3.175 — Media Server Request Header Syntax Contract — active — 2026-09-28
+
+Branch:
+`fix/m3-175-media-request-header-syntax`
+
+Fresh audit finding:
+- After the request line, the media server did not perform generic syntax validation for request header lines.
+- A header line without a colon could therefore be silently skipped by the parser.
+- Existing special handling for malformed `Range` field names covered only that header, not malformed arbitrary header lines.
+
+Scope:
+- Reject malformed media-server request header lines with HTTP 400.
+
+Implementation:
+- Validate each request header line before endpoint routing.
+- Require a non-empty HTTP token field name followed by a colon.
+- Reject missing-colon, empty-name, whitespace-containing, and otherwise invalid field-name syntax with HTTP 400.
+- Preserve valid header values and existing Range parsing semantics.
+- Preserve HEAD response body suppression for validation errors.
+- Add focused TCP regression coverage for malformed GET and HEAD headers.
+- No project schema change.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Validate M3.175 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.174 — Media Server Request Read Timeout — completed — 2026-09-28
+
+Branch:
+`fix/m3-174-media-request-read-timeout`
+
+PR:
+#189
+
+Merge SHA:
+`a626aef0311d236119b42e3ce5d294a498a7e8a7`
+
+User validation:
+- User reported PASS for M3.174.
+- PR #189 was refreshed at head `32eca4d9c88b35e27101be6cd0f405c05283a2cf`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Scope:
+- Bound the media-server request-header read phase so idle local connections cannot hold server threads indefinitely.
+
+Implementation:
+- Applied a fixed 15-second `TcpStream` read timeout before request parsing.
+- Preserved the existing 32 KiB header limit, framing errors, HTTP parsing, query/token authorization, media path validation, range handling, and streaming behavior.
+- Added focused regression coverage for the configured timeout.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` for the next focused media-server protocol/security gap.
+
 ## M3.173 — Media Server OPTIONS Target Contract — completed — 2026-09-28
 
 Branch:
@@ -28,31 +85,6 @@ Implementation:
 Next step:
 - Fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
-## M3.174 — Media Server Request Read Timeout — active — 2026-09-28
-
-Branch:
-`fix/m3-174-media-request-read-timeout`
-
-Fresh audit finding:
-- Each accepted media-server connection creates a dedicated thread.
-- `read_request()` previously blocked without a deadline until the request headers were completed or the peer closed the connection.
-- A local client could therefore hold server threads indefinitely by keeping a connection open without completing the request headers.
-
-Scope:
-- Bound the request-header read phase with a fixed 15-second read timeout.
-
-Implementation:
-- Apply a 15-second `TcpStream` read timeout before parsing request headers.
-- Preserve the existing 32 KiB header limit, framing errors, HTTP parsing, query/token authorization, media path validation, range handling, and streaming behavior.
-- Timeouts surface through the existing request I/O error path, closing the idle connection without changing valid request responses.
-- Add focused regression coverage for the configured timeout.
-- No project schema change.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
-Next step:
-- Validate M3.174 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
 ## M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 
