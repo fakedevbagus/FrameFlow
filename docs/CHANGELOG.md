@@ -24,16 +24,19 @@
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main`.
 
-### M3.138 — Strict Waveform Source-Range Metadata Contract — active — 2026-09-27
+### M3.138 — Strict Waveform Source-Range Metadata Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-138-strict-waveform-source-range-metadata`.
-- Fresh audit found `getWaveformPeaksForSourceRange()` accepted finite fractional or unsafe `sourceDurationMs`, `sourceStartMs`, and non-null `sourceEndMs` values.
-- Tightened source-range timing metadata validation to JavaScript safe integers.
+- PR #153; squash-merged at `4cc633946bf49ec4dd9efcc017d342075fccf015`.
+- User reported PASS.
+- Tightened source-range timing validation to require JavaScript safe integers for `sourceDurationMs`, `sourceStartMs`, and non-null `sourceEndMs`.
 - Preserved safe-integer negative out-of-range clamping semantics.
 - Added focused regression coverage for unsafe and fractional source-range metadata.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- PR head `d0314b1925593ecbf7a5c43fc7fefc3e32358d36` was verified before merge.
+- `main` was verified after merge at `4cc633946bf49ec4dd9efcc017d342075fccf015`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
 
