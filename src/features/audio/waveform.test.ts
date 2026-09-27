@@ -677,7 +677,7 @@ describe("audio waveform", () => {
   });
 
   it("accepts the maximum persistent waveform store size", async () => {
-    const entries = Array.from({ length: 32 }, (_, index) => ({
+    const entries = Array.from({ length: 31 }, (_, index) => ({
       cacheKey: "/bounded-cache-" + index + ".mp3::512::bounded",
       waveform: {
         durationMs: 1000,
@@ -687,6 +687,17 @@ describe("audio waveform", () => {
       },
       lastUsedAt: index + 1,
     }));
+
+    entries.push({
+      cacheKey: "/bounded-target.mp3::512::bounded-target",
+      waveform: {
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.75],
+        sourceFingerprint: "bounded-target",
+      },
+      lastUsedAt: 32,
+    });
 
     localStorage.setItem(
       "frameflow.audio-waveform-cache.v1",
@@ -699,7 +710,14 @@ describe("audio waveform", () => {
 
     await expect(
       getAudioWaveform("/bounded-target.mp3", 512),
-    ).rejects.toThrow();
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.75],
+      sourceFingerprint: "bounded-target",
+    });
+
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("treats malformed persisted waveform data as a cache miss", async () => {
