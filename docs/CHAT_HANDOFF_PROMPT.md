@@ -1,27 +1,26 @@
-## M3.141 — active — 2026-09-27
+## M3.142 — active — 2026-09-27
 
-- Branch: `fix/m3-141-strict-persistent-waveform-entry-contract`.
-- Scope: require every persisted waveform cache entry to satisfy its structural contract before lookup, sorting, mutation, or reuse.
-- Fresh audit after M3.140 found that the store-size validator still accepted malformed individual entries.
-- Added `isValidPersistentWaveformEntry()` requiring a non-empty string `cacheKey`, a valid waveform payload, and non-negative safe-integer `lastUsedAt`.
-- Persisted stores now require every entry to pass the entry validator.
-- Added focused regression coverage for malformed persisted timestamps and invalid cache keys.
+- Branch: `fix/m3-142-strict-waveform-fingerprint-contract`.
+- Scope: require waveform source fingerprints to be non-empty and no longer than 128 characters before cache-key construction, lookup, reuse, or persistence.
+- Fresh audit after M3.141 found native and persisted fingerprints had no upper length bound.
+- Added `MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH = 128` and applied it to native fingerprint responses, generated waveform payloads, and persisted entry validation.
+- Added focused regression coverage for the maximum valid fingerprint and over-limit native/persisted fingerprints.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
-## M3.140 — completed — 2026-09-27
+## M3.141 — completed — 2026-09-27
 
-- Branch: `fix/m3-140-strict-persistent-waveform-store-size`.
-- PR #155; squash-merged at `a43175c89856a34e3f684a27430aca883e27dd32`.
+- Branch: `fix/m3-141-strict-persistent-waveform-entry-contract`.
+- PR #156; squash-merged at `60cf018e960ad3bf928f416c35c7fd9737d600aa`.
 - User reported PASS.
-- Tightened persistent waveform store validation to at most 32 entries before lookup, sorting, or reuse.
-- Reused the same store-size guard in the write path.
-- Added focused regression coverage for the 32-entry boundary and oversized-store rejection.
+- Added strict persisted waveform entry validation before lookup/sorting/mutation.
+- Required non-empty `cacheKey`, valid waveform metadata, and non-negative safe-integer `lastUsedAt`.
+- Added focused regression coverage for malformed timestamps and invalid cache keys.
 - No project schema version change.
-- PR head `314df08dc71bd157f5ac7afc0e1de8dca6f09224` was verified before merge.
-- `main` was verified after merge at `a43175c89856a34e3f684a27430aca883e27dd32`.
+- PR head `741a60c306ed6465414dd7d438317ce05f65d31e` was verified before merge.
+- `main` was verified after merge at `60cf018e960ad3bf928f416c35c7fd9737d600aa`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main`.
 ## M3.139 — completed — 2026-09-27
