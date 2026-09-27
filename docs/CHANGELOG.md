@@ -1,14 +1,16 @@
-### M3.164 — Media Query Duplicate Path Rejection — active — 2026-09-27
+### M3.164 — Media Query Duplicate Path Rejection — completed — 2026-09-27
 
 - Branch: `fix/m3-164-media-query-duplicate-path`.
-- Fresh audit found the media query parser selecting the first `path=` parameter when duplicate parameters were supplied.
-- Added a focused parser requiring exactly one `path=` parameter.
-- Duplicate `path=` parameters now return HTTP 400 with `Duplicate media path parameter.`.
-- Preserved existing missing-path behavior, valid media URL handling, validation, HEAD, and range behavior.
-- Added focused Rust regression coverage for duplicate and missing path parameters.
+- PR #179; squash-merged at `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
+- User reported PASS.
+- Added a focused parser requiring exactly one `path=` query parameter; duplicate parameters now return HTTP 400.
+- Preserved missing-path behavior, valid media URLs, validation, HEAD, and range handling.
+- Added focused Rust regression coverage.
 - No project schema change.
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.164; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- PR head `66565f114fb4ca127180b7202ed0fda2dd47e979` was verified before merge.
+- `main` was verified at merge commit `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next concrete security or correctness gap.
 
 ### M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
