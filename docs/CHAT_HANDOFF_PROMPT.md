@@ -1,13 +1,23 @@
-## M3.152 — active — 2026-09-27
+## M3.152 — completed — 2026-09-27
 
 - Branch: `fix/m3-152-preview-generation-source-consistency`.
-- Scope: prevent preview generation from finalizing output when the source changes during FFmpeg generation.
-- Fresh audit after M3.151 found `prepare_media_preview()` captured the preview cache key before FFmpeg and did not compare source identity after generation.
-- Re-check source metadata after FFmpeg, require the recomputed cache key to match the original key, and delete temporary output when the source changed.
-- Added a focused Rust helper/test for stable and changed preview source identity.
+- PR #167; squash-merged at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- User reported PASS.
+- Re-checked preview source identity after FFmpeg generation and rejected changed sources before cache finalization.
+- Removed temporary output when source identity changed.
+- Added focused Rust regression coverage.
 - No project schema version change.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- PR head `a5a3e1f125fd44d44128330ec284d30e8d4147f7` was verified before merge.
+- `main` was verified after merge at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- The latest completed milestone is M3.152; the next step is a fresh audit from verified `main`.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.151 — completed — 2026-09-27
