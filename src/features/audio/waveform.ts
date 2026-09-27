@@ -158,7 +158,11 @@ function readPersistentWaveform(cacheKey: string): AudioWaveform | null {
     const store = parsed;
 
     const entry = store.entries.find((candidate) => candidate.cacheKey === cacheKey);
-    if (!entry || !isValidAudioWaveform(entry.waveform)) {
+    if (!entry || !isValidPersistentWaveformEntry(entry)) {
+      return null;
+    }
+
+    if (!isPersistentWaveformEntryKeyConsistent(entry, cacheKey)) {
       return null;
     }
 
@@ -266,6 +270,13 @@ function isValidPersistentWaveformEntry(
     Number.isSafeInteger(candidate.lastUsedAt) &&
     candidate.lastUsedAt >= 0
   );
+}
+
+function isPersistentWaveformEntryKeyConsistent(
+  entry: PersistentWaveformEntry,
+  cacheKey: string,
+): boolean {
+  return cacheKey.endsWith("::" + entry.waveform.sourceFingerprint);
 }
 
 function isPersistentWaveformStore(
