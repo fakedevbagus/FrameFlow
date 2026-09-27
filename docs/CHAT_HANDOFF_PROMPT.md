@@ -1,13 +1,27 @@
-## M3.176 — active — 2026-09-28
+## M3.177 — active — 2026-09-28
 
-- Branch: `fix/m3-176-media-response-write-timeout`.
-- Scope: bound media-server response writes so a stalled local client cannot hold a server thread indefinitely.
-- Fresh audit found the M3.174 request-read timeout did not cover response writes; `write_all()` could still block when a client stopped reading.
-- Apply a fixed 15-second `TcpStream` write timeout before request handling.
-- Preserve the existing request-read timeout and all media response/status/header/range/query/token/path/media-type/HTTP/HEAD behavior.
-- Added focused regression coverage for the configured write timeout.
+- Branch: `fix/m3-177-media-server-connection-cap`.
+- Scope: cap concurrently handled media-server connections so local connection bursts cannot create an unbounded number of server threads.
+- Fresh audit found `MediaServerState::start()` spawning one dedicated OS thread for every accepted connection without an active-connection ceiling.
+- Add a fixed 32-connection active-handler ceiling using an atomic slot counter and RAII release guard.
+- Excess accepted connections are closed without spawning another handler thread.
+- Preserve the existing 15-second request-read timeout, 15-second response-write timeout, and all media response/status/header/range/query/token/path/media-type/HTTP/HEAD/OPTIONS behavior.
+- Added focused regression coverage for the connection cap and slot reuse.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - No project schema version change.
+
+## M3.176 — completed — 2026-09-28
+
+- Branch: `fix/m3-176-media-response-write-timeout`.
+- PR #191; squash-merged at `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
+- User reported PASS.
+- Added a fixed 15-second `TcpStream` write timeout so stalled response writes cannot block a media-server connection thread indefinitely.
+- Existing request-read timeout and all media response behavior remain preserved.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `bf8db3dd6bfca6f46cfc7c6730e706cb913a02e2` was verified before merge.
+- `main` was verified at `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 ## M3.175 — completed — 2026-09-28
 
@@ -30,11 +44,10 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.176 is the active milestone.
+- M3.177 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
-
 
 ## M3.171 — completed — 2026-09-27
 
