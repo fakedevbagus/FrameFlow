@@ -240,6 +240,8 @@ fn render_single_source_to_mp4(
 
   let source_identity_snapshot = audio_render::source_identity(&source_path)?;
 
+  let source_identity_snapshot = audio_render::source_identity(&source_path)?;
+
   let args = build_ffmpeg_export_args(
     &source_path,
     &output_path,
@@ -282,6 +284,22 @@ fn render_single_source_to_mp4(
         source_path.display()
       )
     );
+  }
+
+  let current_source_identity =
+    audio_render::source_identity(&source_path).map_err(|error| {
+      let _ = fs::remove_file(&output_path);
+      format!(
+        "FFmpeg completed but the source could not be revalidated before export finalization: {error}"
+      )
+    })?;
+
+  if current_source_identity != source_identity_snapshot {
+    let _ = fs::remove_file(&output_path);
+    return Err(format!(
+      "Native export source changed during rendering; please retry: {}",
+      source_path.display()
+    ));
   }
 
   let metadata = fs::metadata(&output_path)
