@@ -237,9 +237,16 @@ fn decode_and_reduce_waveform(
     }
   }
 
-  let status = child
-    .wait()
-    .map_err(|error| format!("Could not finish FFmpeg waveform generation: {error}"))?;
+  let status = match child.wait() {
+    Ok(status) => status,
+    Err(error) => {
+      let _ = child.kill();
+      let _ = stderr_reader.join();
+      return Err(format!(
+        "Could not finish FFmpeg waveform generation: {error}"
+      ));
+    }
+  };
 
   let stderr_output = stderr_reader.join().unwrap_or_default();
 
