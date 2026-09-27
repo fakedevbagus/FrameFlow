@@ -182,10 +182,9 @@ function writePersistentWaveform(
     const parsed = raw
       ? (JSON.parse(raw) as Partial<PersistentWaveformStore>)
       : null;
-    const entries =
-      parsed?.version === 1 && Array.isArray(parsed.entries)
-        ? parsed.entries.filter((entry) => entry.cacheKey !== cacheKey)
-        : [];
+    const entries = isPersistentWaveformStore(parsed)
+      ? parsed.entries.filter((entry) => entry.cacheKey !== cacheKey)
+      : [];
 
     entries.push({
       cacheKey,
@@ -255,7 +254,11 @@ function isPersistentWaveformStore(
   }
 
   const candidate = value as Partial<PersistentWaveformStore>;
-  return candidate.version === 1 && Array.isArray(candidate.entries);
+  return (
+    candidate.version === 1 &&
+    Array.isArray(candidate.entries) &&
+    candidate.entries.length <= MAX_PERSISTENT_WAVEFORM_ENTRIES
+  );
 }
 
 function normalizeWaveformPeak(peak: number): number {
