@@ -1,16 +1,28 @@
-## M3.144 — active — 2026-09-27
+## M3.145 — active — 2026-09-27
 
-- Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
-- Scope: require every waveform peak-array element to be a JavaScript number before cache or render processing.
-- Fresh audit after M3.143 found native and persisted waveform validation did not reject non-number peak elements.
-- Added `isValidWaveformPeakArray()` and applied it to native and persisted waveform validation.
-- Existing numeric `NaN`/`Infinity` normalization remains unchanged; strings, objects, and null are rejected.
-- Added focused regression coverage for malformed native and persisted peak elements.
+- Branch: `fix/m3-145-strict-source-range-peak-input-contract`.
+- Scope: require source-range waveform resampling inputs to satisfy the established 2048-element peak-array contract.
+- Fresh audit after M3.144 found `getWaveformPeaksForSourceRange()` did not apply the shared peak-array size/type validator to its input array.
+- Reused `isValidWaveformPeakArray()` at the source-range boundary.
+- Added focused regression coverage for an over-limit input array.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
+## M3.144 — completed — 2026-09-27
+
+- Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
+- PR #159; squash-merged at `626bd84dfc4a739f0728c864463b15951d901a4e`.
+- User reported PASS.
+- Added strict numeric peak-element validation across native and persisted waveform boundaries.
+- Preserved numeric `NaN`/`Infinity` normalization and rejected non-number values.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `da44df46fd2ca2ffef1fdd3ac76b061aa95b00af` was verified before merge.
+- `main` was verified after merge at `626bd84dfc4a739f0728c864463b15951d901a4e`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 ## M3.143 — completed — 2026-09-27
 
 - Branch: `fix/m3-143-persistent-waveform-key-consistency`.
