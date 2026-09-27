@@ -90,33 +90,33 @@ impl MediaServerState {
 fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   let request = match read_request(&mut stream) {
     Ok(request) => request,
-    Err(MediaRequestError::HeadersTooLarge) => {
+    Err(MediaRequestError::HeadersTooLarge { suppress_body }) => {
       write_status(
         &mut stream,
         431,
         "Request Header Fields Too Large",
         b"Media request headers are too large.",
-        true,
+        !suppress_body,
       )?;
       return Ok(());
     }
-    Err(MediaRequestError::InvalidUtf8) => {
+    Err(MediaRequestError::InvalidUtf8 { suppress_body }) => {
       write_status(
         &mut stream,
         400,
         "Bad Request",
         b"Media request must use valid UTF-8.",
-        true,
+        !suppress_body,
       )?;
       return Ok(());
     }
-    Err(MediaRequestError::IncompleteHeaders) => {
+    Err(MediaRequestError::IncompleteHeaders { suppress_body }) => {
       write_status(
         &mut stream,
         400,
         "Bad Request",
         b"Media request headers were not terminated correctly.",
-        true,
+        !suppress_body,
       )?;
       return Ok(());
     }
@@ -359,9 +359,9 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
 }
 
 enum MediaRequestError {
-  HeadersTooLarge,
-  InvalidUtf8,
-  IncompleteHeaders,
+  HeadersTooLarge { suppress_body: bool },
+  InvalidUtf8 { suppress_body: bool },
+  IncompleteHeaders { suppress_body: bool },
   Io(String),
 }
 
@@ -490,19 +490,29 @@ fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
       .map_err(|error| MediaRequestError::Io(format!("Could not read media request: {error}")))?;
 
     if read == 0 {
-      return Err(MediaRequestError::IncompleteHeaders);
+      return Err(MediaRequestError::IncompleteHeaders {
+        suppress_body: is_head_request(&buffer),
+      });
     }
 
     buffer.extend_from_slice(&chunk[..read]);
 
     if buffer.len() > MAX_REQUEST_HEADER_BYTES {
-      return Err(MediaRequestError::HeadersTooLarge);
+      return Err(MediaRequestError::HeadersTooLarge {
+        suppress_body: is_head_request(&buffer),
+      });
     }
 
     if buffer.windows(4).any(|window| window == b"\r\n\r\n") {
-      return String::from_utf8(buffer).map_err(|_| MediaRequestError::InvalidUtf8);
+      return String::from_utf8(buffer).map_err(|_| MediaRequestError::InvalidUtf8 {
+        suppress_body: is_head_request(&buffer),
+      });
     }
   }
+}
+
+fn is_head_request(buffer: &[u8]) -> bool {
+  buffer.starts_with(b"HEAD ")
 }
 
 fn write_headers(
@@ -812,6 +822,99 @@ mod tests {
     assert!(response_text.ends_with(
       "Media request headers were not terminated correctly."
     ));
+
+    server.join().unwrap();
+  }
+
+  #[test]
+  fn suppresses_body_for_head_oversized_request_headers() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let request = format!(
+      "HEAD /missing HTTP/1.1\r\nX-FrameFlow: {}\r\n\r\n",
+      "a".repeat(32 * 1024)
+    );
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client.write_all(request.as_bytes()).unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with(
+      "HTTP/1.1 431 Request Header Fields Too Large\r\n"
+    ));
+    assert!(response_text.ends_with("\r\n\r\n"));
+
+    server.join().unwrap();
+  }
+
+  #[test]
+  fn suppresses_body_for_head_invalid_utf8_request() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(b"HEAD /missing HTTP/1.1\r\nX-FrameFlow: \xFF\r\n\r\n")
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+    assert!(response_text.ends_with("\r\n\r\n"));
+
+    server.join().unwrap();
+  }
+
+  #[test]
+  fn suppresses_body_for_head_incomplete_request() {
+    use std::io::{Read, Write};
+    use std::net::{Shutdown, TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(b"HEAD /missing HTTP/1.1\r\nHost: 127.0.0.1\r\n")
+      .unwrap();
+    client.shutdown(Shutdown::Write).unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+    assert!(response_text.ends_with("\r\n\r\n"));
 
     server.join().unwrap();
   }

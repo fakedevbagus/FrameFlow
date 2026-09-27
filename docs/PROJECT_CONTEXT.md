@@ -1,3 +1,33 @@
+## M3.170 — Media Server HEAD Framing Error Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-170-media-head-framing-errors`
+
+PR:
+Draft PR to be created after implementation/documentation synchronization.
+
+Fresh audit finding:
+- Request-framing errors occur before the parsed request method reaches the normal method-aware response path.
+- Oversized, invalid-UTF-8, or incomplete `HEAD` requests could therefore receive an error body even though HEAD responses must suppress response content.
+- Existing framing-error status mappings from M3.166/M3.167 need to retain their status and Content-Length while suppressing the body for HEAD requests.
+
+Scope:
+- Preserve HEAD response body semantics for media-server request-framing errors.
+
+Implementation:
+- Detect whether the raw request begins with the `HEAD ` method token while handling framing errors.
+- Carry the HEAD-body-suppression decision through oversized-header, invalid-UTF-8, and incomplete-header errors.
+- Preserve HTTP 431/400 statuses and Content-Length semantics while suppressing error bodies for HEAD.
+- Add focused TCP regression coverage for all three framing-error categories.
+- Preserve all existing request-line, range, path, media-type, and normal HEAD/GET contracts.
+- No project schema change.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.170; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
 ## M3.169 — Media Server Range Header Syntax Contract — completed — 2026-09-27
 
 Branch:
