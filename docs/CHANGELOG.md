@@ -1,12 +1,16 @@
-### M3.159 — Single-Source Export Consistency Contract — active — 2026-09-27
+### M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-159-single-source-consistency`.
-- Fresh audit found `render_single_source_to_mp4()` accepting output without source identity revalidation after FFmpeg.
-- Capture and re-check Linux source identity around the render window.
-- Remove output and return a retryable error on source mutation/removal.
-- Added focused Rust regression coverage.
-- No project schema change.
-- Implementation is complete; user local validation is pending.
+- PR #174; squash-merged at `0dfd00f97245d8c59546598a6fcc2be1dfe2420f`.
+- User reported PASS.
+- Captured and re-checked Linux source identity around the single-source FFmpeg render window.
+- Source mutation/removal now rejects finalization and cleans the generated output.
+- Added focused Rust regression coverage for mutation and removal.
+- No project schema version change.
+- PR head `79249168e35113c563d696e2f473d59fefbc5904` was verified before merge.
+- `main` was verified at merge commit `0dfd00f97245d8c59546598a6fcc2be1dfe2420f`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next concrete security or correctness gap.
 
 ### M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
