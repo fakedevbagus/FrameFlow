@@ -1,20 +1,21 @@
-## M3.158 — completed — 2026-09-27
+## M3.159 — active — 2026-09-27
 
-- Branch: `fix/m3-158-video-segments-source-consistency`.
-- PR #173; squash-merged at `37b35e214a40125f0effe4f8ba64af2b483319ac`.
-- User reported PASS.
-- Captured and re-checked Linux source identity for every unique resolved video segment source across segment rendering and final concatenation.
-- Source mutation/removal now prevents finalization and cleans the generated output.
+- Branch: `fix/m3-159-single-source-consistency`.
+- Scope: prevent native single-source video export from finalizing when the source media changes or becomes unavailable during FFmpeg rendering.
+- Fresh audit found `render_single_source_to_mp4()` validating the source before FFmpeg but not re-checking source identity before accepting generated output.
+- Capture Linux source identity before rendering.
+- Re-check source identity after successful FFmpeg generation; remove output and return a retryable error on mutation/removal.
+- Reuse the established native source identity contract.
 - Added focused Rust regression coverage.
 - No project schema version change.
-- PR head `74c6da8d4aa7e357bf34a665f6dd3be99be182c0` was verified before merge.
-- `main` was verified at merge commit `37b35e214a40125f0effe4f8ba64af2b483319ac`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, active branch state, and open PRs before acting.
-- M3.158 is completed and merged; the next step is a fresh audit from verified `main`.
+- M3.158 is completed and merged; M3.159 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.

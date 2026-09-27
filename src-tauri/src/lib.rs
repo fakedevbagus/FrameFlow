@@ -238,6 +238,10 @@ fn render_single_source_to_mp4(
     return Err("Export output must differ from the source media.".to_string());
   }
 
+  let source_identity_snapshot = audio_render::source_identity(&source_path)?;
+
+  let source_identity_snapshot = audio_render::source_identity(&source_path)?;
+
   let args = build_ffmpeg_export_args(
     &source_path,
     &output_path,
@@ -260,6 +264,31 @@ fn render_single_source_to_mp4(
     None,
     "the requested export",
   ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
+  }
+
+  let current_source_identity =
+    audio_render::source_identity(&source_path).map_err(|error| {
+      let _ = fs::remove_file(&output_path);
+      format!(
+        "FFmpeg completed but the source could not be revalidated before export finalization: {error}"
+      )
+    })?;
+
+  if current_source_identity != source_identity_snapshot {
+    let _ = fs::remove_file(&output_path);
+    return Err(
+      format!(
+        "Native export source changed during rendering; please retry: {}",
+        source_path.display()
+      )
+    );
+  }
+
+  if let Err(error) =
+    validate_single_source_identity_snapshot(&source_path, &source_identity_snapshot)
+  {
     let _ = fs::remove_file(&output_path);
     return Err(error);
   }
@@ -344,6 +373,26 @@ fn render_video_segments_to_mp4(
   }
 
   result
+}
+
+fn validate_single_source_identity_snapshot(
+  source_path: &Path,
+  expected_identity: &str,
+) -> Result<(), String> {
+  let current_identity = audio_render::source_identity(source_path).map_err(|error| {
+    format!(
+      "Native export source changed or became unavailable during rendering: {error}"
+    )
+  })?;
+
+  if current_identity != expected_identity {
+    return Err(format!(
+      "Native export source changed during rendering; please retry: {}",
+      source_path.display()
+    ));
+  }
+
+  Ok(())
 }
 
 fn capture_video_segments_source_identity_snapshot(
@@ -1692,6 +1741,38 @@ mod tests {
     assert!(super::validate_native_export_settings(1280, 719, 30.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 0.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 241.0).is_err());
+  }
+
+  #[test]
+  fn single_source_identity_snapshot_detects_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-single-source-{unique_suffix}.tmp"
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let snapshot = audio_render::source_identity(&path).unwrap();
+    assert!(super::validate_single_source_identity_snapshot(&path, &snapshot).is_ok());
+
+    fs::write(&path, b"second").unwrap();
+    let error = super::validate_single_source_identity_snapshot(&path, &snapshot)
+      .expect_err("changed single-source media must invalidate the export");
+    assert!(error.contains("Native export source changed during rendering"));
+    assert!(error.contains(&path.to_string_lossy()));
+
+    fs::remove_file(&path).unwrap();
+    let error = super::validate_single_source_identity_snapshot(&path, &snapshot)
+      .expect_err("removed single-source media must invalidate the export");
+    assert!(error.contains("Native export source changed or became unavailable"));
+
   }
 
   #[test]
