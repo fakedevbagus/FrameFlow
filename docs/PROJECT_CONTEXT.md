@@ -1,22 +1,26 @@
-## M3.156 — Audio Graph Source Consistency Contract — active — 2026-09-27
+## M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-156-audio-graph-source-consistency`
 
-Scope:
-- Prevent audio-only graph exports from finalizing when an input source changes or becomes unavailable during FFmpeg rendering.
+PR:
+#171
 
-Audit finding:
-- `render_audio_graph_to_mp4()` resolved and validated audio inputs before FFmpeg, then inspected the output directly after rendering.
-- It did not capture source filesystem identity before the long-running operation or re-check the inputs before final success.
-- An input could therefore change during rendering while the generated export was still accepted.
+Merge SHA:
+`3301123d13c254dc850b35ed8d1d1bdbe838d6ac`
+
+User validation:
+- User reported PASS for M3.156.
+- PR #171 was refreshed at head `38af9e3ab9e6f20ac3bb833b896bf515f33378f9`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `3301123d13c254dc850b35ed8d1d1bdbe838d6ac`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
 - Capture a Linux source identity snapshot for every resolved audio graph input before rendering.
 - Re-check all captured sources after successful FFmpeg generation.
 - Remove the generated output and return a retryable error when a source changes or becomes unavailable.
 - Reuse the existing M3.154 source identity contract.
-- Add focused Rust regression coverage for audio graph source mutation.
+- Added focused Rust regression coverage.
 - No project schema version change.
 
 Invariant / contract:
@@ -24,11 +28,8 @@ Invariant / contract:
 - Source mutation or removal cannot leave a finalized audio graph export from a different source snapshot.
 - Existing audio filter graph, output mapping, and render settings remain unchanged.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.156; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete native render consistency gap.
 
 ## M3.155 — Legacy Video/Audio Source Consistency Contract — completed — 2026-09-27
 
