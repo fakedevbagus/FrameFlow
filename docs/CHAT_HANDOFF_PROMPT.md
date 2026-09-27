@@ -1,16 +1,152 @@
-## M3.165 — active — 2026-09-27
+## M3.165 — Media Server HTTP Version Contract — completed — 2026-09-27
 
-- Branch: `fix/m3-165-media-http-version-contract`.
-- Scope: enforce the media server HTTP request-line version contract.
-- Fresh audit found the server ignoring the request HTTP version and answering unsupported versions with HTTP/1.1.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Branch: `fix/m3-165-media-http-version-contract`
+
+- PR: #180
+
+- Merge SHA: `04302fd1584eeab89fd591541168f580b456d112`
+
+User validation:
+- User reported PASS for M3.165.
+- PR #180 was refreshed, marked Ready for Review, and squash-merged using head `0a9d393982bcabd66a24ac30feb5d0d601e8c6a1`.
+- `main` was verified at merge commit `04302fd1584eeab89fd591541168f580b456d112`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Scope:
+- Enforce the media server's HTTP request-line version contract.
+
+Implementation:
+- Parse request lines into exactly method, target, and version tokens.
+- Reject malformed request lines with HTTP 400.
+- Reject versions other than HTTP/1.1 with HTTP 505.
+- Preserve method-aware HEAD response body suppression.
 - Added focused TCP-level regression coverage for unsupported HTTP versions.
-- No project schema version change.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` for the next focused media-server protocol/correctness gap.
+
+## M3.164 — Media Query Duplicate Path Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-164-media-query-duplicate-path`
+
+- PR: #179
+
+- Merge SHA: `7286b3a82eaa4eefe3246098f97cf400e2246f86`
+
+User validation:
+- User reported PASS for M3.164.
+- PR #179 was refreshed, marked Ready for Review, and squash-merged using the freshly verified head.
+- `main` was verified at merge commit `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
+
+Implementation:
+- Require exactly one `path=` media query parameter.
+- Reject duplicate path parameters with HTTP 400.
+- Reject a missing path parameter with HTTP 400.
+- Preserve existing percent-decoding, canonicalization, allowlist, media-type, range, and HEAD contracts.
+- Added focused regression coverage.
+- No project schema change.
+
+Next step:
+- M3.165 — Media Server HTTP Version Contract.
+
+## M3.163 — Media Server HEAD Response Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-163-media-server-head-response-contract`
+
+- PR: #178
+
+- Merge SHA: `94b1083773336f4339407c8bc82920d66dee4ea7`
+
+User validation:
+- User reported PASS for M3.163.
+- PR #178 was refreshed, marked Ready for Review, and squash-merged using the freshly verified head.
+- `main` was verified at merge commit `94b1083773336f4339407c8bc82920d66dee4ea7`.
+
+Implementation:
+- Make error responses honor HEAD body semantics instead of writing response bodies.
+- Preserve Content-Length and response headers for HEAD errors.
+- Added focused TCP regression coverage for HEAD 404 responses.
+- No project schema change.
+
+Next step:
+- M3.164 — Media Query Duplicate Path Contract.
+
+## M3.162 — Media Server Request Error Mapping — completed — 2026-09-27
+
+- Branch: `fix/m3-162-media-server-request-errors`
+
+- PR: #177
+
+- Merge SHA: `f4455f08360565dfc65c6b15b36f210c8624a76a`
+
+User validation:
+- User reported PASS for M3.162.
+- PR #177 was reconciled against current `main`, refreshed, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `f4455f08360565dfc65c6b15b36f210c8624a76a`.
+
+Implementation:
+- Added typed media-path errors mapped to explicit HTTP statuses.
+- Malformed percent encoding maps to HTTP 400.
+- Relative paths map to HTTP 400.
+- Paths outside allowed media directories map to HTTP 403.
+- Unresolved media files map to HTTP 404.
+- Unsupported media types map to HTTP 415.
+- Preserved canonical-path and URL-generation behavior.
+- Added focused Rust/TCP regression coverage.
+- No project schema change.
+
+Next step:
+- M3.163 — Media Server HEAD Response Contract.
+
+## M3.161 — Media Server Canonical Path Enforcement — completed — 2026-09-27
+
+- Branch: `fix/m3-161-media-server-canonical-path`
+
+- PR: #176
+
+- Merge SHA: `8caa4232bf03843972968c944cfdc69235e6c549`
+
+User validation:
+- User reported PASS for M3.161.
+- PR #176 was refreshed and squash-merged.
+- `main` was verified at merge commit `8caa4232bf03843972968c944cfdc69235e6c549`.
+
+Implementation:
+- `validate_media_path()` now returns the canonical resolved `PathBuf`.
+- URL generation and HTTP serving use the canonical path returned by validation.
+- Preserved media-type detection and local media allowlist enforcement.
+- Added focused regression coverage.
+- No project schema change.
+
+Next step:
+- M3.162 — Media Server Request Error Mapping.
+
+## M3.160 — Media-Type Boundary Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-160-media-type-boundary`
+
+- PR: #175
+
+- Merge SHA: `14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`
+
+User validation:
+- User reported PASS for M3.160.
+- PR #175 was refreshed and squash-merged.
+- `main` was verified at merge commit `14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`.
+
+Implementation:
+- Harden the media-server media-type validation boundary while preserving the existing supported media contract.
+- Added focused regression coverage around the media-type boundary.
+- No project schema change.
+
+Next step:
+- M3.161 — Media Server Canonical Path Enforcement.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.164 is completed and merged; M3.165 is the active milestone.
+- M3.165 is completed and merged; the next step is a fresh audit from verified `main`.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
