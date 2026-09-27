@@ -1,3 +1,32 @@
+## M3.167 — Media Server Request Header Termination Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-167-media-request-header-termination`
+
+PR:
+Draft PR to be created after implementation/documentation synchronization.
+
+Fresh audit finding:
+- `read_request()` returned the buffered data when the client closed the connection before the required HTTP header terminator `\\r\\n\\r\\n`.
+- The connection handler could therefore parse and process an incomplete request as though the request headers were complete.
+- This weakened the media server's request framing contract and made malformed/truncated client input nondeterministic.
+
+Scope:
+- Require explicit HTTP header termination before the media server processes a request.
+
+Implementation:
+- Treat EOF before `\\r\\n\\r\\n` as an incomplete-header error.
+- Map incomplete request headers to HTTP 400.
+- Preserve the existing oversized-header (431), invalid-UTF-8 (400), HTTP-version (505), method, query/path, canonicalization, media-type, range, and HEAD contracts.
+- Add focused TCP-level regression coverage for truncated request headers.
+- No project schema change.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.167; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
 ## M3.166 — Media Server Request Framing Error Contract — completed — 2026-09-27
 
 Branch:
