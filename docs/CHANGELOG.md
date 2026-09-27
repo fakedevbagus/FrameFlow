@@ -1,13 +1,16 @@
-### M3.156 — Audio Graph Source Consistency Contract — active — 2026-09-27
+### M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-156-audio-graph-source-consistency`.
-- Fresh audit found `render_audio_graph_to_mp4()` lacking source identity snapshot/revalidation around its FFmpeg render window.
-- Capture Linux source identity for each resolved audio input before rendering and re-check all inputs after FFmpeg.
-- Remove output and return a retryable error on source mutation or removal.
-- Reuse the existing M3.154 source identity contract.
-- Added focused Rust regression coverage.
-- No project schema change.
-- Implementation is complete; user local validation is pending.
+- PR #171; squash-merged at `3301123d13c254dc850b35ed8d1d1bdbe838d6ac`.
+- User reported PASS.
+- Captured Linux source identity for every resolved audio graph input before FFmpeg rendering and re-checked every source after successful generation.
+- Source mutation/removal now rejects finalization and cleans the generated output.
+- Reused the established M3.154 source identity contract and added focused Rust regression coverage.
+- No project schema version change.
+- PR head `38af9e3ab9e6f20ac3bb833b896bf515f33378f9` was verified before merge.
+- `main` was verified after merge at `3301123d13c254dc850b35ed8d1d1bdbe838d6ac`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next concrete native render consistency gap.
 
 ### M3.155 — Legacy Video/Audio Source Consistency Contract — completed — 2026-09-27
 
