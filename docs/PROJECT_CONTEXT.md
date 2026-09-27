@@ -1,10 +1,19 @@
-## M3.139 — Strict Waveform Peak-Array Contract — active — 2026-09-27
+## M3.139 — Strict Waveform Peak-Array Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-139-strict-waveform-peak-array-contract`
 
-Scope:
-- Ensure native and persisted waveform peak arrays cannot exceed the established maximum waveform density before cache reuse or render-path consumption.
+PR:
+#154
+
+Merge SHA:
+`288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`
+
+User validation:
+- User reported PASS for M3.139.
+- PR #154 was refreshed at head `eda1a4201a6c86f6a4e6ac10a53d7fd054f472de`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - Fresh native waveform metadata validation required only a non-empty `peaks` array.
@@ -15,7 +24,7 @@ Audit finding:
 Implementation:
 - Tightened fresh native waveform validation to reject peak arrays above 2048 entries.
 - Tightened persisted waveform cache validation to reject peak arrays above 2048 entries.
-- Reused the existing `MAX_WAVEFORM_OUTPUT_PEAK_COUNT = 2048` boundary rather than introducing a second waveform-density constant.
+- Reused the existing `MAX_WAVEFORM_OUTPUT_PEAK_COUNT = 2048` boundary.
 - Added focused regression coverage for the maximum valid native array, over-limit native data, and over-limit persisted cache data.
 - Preserved valid waveform reuse and existing interpolation semantics.
 - No project schema version change.
@@ -25,15 +34,12 @@ Invariant / contract:
 - Fresh native and persisted waveform metadata share the same 2048 peak-density boundary.
 - Existing valid waveform sizes remain unchanged.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Remaining risks:
 - Floating-point waveform interpolation remains out of scope.
 - Broader UI/render synchronization remains subject to separate audits when justified.
 
 Next step:
-- Complete user local validation of M3.139; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete waveform/runtime boundary.
 
 ## M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
