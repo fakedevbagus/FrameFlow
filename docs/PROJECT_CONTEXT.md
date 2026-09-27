@@ -33,7 +33,6 @@ Validation:
 Next step:
 - Complete user local validation of M3.162; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
-main=>""
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 Branch:
