@@ -1,40 +1,33 @@
-## M3.142 — Strict Waveform Source Fingerprint Contract — active — 2026-09-27
+## M3.143 — Persistent Waveform Cache-Key Consistency — active — 2026-09-27
 
 Branch:
-`fix/m3-142-strict-waveform-fingerprint-contract`
+`fix/m3-143-persistent-waveform-key-consistency`
 
 Scope:
-- Bound the size of native and persisted waveform source fingerprints before they enter cache keys, lookup, reuse, or persistence.
+- Ensure a persisted waveform entry's cache key is consistent with the source fingerprint stored in its waveform payload before reuse.
 
 Audit finding:
-- Native and persisted waveform fingerprint validation required only a non-empty string.
-- The fingerprint is incorporated into persistent cache keys and serialized into `localStorage`, so an arbitrarily large fingerprint can amplify string comparison, key construction, and serialized storage work.
-- The Rust source fingerprint currently has a compact size derived from file length and modification time, making a conservative 128-character ceiling compatible with the existing format.
+- M3.141 validated the persisted entry structure, and M3.142 bounded source fingerprint length.
+- The cache lookup still matched only the entry `cacheKey`; it did not verify that the key's fingerprint suffix matched `entry.waveform.sourceFingerprint`.
+- Corrupted persisted data could therefore pair a valid cache key with a different valid waveform fingerprint and return the wrong cached waveform for a source.
 
 Implementation:
-- Added `MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH = 128`.
-- Reject native source fingerprints above 128 characters before persistent lookup or waveform generation.
-- Reject generated native waveform payload fingerprints above 128 characters.
-- Reject persisted waveform entries whose fingerprint exceeds 128 characters through the existing entry validator.
-- Preserve the existing fingerprint format and all valid fingerprints within the boundary.
-- Added focused regression coverage for the maximum valid length and over-limit native/persisted fingerprints.
+- Added `isPersistentWaveformEntryKeyConsistent()` for the lookup boundary.
+- Require the requested cache key to end with the exact persisted waveform `sourceFingerprint`.
+- Treat inconsistent entries as cache misses and regenerate the waveform.
+- Added focused regression coverage for a mismatched key/payload fingerprint pair.
 - No project schema version change.
 
 Invariant / contract:
-- Every waveform source fingerprint entering client cache logic is a non-empty string of at most 128 characters.
-- Oversized fingerprints cannot enter cache-key construction, persistent lookup, or waveform reuse.
-- Existing valid fingerprint behavior remains unchanged.
+- A persisted waveform cache entry may be reused only when its cache key is consistent with its waveform source fingerprint.
+- Mismatched persisted metadata cannot produce a cache hit.
+- Existing valid cache reuse remains unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
-Remaining risks:
-- Floating-point waveform interpolation remains out of scope.
-- Other independent persistence key-size boundaries remain subject to fresh focused audits.
-
 Next step:
-- Complete user local validation of M3.142; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
-
+- Complete user local validation of M3.143; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 ## M3.141 — Strict Persistent Waveform Entry Contract — completed — 2026-09-27
 
 Branch:

@@ -1,15 +1,27 @@
-## M3.142 — active — 2026-09-27
+## M3.143 — active — 2026-09-27
 
-- Branch: `fix/m3-142-strict-waveform-fingerprint-contract`.
-- Scope: require waveform source fingerprints to be non-empty and no longer than 128 characters before cache-key construction, lookup, reuse, or persistence.
-- Fresh audit after M3.141 found native and persisted fingerprints had no upper length bound.
-- Added `MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH = 128` and applied it to native fingerprint responses, generated waveform payloads, and persisted entry validation.
-- Added focused regression coverage for the maximum valid fingerprint and over-limit native/persisted fingerprints.
+- Branch: `fix/m3-143-persistent-waveform-key-consistency`.
+- Scope: reject persisted waveform cache hits when the cache-key fingerprint does not match the waveform payload fingerprint.
+- Fresh audit after M3.142 found that persisted lookup checked key equality but not key/payload fingerprint consistency.
+- Added `isPersistentWaveformEntryKeyConsistent()` at the cache lookup boundary.
+- Added focused regression coverage for a mismatched persisted fingerprint pair.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
+## M3.142 — completed — 2026-09-27
+
+- Branch: `fix/m3-142-strict-waveform-fingerprint-contract`.
+- PR #157; squash-merged at `0135723cf9986824d34cb07c95b38db5c13c4da1`.
+- User reported PASS.
+- Added a 128-character source fingerprint maximum across native, generated, and persisted waveform metadata.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `954107b41151adb024a666b7986a5128b773a0f0` was verified before merge.
+- `main` was verified after merge at `0135723cf9986824d34cb07c95b38db5c13c4da1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 ## M3.141 — completed — 2026-09-27
 
 - Branch: `fix/m3-141-strict-persistent-waveform-entry-contract`.

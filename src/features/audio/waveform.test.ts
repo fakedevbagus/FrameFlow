@@ -516,6 +516,54 @@ describe("audio waveform", () => {
     });
   });
 
+  it("rejects a persisted waveform whose key fingerprint does not match its payload", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/mismatched-cache.mp3::512::current-fingerprint",
+            waveform: {
+              durationMs: 1000,
+              sampleRate: 1024,
+              peaks: [0.5],
+              sourceFingerprint: "different-fingerprint",
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "current-fingerprint" })
+      .mockResolvedValueOnce({
+        durationMs: 1200,
+        sampleRate: 1200,
+        peaks: [0.75],
+        sourceFingerprint: "current-fingerprint",
+      });
+
+    await expect(
+      getAudioWaveform("/mismatched-cache.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1200,
+      sampleRate: 1200,
+      peaks: [0.75],
+      sourceFingerprint: "current-fingerprint",
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      "generate_audio_waveform",
+      {
+        path: "/mismatched-cache.mp3",
+        peakCount: 512,
+      },
+    );
+  });
+
   it("rejects an over-limit persisted waveform source fingerprint as a cache miss", async () => {
     localStorage.setItem(
       "frameflow.audio-waveform-cache.v1",
