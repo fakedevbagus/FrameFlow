@@ -4,7 +4,10 @@ use std::{
   net::{TcpListener, TcpStream},
   path::{Path, PathBuf},
   thread,
+  time::Duration,
 };
+
+const MEDIA_REQUEST_READ_TIMEOUT: Duration = Duration::from_secs(15);
 
 pub struct MediaServerState {
   base_url: String,
@@ -99,6 +102,8 @@ fn handle_connection(
   mut stream: TcpStream,
   capability_token: &str,
 ) -> Result<(), String> {
+  configure_media_request_read_timeout(&stream)?;
+
   let request = match read_request(&mut stream) {
     Ok(request) => request,
     Err(MediaRequestError::HeadersTooLarge { suppress_body }) => {
@@ -512,6 +517,12 @@ fn stream_file_range(
   Ok(())
 }
 
+fn configure_media_request_read_timeout(stream: &TcpStream) -> Result<(), String> {
+  stream
+    .set_read_timeout(Some(MEDIA_REQUEST_READ_TIMEOUT))
+    .map_err(|error| format!("Could not configure the media request timeout: {error}"))
+}
+
 fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
   const MAX_REQUEST_HEADER_BYTES: usize = 32 * 1024;
   let mut buffer = Vec::with_capacity(4096);
@@ -806,6 +817,25 @@ mod tests {
     parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
   };
   use std::path::Path;
+
+  #[test]
+  fn configures_media_request_read_timeout() {
+    use std::net::{TcpListener, TcpStream};
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+    let client = TcpStream::connect(address).unwrap();
+    let (server_stream, _) = listener.accept().unwrap();
+
+    super::configure_media_request_read_timeout(&server_stream).unwrap();
+
+    assert_eq!(
+      server_stream.read_timeout().unwrap(),
+      Some(super::MEDIA_REQUEST_READ_TIMEOUT)
+    );
+
+    drop(client);
+  }
 
   #[test]
   fn rejects_oversized_media_request_headers() {
