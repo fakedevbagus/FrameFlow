@@ -1,3 +1,34 @@
+## M3.157 — Video Graph Source Consistency Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-157-video-graph-source-consistency`
+
+Scope:
+- Prevent native video graph exports from finalizing when any resolved video/image input source changes or becomes unavailable during FFmpeg rendering.
+
+Audit finding:
+- `render_video_graph_to_mp4()` validated every input before FFmpeg and checked the output afterward, but did not snapshot source filesystem identity around the long-running render.
+- A source could therefore change during rendering while the generated graph export was still accepted.
+
+Implementation:
+- Reuse the established Linux source identity function from the native AV render contract.
+- Capture source identity for every resolved video graph input before building/running FFmpeg.
+- Re-check all captured input identities after successful FFmpeg generation and before accepting output metadata.
+- Remove the generated output and return a retryable error when any video/image input changes or becomes unavailable.
+- Add focused Rust regression coverage for video graph source mutation.
+- No project schema version change.
+
+Invariant / contract:
+- Video graph output is finalized only when all resolved visual input identities remain unchanged across the FFmpeg render window.
+- Source mutation or removal cannot leave a finalized graph export derived from a different source snapshot.
+- Existing graph inputs, media-type validation, filter graph, output mapping, frame rate, and export settings remain unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.157; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
 Branch:

@@ -385,6 +385,9 @@ fn render_video_graph_to_mp4(
     })
     .collect::<Result<Vec<_>, String>>()?;
 
+  let source_identity_snapshot =
+    capture_video_graph_source_identity_snapshot(&input_paths)?;
+
   let args = build_ffmpeg_video_graph_args(
     &input_paths,
     &request.input_media_types,
@@ -405,6 +408,13 @@ fn render_video_graph_to_mp4(
     None,
     "the requested video graph",
   ) {
+    let _ = fs::remove_file(&output_path);
+    return Err(error);
+  }
+
+  if let Err(error) =
+    validate_video_graph_source_identity_snapshot(&source_identity_snapshot)
+  {
     let _ = fs::remove_file(&output_path);
     return Err(error);
   }
@@ -1007,6 +1017,39 @@ fn validate_native_video_graph_request_metadata(
   for media_type in &request.input_media_types {
     if media_type != "video" && media_type != "image" {
       return Err("Native video graph input media types must be video or image.".to_string());
+    }
+  }
+
+  Ok(())
+}
+
+fn capture_video_graph_source_identity_snapshot(
+  source_paths: &[PathBuf],
+) -> Result<Vec<(PathBuf, String)>, String> {
+  source_paths
+    .iter()
+    .map(|path| {
+      let identity = audio_render::source_identity(path)?;
+      Ok((path.clone(), identity))
+    })
+    .collect()
+}
+
+fn validate_video_graph_source_identity_snapshot(
+  snapshot: &[(PathBuf, String)],
+) -> Result<(), String> {
+  for (path, expected_identity) in snapshot {
+    let current_identity = audio_render::source_identity(path).map_err(|error| {
+      format!(
+        "Video graph source changed or became unavailable during rendering: {error}"
+      )
+    })?;
+
+    if &current_identity != expected_identity {
+      return Err(format!(
+        "Video graph source changed during rendering; please retry: {}",
+        path.display()
+      ));
     }
   }
 
@@ -1692,6 +1735,35 @@ mod tests {
 
     assert!(args.iter().any(|arg| arg.to_string_lossy() == "-an"));
     assert!(!args.windows(2).any(|pair| pair[0].to_string_lossy() == "-map" && pair[1].to_string_lossy() == "0:a:0?"));
+  }
+
+  #[test]
+  fn video_graph_source_identity_snapshot_detects_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-video-graph-source-{unique_suffix}.tmp"
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let snapshot = super::capture_video_graph_source_identity_snapshot(&[path.clone()])
+      .unwrap();
+    assert!(super::validate_video_graph_source_identity_snapshot(&snapshot).is_ok());
+
+    fs::write(&path, b"second").unwrap();
+    let error = super::validate_video_graph_source_identity_snapshot(&snapshot)
+      .expect_err("changed video graph sources must invalidate the render");
+    assert!(error.contains("Video graph source changed during rendering"));
+    assert!(error.contains(&path.to_string_lossy()));
+
+    fs::remove_file(path).unwrap();
   }
 
   #[test]
