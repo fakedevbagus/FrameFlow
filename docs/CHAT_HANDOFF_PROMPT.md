@@ -1,20 +1,17 @@
-## M3.161 — active — 2026-09-27
+## M3.162 — active — 2026-09-27
 
-- Branch: `fix/m3-161-media-server-canonical-path`.
-- Scope: ensure the validated canonical media path is the exact path used for media URL generation and HTTP streaming.
-- Fresh audit found the media server validating canonical paths but then continuing with the original path alias.
-- Return the canonical path from validation and reuse it throughout URL generation and request handling.
-- Preserve the existing supported media-type and directory boundaries plus range behavior.
+- Branch: `fix/m3-162-media-server-request-errors`.
+- Scope: ensure malformed media requests and media-path validation failures receive explicit HTTP error responses instead of silently terminating the local media connection.
+- Fresh audit found `percent_decode()` and `validate_media_path()` errors propagating out of `handle_connection()`, while the per-connection thread discarded the returned `Result`.
+- Add explicit validation error classifications mapped to HTTP 400/403/404/415 while preserving existing validation rules and messages.
 - Added focused Rust regression coverage.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
-- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, active branch state, and open PRs before acting.
-- M3.160 is completed and merged; M3.161 is the active milestone.
+- M3.161 is completed and merged; M3.162 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
