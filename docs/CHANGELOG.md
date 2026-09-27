@@ -1,14 +1,28 @@
-### M3.177 — Media Server Connection Concurrency Cap — active — 2026-09-28
+### M3.178 — Audio Waveform FFmpeg Pipe Liveness — active — 2026-09-28
+
+- Branch: `fix/m3-178-waveform-ffmpeg-pipe-deadlock`.
+- Fresh audit found the waveform FFmpeg child could deadlock when piped stderr filled while the parent was consuming stdout.
+- Added concurrent stderr draining while waveform stdout is consumed.
+- Preserved FFmpeg failure detail from stderr and added child kill/reap handling for output-pipe/read failures.
+- Added focused regression coverage for more than 64 KiB of child stderr.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.178; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+
+### M3.177 — Media Server Connection Concurrency Cap — completed — 2026-09-28
 
 - Branch: `fix/m3-177-media-server-connection-cap`.
-- Fresh audit found unbounded one-thread-per-connection handling in `MediaServerState::start()`.
+- PR #192; squash-merged at `f319afae3289e18308165d535ad810c1cc96e663`.
+- User reported PASS for M3.177.
 - Added a fixed 32-connection active-handler ceiling with an atomic slot counter and RAII release guard.
 - Excess accepted connections are closed without spawning another handler thread.
 - Existing request/response timeouts and media HTTP behavior remain preserved.
 - Added focused regression coverage for the connection cap and slot reuse.
 - No project schema change.
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.177; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- PR head `66cba3991383c379f8c8a5c4dcaf1c6257fcebfa` was verified before merge.
+- `main` was verified at merge commit `f319afae3289e18308165d535ad810c1cc96e663`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused resource/liveness gap.
 
 ### M3.176 — Media Server Response Write Timeout — completed — 2026-09-28
 
