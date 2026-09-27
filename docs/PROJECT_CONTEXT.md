@@ -1,28 +1,58 @@
-## M3.177 — Media Server Connection Concurrency Cap — active — 2026-09-28
+## M3.178 — Audio Waveform FFmpeg Pipe Liveness — active — 2026-09-28
 
 Branch:
-`fix/m3-177-media-server-connection-cap`
+`fix/m3-178-waveform-ffmpeg-pipe-deadlock`
 
 Fresh audit finding:
-- `MediaServerState::start()` accepted every incoming loopback connection and spawned one dedicated OS thread per connection without an active-connection ceiling.
-- A burst of local clients could therefore create an unbounded number of media-server connection threads and exhaust process/thread resources before request-level limits were reached.
+- `audio_waveform::decode_and_reduce_waveform()` spawns FFmpeg with both stdout and stderr piped, but stderr was only collected after stdout reached EOF.
+- A sufficiently large FFmpeg stderr stream could fill the OS pipe while FFmpeg was producing waveform stdout, causing the child process and parent reader to deadlock.
 
 Scope:
-- Bound the number of concurrently handled media-server connections to a fixed 32-connection ceiling.
+- Ensure waveform FFmpeg stderr is drained concurrently with stdout so large diagnostic output cannot block waveform generation.
 
 Implementation:
-- Add a shared atomic active-connection counter with an RAII release guard.
-- Reserve a connection slot before spawning a per-connection thread.
-- Close excess accepted connections without spawning another handler thread.
-- Preserve the existing 15-second request-read timeout, 15-second response-write timeout, request parsing, capability-token authorization, path/media-type validation, Range behavior, HTTP/HEAD/OPTIONS behavior, and streaming behavior.
-- Add focused regression coverage for the connection-slot ceiling and slot reuse.
+- Drain the FFmpeg stderr pipe on a dedicated reader thread while waveform samples are consumed from stdout.
+- Preserve FFmpeg failure detail from stderr.
+- Kill and reap the child if waveform stdout/stderr pipe setup or stdout reading fails.
+- Replace `wait_with_output()` with explicit child wait plus the concurrently collected stderr output.
+- Add focused regression coverage that writes more than 64 KiB of stderr and verifies the child can terminate without deadlock.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Validate M3.177 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Validate M3.178 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.177 — Media Server Connection Concurrency Cap — completed — 2026-09-28
+
+Branch:
+`fix/m3-177-media-server-connection-cap`
+
+PR:
+#192
+
+Merge SHA:
+`f319afae3289e18308165d535ad810c1cc96e663`
+
+User validation:
+- User reported PASS for M3.177.
+- PR #192 was refreshed at head `66cba3991383c379f8c8a5c4dcaf1c6257fcebfa`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `f319afae3289e18308165d535ad810c1cc96e663`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Scope:
+- Bound the number of concurrently handled media-server connections to 32.
+
+Implementation:
+- Added an atomic active-connection counter with an RAII release guard.
+- Connections beyond the ceiling are closed without spawning another handler thread.
+- Existing media request/response behavior and timeouts remain preserved.
+- Added focused regression coverage for the connection cap and slot reuse.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.178 as the next focused resource/liveness milestone.
 
 ## M3.176 — Media Server Response Write Timeout — completed — 2026-09-28
 
