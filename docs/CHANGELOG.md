@@ -1,14 +1,17 @@
-### M3.139 — Strict Waveform Peak-Array Contract — active — 2026-09-27
+### M3.139 — Strict Waveform Peak-Array Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
-- Fresh audit found waveform metadata validation accepted any non-empty `peaks` array without enforcing the established 2048 maximum.
+- PR #154; squash-merged at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- User reported PASS.
 - Tightened fresh native and persisted waveform validation to reject peak arrays above 2048 entries.
 - Reused the existing 2048 waveform-density boundary.
-- Added focused regression coverage for the maximum valid native array, over-limit native data, and over-limit persisted cache data.
+- Added focused regression coverage for maximum-valid and over-limit arrays.
 - Preserved existing valid waveform behavior.
 - No project schema change.
-- Implementation is complete; user local validation is pending.
-- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+- PR head `eda1a4201a6c86f6a4e6ac10a53d7fd054f472de` was verified before merge.
+- `main` was verified after merge at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 
 ### M3.136 — Strict Waveform Local-Time Duration Contract — completed — 2026-09-26
 
