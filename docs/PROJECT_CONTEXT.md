@@ -1,16 +1,61 @@
-## M3.141 — Strict Persistent Waveform Entry Contract — active — 2026-09-27
+## M3.142 — Strict Waveform Source Fingerprint Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-142-strict-waveform-fingerprint-contract`
+
+Scope:
+- Bound the size of native and persisted waveform source fingerprints before they enter cache keys, lookup, reuse, or persistence.
+
+Audit finding:
+- Native and persisted waveform fingerprint validation required only a non-empty string.
+- The fingerprint is incorporated into persistent cache keys and serialized into `localStorage`, so an arbitrarily large fingerprint can amplify string comparison, key construction, and serialized storage work.
+- The Rust source fingerprint currently has a compact size derived from file length and modification time, making a conservative 128-character ceiling compatible with the existing format.
+
+Implementation:
+- Added `MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH = 128`.
+- Reject native source fingerprints above 128 characters before persistent lookup or waveform generation.
+- Reject generated native waveform payload fingerprints above 128 characters.
+- Reject persisted waveform entries whose fingerprint exceeds 128 characters through the existing entry validator.
+- Preserve the existing fingerprint format and all valid fingerprints within the boundary.
+- Added focused regression coverage for the maximum valid length and over-limit native/persisted fingerprints.
+- No project schema version change.
+
+Invariant / contract:
+- Every waveform source fingerprint entering client cache logic is a non-empty string of at most 128 characters.
+- Oversized fingerprints cannot enter cache-key construction, persistent lookup, or waveform reuse.
+- Existing valid fingerprint behavior remains unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Remaining risks:
+- Floating-point waveform interpolation remains out of scope.
+- Other independent persistence key-size boundaries remain subject to fresh focused audits.
+
+Next step:
+- Complete user local validation of M3.142; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.141 — Strict Persistent Waveform Entry Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-141-strict-persistent-waveform-entry-contract`
 
-Scope:
-- Validate every persisted waveform cache entry structurally before lookup, sorting, mutation, or reuse.
+PR:
+#156
+
+Merge SHA:
+`60cf018e960ad3bf928f416c35c7fd9737d600aa`
+
+User validation:
+- User reported PASS for M3.141.
+- PR #156 was refreshed at head `741a60c306ed6465414dd7d438317ce05f65d31e`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `60cf018e960ad3bf928f416c35c7fd9737d600aa`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Audit finding:
 - M3.140 bounded the persisted store to at most 32 entries, but the store validator still accepted malformed individual entries.
 - `readPersistentWaveform()` could therefore reach `find()` and `touchPersistentWaveform()` with entries whose `cacheKey` or `lastUsedAt` metadata was malformed.
 - `writePersistentWaveform()` could also inherit malformed entry metadata until the next successful bounded rewrite.
-- This left the per-entry persistence contract weaker than the store-level size contract.
 
 Implementation:
 - Added `isValidPersistentWaveformEntry()` to require a non-empty string `cacheKey`.
@@ -26,16 +71,8 @@ Invariant / contract:
 - Invalid entry metadata invalidates the persisted store and triggers normal waveform regeneration.
 - Existing valid stores, including the 32-entry boundary, remain reusable.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
-Remaining risks:
-- Floating-point waveform interpolation remains out of scope.
-- Other independent persistence boundaries remain subject to fresh focused audits.
-
 Next step:
-- Complete user local validation of M3.141; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
-
+- Fresh audit from verified `main` for M3.142.
 ## M3.140 — Strict Persistent Waveform Store Size Contract — completed — 2026-09-27
 
 Branch:
