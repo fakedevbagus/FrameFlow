@@ -5,6 +5,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 import {
+  type AudioWaveform,
   buildWaveformPath,
   clearAudioWaveformCache,
   getAudioWaveform,
