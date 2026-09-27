@@ -128,10 +128,29 @@ fn decode_and_reduce_waveform(
     .spawn()
     .map_err(|error| format!("Could not run ffmpeg for waveform generation: {error}"))?;
 
-  let mut stdout = child
-    .stdout
-    .take()
-    .ok_or_else(|| "FFmpeg waveform output could not be opened.".to_string())?;
+  let mut stdout = match child.stdout.take() {
+    Some(stdout) => stdout,
+    None => {
+      let _ = child.kill();
+      let _ = child.wait();
+      return Err("FFmpeg waveform output could not be opened.".to_string());
+    }
+  };
+
+  let mut stderr = match child.stderr.take() {
+    Some(stderr) => stderr,
+    None => {
+      let _ = child.kill();
+      let _ = child.wait();
+      return Err("FFmpeg waveform error output could not be opened.".to_string());
+    }
+  };
+
+  let stderr_reader = std::thread::spawn(move || {
+    let mut output = Vec::new();
+    let _ = stderr.read_to_end(&mut output);
+    output
+  });
 
   let mut peaks = vec![0.0_f32; peak_count];
   let expected_samples = ((duration_ms as f64 / 1000.0) * sample_rate as f64)
@@ -143,9 +162,15 @@ fn decode_and_reduce_waveform(
   let mut buffer = [0_u8; 64 * 1024];
 
   loop {
-    let read = stdout
-      .read(&mut buffer)
-      .map_err(|error| format!("Could not read FFmpeg waveform output: {error}"))?;
+    let read = match stdout.read(&mut buffer) {
+      Ok(read) => read,
+      Err(error) => {
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = stderr_reader.join();
+        return Err(format!("Could not read FFmpeg waveform output: {error}"));
+      }
+    };
 
     if read == 0 {
       break;
@@ -205,12 +230,14 @@ fn decode_and_reduce_waveform(
     }
   }
 
-  let output = child
-    .wait_with_output()
+  let status = child
+    .wait()
     .map_err(|error| format!("Could not finish FFmpeg waveform generation: {error}"))?;
 
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+  let stderr_output = stderr_reader.join().unwrap_or_default();
+
+  if !status.success() {
+    let detail = String::from_utf8_lossy(&stderr_output).trim().to_string();
 
     return Err(if detail.is_empty() {
       "FFmpeg could not generate an audio waveform.".to_string()
