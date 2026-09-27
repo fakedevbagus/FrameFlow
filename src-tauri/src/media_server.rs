@@ -301,6 +301,15 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
         method != "HEAD",
       )?;
     }
+    RangeResult::DuplicateHeaders => {
+      write_status(
+        &mut stream,
+        400,
+        "Bad Request",
+        b"Multiple Range headers are not supported.",
+        method != "HEAD",
+      )?;
+    }
     RangeResult::Single(start, end) => {
       let length = end - start + 1;
 
@@ -351,14 +360,24 @@ enum RangeResult {
   None,
   Single(u64, u64),
   Multiple,
+  DuplicateHeaders,
   Invalid,
 }
 
 fn parse_range_header(request: &str, len: u64) -> RangeResult {
-  let Some(range_line) = request
-    .lines()
-    .find(|line| line.to_ascii_lowercase().starts_with("range:"))
-  else {
+  let mut range_line = None;
+
+  for line in request.lines() {
+    if line.to_ascii_lowercase().starts_with("range:") {
+      if range_line.is_some() {
+        return RangeResult::DuplicateHeaders;
+      }
+
+      range_line = Some(line);
+    }
+  }
+
+  let Some(range_line) = range_line else {
     return RangeResult::None;
   };
 
@@ -947,6 +966,17 @@ mod tests {
     assert!(matches!(
       parse_range_header("GET /media HTTP/1.1\r\nRange: bytes=0-99,200-299\r\n\r\n", 1000),
       RangeResult::Multiple
+    ));
+  }
+
+  #[test]
+  fn rejects_duplicate_range_headers() {
+    assert!(matches!(
+      parse_range_header(
+        "GET /media HTTP/1.1\r\nRange: bytes=0-99\r\nRange: bytes=200-299\r\n\r\n",
+        1000
+      ),
+      RangeResult::DuplicateHeaders
     ));
   }
 }
