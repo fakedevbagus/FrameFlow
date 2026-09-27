@@ -108,6 +108,20 @@ describe("audio waveform", () => {
     ).toHaveLength(2048);
   });
 
+  it("rejects an over-limit source-range waveform peak input", () => {
+    const oversizedPeaks = Array.from({ length: 2049 }, () => 0.5);
+
+    expect(
+      getWaveformPeaksForSourceRange(
+        oversizedPeaks,
+        10_000,
+        0,
+        null,
+        128,
+      ),
+    ).toEqual([]);
+  });
+
   it("rejects unsafe or fractional source-range metadata", () => {
     expect(
       getWaveformPeaksForSourceRange(
