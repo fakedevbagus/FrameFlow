@@ -1,3 +1,15 @@
+### M3.166 — Media Server Request Framing Error Contract — active — 2026-09-27
+
+- Branch: `fix/m3-166-media-request-framing-errors`.
+- Fresh audit found request-read failures that closed the media-server connection without an explicit HTTP response.
+- The intended 32 KiB request-header limit was also checked after the end-of-header marker, allowing an oversized complete request read to bypass the limit.
+- Added typed request-read errors, early header-size enforcement, HTTP 431 for oversized headers, and HTTP 400 for invalid UTF-8.
+- Added focused TCP-level regression coverage.
+- Existing media-server protocol, path, range, and HEAD contracts are preserved.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.166; after PASS, refresh the active PR, merge using the verified head SHA, reconcile the documentation, verify `main`, and start the next focused audit.
+
 ### M3.165 — Media Server HTTP Version Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-165-media-http-version-contract`
