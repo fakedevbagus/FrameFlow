@@ -1,3 +1,15 @@
+### M3.172 — Media Server Query Parameter Strictness — active — 2026-09-27
+
+- Branch: `fix/m3-172-media-query-parameters`.
+- Fresh audit found unknown media-server query parameters were silently ignored.
+- The query contract now accepts only `path=` and `token=`; unknown parameters return HTTP 400.
+- Existing duplicate path/token checks and capability authorization remain unchanged.
+- Added focused regression coverage.
+- Existing path, media-type, range, HTTP-version, method, and HEAD contracts are preserved.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.172; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+
 ### M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-171-media-server-capability-token`.
