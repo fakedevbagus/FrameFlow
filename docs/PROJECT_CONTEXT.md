@@ -1,34 +1,35 @@
-## M3.171 — Media Server Capability Token Contract — active — 2026-09-27
+## M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-171-media-server-capability-token`
 
 PR:
-Draft PR to be created after implementation/documentation synchronization.
+#186
 
-Fresh audit finding:
-- The loopback media server currently emits `Access-Control-Allow-Origin: *` and accepts media requests based only on a path allowlist.
-- A caller that learns an allowed media URL could therefore request and read local media cross-origin without possessing an application-scoped capability.
-- The preview consumer already receives media URLs from the Tauri command boundary, making an opaque per-server capability token a suitable narrow authorization layer without changing the preview pipeline.
+Merge SHA:
+`24153fc569eea56673b016a581c69839968f4f50`
+
+User validation:
+- User reported PASS for M3.171.
+- PR #186 was refreshed at head `acc7a1091a995b1d790a11e17ac3aed15e3a33b0`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `24153fc569eea56673b016a581c69839968f4f50`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Scope:
-- Require an unguessable per-server capability token for media retrieval.
+- Require an unguessable per-server capability token for local media retrieval.
 
 Implementation:
-- Generate a 32-byte token from Linux `/dev/urandom` when the media server starts.
-- Include the capability token in URLs returned by `url_for_path()`.
-- Require exactly one `token=` query parameter alongside `path=`.
-- Compare the supplied token using a length-checked constant-time byte comparison.
-- Reject missing/duplicate token parameters and invalid tokens explicitly.
-- Preserve the existing media path canonicalization, media-type, allowlist, range, HTTP version, method, and HEAD contracts.
-- Add focused regression coverage for token generation, query parsing, token comparison, and invalid-token HTTP rejection.
+- Generate a 32-byte per-server token from Linux `/dev/urandom`.
+- Include the token in URLs returned by `url_for_path()` and require it on media requests.
+- Require exactly one token parameter; reject missing or duplicate tokens.
+- Compare supplied and expected tokens using a length-checked constant-time byte comparison.
+- Reject invalid tokens with HTTP 403 while preserving HEAD semantics.
+- Preserve media path canonicalization, media type, allowlist, range, HTTP version, method, and preview flow.
+- Added focused Rust/TCP regression coverage.
 - No project schema change.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.171; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
 ## M3.170 — Media Server HEAD Framing Error Contract — completed — 2026-09-27
 
