@@ -1,16 +1,19 @@
-## M3.164 — active — 2026-09-27
+## M3.164 — completed — 2026-09-27
 
 - Branch: `fix/m3-164-media-query-duplicate-path`.
-- Scope: reject ambiguous media requests containing duplicate `path=` query parameters.
-- Fresh audit found the media endpoint accepting the first `path=` parameter when duplicates were present.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Added focused Rust regression coverage for duplicate and missing path parameters.
+- PR #179; squash-merged at `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
+- User reported PASS.
+- Added deterministic rejection of duplicate `path=` query parameters with HTTP 400.
+- Preserved existing media validation, HEAD, and range behavior.
+- Added focused Rust regression coverage.
 - No project schema version change.
+- `main` was verified at merge commit `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
+- Next action: fresh audit from verified `main` for M3.165.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.163 is completed and merged; M3.164 is the active milestone.
+- M3.164 is completed and merged; the next step is a fresh audit from verified `main`.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
