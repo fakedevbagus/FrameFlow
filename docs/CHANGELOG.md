@@ -23,6 +23,7 @@
 - `main` was verified at merge commit `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main` for the next focused media-server protocol/security gap.
+
 ### M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-171-media-server-capability-token`.
