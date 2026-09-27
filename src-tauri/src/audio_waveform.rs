@@ -1,6 +1,7 @@
 use std::{
   fs,
   io::Read,
+  os::unix::fs::MetadataExt,
   path::Path,
   process::{Command, Stdio},
   time::UNIX_EPOCH,
@@ -98,7 +99,14 @@ fn source_fingerprint(source_path: &Path) -> Result<String, String> {
     .map(|value| value.as_nanos())
     .unwrap_or_default();
 
-  Ok(format!("{}:{modified_nanos}", metadata.len()))
+  Ok(format!(
+    "{}:{modified_nanos}:{}:{}:{}:{}",
+    metadata.len(),
+    metadata.ctime(),
+    metadata.ctime_nsec(),
+    metadata.dev(),
+    metadata.ino(),
+  ))
 }
 
 fn waveform_sample_rate(peak_count: usize) -> u32 {
