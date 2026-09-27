@@ -1,17 +1,19 @@
-## M3.162 — active — 2026-09-27
+## M3.162 — completed — 2026-09-27
 
 - Branch: `fix/m3-162-media-server-request-errors`.
-- PR #177.
-- Scope: ensure malformed media requests and media-path validation failures receive explicit HTTP error responses instead of silently terminating the local media connection.
-- Fresh audit found `percent_decode()` and `validate_media_path()` errors propagating from `handle_connection()` while the per-connection thread discarded the returned `Result`.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Added focused Rust regression coverage for validation error status mapping and stable messages.
+- PR #177; squash-merged at `f4455f08360565dfc65c6b15b36f210c8624a76a`.
+- User reported PASS.
+- Added explicit HTTP error responses for malformed media requests and media-path validation failures.
+- Preserved existing canonical-path, media-type, allowlist, range, and URL-generation contracts.
+- Added focused Rust regression coverage.
 - No project schema version change.
+- `main` was verified at merge commit `f4455f08360565dfc65c6b15b36f210c8624a76a`.
+- Next action: fresh audit from verified `main` and start the next narrowly-scoped milestone.
 
 ## Workflow for this chat
 
-- Inspect actual `main` SHA, active branch state, and open PRs before acting.
-- M3.161 is completed and merged; M3.162 is the active milestone.
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.162 is completed and merged; the next step is a fresh audit from verified `main`.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
