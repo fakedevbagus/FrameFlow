@@ -1,13 +1,16 @@
-### M3.169 — Media Server Range Header Syntax Contract — active — 2026-09-27
+### M3.169 — Media Server Range Header Syntax Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-169-media-range-header-syntax`.
-- Fresh audit found malformed `Range` field syntax such as `Range : ...` was silently ignored.
-- Malformed `Range` header field names now receive HTTP 400.
-- Existing duplicate-header, 416 multiple-range, valid 206 range, HTTP-version, path/query, canonicalization, media-type, and HEAD contracts are preserved.
+- PR #184; squash-merged at `c095091e40309e21a218e49bd0fe11a2cefa3dc3`.
+- User reported PASS for M3.169.
+- Malformed `Range` field names now return HTTP 400 instead of being silently ignored.
+- Existing duplicate-header, 416 multiple-range, valid 206 range, HTTP-version, path/query, canonicalization, media-type, and HEAD contracts remain preserved.
 - Added focused regression coverage.
 - No project schema change.
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.169; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- PR head `5180c3f3def6d52f21d3849d3ea3c2869470ce1f` was verified before merge.
+- `main` was verified at merge commit `c095091e40309e21a218e49bd0fe11a2cefa3dc3`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused media-server protocol/correctness gap.
 
 ### M3.168 — Media Server Range Header Uniqueness Contract — completed — 2026-09-27
 
