@@ -1,25 +1,27 @@
-## M3.143 — active — 2026-09-27
+## M3.144 — active — 2026-09-27
 
-- Branch: `fix/m3-143-persistent-waveform-key-consistency`.
-- Scope: reject persisted waveform cache hits when the cache-key fingerprint does not match the waveform payload fingerprint.
-- Fresh audit after M3.142 found that persisted lookup checked key equality but not key/payload fingerprint consistency.
-- Added `isPersistentWaveformEntryKeyConsistent()` at the cache lookup boundary.
-- Added focused regression coverage for a mismatched persisted fingerprint pair.
+- Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
+- Scope: require every waveform peak-array element to be a JavaScript number before cache or render processing.
+- Fresh audit after M3.143 found native and persisted waveform validation did not reject non-number peak elements.
+- Added `isValidWaveformPeakArray()` and applied it to native and persisted waveform validation.
+- Existing numeric `NaN`/`Infinity` normalization remains unchanged; strings, objects, and null are rejected.
+- Added focused regression coverage for malformed native and persisted peak elements.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
-## M3.142 — completed — 2026-09-27
+## M3.143 — completed — 2026-09-27
 
-- Branch: `fix/m3-142-strict-waveform-fingerprint-contract`.
-- PR #157; squash-merged at `0135723cf9986824d34cb07c95b38db5c13c4da1`.
+- Branch: `fix/m3-143-persistent-waveform-key-consistency`.
+- PR #158; squash-merged at `be3f872637a26414fd37e8f62fa4ae8a538de58e`.
 - User reported PASS.
-- Added a 128-character source fingerprint maximum across native, generated, and persisted waveform metadata.
+- Added persisted cache-key/payload fingerprint consistency validation.
+- Mismatched key/payload entries now become cache misses.
 - Added focused regression coverage.
 - No project schema version change.
-- PR head `954107b41151adb024a666b7986a5128b773a0f0` was verified before merge.
-- `main` was verified after merge at `0135723cf9986824d34cb07c95b38db5c13c4da1`.
+- PR head `07faea424ace642c0270c23291562fe93c6e897b` was verified before merge.
+- `main` was verified after merge at `be3f872637a26414fd37e8f62fa4ae8a538de58e`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main`.
 ## M3.141 — completed — 2026-09-27
