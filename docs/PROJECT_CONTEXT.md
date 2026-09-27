@@ -1,32 +1,59 @@
-## M3.172 — Media Server Query Parameter Strictness — active — 2026-09-27
+## M3.172 — Media Server Query Parameter Strictness — completed — 2026-09-27
 
 Branch:
 `fix/m3-172-media-query-parameters`
 
 PR:
-Draft PR to be created after implementation/documentation synchronization.
+#187
 
-Fresh audit finding:
-- `extract_media_request()` recognized `path=` and `token=` but silently ignored every other query parameter.
-- This made the media endpoint tolerant of malformed or unsupported request shape instead of enforcing a closed query contract.
-- With the capability-token boundary established in M3.171, the endpoint should accept only the parameters it explicitly understands.
+Merge SHA:
+`b78f73310ce1ff006bcb938f346aa138e6e5fdfd`
+
+User validation:
+- User reported PASS for M3.172.
+- PR #187 was refreshed at head `c9c6f9a74c9d5443ac638faa7a84837487c8e089`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Scope:
-- Reject unknown media-server query parameters.
+- Make the media-server query contract closed and deterministic.
 
 Implementation:
 - Accept only `path=` and `token=` query parameters.
-- Preserve duplicate-path and duplicate-token rejection.
-- Return HTTP 400 for unknown query parameters.
-- Preserve existing capability-token authorization and all path, media-type, range, HTTP version, method, and HEAD contracts.
-- Add focused regression coverage.
+- Reject unknown query parameters with HTTP 400.
+- Preserve duplicate-path and duplicate-token rejection and capability-token authorization.
+- Preserve path, media-type, range, HTTP-version, method, and HEAD contracts.
+- Added focused regression coverage.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` for the next focused media-server protocol/security gap.
+
+## M3.173 — Media Server OPTIONS Target Contract — active — 2026-09-27
+
+Branch:
+`fix/m3-173-media-options-target`
+
+Fresh audit finding:
+- The media server returned HTTP 204 for every HTTP/1.1 `OPTIONS` target before checking whether the target was the media endpoint.
+- This made unrelated local-server targets appear to support the media-server CORS/preflight endpoint.
+- The fix scopes successful `OPTIONS` handling to targets beginning with `/media?`, while leaving valid media preflight behavior unchanged.
+
+Scope:
+- Reject `OPTIONS` requests to non-media targets with HTTP 404.
+
+Implementation:
+- Add an endpoint-target guard for `OPTIONS` before the existing 204 response.
+- Preserve 204 handling for `/media?` targets.
+- Add focused TCP regression coverage for non-media `OPTIONS` requests.
+- Preserve all existing query, capability-token, path, media-type, range, HTTP-version, method, and HEAD contracts.
 - No project schema change.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.172; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Validate M3.173 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
 ## M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 

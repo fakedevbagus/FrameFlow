@@ -1,17 +1,28 @@
-## M3.172 — active — 2026-09-27
+## M3.173 — active — 2026-09-27
+
+- Branch: `fix/m3-173-media-options-target`.
+- Scope: scope successful media-server `OPTIONS` handling to the media endpoint target.
+- Fresh audit found every HTTP/1.1 `OPTIONS` target returned HTTP 204 before endpoint routing was checked.
+- Non-media `OPTIONS` targets now return HTTP 404; `/media?` targets retain HTTP 204 handling.
+- Added focused TCP regression coverage.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Existing M3.160–M3.172 media-server contracts remain preserved.
+- No project schema version change.
+
+## M3.172 — completed — 2026-09-27
 
 - Branch: `fix/m3-172-media-query-parameters`.
-- Scope: make the media-server query contract closed and deterministic.
-- Fresh audit found `path=` and `token=` were recognized while unknown query parameters were ignored.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Added HTTP 400 rejection for unknown query parameters and focused regression coverage.
-- Existing M3.160–M3.171 media-server contracts remain preserved.
+- PR #187; squash-merged at `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
+- User reported PASS.
+- Closed the media-server query contract to the explicit `path=` and `token=` parameters.
+- Unknown query parameters now return HTTP 400 with focused regression coverage.
+- Existing duplicate path/token, capability-token, path/media/range/HTTP/HEAD behavior remains preserved.
 - No project schema version change.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.172 is the active milestone.
+- M3.173 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.

@@ -201,6 +201,17 @@ fn handle_connection(
     return Ok(());
   }
 
+  if method == "OPTIONS" && !target.starts_with("/media?") {
+    write_status(
+      &mut stream,
+      404,
+      "Not Found",
+      b"Media endpoint not found.",
+      true,
+    )?;
+    return Ok(());
+  }
+
   if method == "OPTIONS" {
     write_headers(
       &mut stream,
@@ -1011,6 +1022,35 @@ mod tests {
     let response_text = String::from_utf8(response).unwrap();
     assert!(response_text.starts_with("HTTP/1.1 403 Forbidden\r\n"));
     assert!(response_text.ends_with("Media server capability token is invalid."));
+
+    server.join().unwrap();
+  }
+
+  #[test]
+  fn rejects_options_requests_to_non_media_targets() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream, "test-token").unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(b"OPTIONS /not-media HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n")
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 404 Not Found\r\n"));
+    assert!(response_text.ends_with("Media endpoint not found."));
 
     server.join().unwrap();
   }
