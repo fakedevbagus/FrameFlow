@@ -1,34 +1,35 @@
-## M3.166 — Media Server Request Framing Error Contract — active — 2026-09-27
+## M3.166 — Media Server Request Framing Error Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-166-media-request-framing-errors`
 
 PR:
-Draft PR to be created after implementation/documentation synchronization.
+#181
 
-Fresh audit finding:
-- `read_request()` returned generic errors for oversized request headers and invalid UTF-8.
-- `handle_connection()` propagated those errors without writing an HTTP response, and the connection worker discarded the error.
-- The 32 KiB header limit was checked only after looking for the request terminator, so a single read containing an oversized complete request could bypass the intended limit.
+Merge SHA:
+`e717ad8244b71146ea719997c37b1efe6ec510b3`
+
+User validation:
+- User reported PASS for M3.166.
+- PR #181 was refreshed at head `8367c9f3c82f9c972abe37a0c750ffc885c3e14f`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `e717ad8244b71146ea719997c37b1efe6ec510b3`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Scope:
-- Make request framing rejection explicit and deterministic at the media-server HTTP boundary.
+- Make media-server request framing rejection explicit and deterministic at the HTTP boundary.
 
 Implementation:
-- Introduce typed request-read errors for oversized headers, invalid UTF-8, and underlying I/O failures.
-- Enforce the 32 KiB request-header limit before accepting the completed header.
-- Map oversized headers to HTTP 431.
-- Map invalid UTF-8 requests to HTTP 400.
-- Preserve underlying I/O failures as internal connection errors.
-- Add focused TCP-level regression coverage for oversized headers and invalid UTF-8.
-- Preserve HTTP version, method, query/path, canonicalization, media-type, range, and HEAD contracts.
+- Added typed request-read errors for oversized headers, invalid UTF-8, and underlying I/O failures.
+- Enforced the 32 KiB request-header limit before accepting a completed header.
+- Mapped oversized requests to HTTP 431.
+- Mapped invalid UTF-8 requests to HTTP 400.
+- Preserved underlying I/O failures as connection-level errors.
+- Added focused TCP-level regression coverage.
+- Preserved HTTP version, method, media query/path, canonicalization, media-type, range, and HEAD contracts.
 - No project schema change.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.166; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Fresh audit from verified `main` for the next focused media-server protocol/correctness gap.
 
 ## M3.165 — Media Server HTTP Version Contract — completed — 2026-09-27
 
