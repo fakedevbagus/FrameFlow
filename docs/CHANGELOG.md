@@ -1,13 +1,17 @@
-### M3.171 — Media Server Capability Token Contract — active — 2026-09-27
+### M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-171-media-server-capability-token`.
-- Fresh audit found the loopback media server exposed allowed media resources with a wildcard CORS policy and no application-scoped request capability.
-- Added a per-server 32-byte token sourced from Linux `/dev/urandom`, included in generated media URLs and required on media requests.
-- Missing, duplicate, or invalid capability tokens are rejected explicitly.
-- Added focused regression coverage and preserved existing path/media/range/HTTP/HEAD behavior.
+- PR #186; squash-merged at `24153fc569eea56673b016a581c69839968f4f50`.
+- User reported PASS for M3.171.
+- Added a 32-byte per-server Linux `/dev/urandom` capability token to generated media URLs and media-request authorization.
+- Missing, duplicate, and invalid tokens are rejected explicitly; token comparison uses a length-checked constant-time byte comparison.
+- Existing path/media/range/HTTP/HEAD/preview behavior is preserved.
+- Added focused Rust/TCP regression coverage.
 - No project schema change.
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.171; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- PR head `acc7a1091a995b1d790a11e17ac3aed15e3a33b0` was verified before merge.
+- `main` was verified at merge commit `24153fc569eea56673b016a581c69839968f4f50`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
 ### M3.170 — Media Server HEAD Framing Error Contract — completed — 2026-09-27
 
