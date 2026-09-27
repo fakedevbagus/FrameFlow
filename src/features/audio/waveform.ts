@@ -246,6 +246,24 @@ function isValidAudioWaveform(
   );
 }
 
+function isValidPersistentWaveformEntry(
+  value: unknown,
+): value is PersistentWaveformEntry {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<PersistentWaveformEntry>;
+  return (
+    typeof candidate.cacheKey === "string" &&
+    candidate.cacheKey.length > 0 &&
+    isValidAudioWaveform(candidate.waveform) &&
+    candidate.lastUsedAt !== undefined &&
+    Number.isSafeInteger(candidate.lastUsedAt) &&
+    candidate.lastUsedAt >= 0
+  );
+}
+
 function isPersistentWaveformStore(
   value: unknown,
 ): value is PersistentWaveformStore {
@@ -257,7 +275,8 @@ function isPersistentWaveformStore(
   return (
     candidate.version === 1 &&
     Array.isArray(candidate.entries) &&
-    candidate.entries.length <= MAX_PERSISTENT_WAVEFORM_ENTRIES
+    candidate.entries.length <= MAX_PERSISTENT_WAVEFORM_ENTRIES &&
+    candidate.entries.every(isValidPersistentWaveformEntry)
   );
 }
 
