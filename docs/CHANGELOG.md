@@ -1,12 +1,24 @@
-### M3.145 — Strict Source-Range Waveform Peak Input Contract — active — 2026-09-27
+### M3.146 — Dense Waveform Peak Array Contract — active — 2026-09-27
 
-- Branch: `fix/m3-145-strict-source-range-peak-input-contract`.
-- Fresh audit found `getWaveformPeaksForSourceRange()` accepted an arbitrary input peak array even though waveform data is bounded to 2048 elements elsewhere.
-- Reused `isValidWaveformPeakArray()` at the source-range resampling boundary.
-- Added focused regression coverage for an over-limit source-range input.
+- Branch: `fix/m3-146-dense-waveform-peak-array-contract`.
+- Fresh audit found the shared peak validator used `Array.prototype.every()`, which skips sparse-array holes.
+- Replaced hole-skipping validation with explicit index coverage so every declared peak position must contain a number.
+- Added focused regression coverage for a sparse native waveform peak array.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 
+### M3.145 — Strict Source-Range Waveform Peak Input Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-145-strict-source-range-peak-input-contract`.
+- PR #160; squash-merged at `6f1ae4e2ec7c90a1581a2c34119459717b93ab12`.
+- User reported PASS.
+- Applied the shared 2048-element waveform peak contract at the source-range resampling boundary.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `535f858f76788dca7882ed22e259694f0a4a6cf3` was verified before merge.
+- `main` was verified after merge at `6f1ae4e2ec7c90a1581a2c34119459717b93ab12`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next waveform runtime boundary.
 ### M3.144 — Strict Waveform Peak Element Type Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
