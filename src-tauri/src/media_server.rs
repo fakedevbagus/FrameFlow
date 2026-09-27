@@ -110,6 +110,16 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
       )?;
       return Ok(());
     }
+    Err(MediaRequestError::IncompleteHeaders) => {
+      write_status(
+        &mut stream,
+        400,
+        "Bad Request",
+        b"Media request headers were not terminated correctly.",
+        true,
+      )?;
+      return Ok(());
+    }
     Err(MediaRequestError::Io(error)) => return Err(error),
   };
 
@@ -333,6 +343,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
 enum MediaRequestError {
   HeadersTooLarge,
   InvalidUtf8,
+  IncompleteHeaders,
   Io(String),
 }
 
@@ -441,7 +452,7 @@ fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
       .map_err(|error| MediaRequestError::Io(format!("Could not read media request: {error}")))?;
 
     if read == 0 {
-      break;
+      return Err(MediaRequestError::IncompleteHeaders);
     }
 
     buffer.extend_from_slice(&chunk[..read]);
@@ -451,11 +462,9 @@ fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
     }
 
     if buffer.windows(4).any(|window| window == b"\r\n\r\n") {
-      break;
+      return String::from_utf8(buffer).map_err(|_| MediaRequestError::InvalidUtf8);
     }
   }
-
-  String::from_utf8(buffer).map_err(|_| MediaRequestError::InvalidUtf8)
 }
 
 fn write_headers(
@@ -733,6 +742,38 @@ mod tests {
     let response_text = String::from_utf8(response).unwrap();
     assert!(response_text.starts_with("HTTP/1.1 400 Bad Request\r\n"));
     assert!(response_text.ends_with("Media request must use valid UTF-8."));
+
+    server.join().unwrap();
+  }
+
+  #[test]
+  fn rejects_incomplete_media_request_headers() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(b"GET /missing HTTP/1.1\r\nHost: 127.0.0.1\r\n")
+      .unwrap();
+    client.shutdown(std::net::Shutdown::Write).unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+    assert!(response_text.ends_with(
+      "Media request headers were not terminated correctly."
+    ));
 
     server.join().unwrap();
   }
