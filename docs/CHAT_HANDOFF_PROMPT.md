@@ -1,15 +1,29 @@
-## M3.140 — active — 2026-09-27
+## M3.141 — active — 2026-09-27
 
-- Branch: `fix/m3-140-strict-persistent-waveform-store-size`.
-- Scope: require persisted waveform cache stores to contain at most 32 entries before lookup, sorting, or reuse.
-- Fresh audit found the persistent store parser accepted arbitrary entry-array length even though the cache retention limit was already 32.
-- Tightened the persistent store validator and reused it in the write path.
-- Added focused regression coverage for the maximum valid 32-entry store and oversized-store rejection.
+- Branch: `fix/m3-141-strict-persistent-waveform-entry-contract`.
+- Scope: require every persisted waveform cache entry to satisfy its structural contract before lookup, sorting, mutation, or reuse.
+- Fresh audit after M3.140 found that the store-size validator still accepted malformed individual entries.
+- Added `isValidPersistentWaveformEntry()` requiring a non-empty string `cacheKey`, a valid waveform payload, and non-negative safe-integer `lastUsedAt`.
+- Persisted stores now require every entry to pass the entry validator.
+- Added focused regression coverage for malformed persisted timestamps and invalid cache keys.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
+## M3.140 — completed — 2026-09-27
+
+- Branch: `fix/m3-140-strict-persistent-waveform-store-size`.
+- PR #155; squash-merged at `a43175c89856a34e3f684a27430aca883e27dd32`.
+- User reported PASS.
+- Tightened persistent waveform store validation to at most 32 entries before lookup, sorting, or reuse.
+- Reused the same store-size guard in the write path.
+- Added focused regression coverage for the 32-entry boundary and oversized-store rejection.
+- No project schema version change.
+- PR head `314df08dc71bd157f5ac7afc0e1de8dca6f09224` was verified before merge.
+- `main` was verified after merge at `a43175c89856a34e3f684a27430aca883e27dd32`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 ## M3.139 — completed — 2026-09-27
 
 - Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
