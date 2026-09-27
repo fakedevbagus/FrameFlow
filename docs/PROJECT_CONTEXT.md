@@ -1,32 +1,34 @@
-## M3.153 — Native Video Graph Input Index Validation — active — 2026-09-27
+## M3.153 — Native Video Graph Input Index Validation — completed — 2026-09-27
 
 Branch:
 `fix/m3-153-video-graph-input-index-validation`
 
-Scope:
-- Restore indexed iteration at the native video-graph input validation boundary so each declared media type is checked against the corresponding input.
+PR:
+#168
 
-Audit finding:
-- `render_video_graph_to_mp4()` referenced `index` inside the input mapping closure without enumerating the input iterator.
-- The source on verified `main` therefore had an unresolved local `index` binding at this native Rust boundary, making the implementation inconsistent with a compilable command path.
-- The intended per-input media-type validation was present but could not be evaluated correctly without a stable input index.
+Merge SHA:
+`4f2ad5268df82be89d72077837dce26864636244`
+
+User validation:
+- User reported PASS for M3.153.
+- PR #168 was refreshed at head `601fd88a5b9fdac4beea56996bd539b7f2f393c4`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `4f2ad5268df82be89d72077837dce26864636244`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Changed the input iterator to `.enumerate().map(|(index, value)| ...)`.
-- Extracted the indexed media-type comparison into `validate_native_video_graph_input_media_type()`.
+- Restored indexed iteration for native video-graph inputs with `.enumerate().map(|(index, value)| ...)`.
+- Extracted indexed media-type comparison into a focused helper.
 - Added focused Rust regression coverage for matching, omitted, and mismatched indexed media types.
 - No project schema version change.
 
-Invariant / contract:
-- Each native video-graph input is validated against the media type declared at the same index.
-- Omitted media-type metadata remains compatible with the existing empty-list behavior.
-- Mismatched indexed media types return the existing error contract.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.153; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete engineering gap.
+
+
+## M3.154 — active — 2026-09-27
+
+Scope:
+- Fresh audit from the verified `main` after M3.153.
 
 ## M3.152 — Preview Generation Source Consistency Contract — completed — 2026-09-27
 
