@@ -1,34 +1,68 @@
-## M3.161 — Media Server Canonical Path Enforcement — active — 2026-09-27
+## M3.161 — Media Server Canonical Path Enforcement — completed — 2026-09-27
 
 Branch:
 `fix/m3-161-media-server-canonical-path`
 
-Scope:
-- Ensure the local media server validates and serves the same canonical media path, preventing path-alias/symlink changes between validation and file access.
+PR:
+#176
 
-Audit finding:
-- M3.160 tightened supported media type and directory validation, but `validate_media_path()` returned no canonical path to callers.
-- `url_for_path()` and the HTTP handler therefore validated one path representation and subsequently operated on the original alias.
-- A path alias could change after validation and before streaming.
+Merge SHA:
+`8caa4232bf03843972968c944cfdc69235e6c549`
+
+User validation:
+- User reported PASS for M3.161.
+- PR #176 was refreshed after validation and was already merged by GitHub at head `1908dbbd830601ee3d1687140afb2597555c56e6`.
+- `main` was verified at merge commit `8caa4232bf03843972968c944cfdc69235e6c549`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Make `validate_media_path()` return the validated canonical `PathBuf`.
-- Use the canonical path when generating media URLs.
-- Use the canonical path directly for HTTP metadata checks and streaming.
-- Preserve the existing directory allowlist and supported media-type boundary.
-- Add focused regression coverage for relative-path rejection while preserving existing validation semantics.
+- Made `validate_media_path()` return the validated canonical `PathBuf`.
+- Reused the canonical path for media URL generation.
+- Reused the canonical path for HTTP metadata access, range handling, and streaming.
+- Preserved the existing supported media-type and directory boundaries.
+- Added focused Rust regression coverage for relative-path rejection.
 - No project schema version change.
 
 Invariant / contract:
 - The path validated by the local media server is the same canonical filesystem path used for media URL generation and streaming.
-- Symlink/path-alias changes after validation cannot redirect streaming to a different target.
+- Symlink/path-alias changes after validation cannot redirect the validated serving path to a different canonical target.
 - Existing supported media types, allowed directories, range handling, and MIME mappings remain unchanged.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+Next step:
+- Fresh audit from verified `main` for M3.162 — choose the next narrowly-scoped security or correctness gap.
+
+## M3.160 — Media Server Media-Type Boundary — completed — 2026-09-27
+
+Branch:
+`fix/m3-160-media-server-media-type-boundary`
+
+PR:
+#175
+
+Merge SHA:
+`14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`
+
+User validation:
+- User reported PASS for M3.160.
+- PR #175 was refreshed before merge and squash-merged at head `7bf244bb3e60f82644fdfb5193dee2933ee1ff06`.
+- `main` was verified after merge at `14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Required the canonical target to be an existing regular file.
+- Reused the central FrameFlow media-type contract from `lib.rs`.
+- Rejected unsupported media types at the media-server boundary.
+- Added explicit MIME mappings for supported image/audio/video formats.
+- Added focused Rust regression coverage for unsupported extensions.
+- No project schema version change.
+
+Invariant / contract:
+- The local media server serves only existing files whose extension matches FrameFlow's supported audio, image, or video media contract.
+- Canonical path restrictions for `/media`, `/mnt`, `/run/media`, and the user's home directory remain unchanged.
+- Existing supported media streaming and range behavior remain unchanged.
 
 Next step:
-- Complete user local validation of M3.161; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete security or correctness gap.
 
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
