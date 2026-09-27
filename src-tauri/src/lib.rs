@@ -238,6 +238,8 @@ fn render_single_source_to_mp4(
     return Err("Export output must differ from the source media.".to_string());
   }
 
+  let source_identity_snapshot = audio_render::source_identity(&source_path)?;
+
   let args = build_ffmpeg_export_args(
     &source_path,
     &output_path,
@@ -262,6 +264,24 @@ fn render_single_source_to_mp4(
   ) {
     let _ = fs::remove_file(&output_path);
     return Err(error);
+  }
+
+  let current_source_identity =
+    audio_render::source_identity(&source_path).map_err(|error| {
+      let _ = fs::remove_file(&output_path);
+      format!(
+        "FFmpeg completed but the source could not be revalidated before export finalization: {error}"
+      )
+    })?;
+
+  if current_source_identity != source_identity_snapshot {
+    let _ = fs::remove_file(&output_path);
+    return Err(
+      format!(
+        "Native export source changed during rendering; please retry: {}",
+        source_path.display()
+      )
+    );
   }
 
   let metadata = fs::metadata(&output_path)
@@ -1692,6 +1712,32 @@ mod tests {
     assert!(super::validate_native_export_settings(1280, 719, 30.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 0.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 241.0).is_err());
+  }
+
+  #[test]
+  fn single_source_identity_snapshot_detects_changes() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-single-source-{unique_suffix}.tmp"
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let snapshot = audio_render::source_identity(&path).unwrap();
+    assert_eq!(audio_render::source_identity(&path).unwrap(), snapshot);
+
+    fs::write(&path, b"second").unwrap();
+    let current = audio_render::source_identity(&path).unwrap();
+    assert_ne!(current, snapshot);
+
+    fs::remove_file(path).unwrap();
   }
 
   #[test]
