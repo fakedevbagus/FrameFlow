@@ -229,12 +229,21 @@ function touchPersistentWaveform(
 }
 
 function isValidWaveformPeakArray(value: unknown): value is number[] {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.length <= MAX_WAVEFORM_OUTPUT_PEAK_COUNT &&
-    value.every((peak) => typeof peak === "number")
-  );
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.length > MAX_WAVEFORM_OUTPUT_PEAK_COUNT
+  ) {
+    return false;
+  }
+
+  for (let index = 0; index < value.length; index += 1) {
+    if (typeof value[index] !== "number") {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function isValidAudioWaveform(
