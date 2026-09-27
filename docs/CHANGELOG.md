@@ -1,16 +1,14 @@
-### M3.163 — Media Server HEAD Response Contract — completed — 2026-09-27
+### M3.164 — Media Query Duplicate Path Rejection — active — 2026-09-27
 
-- Branch: `fix/m3-163-media-server-head-response-contract`.
-- PR #178; squash-merged at `94b1083773336f4339407c8bc82920d66dee4ea7`.
-- User reported PASS.
-- Added explicit body-emission control so media-server HEAD error responses preserve headers/Content-Length without transmitting a response body.
-- Preserved GET, successful HEAD, validation, status-code, and range behavior.
-- Added focused TCP-level regression coverage.
+- Branch: `fix/m3-164-media-query-duplicate-path`.
+- Fresh audit found the media query parser selecting the first `path=` parameter when duplicate parameters were supplied.
+- Added a focused parser requiring exactly one `path=` parameter.
+- Duplicate `path=` parameters now return HTTP 400 with `Duplicate media path parameter.`.
+- Preserved existing missing-path behavior, valid media URL handling, validation, HEAD, and range behavior.
+- Added focused Rust regression coverage for duplicate and missing path parameters.
 - No project schema change.
-- PR head `449aabf415db8269b81a996e5c42845fddfff736` was verified before merge.
-- `main` was verified at merge commit `94b1083773336f4339407c8bc82920d66dee4ea7`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main` for the next concrete security or correctness gap.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.164; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ### M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 

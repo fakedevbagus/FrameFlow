@@ -1,34 +1,33 @@
-## M3.163 — Media Server HEAD Response Contract — completed — 2026-09-27
+## M3.164 — Media Query Duplicate Path Rejection — active — 2026-09-27
 
 Branch:
-`fix/m3-163-media-server-head-response-contract`
+`fix/m3-164-media-query-duplicate-path`
 
-PR:
-#178
+Scope:
+- Reject ambiguous media HTTP requests that contain more than one `path=` query parameter.
 
-Merge SHA:
-`94b1083773336f4339407c8bc82920d66dee4ea7`
-
-User validation:
-- User reported PASS for M3.163.
-- PR #178 was refreshed at head `449aabf415db8269b81a996e5c42845fddfff736`, verified ahead of `main` with 0 commits behind, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `94b1083773336f4339407c8bc82920d66dee4ea7`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+Fresh audit finding:
+- The media endpoint previously used the first matching `path=` parameter from the query string.
+- A request containing duplicate `path=` parameters was therefore accepted with implicit first-value semantics instead of being rejected as malformed/ambiguous input.
 
 Implementation:
-- Added explicit body-emission control to media-server status responses.
-- Suppressed response bodies for HEAD error responses while preserving the declared `Content-Length`.
-- Preserved GET behavior, successful HEAD behavior, status codes, validation messages, and range handling.
-- Added focused TCP-level regression coverage for a HEAD error response.
+- Add a focused media-query parser that requires exactly one `path=` parameter.
+- Preserve the existing `Missing media path.` behavior when no `path=` parameter is present.
+- Reject duplicate `path=` parameters with HTTP 400 and the stable message `Duplicate media path parameter.`.
+- Preserve percent decoding, canonical-path validation, media-type checks, directory allowlist, HEAD behavior, and range handling.
+- Add focused Rust regression coverage for duplicate and missing media path parameters.
 - No project schema version change.
 
 Invariant / contract:
-- HEAD responses do not transmit response bodies.
-- HEAD error responses preserve status and representation headers while suppressing the body.
-- Existing GET, media validation, canonical-path, media-type, allowlist, and range contracts remain unchanged.
+- The media endpoint accepts exactly one `path=` query parameter.
+- Duplicate media path parameters are rejected deterministically with HTTP 400.
+- Existing valid media URLs and existing validation semantics remain unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Fresh audit from verified `main` for M3.164 — choose the next narrowly-scoped security or correctness gap.
+- Complete user local validation of M3.164; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 

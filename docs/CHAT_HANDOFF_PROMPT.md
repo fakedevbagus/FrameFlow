@@ -1,19 +1,16 @@
-## M3.163 — completed — 2026-09-27
+## M3.164 — active — 2026-09-27
 
-- Branch: `fix/m3-163-media-server-head-response-contract`.
-- PR #178; squash-merged at `94b1083773336f4339407c8bc82920d66dee4ea7`.
-- User reported PASS.
-- Fixed media-server HEAD error responses so bodies are suppressed while response headers and Content-Length remain available.
-- Preserved GET, validation, status-code, and range behavior.
-- Added focused TCP-level regression coverage.
+- Branch: `fix/m3-164-media-query-duplicate-path`.
+- Scope: reject ambiguous media requests containing duplicate `path=` query parameters.
+- Fresh audit found the media endpoint accepting the first `path=` parameter when duplicates were present.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Added focused Rust regression coverage for duplicate and missing path parameters.
 - No project schema version change.
-- `main` was verified at merge commit `94b1083773336f4339407c8bc82920d66dee4ea7`.
-- Next action: fresh audit from verified `main` for the next narrowly-scoped milestone.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.163 is completed and merged; the next step is a fresh audit from verified `main`.
+- M3.163 is completed and merged; M3.164 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.

@@ -146,18 +146,18 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
     return Ok(());
   };
 
-  let Some(encoded_path) = query
-    .split('&')
-    .find_map(|part| part.strip_prefix("path="))
-  else {
-    write_status(
-      &mut stream,
-      400,
-      "Bad Request",
-      b"Missing media path.",
-      method != "HEAD",
-    )?;
-    return Ok(());
+  let encoded_path = match extract_media_path(query) {
+    Ok(path) => path,
+    Err(error) => {
+      write_status(
+        &mut stream,
+        400,
+        "Bad Request",
+        error.as_bytes(),
+        method != "HEAD",
+      )?;
+      return Ok(());
+    }
   };
 
   let decoded_path = match percent_decode(encoded_path) {
@@ -498,6 +498,22 @@ fn write_media_path_error(
   write_status(stream, status, reason, body.as_bytes(), include_body)
 }
 
+fn extract_media_path(query: &str) -> Result<&str, &'static str> {
+  let mut encoded_path = None;
+
+  for part in query.split('&') {
+    if let Some(path) = part.strip_prefix("path=") {
+      if encoded_path.is_some() {
+        return Err("Duplicate media path parameter.");
+      }
+
+      encoded_path = Some(path);
+    }
+  }
+
+  encoded_path.ok_or("Missing media path.")
+}
+
 fn percent_encode_path(path: &Path) -> String {
   path
     .to_string_lossy()
@@ -582,6 +598,24 @@ mod tests {
     parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
   };
   use std::path::Path;
+
+  #[test]
+  fn rejects_duplicate_media_path_parameters() {
+    assert_eq!(
+      super::extract_media_path("path=%2Fmedia%2Fone.mp4&path=%2Fmedia%2Ftwo.mp4")
+        .expect_err("duplicate media path parameters must be rejected"),
+      "Duplicate media path parameter."
+    );
+  }
+
+  #[test]
+  fn rejects_missing_media_path_parameter() {
+    assert_eq!(
+      super::extract_media_path("foo=bar")
+        .expect_err("missing media path parameters must be rejected"),
+      "Missing media path."
+    );
+  }
 
   #[test]
   fn suppresses_body_for_head_error_responses() {
