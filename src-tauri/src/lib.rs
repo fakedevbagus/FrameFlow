@@ -1951,6 +1951,40 @@ mod tests {
   }
 
   #[test]
+  fn detects_preview_source_changes_before_cache_finalization() {
+    use std::{
+      fs,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+      "frameflow-preview-source-change-{}-{unique_suffix}.tmp",
+      std::process::id(),
+    ));
+
+    fs::write(&path, b"first").unwrap();
+    let initial_metadata = fs::metadata(&path).unwrap();
+    let initial_key = preview_cache_key(&path, &initial_metadata);
+
+    assert!(super::validate_preview_source_identity(&path, &initial_key).is_ok());
+
+    fs::write(&path, b"second").unwrap();
+
+    let error = super::validate_preview_source_identity(&path, &initial_key)
+      .expect_err("changed preview sources must invalidate the generation");
+    assert_eq!(
+      error,
+      "Selected media changed during preview generation; please retry."
+    );
+
+    fs::remove_file(path).unwrap();
+  }
+
+  #[test]
   fn preview_cache_key_changes_when_source_metadata_changes() {
     use std::{
       fs,
