@@ -1,21 +1,26 @@
-## M3.158 — Multi-Segment Source Consistency Contract — active — 2026-09-27
+## M3.158 — Multi-Segment Source Consistency Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-158-video-segments-source-consistency`
 
-Scope:
-- Prevent native multi-segment video exports from finalizing when any resolved video source changes or becomes unavailable during segment rendering or final concatenation.
+PR:
+#173
 
-Audit finding:
-- `render_video_segments_to_mp4()` validated source existence and duration before rendering, then delegated multiple FFmpeg segment renders and a final concat without preserving source filesystem identity across the full render window.
-- A source could change after the initial probe while a generated segment/output was still accepted.
+Merge SHA:
+`37b35e214a40125f0effe4f8ba64af2b483319ac`
+
+User validation:
+- User reported PASS for M3.158.
+- PR #173 was refreshed at head `74c6da8d4aa7e357bf34a665f6dd3be99be182c0`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `37b35e214a40125f0effe4f8ba64af2b483319ac`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Capture Linux source identity for every unique resolved video segment source after initial validation and duration probing.
-- Re-check every captured source after successful segment rendering and final concatenation, before accepting the generated output.
-- Remove the generated final output and return a retryable error when any source changes or becomes unavailable.
-- Reuse the established native source identity contract from the AV render path.
-- Add focused Rust regression coverage for multi-segment source mutation.
+- Captured Linux source identity for every unique resolved video segment source after initial validation.
+- Re-checked all captured sources after successful segment rendering and final concatenation, before accepting the generated output.
+- Removed the generated final output and returned a retryable error when any source changed or became unavailable.
+- Reused the established native source identity contract from the AV render path.
+- Added focused Rust regression coverage.
 - No project schema version change.
 
 Invariant / contract:
@@ -23,11 +28,8 @@ Invariant / contract:
 - Source mutation or removal cannot leave a finalized multi-segment export derived from a different source snapshot.
 - Black-gap segments and existing segment timing/render settings remain unchanged.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.158; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete native render consistency gap.
 
 ## M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
