@@ -1,34 +1,63 @@
-## M3.144 — Strict Waveform Peak Element Type Contract — active — 2026-09-27
+## M3.145 — Strict Source-Range Waveform Peak Input Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-144-strict-waveform-peak-element-contract`
+`fix/m3-145-strict-source-range-peak-input-contract`
 
 Scope:
-- Require every runtime waveform peak array element to be a JavaScript number before cache or render processing.
+- Enforce the established 2048-element waveform peak bound at the source-range resampling boundary.
 
 Audit finding:
-- M3.139 bounded waveform peak-array length, but runtime validation did not validate element types.
-- Native or persisted payloads containing strings, objects, or null values could therefore enter normalization and be silently converted to zero instead of being rejected as malformed waveform data.
-- Existing `NaN`/`Infinity` sanitization is preserved because those values are numeric and the established normalizer maps them to zero.
+- M3.139 and M3.144 tightened native/persisted waveform peak-array validation, but `getWaveformPeaksForSourceRange()` accepted arbitrary input arrays independently.
+- An oversized caller-provided peak array could therefore reach interpolation and allocation work before the established 2048-element waveform density contract was applied elsewhere.
 
 Implementation:
-- Added `isValidWaveformPeakArray()` requiring a non-empty array of at most 2048 elements, with every element having type `number`.
-- Reused the validator for native waveform response validation and persisted waveform validation.
-- Preserved existing numeric peak normalization, including `NaN`/`Infinity` handling.
-- Added focused regression coverage for non-number native and persisted peak elements.
+- Reuse `isValidWaveformPeakArray()` at the source-range helper boundary.
+- Reject empty, over-limit, or non-number peak arrays before interpolation.
+- Preserve numeric `NaN`/`Infinity` normalization and existing safe source-range behavior.
+- Added focused regression coverage for an over-limit source-range input array.
 - No project schema version change.
 
 Invariant / contract:
-- Every waveform peak array entering cache or render logic contains only numeric elements.
-- Malformed non-number peak elements cannot be silently converted into waveform data.
-- Existing valid numeric and non-finite-number normalization semantics remain unchanged.
+- Source-range waveform resampling accepts only peak arrays that satisfy the established waveform peak-array contract.
+- Input peak arrays are bounded to at most 2048 elements before interpolation work.
+- Existing valid source-range output behavior remains unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.144; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.145; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
+## M3.144 — Strict Waveform Peak Element Type Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-144-strict-waveform-peak-element-contract`
+
+PR:
+#159
+
+Merge SHA:
+`626bd84dfc4a739f0728c864463b15951d901a4e`
+
+User validation:
+- User reported PASS for M3.144.
+- PR #159 was refreshed at head `da44df46fd2ca2ffef1fdd3ac76b061aa95b00af`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `626bd84dfc4a739f0728c864463b15951d901a4e`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- M3.139 bounded peak-array length, but runtime validation did not validate individual peak element types.
+- Non-number values could enter normalization and be silently converted to zero.
+
+Implementation:
+- Added `isValidWaveformPeakArray()` requiring numeric elements in a non-empty array of at most 2048 entries.
+- Reused the validator for native response and persisted waveform validation.
+- Preserved existing `NaN`/`Infinity` normalization.
+- Added focused regression coverage for malformed native and persisted peak elements.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.145.
 ## M3.143 — Persistent Waveform Cache-Key Consistency — completed — 2026-09-27
 
 Branch:
