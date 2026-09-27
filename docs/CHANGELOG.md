@@ -1,13 +1,28 @@
-### M3.174 — Media Server Request Read Timeout — active — 2026-09-28
+### M3.175 — Media Server Request Header Syntax Contract — active — 2026-09-28
 
-- Branch: `fix/m3-174-media-request-read-timeout`.
-- Fresh audit found accepted media-server connections could block a dedicated thread indefinitely while waiting for request headers to finish.
-- Added a fixed 15-second read timeout before request-header parsing.
-- Existing header-size/framing, HTTP parsing, query/token, path, media-type, range, and streaming behavior remain preserved.
-- Added focused regression coverage for the configured timeout.
+- Branch: `fix/m3-175-media-request-header-syntax`.
+- Fresh audit found generic request header lines without valid field syntax were silently skipped.
+- Added generic HTTP request-header field-name validation before endpoint routing.
+- Malformed header lines now return HTTP 400; valid header values and existing Range semantics remain unchanged.
+- Preserved HEAD response body suppression for validation errors.
+- Added focused TCP regression coverage for malformed GET and HEAD headers.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.174; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- Next step: complete user local validation of M3.175; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+
+### M3.174 — Media Server Request Read Timeout — completed — 2026-09-28
+
+- Branch: `fix/m3-174-media-request-read-timeout`.
+- PR #189; squash-merged at `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
+- User reported PASS for M3.174.
+- Added a fixed 15-second read timeout before media request-header parsing.
+- Existing header-size/framing, HTTP parsing, query/token, path, media-type, range, and streaming behavior remain preserved.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `32eca4d9c88b35e27101be6cd0f405c05283a2cf` was verified before merge.
+- `main` was verified at merge commit `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
 ### M3.173 — Media Server OPTIONS Target Contract — completed — 2026-09-28
 
