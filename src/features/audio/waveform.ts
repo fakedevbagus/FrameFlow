@@ -75,9 +75,7 @@ export function getAudioWaveform(
           waveform.durationMs <= 0 ||
           !Number.isSafeInteger(waveform.sampleRate) ||
           waveform.sampleRate <= 0 ||
-          !Array.isArray(waveform.peaks) ||
-          waveform.peaks.length === 0 ||
-          waveform.peaks.length > MAX_WAVEFORM_OUTPUT_PEAK_COUNT ||
+          !isValidWaveformPeakArray(waveform.peaks) ||
           typeof waveform.sourceFingerprint !== "string" ||
           waveform.sourceFingerprint.length === 0 ||
           waveform.sourceFingerprint.length > MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
@@ -230,6 +228,15 @@ function touchPersistentWaveform(
   entries.sort((left, right) => right.lastUsedAt - left.lastUsedAt);
 }
 
+function isValidWaveformPeakArray(value: unknown): value is number[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.length <= MAX_WAVEFORM_OUTPUT_PEAK_COUNT &&
+    value.every((peak) => typeof peak === "number")
+  );
+}
+
 function isValidAudioWaveform(
   waveform: unknown,
 ): waveform is AudioWaveform {
@@ -245,9 +252,7 @@ function isValidAudioWaveform(
     candidate.sampleRate !== undefined &&
     Number.isSafeInteger(candidate.sampleRate) &&
     candidate.sampleRate > 0 &&
-    Array.isArray(candidate.peaks) &&
-    candidate.peaks.length > 0 &&
-    candidate.peaks.length <= MAX_WAVEFORM_OUTPUT_PEAK_COUNT &&
+    isValidWaveformPeakArray(candidate.peaks) &&
     typeof candidate.sourceFingerprint === "string" &&
     candidate.sourceFingerprint.length > 0 &&
     candidate.sourceFingerprint.length <= MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
