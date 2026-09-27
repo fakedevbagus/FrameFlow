@@ -1,3 +1,21 @@
+## M3.166 — active — 2026-09-27
+
+- Branch: `fix/m3-166-media-request-framing-errors`.
+- Scope: explicit HTTP responses for media-server request framing rejection.
+- Fresh audit found oversized-header and invalid-UTF-8 request errors were propagated out of the connection handler without an HTTP response; the worker discarded the error.
+- The intended 32 KiB header limit was checked after terminator detection, so an oversized complete request could bypass the limit.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Added typed read errors, early size enforcement, HTTP 431/400 mapping, and focused TCP regression tests.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.165 is completed and merged; M3.166 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
 ## M3.165 — Media Server HTTP Version Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-165-media-http-version-contract`
