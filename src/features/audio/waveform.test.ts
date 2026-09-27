@@ -632,6 +632,94 @@ describe("audio waveform", () => {
     });
   });
 
+  it("treats an oversized persisted waveform store as a cache miss", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: Array.from({ length: 33 }, (_, index) => ({
+          cacheKey: "/oversized-cache-" + index + ".mp3::512::oversized",
+          waveform: {
+            durationMs: 1000,
+            sampleRate: 1024,
+            peaks: [0.5],
+            sourceFingerprint: "oversized-" + index,
+          },
+          lastUsedAt: index + 1,
+        })),
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "oversized-target" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.75],
+        sourceFingerprint: "oversized-target",
+      });
+
+    await expect(
+      getAudioWaveform("/oversized-target.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.75],
+      sourceFingerprint: "oversized-target",
+    });
+
+    const persisted = JSON.parse(
+      localStorage.getItem("frameflow.audio-waveform-cache.v1") ?? "null",
+    ) as { version: number; entries: unknown[] };
+
+    expect(persisted.version).toBe(1);
+    expect(persisted.entries).toHaveLength(1);
+  });
+
+  it("accepts the maximum persistent waveform store size", async () => {
+    const entries = Array.from({ length: 31 }, (_, index) => ({
+      cacheKey: "/bounded-cache-" + index + ".mp3::512::bounded",
+      waveform: {
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.5],
+        sourceFingerprint: "bounded-" + index,
+      },
+      lastUsedAt: index + 1,
+    }));
+
+    entries.push({
+      cacheKey: "/bounded-target.mp3::512::bounded-target",
+      waveform: {
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.75],
+        sourceFingerprint: "bounded-target",
+      },
+      lastUsedAt: 32,
+    });
+
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({ version: 1, entries }),
+    );
+
+    vi.mocked(invoke).mockResolvedValueOnce({
+      sourceFingerprint: "bounded-target",
+    });
+
+    await expect(
+      getAudioWaveform("/bounded-target.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.75],
+      sourceFingerprint: "bounded-target",
+    });
+
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
   it("treats malformed persisted waveform data as a cache miss", async () => {
     localStorage.setItem(
       "frameflow.audio-waveform-cache.v1",

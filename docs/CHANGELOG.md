@@ -1,3 +1,14 @@
+### M3.140 — Strict Persistent Waveform Store Size Contract — active — 2026-09-27
+
+- Branch: `fix/m3-140-strict-persistent-waveform-store-size`.
+- Fresh audit found persisted waveform stores accepted an arbitrary entry-array length before lookup/sort, despite an existing retention limit of 32 entries.
+- Tightened store validation to reject more than 32 persisted entries.
+- Reused the same size guard in the write path so oversized stores are discarded rather than sorted and trimmed.
+- Added focused regression coverage for the maximum valid 32-entry store and an oversized store.
+- No project schema change.
+- Implementation is complete; user local validation is pending.
+- Next step: complete local validation before the standard PASS merge/reconciliation workflow.
+
 ### M3.139 — Strict Waveform Peak-Array Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
@@ -10,6 +21,35 @@
 - No project schema change.
 - PR head `eda1a4201a6c86f6a4e6ac10a53d7fd054f472de` was verified before merge.
 - `main` was verified after merge at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+### M3.138 — Strict Waveform Source-Range Metadata Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-138-strict-waveform-source-range-metadata`.
+- PR #153; squash-merged at `4cc633946bf49ec4dd9efcc017d342075fccf015`.
+- User reported PASS.
+- Tightened source-range timing validation to require JavaScript safe integers for `sourceDurationMs`, `sourceStartMs`, and non-null `sourceEndMs`.
+- Preserved safe-integer negative out-of-range clamping semantics.
+- Added focused regression coverage for unsafe and fractional source-range metadata.
+- No project schema change.
+- PR head `d0314b1925593ecbf7a5c43fc7fefc3e32358d36` was verified before merge.
+- `main` was verified after merge at `4cc633946bf49ec4dd9efcc017d342075fccf015`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+### M3.137 — Strict Persistent Waveform Metadata Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-137-strict-persistent-waveform-metadata`.
+- PR #152; squash-merged at `816d970ac31c9b080c937b89803d3f52ebde0936`.
+- User reported PASS.
+- Tightened `isValidAudioWaveform()` to require positive JavaScript safe integers for persisted `durationMs` and `sampleRate`.
+- Invalid fractional or unsafe persisted timing metadata is treated as a cache miss and regenerated.
+- Added focused regression coverage for unsafe and fractional persisted metadata.
+- Preserved valid persisted waveform reuse.
+- No project schema change.
+- PR head `23dead40898b5a540138b943c564893c6abf9c5b` was verified before merge.
+- `main` was verified after merge at `816d970ac31c9b080c937b89803d3f52ebde0936`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main`.
 
