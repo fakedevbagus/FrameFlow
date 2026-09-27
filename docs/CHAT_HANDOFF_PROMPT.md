@@ -1,12 +1,21 @@
-## M3.175 — active — 2026-09-28
+## M3.176 — active — 2026-09-28
+
+- Branch: `fix/m3-176-media-response-write-timeout`.
+- Scope: bound media-server response writes so a stalled local client cannot hold a server thread indefinitely.
+- Fresh audit found the M3.174 request-read timeout did not cover response writes; `write_all()` could still block when a client stopped reading.
+- Apply a fixed 15-second `TcpStream` write timeout before request handling.
+- Preserve the existing request-read timeout and all media response/status/header/range/query/token/path/media-type/HTTP/HEAD behavior.
+- Added focused regression coverage for the configured write timeout.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- No project schema version change.
+
+## M3.175 — completed — 2026-09-28
 
 - Branch: `fix/m3-175-media-request-header-syntax`.
-- Scope: reject malformed media-server request header lines instead of silently skipping them.
-- Fresh audit found generic request header lines without a colon or valid field-name syntax were not validated.
-- Validate each request header field name before endpoint routing.
-- Preserve valid header values, existing Range parsing, query/token, path, media-type, HTTP-version, method, and HEAD contracts.
-- Added focused TCP regression coverage for malformed GET and HEAD headers.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- PR #190; squash-merged at `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
+- User reported PASS.
+- Added generic request-header field-name validation; malformed header lines now return HTTP 400.
+- Existing valid headers, Range parsing, and HEAD behavior remain preserved.
 - No project schema version change.
 
 ## M3.174 — completed — 2026-09-28
@@ -15,31 +24,13 @@
 - PR #189; squash-merged at `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
 - User reported PASS.
 - Added a fixed 15-second request-header read timeout.
-- Existing request framing and media streaming behavior remain preserved.
-- No project schema version change.
-
-## M3.173 — completed — 2026-09-28
-
-- Branch: `fix/m3-173-media-options-target`.
-- PR #188; squash-merged at `bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`.
-- User reported PASS.
-- Non-media OPTIONS targets now return HTTP 404; valid /media? targets retain HTTP 204.
-- Added focused TCP regression coverage.
-- No project schema version change.
-
-## M3.172 — completed — 2026-09-27
-
-- Branch: `fix/m3-172-media-query-parameters`.
-- PR #187; squash-merged at `b78f73310ce1ff006bcb938f346aa138e6e5fdfd`.
-- User reported PASS.
-- Closed the media-server query contract to explicit `path=` and `token=` parameters.
-- Unknown query parameters now return HTTP 400 with focused regression coverage.
+- Existing response streaming behavior remains preserved.
 - No project schema version change.
 
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.175 is the active milestone.
+- M3.176 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.

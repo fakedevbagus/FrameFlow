@@ -1,42 +1,28 @@
-### M3.175 — Media Server Request Header Syntax Contract — active — 2026-09-28
+### M3.176 — Media Server Response Write Timeout — active — 2026-09-28
 
-- Branch: `fix/m3-175-media-request-header-syntax`.
-- Fresh audit found generic request header lines without valid field syntax were silently skipped.
-- Added generic HTTP request-header field-name validation before endpoint routing.
-- Malformed header lines now return HTTP 400; valid header values and existing Range semantics remain unchanged.
-- Preserved HEAD response body suppression for validation errors.
-- Added focused TCP regression coverage for malformed GET and HEAD headers.
+- Branch: `fix/m3-176-media-response-write-timeout`.
+- Fresh audit found response writes could block a dedicated media-server thread indefinitely when a client stopped reading.
+- Added a fixed 15-second socket write timeout before request handling.
+- Existing request-read timeout and all response/media protocol behavior remain preserved.
+- Added focused regression coverage for the configured write timeout.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.175; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- Next step: complete user local validation of M3.176; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
 
-### M3.174 — Media Server Request Read Timeout — completed — 2026-09-28
+### M3.175 — Media Server Request Header Syntax Contract — completed — 2026-09-28
 
-- Branch: `fix/m3-174-media-request-read-timeout`.
-- PR #189; squash-merged at `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
-- User reported PASS for M3.174.
-- Added a fixed 15-second read timeout before media request-header parsing.
-- Existing header-size/framing, HTTP parsing, query/token, path, media-type, range, and streaming behavior remain preserved.
-- Added focused regression coverage.
-- No project schema change.
-- PR head `32eca4d9c88b35e27101be6cd0f405c05283a2cf` was verified before merge.
-- `main` was verified at merge commit `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main` for the next focused media-server protocol/security gap.
-
-### M3.173 — Media Server OPTIONS Target Contract — completed — 2026-09-28
-
-- Branch: `fix/m3-173-media-options-target`.
-- PR #188; squash-merged at `bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`.
-- User reported PASS for M3.173.
-- Non-media `OPTIONS` targets now return HTTP 404; `/media?` retains HTTP 204 handling.
+- Branch: `fix/m3-175-media-request-header-syntax`.
+- PR #190; squash-merged at `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
+- User reported PASS for M3.175.
+- Added generic HTTP request-header field-name validation; malformed header lines now return HTTP 400.
+- Existing valid header values, Range parsing, and HEAD behavior remain preserved.
 - Added focused TCP regression coverage.
-- Existing query, capability-token, path, media-type, range, HTTP-version, method, and HEAD contracts remain preserved.
 - No project schema change.
-- PR head `9f5e23ca86fc2aa9e57f4a3ec5563c72ece6dbd8` was verified before merge.
-- `main` was verified at merge commit `bb9fd52787549e8e23dd06e0a1e1d397b79dda7f`.
+- PR head `dda4cc9bd1c75224bdabbd7f152f2509c13589b3` was verified before merge.
+- `main` was verified at merge commit `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main` for the next focused media-server protocol/security gap.
+- Next step: fresh audit from verified `main` for the next focused media-server resource-safety/protocol gap.
+
 
 ### M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 

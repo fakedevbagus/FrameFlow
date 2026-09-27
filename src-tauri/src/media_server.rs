@@ -8,6 +8,7 @@ use std::{
 };
 
 const MEDIA_REQUEST_READ_TIMEOUT: Duration = Duration::from_secs(15);
+const MEDIA_RESPONSE_WRITE_TIMEOUT: Duration = Duration::from_secs(15);
 
 pub struct MediaServerState {
   base_url: String,
@@ -103,6 +104,7 @@ fn handle_connection(
   capability_token: &str,
 ) -> Result<(), String> {
   configure_media_request_read_timeout(&stream)?;
+  configure_media_response_write_timeout(&stream)?;
 
   let request = match read_request(&mut stream) {
     Ok(request) => request,
@@ -576,6 +578,12 @@ fn configure_media_request_read_timeout(stream: &TcpStream) -> Result<(), String
     .map_err(|error| format!("Could not configure the media request timeout: {error}"))
 }
 
+fn configure_media_response_write_timeout(stream: &TcpStream) -> Result<(), String> {
+  stream
+    .set_write_timeout(Some(MEDIA_RESPONSE_WRITE_TIMEOUT))
+    .map_err(|error| format!("Could not configure the media response timeout: {error}"))
+}
+
 fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
   const MAX_REQUEST_HEADER_BYTES: usize = 32 * 1024;
   let mut buffer = Vec::with_capacity(4096);
@@ -951,6 +959,25 @@ mod tests {
     assert!(!response_text.ends_with("Malformed media request header."));
 
     server.join().unwrap();
+  }
+
+  #[test]
+  fn configures_media_response_write_timeout() {
+    use std::net::{TcpListener, TcpStream};
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+    let client = TcpStream::connect(address).unwrap();
+    let (server_stream, _) = listener.accept().unwrap();
+
+    super::configure_media_response_write_timeout(&server_stream).unwrap();
+
+    assert_eq!(
+      server_stream.write_timeout().unwrap(),
+      Some(super::MEDIA_RESPONSE_WRITE_TIMEOUT)
+    );
+
+    drop(client);
   }
 
   #[test]

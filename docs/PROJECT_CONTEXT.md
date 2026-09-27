@@ -1,30 +1,59 @@
-## M3.175 — Media Server Request Header Syntax Contract — active — 2026-09-28
+## M3.176 — Media Server Response Write Timeout — active — 2026-09-28
 
 Branch:
-`fix/m3-175-media-request-header-syntax`
+`fix/m3-176-media-response-write-timeout`
 
 Fresh audit finding:
-- After the request line, the media server did not perform generic syntax validation for request header lines.
-- A header line without a colon could therefore be silently skipped by the parser.
-- Existing special handling for malformed `Range` field names covered only that header, not malformed arbitrary header lines.
+- M3.174 bounded request-header reads, but response writes remained unbounded.
+- Each accepted connection has a dedicated thread, and a client that stops reading can cause `write_all()` to block while the kernel send buffer is full.
+- A local client could therefore retain a media-server thread indefinitely during a large response.
 
 Scope:
-- Reject malformed media-server request header lines with HTTP 400.
+- Bound the media-server response write phase with a fixed 15-second socket write timeout.
 
 Implementation:
-- Validate each request header line before endpoint routing.
-- Require a non-empty HTTP token field name followed by a colon.
-- Reject missing-colon, empty-name, whitespace-containing, and otherwise invalid field-name syntax with HTTP 400.
-- Preserve valid header values and existing Range parsing semantics.
-- Preserve HEAD response body suppression for validation errors.
-- Add focused TCP regression coverage for malformed GET and HEAD headers.
+- Apply a 15-second `TcpStream` write timeout before handling the request.
+- Preserve the existing 15-second request-read timeout.
+- Preserve all response status/header, media streaming, range, query/token, path, media-type, HTTP-version, method, and HEAD behavior.
+- Add focused regression coverage for the configured write timeout.
 - No project schema change.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Validate M3.175 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Validate M3.176 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.175 — Media Server Request Header Syntax Contract — completed — 2026-09-28
+
+Branch:
+`fix/m3-175-media-request-header-syntax`
+
+PR:
+#190
+
+Merge SHA:
+`13caea6cd5149ca2ab2d50ed3aa681215895d585`
+
+User validation:
+- User reported PASS for M3.175.
+- PR #190 was refreshed at head `dda4cc9bd1c75224bdabbd7f152f2509c13589b3`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Scope:
+- Reject malformed media-server request header lines.
+
+Implementation:
+- Added generic HTTP request-header field-name validation before endpoint routing.
+- Reject malformed header lines with HTTP 400.
+- Preserve valid header values, existing Range parsing semantics, and HEAD body suppression.
+- Added focused TCP regression coverage.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` for the next focused media-server resource-safety/protocol gap.
+
 
 ## M3.174 — Media Server Request Read Timeout — completed — 2026-09-28
 
