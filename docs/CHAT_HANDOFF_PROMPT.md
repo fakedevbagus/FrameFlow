@@ -1,14 +1,28 @@
-## M3.146 — active — 2026-09-27
+## M3.147 — active — 2026-09-27
 
-- Branch: `fix/m3-146-dense-waveform-peak-array-contract`.
-- Scope: require waveform peak arrays to be dense, bounded, and numeric before cache or interpolation processing.
-- Fresh audit after M3.145 found the shared peak validator used `Array.prototype.every()`, which skips sparse-array holes.
-- Replaced the validator with explicit index checks and added sparse-array regression coverage.
+- Branch: `fix/m3-147-waveform-render-peak-contract`.
+- Scope: enforce the established dense, bounded, numeric waveform peak-array contract at the exported SVG render boundary.
+- Fresh audit after M3.146 found `buildWaveformPath()` still accepted arbitrary non-empty arrays independently of the shared validator.
+- Reused `isValidWaveformPeakArray()` before normalization/path construction and added regressions for sparse, over-limit, and non-number render arrays.
 - Existing numeric `NaN`/`Infinity` normalization remains unchanged.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.146 — completed — 2026-09-27
+
+- Branch: `fix/m3-146-dense-waveform-peak-array-contract`.
+- PR #161; squash-merged at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- User reported PASS.
+- Replaced hole-skipping peak validation with explicit index checks and added sparse-array regression coverage.
+- Existing numeric `NaN`/`Infinity` normalization and the 2048-element bound remain intact.
+- No project schema version change.
+- PR head `9c547abcd8a8d16dbb59b31f5f869deac5bee3b7` was verified before merge.
+- `main` was verified after merge at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
 
 ## M3.145 — completed — 2026-09-27
 
