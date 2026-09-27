@@ -1,3 +1,14 @@
+### M3.171 — Media Server Capability Token Contract — active — 2026-09-27
+
+- Branch: `fix/m3-171-media-server-capability-token`.
+- Fresh audit found the loopback media server exposed allowed media resources with a wildcard CORS policy and no application-scoped request capability.
+- Added a per-server 32-byte token sourced from Linux `/dev/urandom`, included in generated media URLs and required on media requests.
+- Missing, duplicate, or invalid capability tokens are rejected explicitly.
+- Added focused regression coverage and preserved existing path/media/range/HTTP/HEAD behavior.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete user local validation of M3.171; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+
 ### M3.170 — Media Server HEAD Framing Error Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-170-media-head-framing-errors`.
