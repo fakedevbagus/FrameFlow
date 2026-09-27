@@ -1,33 +1,34 @@
-## M3.164 — Media Query Duplicate Path Rejection — active — 2026-09-27
+## M3.164 — Media Query Duplicate Path Rejection — completed — 2026-09-27
 
 Branch:
 `fix/m3-164-media-query-duplicate-path`
 
-Scope:
-- Reject ambiguous media HTTP requests that contain more than one `path=` query parameter.
+PR:
+#179
 
-Fresh audit finding:
-- The media endpoint previously used the first matching `path=` parameter from the query string.
-- A request containing duplicate `path=` parameters was therefore accepted with implicit first-value semantics instead of being rejected as malformed/ambiguous input.
+Merge SHA:
+`7286b3a82eaa4eefe3246098f97cf400e2246f86`
+
+User validation:
+- User reported PASS for M3.164.
+- PR #179 was refreshed at head `66565f114fb4ca127180b7202ed0fda2dd47e979`, verified ahead of `main` with 0 commits behind, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Add a focused media-query parser that requires exactly one `path=` parameter.
-- Preserve the existing `Missing media path.` behavior when no `path=` parameter is present.
-- Reject duplicate `path=` parameters with HTTP 400 and the stable message `Duplicate media path parameter.`.
-- Preserve percent decoding, canonical-path validation, media-type checks, directory allowlist, HEAD behavior, and range handling.
-- Add focused Rust regression coverage for duplicate and missing media path parameters.
+- Added a focused media-query parser requiring exactly one `path=` parameter.
+- Duplicate `path=` parameters now receive HTTP 400 with a stable error message.
+- Preserved missing-path behavior, percent decoding, canonical-path validation, media-type checks, allowlist enforcement, HEAD handling, and range handling.
+- Added focused Rust regression coverage for duplicate and missing media path parameters.
 - No project schema version change.
 
 Invariant / contract:
 - The media endpoint accepts exactly one `path=` query parameter.
 - Duplicate media path parameters are rejected deterministically with HTTP 400.
-- Existing valid media URLs and existing validation semantics remain unchanged.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Existing valid media URLs and media-server validation semantics remain unchanged.
 
 Next step:
-- Complete user local validation of M3.164; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for M3.165 — choose the next narrowly-scoped security or correctness gap.
 
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
