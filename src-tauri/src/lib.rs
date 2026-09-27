@@ -334,7 +334,7 @@ fn render_video_segments_to_mp4(
 
   let _ = fs::remove_dir_all(&temp_root);
 
-  if let Ok(_) = result {
+  if result.is_ok() {
     if let Err(error) =
       validate_video_segments_source_identity_snapshot(&source_identity_snapshot)
     {
