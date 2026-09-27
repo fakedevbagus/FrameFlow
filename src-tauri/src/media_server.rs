@@ -672,7 +672,10 @@ fn extract_media_request(query: &str) -> Result<(&str, &str), &'static str> {
       }
 
       token = Some(value);
+      continue;
     }
+
+    return Err("Unknown media server query parameter.");
   }
 
   let encoded_path = encoded_path.ok_or("Missing media path.")?;
@@ -1056,6 +1059,15 @@ mod tests {
       super::extract_media_request("foo=bar&token=test")
         .expect_err("missing media path parameters must be rejected"),
       "Missing media path."
+    );
+  }
+
+  #[test]
+  fn rejects_unknown_media_server_query_parameters() {
+    assert_eq!(
+      super::extract_media_request("path=%2Fmedia%2Fvideo.mp4&token=test&extra=value")
+        .expect_err("unknown media query parameters must be rejected"),
+      "Unknown media server query parameter."
     );
   }
 
