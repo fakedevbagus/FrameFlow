@@ -1,33 +1,59 @@
-## M3.151 — Linux Preview Cache Source Identity Contract — active — 2026-09-27
+## M3.152 — Preview Generation Source Consistency Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-151-preview-cache-source-identity`
+`fix/m3-152-preview-generation-source-consistency`
 
 Scope:
-- Align the native media-preview cache key with the stronger Linux source-identity metadata contract used by waveform caching.
+- Prevent a preview generated from a changed source snapshot from being finalized under the cache key captured before FFmpeg generation.
 
 Audit finding:
-- M3.150 strengthened waveform source identity with size, mtime, ctime, ctime nanoseconds, device ID, and inode.
-- `prepare_media_preview()` still generated its cache key from only path, size, and modification time.
-- A preview cache entry could therefore have weaker source invalidation semantics than waveform data for the same media file.
+- M3.151 strengthened the preview cache key with Linux filesystem identity/change metadata.
+- `prepare_media_preview()` still captured the source cache key before invoking FFmpeg and did not re-check source identity after generation.
+- If the media changed while FFmpeg was running, the generated preview could be finalized under the earlier cache key even though the preview bytes represented a different source snapshot.
 
 Implementation:
-- Extend `preview_cache_key()` to include Linux ctime, ctime nanoseconds, device ID, and inode.
-- Preserve the existing path, size, and modification-time inputs.
-- Keep the preview key as a compact 64-bit FNV-1a-derived value.
-- Add focused Rust regression coverage proving the preview key changes when the source metadata changes.
+- Re-check the source metadata after successful FFmpeg preview generation.
+- Recompute the preview cache key and require it to match the pre-generation key before finalizing the temporary preview.
+- Delete the temporary preview and return a retryable error when source identity changed during generation.
+- Extract the source-identity check into a focused helper and add Rust regression coverage for both stable and changed source metadata.
 - No project schema version change.
 
 Invariant / contract:
-- Native media previews and waveform caches use the same class of Linux filesystem identity/change metadata for source invalidation.
-- Rewriting a source file with changed metadata produces a distinct preview cache key.
-- Existing preview output format and cache directory behavior remain unchanged.
+- A preview cache artifact is finalized only when the source cache identity is unchanged across the FFmpeg generation window.
+- Source changes during preview generation cannot produce a cache artifact under a stale key.
+- Existing preview generation settings and cache location remain unchanged.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.151; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.152; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
+## M3.151 — Linux Preview Cache Source Identity Contract — completed — 2026-09-27
+
+Branch:
+`fix/m3-151-preview-cache-source-identity`
+
+PR:
+#166
+
+Merge SHA:
+`4f451f9f17d3273ef1622ce008fb5deeaaa8e859`
+
+User validation:
+- User reported PASS for M3.151.
+- PR #166 was refreshed at head `0885ffdca058a03b1a8ef320cd573bff417f8a55`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `4f451f9f17d3273ef1622ce008fb5deeaaa8e859`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Implementation:
+- Extended native preview cache identity with ctime, ctime nanoseconds, device ID, and inode while retaining path, size, and mtime.
+- Added focused Rust regression coverage for preview source identity changes.
+- No project schema version change.
+
+Next step:
+- Fresh audit from verified `main` for M3.152.
+
 
 ## M3.150 — Linux Waveform Source Fingerprint Identity Contract — completed — 2026-09-27
 
