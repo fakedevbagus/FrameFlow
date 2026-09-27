@@ -1,34 +1,38 @@
-## M3.164 — Media Query Duplicate Path Rejection — completed — 2026-09-27
+## M3.165 — Media Server HTTP Version Contract — active — 2026-09-27
 
 Branch:
-`fix/m3-164-media-query-duplicate-path`
+`fix/m3-165-media-http-version-contract`
 
 PR:
-#179
+M3.165 Draft PR to be created after implementation/documentation synchronization.
 
-Merge SHA:
-`7286b3a82eaa4eefe3246098f97cf400e2246f86`
+Scope:
+- Enforce the media server's HTTP request-version contract so it accepts only HTTP/1.1 requests and returns an explicit error for unsupported versions.
 
-User validation:
-- User reported PASS for M3.164.
-- PR #179 was refreshed at head `66565f114fb4ca127180b7202ed0fda2dd47e979`, verified ahead of `main` with 0 commits behind, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+Fresh audit finding:
+- The media server parsed a request line's method and target but ignored the HTTP version token.
+- Requests using unsupported versions could therefore be processed and answered with HTTP/1.1 responses.
+- This left the request-line contract underspecified and made protocol handling less deterministic.
 
 Implementation:
-- Added a focused media-query parser requiring exactly one `path=` parameter.
-- Duplicate `path=` parameters now receive HTTP 400 with a stable error message.
-- Preserved missing-path behavior, percent decoding, canonical-path validation, media-type checks, allowlist enforcement, HEAD handling, and range handling.
-- Added focused Rust regression coverage for duplicate and missing media path parameters.
+- Parse the request line into exactly method, target, and version tokens.
+- Reject malformed request lines with HTTP 400.
+- Reject versions other than HTTP/1.1 with HTTP 505.
+- Preserve method-aware HEAD body suppression.
+- Preserve existing media query parsing, validation, canonical-path, media-type, allowlist, range, and successful response behavior.
+- Add focused TCP-level regression coverage for an unsupported HTTP version.
 - No project schema version change.
 
 Invariant / contract:
-- The media endpoint accepts exactly one `path=` query parameter.
-- Duplicate media path parameters are rejected deterministically with HTTP 400.
-- Existing valid media URLs and media-server validation semantics remain unchanged.
+- The media server accepts HTTP/1.1 request lines only.
+- Unsupported HTTP versions receive explicit HTTP 505 responses.
+- Existing valid HTTP/1.1 media behavior remains unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Fresh audit from verified `main` for M3.165 — choose the next narrowly-scoped security or correctness gap.
+- Complete user local validation of M3.165; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
