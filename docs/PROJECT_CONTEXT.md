@@ -1,34 +1,35 @@
-## M3.163 — Media Server HEAD Response Contract — active — 2026-09-27
+## M3.163 — Media Server HEAD Response Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-163-media-server-head-response-contract`
 
-Scope:
-- Ensure HTTP HEAD requests return the same response headers as the corresponding response while suppressing response bodies for media-server error responses.
+PR:
+#178
 
-Fresh audit finding:
-- Successful HEAD media responses already omit the file body.
-- Error responses routed through `write_status()` still unconditionally wrote their body.
-- A client issuing HEAD against a malformed or rejected media request could therefore receive a response body, violating the endpoint's HEAD semantics.
+Merge SHA:
+`94b1083773336f4339407c8bc82920d66dee4ea7`
+
+User validation:
+- User reported PASS for M3.163.
+- PR #178 was refreshed at head `449aabf415db8269b81a996e5c42845fddfff736`, verified ahead of `main` with 0 commits behind, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `94b1083773336f4339407c8bc82920d66dee4ea7`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Make `write_status()` explicitly control whether the response body is emitted while preserving the declared `Content-Length`.
-- Pass HEAD-aware body suppression through media-server error paths that already know the request method.
-- Preserve existing GET, OPTIONS, range, status, and error-message behavior.
-- Add focused TCP-level regression coverage for a HEAD error response.
+- Added explicit body-emission control to media-server status responses.
+- Suppressed response bodies for HEAD error responses while preserving the declared `Content-Length`.
+- Preserved GET behavior, successful HEAD behavior, status codes, validation messages, and range handling.
+- Added focused TCP-level regression coverage for a HEAD error response.
 - No project schema version change.
 
 Invariant / contract:
-- HEAD responses contain no response body.
-- HEAD error responses retain the same status and representation headers, including `Content-Length`, without transmitting the body.
-- Existing GET error responses continue to include their bodies.
-- Existing media validation, canonical-path, media-type, allowlist, and range contracts remain unchanged.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- HEAD responses do not transmit response bodies.
+- HEAD error responses preserve status and representation headers while suppressing the body.
+- Existing GET, media validation, canonical-path, media-type, allowlist, and range contracts remain unchanged.
 
 Next step:
-- Complete user local validation of M3.163; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for M3.164 — choose the next narrowly-scoped security or correctness gap.
+
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 Branch:
