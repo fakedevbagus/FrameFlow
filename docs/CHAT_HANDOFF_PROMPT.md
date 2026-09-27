@@ -1,15 +1,27 @@
-## M3.145 — active — 2026-09-27
+## M3.146 — active — 2026-09-27
 
-- Branch: `fix/m3-145-strict-source-range-peak-input-contract`.
-- Scope: require source-range waveform resampling inputs to satisfy the established 2048-element peak-array contract.
-- Fresh audit after M3.144 found `getWaveformPeaksForSourceRange()` did not apply the shared peak-array size/type validator to its input array.
-- Reused `isValidWaveformPeakArray()` at the source-range boundary.
-- Added focused regression coverage for an over-limit input array.
+- Branch: `fix/m3-146-dense-waveform-peak-array-contract`.
+- Scope: require waveform peak arrays to be dense, bounded, and numeric before cache or interpolation processing.
+- Fresh audit after M3.145 found the shared peak validator used `Array.prototype.every()`, which skips sparse-array holes.
+- Replaced the validator with explicit index checks and added sparse-array regression coverage.
+- Existing numeric `NaN`/`Infinity` normalization remains unchanged.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
 
+## M3.145 — completed — 2026-09-27
+
+- Branch: `fix/m3-145-strict-source-range-peak-input-contract`.
+- PR #160; squash-merged at `6f1ae4e2ec7c90a1581a2c34119459717b93ab12`.
+- User reported PASS.
+- Reused the shared peak-array validator at the source-range resampling boundary.
+- Added focused regression coverage for over-limit source-range input.
+- No project schema version change.
+- PR head `535f858f76788dca7882ed22e259694f0a4a6cf3` was verified before merge.
+- `main` was verified after merge at `6f1ae4e2ec7c90a1581a2c34119459717b93ab12`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
 ## M3.144 — completed — 2026-09-27
 
 - Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
