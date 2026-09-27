@@ -88,7 +88,30 @@ impl MediaServerState {
 }
 
 fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
-  let request = read_request(&mut stream)?;
+  let request = match read_request(&mut stream) {
+    Ok(request) => request,
+    Err(MediaRequestError::HeadersTooLarge) => {
+      write_status(
+        &mut stream,
+        431,
+        "Request Header Fields Too Large",
+        b"Media request headers are too large.",
+        true,
+      )?;
+      return Ok(());
+    }
+    Err(MediaRequestError::InvalidUtf8) => {
+      write_status(
+        &mut stream,
+        400,
+        "Bad Request",
+        b"Media request must use valid UTF-8.",
+        true,
+      )?;
+      return Ok(());
+    }
+    Err(MediaRequestError::Io(error)) => return Err(error),
+  };
 
   let Some(request_line) = request.lines().next() else {
     write_status(
@@ -307,6 +330,12 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
   Ok(())
 }
 
+enum MediaRequestError {
+  HeadersTooLarge,
+  InvalidUtf8,
+  Io(String),
+}
+
 enum RangeResult {
   None,
   Single(u64, u64),
@@ -401,14 +430,15 @@ fn stream_file_range(
   Ok(())
 }
 
-fn read_request(stream: &mut TcpStream) -> Result<String, String> {
+fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
+  const MAX_REQUEST_HEADER_BYTES: usize = 32 * 1024;
   let mut buffer = Vec::with_capacity(4096);
   let mut chunk = [0_u8; 4096];
 
   loop {
     let read = stream
       .read(&mut chunk)
-      .map_err(|error| format!("Could not read media request: {error}"))?;
+      .map_err(|error| MediaRequestError::Io(format!("Could not read media request: {error}")))?;
 
     if read == 0 {
       break;
@@ -416,16 +446,16 @@ fn read_request(stream: &mut TcpStream) -> Result<String, String> {
 
     buffer.extend_from_slice(&chunk[..read]);
 
+    if buffer.len() > MAX_REQUEST_HEADER_BYTES {
+      return Err(MediaRequestError::HeadersTooLarge);
+    }
+
     if buffer.windows(4).any(|window| window == b"\r\n\r\n") {
       break;
     }
-
-    if buffer.len() > 32 * 1024 {
-      return Err("Media request header is too large.".to_string());
-    }
   }
 
-  String::from_utf8(buffer).map_err(|_| "Media request was not valid UTF-8.".to_string())
+  String::from_utf8(buffer).map_err(|_| MediaRequestError::InvalidUtf8)
 }
 
 fn write_headers(
@@ -643,6 +673,69 @@ mod tests {
     parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
   };
   use std::path::Path;
+
+  #[test]
+  fn rejects_oversized_media_request_headers() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let request = format!(
+      "GET /missing HTTP/1.1\r\nX-FrameFlow: {}\r\n\r\n",
+      "a".repeat(32 * 1024)
+    );
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client.write_all(request.as_bytes()).unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with(
+      "HTTP/1.1 431 Request Header Fields Too Large\r\n"
+    ));
+    assert!(response_text.ends_with("Media request headers are too large."));
+
+    server.join().unwrap();
+  }
+
+  #[test]
+  fn rejects_invalid_utf8_media_requests() {
+    use std::io::{Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let address = listener.local_addr().unwrap();
+
+    let server = thread::spawn(move || {
+      let (stream, _) = listener.accept().unwrap();
+      super::handle_connection(stream).unwrap();
+    });
+
+    let mut client = TcpStream::connect(address).unwrap();
+    client
+      .write_all(b"GET /missing HTTP/1.1\r\nX-FrameFlow: \xFF\r\n\r\n")
+      .unwrap();
+
+    let mut response = Vec::new();
+    client.read_to_end(&mut response).unwrap();
+
+    let response_text = String::from_utf8(response).unwrap();
+    assert!(response_text.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+    assert!(response_text.ends_with("Media request must use valid UTF-8."));
+
+    server.join().unwrap();
+  }
 
   #[test]
   fn rejects_unsupported_http_versions() {
