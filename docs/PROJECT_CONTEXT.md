@@ -1,3 +1,35 @@
+## M3.160 — Media Server Media-Type Boundary — active — 2026-09-27
+
+Branch:
+`fix/m3-160-media-server-media-type-boundary`
+
+Scope:
+- Prevent the local media server from exposing arbitrary non-media files from otherwise allowed local directories.
+
+Audit finding:
+- `validate_media_path()` restricted canonical paths to selected local directories but did not require the target to be a supported FrameFlow media type.
+- The local HTTP endpoint could therefore resolve and serve arbitrary files such as text/configuration files under an allowed directory.
+- `content_type_for_path()` also lacked explicit MIME mappings for several supported image/audio formats.
+
+Implementation:
+- Require the canonical target to be an actual file.
+- Reuse the central FrameFlow media-type contract from `lib.rs` so the media server cannot drift from supported application formats.
+- Reject unsupported extensions before the path is accepted by the local HTTP server.
+- Add explicit MIME mappings for supported AV/image extensions.
+- Add focused Rust regression coverage for unsupported file extensions.
+- No project schema version change.
+
+Invariant / contract:
+- The local media server serves only existing files whose extension matches FrameFlow's supported audio, image, or video media contract.
+- Canonical path restrictions for `/media`, `/mnt`, `/run/media`, and the user's home directory remain unchanged.
+- Existing supported media streaming and range behavior remain unchanged.
+
+Validation:
+- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Complete user local validation of M3.160; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+
 ## M3.159 — Single-Source Export Consistency Contract — completed — 2026-09-27
 
 Branch:
