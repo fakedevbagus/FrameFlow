@@ -1,14 +1,28 @@
-## M3.148 — active — 2026-09-27
+## M3.149 — active — 2026-09-27
 
-- Branch: `fix/m3-148-waveform-request-fingerprint-key`.
-- Scope: prevent in-flight waveform request deduplication from sharing a request across different source fingerprints.
-- Fresh audit after M3.147 found the in-memory request cache was keyed only by source path and normalized peak count before native source fingerprint resolution.
-- Resolve and validate the source fingerprint first, then key the in-flight request cache by source path, normalized peak count, and fingerprint.
-- Added a focused regression for a source fingerprint change during an in-flight generation request.
+- Branch: `fix/m3-149-waveform-generation-fingerprint-consistency`.
+- Scope: require the generated waveform fingerprint to match the pre-generation source fingerprint.
+- Fresh audit after M3.148 found that a source file can change while FFmpeg is generating waveform data, allowing the returned native fingerprint to differ from the fingerprint used to key the request.
+- Reject generated waveform data when its fingerprint differs from the captured fingerprint, so mismatched results are never returned or persisted.
+- Added focused regression coverage for fingerprint drift and subsequent regeneration with the new fingerprint.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.148 — completed — 2026-09-27
+
+- Branch: `fix/m3-148-waveform-request-fingerprint-key`.
+- PR #163; squash-merged at `39073936f701476dd8bd31690199b2236f7d083a`.
+- User reported PASS.
+- Resolved source fingerprint before checking in-memory waveform request deduplication and included fingerprint in the key.
+- Added focused regression coverage for changed fingerprints during in-flight generation.
+- No project schema version change.
+- PR head `36ceee7913ba11fd7e6944385c530950f905e82d` was verified before merge.
+- `main` was verified after merge at `39073936f701476dd8bd31690199b2236f7d083a`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
 
 ## M3.147 — completed — 2026-09-27
 
