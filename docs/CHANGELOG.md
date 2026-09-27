@@ -1,13 +1,25 @@
-### M3.144 — Strict Waveform Peak Element Type Contract — active — 2026-09-27
+### M3.145 — Strict Source-Range Waveform Peak Input Contract — active — 2026-09-27
 
-- Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
-- Fresh audit found waveform peak-array length was bounded but individual peak element types were not validated at runtime.
-- Added a shared peak-array validator requiring numeric elements while preserving existing `NaN`/`Infinity` normalization.
-- Native malformed non-number peaks are rejected; persisted malformed non-number peaks become cache misses.
-- Added focused regression coverage.
+- Branch: `fix/m3-145-strict-source-range-peak-input-contract`.
+- Fresh audit found `getWaveformPeaksForSourceRange()` accepted an arbitrary input peak array even though waveform data is bounded to 2048 elements elsewhere.
+- Reused `isValidWaveformPeakArray()` at the source-range resampling boundary.
+- Added focused regression coverage for an over-limit source-range input.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
 
+### M3.144 — Strict Waveform Peak Element Type Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
+- PR #159; squash-merged at `626bd84dfc4a739f0728c864463b15951d901a4e`.
+- User reported PASS.
+- Added runtime peak-array element type validation across native and persisted waveform boundaries.
+- Strings, objects, and null values are rejected; numeric `NaN`/`Infinity` normalization remains unchanged.
+- Added focused regression coverage.
+- No project schema change.
+- PR head `da44df46fd2ca2ffef1fdd3ac76b061aa95b00af` was verified before merge.
+- `main` was verified after merge at `626bd84dfc4a739f0728c864463b15951d901a4e`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next waveform runtime boundary.
 ### M3.143 — Persistent Waveform Cache-Key Consistency — completed — 2026-09-27
 
 - Branch: `fix/m3-143-persistent-waveform-key-consistency`.
