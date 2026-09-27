@@ -1,28 +1,28 @@
-### M3.176 — Media Server Response Write Timeout — active — 2026-09-28
+### M3.177 — Media Server Connection Concurrency Cap — active — 2026-09-28
 
-- Branch: `fix/m3-176-media-response-write-timeout`.
-- Fresh audit found response writes could block a dedicated media-server thread indefinitely when a client stopped reading.
-- Added a fixed 15-second socket write timeout before request handling.
-- Existing request-read timeout and all response/media protocol behavior remain preserved.
-- Added focused regression coverage for the configured write timeout.
+- Branch: `fix/m3-177-media-server-connection-cap`.
+- Fresh audit found unbounded one-thread-per-connection handling in `MediaServerState::start()`.
+- Added a fixed 32-connection active-handler ceiling with an atomic slot counter and RAII release guard.
+- Excess accepted connections are closed without spawning another handler thread.
+- Existing request/response timeouts and media HTTP behavior remain preserved.
+- Added focused regression coverage for the connection cap and slot reuse.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.176; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- Next step: complete user local validation of M3.177; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
 
-### M3.175 — Media Server Request Header Syntax Contract — completed — 2026-09-28
+### M3.176 — Media Server Response Write Timeout — completed — 2026-09-28
 
-- Branch: `fix/m3-175-media-request-header-syntax`.
-- PR #190; squash-merged at `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
-- User reported PASS for M3.175.
-- Added generic HTTP request-header field-name validation; malformed header lines now return HTTP 400.
-- Existing valid header values, Range parsing, and HEAD behavior remain preserved.
-- Added focused TCP regression coverage.
+- Branch: `fix/m3-176-media-response-write-timeout`.
+- PR #191; squash-merged at `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
+- User reported PASS for M3.176.
+- Added a fixed 15-second socket write timeout so stalled response writes cannot block a media-server connection thread indefinitely.
+- Existing request-read timeout and media response behavior remain preserved.
+- Added focused regression coverage for the configured write timeout.
 - No project schema change.
-- PR head `dda4cc9bd1c75224bdabbd7f152f2509c13589b3` was verified before merge.
-- `main` was verified at merge commit `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
+- PR head `bf8db3dd6bfca6f46cfc7c6730e706cb913a02e2` was verified before merge.
+- `main` was verified at merge commit `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 - Next step: fresh audit from verified `main` for the next focused media-server resource-safety/protocol gap.
-
 
 ### M3.171 — Media Server Capability Token Contract — completed — 2026-09-27
 
