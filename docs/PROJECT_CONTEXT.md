@@ -1,33 +1,30 @@
-## M3.152 — Preview Generation Source Consistency Contract — active — 2026-09-27
+## M3.152 — Preview Generation Source Consistency Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-152-preview-generation-source-consistency`
 
-Scope:
-- Prevent a preview generated from a changed source snapshot from being finalized under the cache key captured before FFmpeg generation.
+PR:
+#167
 
-Audit finding:
-- M3.151 strengthened the preview cache key with Linux filesystem identity/change metadata.
-- `prepare_media_preview()` still captured the source cache key before invoking FFmpeg and did not re-check source identity after generation.
-- If the media changed while FFmpeg was running, the generated preview could be finalized under the earlier cache key even though the preview bytes represented a different source snapshot.
+Merge SHA:
+`9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`
+
+User validation:
+- User reported PASS for M3.152.
+- PR #167 was refreshed at head `a5a3e1f125fd44d44128330ec284d30e8d4147f7`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `9d1b63c36ee57f58bdf4e484b2a59c6bdf260673`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Re-check the source metadata after successful FFmpeg preview generation.
-- Recompute the preview cache key and require it to match the pre-generation key before finalizing the temporary preview.
-- Delete the temporary preview and return a retryable error when source identity changed during generation.
-- Extract the source-identity check into a focused helper and add Rust regression coverage for both stable and changed source metadata.
+- Re-checked source filesystem metadata after successful FFmpeg preview generation.
+- Recomputed the preview cache key and required it to match the pre-generation key before finalizing the temporary preview.
+- Removed temporary preview output and returned a retryable error when source identity changed during generation.
+- Added focused Rust regression coverage for stable and changed source identity.
 - No project schema version change.
 
-Invariant / contract:
-- A preview cache artifact is finalized only when the source cache identity is unchanged across the FFmpeg generation window.
-- Source changes during preview generation cannot produce a cache artifact under a stale key.
-- Existing preview generation settings and cache location remain unchanged.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.152; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Fresh audit from verified `main` for the next concrete engineering gap.
+
 
 ## M3.151 — Linux Preview Cache Source Identity Contract — completed — 2026-09-27
 
