@@ -1,12 +1,16 @@
-### M3.158 — Multi-Segment Source Consistency Contract — active — 2026-09-27
+### M3.158 — Multi-Segment Source Consistency Contract — completed — 2026-09-27
 
 - Branch: `fix/m3-158-video-segments-source-consistency`.
-- Fresh audit found `render_video_segments_to_mp4()` probing sources before rendering but not preserving source identity across segment renders and final concat.
-- Capture identity for every unique resolved video source and re-check all sources after successful rendering before accepting output.
-- Remove the final output and return a retryable error on source mutation/removal.
+- PR #173; squash-merged at `37b35e214a40125f0effe4f8ba64af2b483319ac`.
+- User reported PASS.
+- Captured and re-checked Linux source identity for every unique resolved video segment source across segment rendering and final concatenation.
+- Source mutation/removal now rejects finalization and cleans the generated output.
 - Added focused Rust regression coverage.
-- No project schema change.
-- Implementation is complete; user local validation is pending.
+- No project schema version change.
+- PR head `74c6da8d4aa7e357bf34a665f6dd3be99be182c0` was verified before merge.
+- `main` was verified at merge commit `37b35e214a40125f0effe4f8ba64af2b483319ac`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for the next concrete native render consistency gap.
 
 ### M3.156 — Audio Graph Source Consistency Contract — completed — 2026-09-27
 
