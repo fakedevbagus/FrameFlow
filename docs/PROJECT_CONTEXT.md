@@ -1,88 +1,57 @@
-## M3.176 — Media Server Response Write Timeout — active — 2026-09-28
+## M3.177 — Media Server Connection Concurrency Cap — active — 2026-09-28
+
+Branch:
+`fix/m3-177-media-server-connection-cap`
+
+Fresh audit finding:
+- `MediaServerState::start()` accepted every incoming loopback connection and spawned one dedicated OS thread per connection without an active-connection ceiling.
+- A burst of local clients could therefore create an unbounded number of media-server connection threads and exhaust process/thread resources before request-level limits were reached.
+
+Scope:
+- Bound the number of concurrently handled media-server connections to a fixed 32-connection ceiling.
+
+Implementation:
+- Add a shared atomic active-connection counter with an RAII release guard.
+- Reserve a connection slot before spawning a per-connection thread.
+- Close excess accepted connections without spawning another handler thread.
+- Preserve the existing 15-second request-read timeout, 15-second response-write timeout, request parsing, capability-token authorization, path/media-type validation, Range behavior, HTTP/HEAD/OPTIONS behavior, and streaming behavior.
+- Add focused regression coverage for the connection-slot ceiling and slot reuse.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Validate M3.177 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.176 — Media Server Response Write Timeout — completed — 2026-09-28
 
 Branch:
 `fix/m3-176-media-response-write-timeout`
 
-Fresh audit finding:
-- M3.174 bounded request-header reads, but response writes remained unbounded.
-- Each accepted connection has a dedicated thread, and a client that stops reading can cause `write_all()` to block while the kernel send buffer is full.
-- A local client could therefore retain a media-server thread indefinitely during a large response.
-
-Scope:
-- Bound the media-server response write phase with a fixed 15-second socket write timeout.
-
-Implementation:
-- Apply a 15-second `TcpStream` write timeout before handling the request.
-- Preserve the existing 15-second request-read timeout.
-- Preserve all response status/header, media streaming, range, query/token, path, media-type, HTTP-version, method, and HEAD behavior.
-- Add focused regression coverage for the configured write timeout.
-- No project schema change.
-
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
-Next step:
-- Validate M3.176 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
-
-## M3.175 — Media Server Request Header Syntax Contract — completed — 2026-09-28
-
-Branch:
-`fix/m3-175-media-request-header-syntax`
-
 PR:
-#190
+#191
 
 Merge SHA:
-`13caea6cd5149ca2ab2d50ed3aa681215895d585`
+`0e0ddc759ac558cdecf935edada02ddee6cedf56`
 
 User validation:
-- User reported PASS for M3.175.
-- PR #190 was refreshed at head `dda4cc9bd1c75224bdabbd7f152f2509c13589b3`, verified against `main`, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
+- User reported PASS for M3.176.
+- PR #191 was refreshed at head `bf8db3dd6bfca6f46cfc7c6730e706cb913a02e2`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Scope:
-- Reject malformed media-server request header lines.
+- Bound media-server response writes so a stalled local client cannot hold a server thread indefinitely.
 
 Implementation:
-- Added generic HTTP request-header field-name validation before endpoint routing.
-- Reject malformed header lines with HTTP 400.
-- Preserve valid header values, existing Range parsing semantics, and HEAD body suppression.
-- Added focused TCP regression coverage.
+- Applied a fixed 15-second `TcpStream` write timeout before request handling.
+- Preserved the existing 15-second request-read timeout and all response/media protocol behavior.
+- Added focused regression coverage.
 - No project schema change.
 
 Next step:
-- Fresh audit from verified `main` for the next focused media-server resource-safety/protocol gap.
-
-
-## M3.174 — Media Server Request Read Timeout — completed — 2026-09-28
-
-Branch:
-`fix/m3-174-media-request-read-timeout`
-
-PR:
-#189
-
-Merge SHA:
-`a626aef0311d236119b42e3ce5d294a498a7e8a7`
-
-User validation:
-- User reported PASS for M3.174.
-- PR #189 was refreshed at head `32eca4d9c88b35e27101be6cd0f405c05283a2cf`, verified against `main`, marked Ready for Review, and squash-merged.
-- `main` was verified at merge commit `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-
-Scope:
-- Bound the media-server request-header read phase so idle local connections cannot hold server threads indefinitely.
-
-Implementation:
-- Applied a fixed 15-second `TcpStream` read timeout before request parsing.
-- Preserved the existing 32 KiB header limit, framing errors, HTTP parsing, query/token authorization, media path validation, range handling, and streaming behavior.
-- Added focused regression coverage for the configured timeout.
-- No project schema change.
-
-Next step:
-- Fresh audit from verified `main` for the next focused media-server protocol/security gap.
+- Fresh audit from verified `main` identified M3.177 as the next focused media-server resource-safety milestone.
 
 ## M3.173 — Media Server OPTIONS Target Contract — completed — 2026-09-28
 
