@@ -1,61 +1,60 @@
-## M3.147 — Strict Waveform Render Peak Input Contract — active — 2026-09-27
+## M3.148 — Fingerprint-Aware Waveform Request Deduplication — active — 2026-09-27
 
 Branch:
-`fix/m3-147-waveform-render-peak-contract`
+`fix/m3-148-waveform-request-fingerprint-key`
 
 Scope:
-- Enforce the established waveform peak-array contract at the exported SVG waveform rendering boundary.
+- Prevent in-flight waveform request deduplication from sharing a request across different source fingerprints.
 
 Audit finding:
-- M3.146 made the shared peak validator dense, bounded, and numeric, and native/persisted/source-range paths already reused it.
-- `buildWaveformPath()` remained an independent exported rendering boundary that only checked non-empty arrays and SVG dimensions.
-- A sparse, oversized, or non-number caller-provided render array could therefore reach normalization and SVG path construction without the shared 2048-element peak contract.
+- M3.147 completed the exported render boundary contract, but `getAudioWaveform()` still keyed its in-memory request cache only by `sourcePath + normalizedPeakCount` before the native source fingerprint was known.
+- If the underlying media changed while a waveform generation request was still in flight, a later caller for the same path and peak count could reuse the earlier Promise and receive waveform data for the stale fingerprint.
+- This is a source-consistency issue at the asynchronous request-coalescing boundary.
 
 Implementation:
-- Reuse `isValidWaveformPeakArray()` at `buildWaveformPath()` before normalization and path allocation.
-- Preserve existing empty-path behavior for empty or invalid dimensions.
-- Preserve numeric `NaN`/`Infinity` normalization for valid peak arrays.
-- Add focused regression coverage for sparse, over-limit, and non-number render peak arrays.
+- Resolve and validate the native source fingerprint before consulting the in-memory request cache.
+- Use `sourcePath + normalizedPeakCount + sourceFingerprint` as the in-flight request key.
+- Preserve request deduplication for callers that resolve to the same source fingerprint.
+- Add focused regression coverage proving changed fingerprints do not share an in-flight generation request.
 - No project schema version change.
 
 Invariant / contract:
-- The exported waveform renderer accepts only dense, non-empty, numeric peak arrays of at most 2048 elements.
-- Malformed render inputs are rejected before waveform point mapping and SVG path construction.
-- Existing valid rendering output remains unchanged.
+- An in-flight waveform generation Promise is reusable only for the same source path, normalized peak count, and validated source fingerprint.
+- A changed source fingerprint must create or reuse only a request keyed to the new source version.
+- Existing persistent-cache behavior remains fingerprint-aware.
 
 Validation:
 - Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Complete user local validation of M3.147; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
+- Complete user local validation of M3.148; after PASS, follow the standard verify head → merge → documentation reconciliation workflow.
 
-
-## M3.146 — Dense Waveform Peak Array Contract — completed — 2026-09-27
+## M3.147 — Strict Waveform Render Peak Input Contract — completed — 2026-09-27
 
 Branch:
-`fix/m3-146-dense-waveform-peak-array-contract`
+`fix/m3-147-waveform-render-peak-contract`
 
 PR:
-#161
+#162
 
 Merge SHA:
-`731eb8d453c44c5c609abc458b8a09b9f50b5021`
+`8778e7787535ec6b473c78a782ef596819b4d1b4`
 
 User validation:
-- User reported PASS for M3.146.
-- PR #161 was refreshed at head `9c547abcd8a8d16dbb59b31f5f869deac5bee3b7`, verified ahead of `main`, marked Ready for Review, and squash-merged.
-- `main` was verified after merge at `731eb8d453c44c5c609abc458b8a09b9f50b5021`.
+- User reported PASS for M3.147.
+- PR #162 was refreshed at head `1949355fe2b03a58fb7928a6d391e69274bd8016`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `8778e7787535ec6b473c78a782ef596819b4d1b4`.
 - No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Implementation:
-- Replaced hole-skipping peak validation with explicit index coverage so sparse arrays are rejected.
-- Retained the established non-empty, maximum-2048, numeric peak-array contract.
-- Preserved numeric `NaN`/`Infinity` normalization.
-- Added focused regression coverage for a sparse native peak array.
+- Reused `isValidWaveformPeakArray()` at the exported `buildWaveformPath()` rendering boundary.
+- Sparse, over-limit, and non-number peak arrays are rejected before SVG path construction.
+- Preserved existing dimension validation and numeric `NaN`/`Infinity` normalization.
+- Added focused regression coverage.
 - No project schema version change.
 
 Next step:
-- Fresh audit from verified `main` for M3.147.
+- Fresh audit from verified `main` for M3.148.
 
 ## M3.145 — Strict Source-Range Waveform Peak Input Contract — completed — 2026-09-27
 
