@@ -25,6 +25,7 @@ interface PersistentWaveformStore {
 const PERSISTENT_WAVEFORM_STORAGE_KEY = "frameflow.audio-waveform-cache.v1";
 const MAX_PERSISTENT_WAVEFORM_ENTRIES = 32;
 const MAX_WAVEFORM_OUTPUT_PEAK_COUNT = 2048;
+const MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH = 128;
 const waveformRequestCache = new Map<string, Promise<AudioWaveform>>();
 
 export function getAudioWaveform(
@@ -47,7 +48,8 @@ export function getAudioWaveform(
       if (
         !fingerprint ||
         typeof fingerprint.sourceFingerprint !== "string" ||
-        fingerprint.sourceFingerprint.length === 0
+        fingerprint.sourceFingerprint.length === 0 ||
+        fingerprint.sourceFingerprint.length > MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
       ) {
         throw new Error("Native waveform source fingerprint is invalid.");
       }
@@ -77,7 +79,8 @@ export function getAudioWaveform(
           waveform.peaks.length === 0 ||
           waveform.peaks.length > MAX_WAVEFORM_OUTPUT_PEAK_COUNT ||
           typeof waveform.sourceFingerprint !== "string" ||
-          waveform.sourceFingerprint.length === 0
+          waveform.sourceFingerprint.length === 0 ||
+          waveform.sourceFingerprint.length > MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
         ) {
           throw new Error("Native waveform data is invalid.");
         }
@@ -242,7 +245,8 @@ function isValidAudioWaveform(
     candidate.peaks.length > 0 &&
     candidate.peaks.length <= MAX_WAVEFORM_OUTPUT_PEAK_COUNT &&
     typeof candidate.sourceFingerprint === "string" &&
-    candidate.sourceFingerprint.length > 0
+    candidate.sourceFingerprint.length > 0 &&
+    candidate.sourceFingerprint.length <= MAX_WAVEFORM_SOURCE_FINGERPRINT_LENGTH
   );
 }
 
