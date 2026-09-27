@@ -1,12 +1,26 @@
-### M3.147 — Strict Waveform Render Peak Input Contract — active — 2026-09-27
+### M3.148 — Fingerprint-Aware Waveform Request Deduplication — active — 2026-09-27
 
-- Branch: `fix/m3-147-waveform-render-peak-contract`.
-- Fresh audit found exported `buildWaveformPath()` validated only array non-emptiness and SVG dimensions, while the shared waveform peak contract was already stricter.
-- Reused `isValidWaveformPeakArray()` at the rendering boundary so sparse, over-limit, and non-number arrays are rejected before SVG point/path construction.
-- Preserved numeric `NaN`/`Infinity` normalization for valid render input.
-- Added focused regression coverage for malformed render peak arrays.
+- Branch: `fix/m3-148-waveform-request-fingerprint-key`.
+- Fresh audit found in-memory waveform request deduplication keyed only by source path and normalized peak count before source fingerprint resolution.
+- Resolve and validate the source fingerprint before checking the request cache, then key in-flight generation requests by path, peak count, and fingerprint.
+- Preserve deduplication for identical fingerprints while preventing stale requests from being reused across changed source fingerprints.
+- Added focused regression coverage for a source change during an in-flight waveform generation request.
 - No project schema change.
 - Implementation is complete; user local validation is pending.
+
+### M3.147 — Strict Waveform Render Peak Input Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-147-waveform-render-peak-contract`.
+- PR #162; squash-merged at `8778e7787535ec6b473c78a782ef596819b4d1b4`.
+- User reported PASS.
+- Applied the shared dense/bounded/numeric peak-array contract at the exported `buildWaveformPath()` boundary.
+- Added focused regression coverage for sparse, over-limit, and non-number render arrays.
+- Preserved existing valid SVG output and numeric `NaN`/`Infinity` normalization.
+- No project schema change.
+- PR head `1949355fe2b03a58fb7928a6d391e69274bd8016` was verified before merge.
+- `main` was verified after merge at `8778e7787535ec6b473c78a782ef596819b4d1b4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` for M3.148.
 
 ### M3.146 — Dense Waveform Peak Array Contract — completed — 2026-09-27
 
