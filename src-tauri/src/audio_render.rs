@@ -358,7 +358,7 @@ fn validate_source_identity_snapshot(
   Ok(())
 }
 
-fn source_identity(path: &Path) -> Result<String, String> {
+pub(crate) fn source_identity(path: &Path) -> Result<String, String> {
   let metadata = fs::metadata(path).map_err(|error| {
     format!("Could not inspect source metadata '{}': {error}", path.display())
   })?;
