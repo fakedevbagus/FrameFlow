@@ -10,6 +10,40 @@ pub struct MediaServerState {
   base_url: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum MediaPathError {
+  BadRequest,
+  NotFound,
+  UnsupportedMediaType,
+  Forbidden,
+}
+
+impl MediaPathError {
+  fn status(self) -> (u16, &'static str) {
+    match self {
+      Self::BadRequest => (400, "Bad Request"),
+      Self::NotFound => (404, "Not Found"),
+      Self::UnsupportedMediaType => (415, "Unsupported Media Type"),
+      Self::Forbidden => (403, "Forbidden"),
+    }
+  }
+
+  fn message(self) -> &'static str {
+    match self {
+      Self::BadRequest => "Media path must be absolute.",
+      Self::NotFound => "Media file could not be resolved.",
+      Self::UnsupportedMediaType => "Media file type is not supported.",
+      Self::Forbidden => "Media path is outside the allowed local media directories.",
+    }
+  }
+}
+
+impl std::fmt::Display for MediaPathError {
+  fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    formatter.write_str(self.message())
+  }
+}
+
 impl MediaServerState {
   pub fn start() -> Result<Self, String> {
     let listener = TcpListener::bind(("127.0.0.1", 0))
@@ -95,10 +129,39 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), String> {
     return Ok(());
   };
 
-  let path = validate_media_path(Path::new(&percent_decode(encoded_path)?))?;
+  let decoded_path = match percent_decode(encoded_path) {
+    Ok(path) => path,
+    Err(error) => {
+      write_status(
+        &mut stream,
+        400,
+        "Bad Request",
+        error.as_bytes(),
+      )?;
+      return Ok(());
+    }
+  };
 
-  let metadata = fs::metadata(&path)
-    .map_err(|_| "Media file could not be found.".to_string())?;
+  let path = match validate_media_path(Path::new(&decoded_path)) {
+    Ok(path) => path,
+    Err(error) => {
+      write_media_path_error(&mut stream, error)?;
+      return Ok(());
+    }
+  };
+
+  let metadata = match fs::metadata(&path) {
+    Ok(metadata) => metadata,
+    Err(_) => {
+      write_status(
+        &mut stream,
+        404,
+        "Not Found",
+        b"Media file could not be found.",
+      )?;
+      return Ok(());
+    }
+  };
 
   if !metadata.is_file() {
     write_status(&mut stream, 404, "Not Found", b"Media file not found.")?;
@@ -348,20 +411,20 @@ Connection: close\r\n\
     .map_err(|error| format!("Could not write range error: {error}"))
 }
 
-fn validate_media_path(path: &Path) -> Result<PathBuf, String> {
+fn validate_media_path(path: &Path) -> Result<PathBuf, MediaPathError> {
   if path.is_relative() {
-    return Err("Media path must be absolute.".to_string());
+    return Err(MediaPathError::BadRequest);
   }
 
-  let canonical = fs::canonicalize(path)
-    .map_err(|_| "Media file could not be resolved.".to_string())?;
+  let canonical =
+    fs::canonicalize(path).map_err(|_| MediaPathError::NotFound)?;
 
   if !canonical.is_file() {
-    return Err("Media file could not be resolved.".to_string());
+    return Err(MediaPathError::NotFound);
   }
 
   crate::media_type(&canonical)
-    .map_err(|_| "Media file type is not supported.".to_string())?;
+    .map_err(|_| MediaPathError::UnsupportedMediaType)?;
 
   if canonical.starts_with("/media/")
     || canonical.starts_with("/mnt/")
@@ -376,7 +439,17 @@ fn validate_media_path(path: &Path) -> Result<PathBuf, String> {
     }
   }
 
-  Err("Media path is outside the allowed local media directories.".to_string())
+  Err(MediaPathError::Forbidden)
+}
+
+fn write_media_path_error(
+  stream: &mut TcpStream,
+  error: MediaPathError,
+) -> Result<(), String> {
+  let (status, reason) = error.status();
+  let body = error.to_string();
+
+  write_status(stream, status, reason, body.as_bytes())
 }
 
 fn percent_encode_path(path: &Path) -> String {
@@ -459,8 +532,41 @@ fn content_type_for_path(path: &Path) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-  use super::{parse_range_header, percent_decode, percent_encode_path, RangeResult};
+  use super::{
+    parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
+  };
   use std::path::Path;
+
+  #[test]
+  fn maps_media_path_validation_errors_to_http_statuses() {
+    assert_eq!(MediaPathError::BadRequest.status(), (400, "Bad Request"));
+    assert_eq!(MediaPathError::NotFound.status(), (404, "Not Found"));
+    assert_eq!(
+      MediaPathError::UnsupportedMediaType.status(),
+      (415, "Unsupported Media Type")
+    );
+    assert_eq!(MediaPathError::Forbidden.status(), (403, "Forbidden"));
+  }
+
+  #[test]
+  fn preserves_media_path_validation_error_messages() {
+    assert_eq!(
+      MediaPathError::BadRequest.to_string(),
+      "Media path must be absolute."
+    );
+    assert_eq!(
+      MediaPathError::NotFound.to_string(),
+      "Media file could not be resolved."
+    );
+    assert_eq!(
+      MediaPathError::UnsupportedMediaType.to_string(),
+      "Media file type is not supported."
+    );
+    assert_eq!(
+      MediaPathError::Forbidden.to_string(),
+      "Media path is outside the allowed local media directories."
+    );
+  }
 
   #[test]
   fn rejects_relative_media_paths_before_resolution() {
