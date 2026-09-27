@@ -286,20 +286,11 @@ fn render_single_source_to_mp4(
     );
   }
 
-  let current_source_identity =
-    audio_render::source_identity(&source_path).map_err(|error| {
-      let _ = fs::remove_file(&output_path);
-      format!(
-        "FFmpeg completed but the source could not be revalidated before export finalization: {error}"
-      )
-    })?;
-
-  if current_source_identity != source_identity_snapshot {
+  if let Err(error) =
+    validate_single_source_identity_snapshot(&source_path, &source_identity_snapshot)
+  {
     let _ = fs::remove_file(&output_path);
-    return Err(format!(
-      "Native export source changed during rendering; please retry: {}",
-      source_path.display()
-    ));
+    return Err(error);
   }
 
   let metadata = fs::metadata(&output_path)
@@ -382,6 +373,26 @@ fn render_video_segments_to_mp4(
   }
 
   result
+}
+
+fn validate_single_source_identity_snapshot(
+  source_path: &Path,
+  expected_identity: &str,
+) -> Result<(), String> {
+  let current_identity = audio_render::source_identity(source_path).map_err(|error| {
+    format!(
+      "Native export source changed or became unavailable during rendering: {error}"
+    )
+  })?;
+
+  if current_identity != expected_identity {
+    return Err(format!(
+      "Native export source changed during rendering; please retry: {}",
+      source_path.display()
+    ));
+  }
+
+  Ok(())
 }
 
 fn capture_video_segments_source_identity_snapshot(
@@ -1749,13 +1760,19 @@ mod tests {
 
     fs::write(&path, b"first").unwrap();
     let snapshot = audio_render::source_identity(&path).unwrap();
-    assert_eq!(audio_render::source_identity(&path).unwrap(), snapshot);
+    assert!(super::validate_single_source_identity_snapshot(&path, &snapshot).is_ok());
 
     fs::write(&path, b"second").unwrap();
-    let current = audio_render::source_identity(&path).unwrap();
-    assert_ne!(current, snapshot);
+    let error = super::validate_single_source_identity_snapshot(&path, &snapshot)
+      .expect_err("changed single-source media must invalidate the export");
+    assert!(error.contains("Native export source changed during rendering"));
+    assert!(error.contains(&path.to_string_lossy()));
 
-    fs::remove_file(path).unwrap();
+    fs::remove_file(&path).unwrap();
+    let error = super::validate_single_source_identity_snapshot(&path, &snapshot)
+      .expect_err("removed single-source media must invalidate the export");
+    assert!(error.contains("Native export source changed or became unavailable"));
+
   }
 
   #[test]
