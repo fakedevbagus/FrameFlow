@@ -1,14 +1,28 @@
-## M3.151 — active — 2026-09-27
+## M3.152 — active — 2026-09-27
 
-- Branch: `fix/m3-151-preview-cache-source-identity`.
-- Scope: align native media-preview cache identity with the strengthened Linux source metadata contract.
-- Fresh audit after M3.150 found `prepare_media_preview()` still keyed preview cache entries from path + size + modification time only.
-- Extended `preview_cache_key()` with ctime, ctime nanoseconds, device ID, and inode while retaining path, size, and mtime.
-- Added focused Rust regression coverage for preview key invalidation after source metadata changes.
+- Branch: `fix/m3-152-preview-generation-source-consistency`.
+- Scope: prevent preview generation from finalizing output when the source changes during FFmpeg generation.
+- Fresh audit after M3.151 found `prepare_media_preview()` captured the preview cache key before FFmpeg and did not compare source identity after generation.
+- Re-check source metadata after FFmpeg, require the recomputed cache key to match the original key, and delete temporary output when the source changed.
+- Added a focused Rust helper/test for stable and changed preview source identity.
 - No project schema version change.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.151 — completed — 2026-09-27
+
+- Branch: `fix/m3-151-preview-cache-source-identity`.
+- PR #166; squash-merged at `4f451f9f17d3273ef1622ce008fb5deeaaa8e859`.
+- User reported PASS.
+- Extended preview cache identity with ctime, ctime nanoseconds, device ID, and inode while retaining path, size, and mtime.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- PR head `0885ffdca058a03b1a8ef320cd573bff417f8a55` was verified before merge.
+- `main` was verified after merge at `4f451f9f17d3273ef1622ce008fb5deeaaa8e859`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
 
 ## M3.150 — completed — 2026-09-27
 
