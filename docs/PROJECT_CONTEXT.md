@@ -1,32 +1,33 @@
-## M3.170 — Media Server HEAD Framing Error Contract — active — 2026-09-27
+## M3.170 — Media Server HEAD Framing Error Contract — completed — 2026-09-27
 
 Branch:
 `fix/m3-170-media-head-framing-errors`
 
 PR:
-Draft PR to be created after implementation/documentation synchronization.
+#185
 
-Fresh audit finding:
-- Request-framing errors occur before the parsed request method reaches the normal method-aware response path.
-- Oversized, invalid-UTF-8, or incomplete `HEAD` requests could therefore receive an error body even though HEAD responses must suppress response content.
-- Existing framing-error status mappings from M3.166/M3.167 need to retain their status and Content-Length while suppressing the body for HEAD requests.
+Merge SHA:
+`3fb60428a79877de9cb89ad73043718a130c19b6`
+
+User validation:
+- User reported PASS for M3.170.
+- PR #185 was refreshed at head `f20d6399652509ec1b920800714283125e9d9d1d`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `3fb60428a79877de9cb89ad73043718a130c19b6`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Scope:
 - Preserve HEAD response body semantics for media-server request-framing errors.
 
 Implementation:
-- Detect whether the raw request begins with the `HEAD ` method token while handling framing errors.
-- Carry the HEAD-body-suppression decision through oversized-header, invalid-UTF-8, and incomplete-header errors.
-- Preserve HTTP 431/400 statuses and Content-Length semantics while suppressing error bodies for HEAD.
-- Add focused TCP regression coverage for all three framing-error categories.
-- Preserve all existing request-line, range, path, media-type, and normal HEAD/GET contracts.
+- Detect raw `HEAD ` method tokens while handling request-read failures.
+- Carry HEAD-body-suppression state through oversized-header, invalid-UTF-8, and incomplete-header errors.
+- Preserve HTTP 431/400 statuses and Content-Length semantics while suppressing bodies for HEAD.
+- Added focused TCP regression coverage for oversized, invalid-UTF-8, and incomplete HEAD requests.
+- Preserved existing request-line, range, path, media-type, and normal HEAD/GET contracts.
 - No project schema change.
 
-Validation:
-- Implementation complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Complete user local validation of M3.170; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Fresh audit from verified `main` for the next focused media-server protocol/security gap.
 
 ## M3.169 — Media Server Range Header Syntax Contract — completed — 2026-09-27
 
