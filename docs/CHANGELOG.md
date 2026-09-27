@@ -3,7 +3,8 @@
 - Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
 - Fresh audit found waveform metadata validation accepted any non-empty `peaks` array without enforcing the established 2048 maximum.
 - Tightened fresh native and persisted waveform validation to reject peak arrays above 2048 entries.
-- Added focused regression coverage for the maximum valid length and over-limit arrays.
+- Reused the existing 2048 waveform-density boundary.
+- Added focused regression coverage for the maximum valid native array, over-limit native data, and over-limit persisted cache data.
 - Preserved existing valid waveform behavior.
 - No project schema change.
 - Implementation is complete; user local validation is pending.

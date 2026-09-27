@@ -366,6 +366,41 @@ describe("audio waveform", () => {
     ).rejects.toThrow("Native waveform data is invalid.");
   });
 
+  it("accepts the maximum native waveform peak array length", async () => {
+    const peaks = Array.from({ length: 2048 }, (_, index) => index / 2047);
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "max-native-peaks" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks,
+        sourceFingerprint: "max-native-peaks",
+      });
+
+    await expect(getAudioWaveform("/max-native-peaks.mp3")).resolves.toMatchObject({
+      peaks,
+      sourceFingerprint: "max-native-peaks",
+    });
+  });
+
+  it("rejects an over-limit native waveform peak array", async () => {
+    const peaks = Array.from({ length: 2049 }, () => 0.5);
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "over-limit-native-peaks" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks,
+        sourceFingerprint: "over-limit-native-peaks",
+      });
+
+    await expect(
+      getAudioWaveform("/over-limit-native-peaks.mp3"),
+    ).rejects.toThrow("Native waveform data is invalid.");
+  });
+
   it("rejects an empty native peak array", async () => {
     vi.mocked(invoke)
       .mockResolvedValueOnce({ sourceFingerprint: "1000:300" })
@@ -556,6 +591,45 @@ describe("audio waveform", () => {
     });
 
     expect(invoke).toHaveBeenCalledTimes(4);
+  });
+
+  it("rejects an over-limit persisted waveform peak array as a cache miss", async () => {
+    localStorage.setItem(
+      "frameflow.audio-waveform-cache.v1",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            cacheKey: "/over-limit-cache.mp3::512::over-limit",
+            waveform: {
+              durationMs: 1000,
+              sampleRate: 1024,
+              peaks: Array.from({ length: 2049 }, () => 0.5),
+              sourceFingerprint: "over-limit",
+            },
+            lastUsedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    vi.mocked(invoke)
+      .mockResolvedValueOnce({ sourceFingerprint: "over-limit" })
+      .mockResolvedValueOnce({
+        durationMs: 1000,
+        sampleRate: 1024,
+        peaks: [0.75],
+        sourceFingerprint: "over-limit",
+      });
+
+    await expect(
+      getAudioWaveform("/over-limit-cache.mp3", 512),
+    ).resolves.toEqual({
+      durationMs: 1000,
+      sampleRate: 1024,
+      peaks: [0.75],
+      sourceFingerprint: "over-limit",
+    });
   });
 
   it("treats malformed persisted waveform data as a cache miss", async () => {

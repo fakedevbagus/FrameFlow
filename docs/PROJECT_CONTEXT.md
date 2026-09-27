@@ -13,15 +13,16 @@ Audit finding:
 - A malformed native response or persisted cache entry with an extreme peak array could therefore bypass the established waveform density limit and create avoidable allocation/render work.
 
 Implementation:
-- Tightened waveform metadata validation to require a non-empty peak array with no more than 2048 entries.
-- Apply the same bound to fresh native responses and persisted waveform cache reuse through the shared validator path.
-- Added focused regression coverage for the maximum valid peak-array length and an over-limit persisted/native array.
-- Preserve all existing valid waveform behavior and interpolation semantics.
+- Tightened fresh native waveform validation to reject peak arrays above 2048 entries.
+- Tightened persisted waveform cache validation to reject peak arrays above 2048 entries.
+- Reused the existing `MAX_WAVEFORM_OUTPUT_PEAK_COUNT = 2048` boundary rather than introducing a second waveform-density constant.
+- Added focused regression coverage for the maximum valid native array, over-limit native data, and over-limit persisted cache data.
+- Preserved valid waveform reuse and existing interpolation semantics.
 - No project schema version change.
 
 Invariant / contract:
 - Waveform peak arrays must contain between 1 and 2048 entries before cache/render use.
-- Native and persisted waveform metadata share the same peak-density boundary.
+- Fresh native and persisted waveform metadata share the same 2048 peak-density boundary.
 - Existing valid waveform sizes remain unchanged.
 
 Validation:
