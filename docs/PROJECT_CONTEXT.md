@@ -3,6 +3,9 @@
 Branch:
 `fix/m3-179-media-file-open-toctou`
 
+PR:
+#194
+
 Fresh audit finding:
 - `handle_connection()` canonicalized and allowlisted the requested media path, then later reopened that pathname with `File::open(&path)`.
 - A local process could replace the validated pathname between resolution and open, including replacing it with a symlink to a file outside the allowed media roots.
