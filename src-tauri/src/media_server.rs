@@ -1,6 +1,7 @@
 use std::{
   fs::{self, File},
   io::{self, Read, Seek, SeekFrom, Write},
+  os::unix::fs::MetadataExt,
   net::{TcpListener, TcpStream},
   path::{Path, PathBuf},
   sync::{
@@ -688,9 +689,10 @@ fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
     }
 
     if buffer.windows(4).any(|window| window == b"\r\n\r\n") {
-      return String::from_utf8(buffer).map_err(|_| MediaRequestError::InvalidUtf8 {
-        suppress_body: is_head_request(&buffer),
-      });
+      return String::from_utf8(buffer).map_err(|error| {
+      let suppress_body = error.as_bytes().starts_with(b"HEAD ");
+      MediaRequestError::InvalidUtf8 { suppress_body }
+    });
     }
   }
 }
