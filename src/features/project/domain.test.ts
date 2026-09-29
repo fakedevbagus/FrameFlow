@@ -1226,7 +1226,7 @@ describe("project domain", () => {
                 {
                   id: "clip-transition-first",
                   assetId: firstAsset.id,
-                  timelineStartMs: Number.MAX_SAFE_INTEGER - 49,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER - 50,
                   sourceStartMs: 0,
                   sourceEndMs: 50,
                   transitionOut: {
