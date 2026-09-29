@@ -16,6 +16,10 @@
 - Corrected the fixture to use MAX_SAFE_INTEGER - 50, making the derived transition endpoint exactly MAX_SAFE_INTEGER without changing production validation.
 - Commit: `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
 - Full validation remains pending.
+- The next test run exposed two domain regression assertions caused only by changed asset-duration error wording after TypeScript narrowing cleanup.
+- Restored the established nullable-duration error contract with a dedicated narrowing helper; validation semantics remain unchanged.
+- Commit: `9b91f3f86f42aeb9be1e1aa2e7fddad46ae590cc`.
+- Full validation remains pending.
 - Follow-up validation reached 529/529 passing tests and clean lint, then the TypeScript build exposed three type-narrowing errors.
 - Fixed the production-domain narrowing by constructing a validated `MediaAsset` and asserting `TrackType`, plus fixed the deferred waveform test resolver narrowing with an explicit holder object.
 - Commits: `59cb1f15f1dc9e1962668fb5af7ea9b51ef06f99`, `f0937b492e7feb40fa5c877e4b8b9dcc8f86ec2e`.
