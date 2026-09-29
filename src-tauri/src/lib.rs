@@ -24,6 +24,10 @@ struct MediaProbe {
   duration_ms: Option<u64>,
 }
 
+const MAX_PREVIEW_FFMPEG_STDERR_BYTES: usize = 64 * 1024;
+const PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
+  b"\n[FFmpeg preview stderr truncated by FrameFlow]\n";
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct NativeExportRenderRequest {
@@ -125,49 +129,10 @@ fn prepare_media_preview(
     return Ok(output_path.to_string_lossy().into_owned());
   }
 
-  let output = Command::new("ffmpeg")
-    .args([
-      "-hide_banner",
-      "-loglevel",
-      "error",
-      "-y",
-      "-i",
-    ])
-    .arg(&source_path)
-    .args([
-      "-map",
-      "0:v:0",
-      "-map",
-      "0:a:0?",
-      "-sn",
-      "-dn",
-      "-vf",
-      "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
-      "-c:v",
-      "libx264",
-      "-preset",
-      "veryfast",
-      "-profile:v",
-      "main",
-      "-pix_fmt",
-      "yuv420p",
-      "-crf",
-      "28",
-      "-c:a",
-      "aac",
-      "-b:a",
-      "128k",
-      "-movflags",
-      "+faststart",
-      "-f",
-      "mp4",
-    ])
-    .arg(&temporary_path)
-    .output()
-    .map_err(|error| format!("Could not run ffmpeg for preview generation: {error}"))?;
+  let (status, stderr) = run_ffmpeg_preview(&source_path, &temporary_path)?;
 
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+  if !status.success() {
+    let detail = String::from_utf8_lossy(&stderr).trim().to_string();
     let _ = fs::remove_file(&temporary_path);
 
     return Err(if detail.is_empty() {
@@ -1359,6 +1324,115 @@ fn probe_has_audio(path: &Path) -> Result<bool, String> {
     .any(|line| !line.trim().is_empty()))
 }
 
+fn run_ffmpeg_preview(source_path: &Path, temporary_path: &Path) -> Result<(std::process::ExitStatus, Vec<u8>), String> {
+  let mut child = Command::new("ffmpeg")
+    .args([
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+    ])
+    .arg(source_path)
+    .args([
+      "-map",
+      "0:v:0",
+      "-map",
+      "0:a:0?",
+      "-sn",
+      "-dn",
+      "-vf",
+      "scale=w=1280:h=1280:force_original_aspect_ratio=decrease",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-profile:v",
+      "main",
+      "-pix_fmt",
+      "yuv420p",
+      "-crf",
+      "28",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-movflags",
+      "+faststart",
+      "-f",
+      "mp4",
+    ])
+    .arg(temporary_path)
+    .stdout(Stdio::null())
+    .stderr(Stdio::piped())
+    .spawn()
+    .map_err(|error| format!("Could not run ffmpeg for preview generation: {error}"))?;
+
+  let stderr = child
+    .stderr
+    .take()
+    .ok_or_else(|| "FFmpeg preview error output could not be opened.".to_string())?;
+
+  let stderr_reader = thread::spawn(move || {
+    collect_bounded_ffmpeg_stderr(
+      stderr,
+      MAX_PREVIEW_FFMPEG_STDERR_BYTES,
+      PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE,
+    )
+  });
+
+  let status = match child.wait() {
+    Ok(status) => status,
+    Err(error) => {
+      let _ = child.kill();
+      let _ = stderr_reader.join();
+      return Err(format!("Could not finish ffmpeg preview generation: {error}"));
+    }
+  };
+
+  let stderr = stderr_reader
+    .join()
+    .unwrap_or_else(|_| PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE.to_vec());
+
+  Ok((status, stderr))
+}
+
+fn collect_bounded_ffmpeg_stderr<R: Read>(
+  mut reader: R,
+  max_bytes: usize,
+  truncation_notice: &[u8],
+) -> Vec<u8> {
+  let retain_limit = max_bytes.saturating_sub(truncation_notice.len());
+  let mut retained = Vec::with_capacity(max_bytes.min(8 * 1024));
+  let mut buffer = [0_u8; 8192];
+  let mut truncated = false;
+
+  loop {
+    match reader.read(&mut buffer) {
+      Ok(0) | Err(_) => break,
+      Ok(read) => {
+        if retained.len() < retain_limit {
+          let remaining = retain_limit - retained.len();
+          let copied = read.min(remaining);
+          retained.extend_from_slice(&buffer[..copied]);
+
+          if copied < read {
+            truncated = true;
+          }
+        } else {
+          truncated = true;
+        }
+      }
+    }
+  }
+
+  if truncated {
+    retained.extend_from_slice(truncation_notice);
+  }
+
+  retained
+}
+
 fn probe_duration_ms(path: &Path) -> Result<u64, String> {
   let format_output = run_ffprobe(path, &[
     "-show_entries",
@@ -2371,4 +2445,19 @@ mod tests {
 
     fs::remove_file(path).unwrap();
   }
+  #[test]
+  fn bounds_preview_ffmpeg_stderr_retention() {
+    let payload = vec![b'x'; 4 * 1024 * 1024];
+
+    let retained = super::collect_bounded_ffmpeg_stderr(
+      std::io::Cursor::new(payload),
+      super::MAX_PREVIEW_FFMPEG_STDERR_BYTES,
+      super::PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE,
+    );
+
+    assert!(retained.len() <= super::MAX_PREVIEW_FFMPEG_STDERR_BYTES);
+    assert!(retained.ends_with(super::PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE));
+  }
+
+
 }
