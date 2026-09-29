@@ -33,6 +33,7 @@ const FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
 const MAX_FFPROBE_STDERR_BYTES: usize = 64 * 1024;
 const FFPROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[ffprobe stderr truncated by FrameFlow]\n";
+const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -519,8 +520,32 @@ fn get_media_http_url(
 fn open_project(path: String) -> Result<String, String> {
   let project_path = project_path(&path)?;
 
-  fs::read_to_string(&project_path)
-    .map_err(|error| format!("Could not open project '{}': {error}", project_path.display()))
+  let mut file = fs::File::open(&project_path)
+    .map_err(|error| format!("Could not open project '{}': {error}", project_path.display()))?;
+
+  let content = read_project_content(&mut file).map_err(|error| {
+    format!(
+      "Could not open project '{}': {error}",
+      project_path.display()
+    )
+  })?;
+
+  Ok(content)
+}
+
+fn read_project_content<R: Read>(reader: &mut R) -> Result<String, String> {
+  let mut limited = reader.take(MAX_PROJECT_FILE_BYTES.saturating_add(1));
+  let mut content = String::new();
+
+  limited
+    .read_to_string(&mut content)
+    .map_err(|error| format!("Could not read project file: {error}"))?;
+
+  if content.as_bytes().len() as u64 > MAX_PROJECT_FILE_BYTES {
+    return Err("Project file is too large; maximum supported size is 16 MiB.".to_string());
+  }
+
+  Ok(content)
 }
 
 #[tauri::command]
@@ -1976,6 +2001,24 @@ pub fn run() {
 mod tests {
   use super::{media_type, parse_duration_ms, preview_cache_key, temporary_path};
   use std::path::Path;
+
+  #[test]
+  fn rejects_project_content_above_size_limit() {
+    let oversized = vec![b'x'; super::MAX_PROJECT_FILE_BYTES as usize + 1];
+    let error = super::read_project_content(&mut std::io::Cursor::new(oversized))
+      .expect_err("project content above the configured limit must be rejected");
+
+    assert!(error.contains("maximum supported size is 16 MiB"));
+  }
+
+  #[test]
+  fn accepts_project_content_at_size_limit() {
+    let content = vec![b'x'; super::MAX_PROJECT_FILE_BYTES as usize];
+    let loaded = super::read_project_content(&mut std::io::Cursor::new(content))
+      .expect("project content at the configured limit should remain readable");
+
+    assert_eq!(loaded.len() as u64, super::MAX_PROJECT_FILE_BYTES);
+  }
 
   #[test]
   fn generates_unique_project_save_temp_paths() {
