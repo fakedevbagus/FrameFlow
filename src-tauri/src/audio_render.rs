@@ -15,6 +15,7 @@ const MAX_NATIVE_AUDIO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS: usize = 4096;
+const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -457,6 +458,13 @@ fn validate_video_audio_graph_request(
     if media_type != "video" {
       return Err(format!(
         "Native unified AV graph source audio segment at input index {} requires a video input.",
+        segment.input_index
+      ));
+    }
+
+    if segment.audio_volume_keyframes.len() > MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES {
+      return Err(format!(
+        "Native unified AV graph source audio segment at input index {} supports at most {MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES} audio volume keyframes.",
         segment.input_index
       ));
     }
@@ -1902,6 +1910,89 @@ mod tests {
           audio_compressor: None,
         };
         MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS
+      ],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    assert!(validate_video_audio_graph_request(&request).is_ok());
+  }
+
+  #[test]
+  fn rejects_unified_video_audio_graph_audio_keyframes_above_count_limit() {
+    let request = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![
+        NativeSourceAudioSegment {
+          input_index: 0,
+          source_start_ms: 0,
+          timeline_start_ms: 0,
+          duration_ms: 1_000,
+          track_volume: 1.0,
+          track_pan: 0.0,
+          audio_fade_in_ms: 0,
+          audio_fade_out_ms: 0,
+          audio_volume_keyframes: (0..=MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES)
+            .map(|index| NativeSourceAudioVolumeKeyframe {
+              time_ms: index as u64,
+              volume: 1.0,
+            })
+            .collect(),
+          audio_eq: None,
+          audio_compressor: None,
+        },
+      ],
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    let error = validate_video_audio_graph_request(&request)
+      .expect_err("unified AV graph segments above the configured keyframe limit must be rejected");
+
+    assert!(error.contains("supports at most 4096 audio volume keyframes"));
+  }
+
+  #[test]
+  fn accepts_unified_video_audio_graph_audio_keyframes_at_count_limit() {
+    let request = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: vec![
+        NativeSourceAudioSegment {
+          input_index: 0,
+          source_start_ms: 0,
+          timeline_start_ms: 0,
+          duration_ms: 5_000,
+          track_volume: 1.0,
+          track_pan: 0.0,
+          audio_fade_in_ms: 0,
+          audio_fade_out_ms: 0,
+          audio_volume_keyframes: (0..MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES)
+            .map(|index| NativeSourceAudioVolumeKeyframe {
+              time_ms: index as u64,
+              volume: 1.0,
+            })
+            .collect(),
+          audio_eq: None,
+          audio_compressor: None,
+        },
       ],
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),

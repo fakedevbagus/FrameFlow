@@ -1,29 +1,60 @@
-## M3.195 — Unified AV Source Audio Segment Count Cap — active — 2026-09-29
+## M3.196 — Unified AV Audio Keyframe Count Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-195-unified-av-source-audio-segment-count-cap`
+`fix/m3-196-unified-av-audio-keyframe-count-cap`
 
 Fresh audit finding:
-- `NativeVideoAudioGraphRenderRequest.source_audio_segments` had no maximum count validation.
-- A large unified AV request could therefore trigger arbitrarily many segment validations, source-duration/audio probes, resolved segment allocations, generated audio-filter fragments, and FFmpeg graph growth.
+- `NativeSourceAudioSegment.audio_volume_keyframes` had no maximum count validation.
+- One source-audio segment could carry an arbitrarily large keyframe list, increasing request memory, validation work, generated volume expressions, and FFmpeg filter-graph size.
 
 Scope:
-- Cap unified AV source audio segments at 4,096.
+- Cap unified AV source-audio volume keyframes at 4,096 per segment.
 
 Implementation:
-- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS = 4096`.
-- Reject oversized unified AV source-audio segment lists during metadata validation before source probing or segment resolution.
-- Preserve existing video/audio input validation, segment bounds/parameter semantics, graph construction, rendering, and cleanup.
-- Added focused regression coverage at 4,096 and 4,097 source audio segments.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES = 4096`.
+- Reject a source-audio segment whose keyframe list exceeds the limit during metadata validation before source probing or filter generation.
+- Preserve existing keyframe ordering, time bounds, finite/range validation, volume semantics, and render behavior.
+- Added focused regression coverage at 4,096 and 4,097 keyframes.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create the Draft PR for M3.195 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create the Draft PR for M3.196 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
-## M3.194 — Unified AV Audio Input Count Cap — completed — 2026-09-29
+## M3.195 — Unified AV Source Audio Segment Count Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-195-unified-av-source-audio-segment-count-cap`
+
+PR:
+#210
+
+Merge SHA:
+`785942ed938454ebe1d9d960fcecda28cde7b8d7`
+
+User validation:
+- User reported PASS for M3.195.
+- PR #210 was refreshed at head `b1702f1aea3a90dcb412c606c9c72a2759084851`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `785942ed938454ebe1d9d960fcecda28cde7b8d7`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `NativeVideoAudioGraphRenderRequest.source_audio_segments` had no maximum count validation.
+- A large unified AV request could therefore trigger arbitrarily many segment validations, source-duration/audio probes, resolved segment allocations, generated audio-filter fragments, and FFmpeg graph growth.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS = 4096`.
+- Reject oversized unified AV source-audio segment lists during metadata validation before source probing or segment resolution.
+- Preserved existing video/audio input validation, segment bounds/parameter semantics, graph construction, rendering, and cleanup.
+- Added focused regression coverage at 4,096 and 4,097 source audio segments.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.196 as the next unified AV renderer resource-boundary milestone.
+
+ Unified AV Audio Input Count Cap — completed — 2026-09-29
 
 Branch:
 `fix/m3-194-unified-av-audio-input-count-cap`
