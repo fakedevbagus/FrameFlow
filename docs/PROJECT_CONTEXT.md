@@ -1,32 +1,55 @@
-- Validation found one test-fixture issue in the exact 4,096-byte video-source-path boundary: the fixture omitted a `.mp4` extension, so the normal media-type validator rejected it for a reason unrelated to the path-length boundary. Corrected both exact-limit and over-limit fixtures to retain the video extension while preserving the intended byte boundaries.
-- Fix commit: `b4a8c419533ca2164046459b9067ba95a58e40c6`.
-- Full validation remains pending; do not infer PASS.
+## M3.205 — Native Audio Graph Input Path Length Cap — active — 2026-09-30
 
-## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — active — 2026-09-30
+Branch:
+`fix/m3-205-native-audio-graph-input-path-cap`
+
+Fresh audit finding:
+- `NativeAudioGraphRenderRequest.inputs` is bounded to 256 entries, but each input path string remains unbounded.
+- A pathological path string can still increase request memory and path-processing work before filesystem/media validation.
+
+Scope:
+- Cap each native audio graph input path at 4,096 bytes.
+- Reject oversized paths during metadata validation before filesystem probing.
+- Preserve existing absolute-path, existence, media-type, output-collision, FFmpeg argument, rendering, and cleanup behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation is not yet validated locally.
+- Do not infer lint/test/build/cargo/manual success until the user reports it.
+
+Workflow:
+- After user PASS, refresh PR/head/base state, ensure the branch is not behind `main`, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, audit again, and create the next focused milestone.
+- Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
 
 Branch:
 `fix/m3-204-video-audio-mix-video-input-path-cap`
 
-Fresh audit finding:
-- `NativeVideoWithAudioGraphRenderRequest.video_source_path` had no maximum length validation.
-- Legacy audio input paths and the audio filter graph were already bounded, but the primary video source path could still carry an oversized request string into path/media probing.
-
-Scope:
-- Cap legacy video/audio mix `video_source_path` at 4,096 bytes.
+Merge:
+- PR #221
+- Squash merge SHA: `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`
+- `main` verified identical to the merge SHA.
+- User reported PASS after full validation.
 
 Implementation:
-- Added `MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES = 4096`.
-- Reject oversized video source paths during metadata validation before filesystem/media probing.
-- Preserve existing absolute-path, media-type, source identity, rendering, cleanup, and output behavior.
-- Added focused regression coverage at 4,096 and 4,097 bytes.
+- Added a 4,096-byte cap to `NativeVideoWithAudioGraphRenderRequest.video_source_path`.
+- Rejected oversized values before filesystem/media probing.
+- Preserved existing absolute-path, media-type, source identity, rendering, cleanup, and output behavior.
+- Added exact 4,096-byte and over-limit 4,097-byte regression coverage.
+- Corrected the exact-limit fixture to retain a `.mp4` extension so the intended path boundary was actually exercised.
 - No project schema change.
 
-Validation:
-- Implementation is complete.
-- Local validation is pending; do not infer lint/test/build/cargo/manual success until the user reports it.
+Validation reported by user:
+- `npm ci`: successful, 0 vulnerabilities.
+- `npm run lint`: successful.
+- `npm run test`: 529/529 passed.
+- `npm run build`: successful.
+- `cargo test --manifest-path src-tauri/Cargo.toml`: 135 passed, 0 failed; binary test target and doc-tests also completed with 0 failures.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow. After user PASS, refresh PR state and merge using the standard workflow.
+- Fresh audit from verified `main` identified M3.205: cap individual native audio graph input path strings at 4,096 bytes.
 
 ## M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — completed — 2026-09-30
 
