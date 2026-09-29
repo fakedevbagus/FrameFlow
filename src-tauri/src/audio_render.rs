@@ -1789,10 +1789,11 @@ mod tests {
   fn rejects_video_audio_mix_video_input_path_above_size_limit() {
     let request = NativeVideoWithAudioGraphRenderRequest {
       video_source_path: format!(
-        "/media/{}",
+        "/media/{}.mp4",
         "a".repeat(
           MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES
             .saturating_sub("/media/".len())
+            .saturating_sub(".mp4".len())
             + 1
         )
       ),
@@ -1813,10 +1814,11 @@ mod tests {
   fn accepts_video_audio_mix_video_input_path_at_size_limit() {
     let request = NativeVideoWithAudioGraphRenderRequest {
       video_source_path: format!(
-        "/media/{}",
+        "/media/{}.mp4",
         "a".repeat(
           MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES
             .saturating_sub("/media/".len())
+            .saturating_sub(".mp4".len())
         )
       ),
       audio_inputs: vec!["/media/music.mp3".to_string()],
