@@ -282,19 +282,22 @@ function validateAssets(value: unknown): MediaAsset[] {
     assertMediaType(asset.mediaType, fieldPrefix + " mediaType");
     assertNonEmptyString(asset.sourcePath, fieldPrefix + " sourcePath");
 
-    if (
-      asset.durationMs !== null &&
-      (!isFiniteNumber(asset.durationMs) ||
-        !Number.isSafeInteger(asset.durationMs) ||
-        asset.durationMs < 0)
-    ) {
-      throw new ProjectValidationError(
-        fieldPrefix +
-          " durationMs must be null or a non-negative integer number of milliseconds.",
+    if (asset.durationMs !== null) {
+      assertFiniteNonNegativeIntegerMilliseconds(
+        asset.durationMs,
+        fieldPrefix + " durationMs",
       );
     }
 
-    assets.push(asset as MediaAsset);
+    const validatedAsset: MediaAsset = {
+      id: asset.id,
+      name: asset.name,
+      mediaType: asset.mediaType,
+      sourcePath: asset.sourcePath,
+      durationMs: asset.durationMs,
+    };
+
+    assets.push(validatedAsset);
   }
 
   return assets;
@@ -330,11 +333,7 @@ function validateTracks(
 
     assertNonEmptyString(track.name, fieldPrefix + " name");
 
-    if (track.type !== "audio" && track.type !== "video") {
-      throw new ProjectValidationError(
-        fieldPrefix + " type must be audio or video.",
-      );
-    }
+    assertTrackType(track.type, fieldPrefix + " type");
 
     if (typeof track.isLocked !== "boolean") {
       throw new ProjectValidationError(
@@ -1237,6 +1236,12 @@ function assertMediaType(value: unknown, field: string): asserts value is MediaT
     throw new ProjectValidationError(
       field + " must be audio, image, or video.",
     );
+  }
+}
+
+function assertTrackType(value: unknown, field: string): asserts value is TrackType {
+  if (value !== "audio" && value !== "video") {
+    throw new ProjectValidationError(field + " must be audio or video.");
   }
 }
 
