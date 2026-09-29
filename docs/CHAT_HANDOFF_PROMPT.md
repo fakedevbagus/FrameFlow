@@ -1,14 +1,34 @@
-## M3.185 — active — 2026-09-29
+## M3.186 — active — 2026-09-29
 
-- Branch: `fix/m3-185-ffprobe-stderr-memory-cap`.
-- Scope: prevent unbounded retained ffprobe stderr diagnostics in the shared `run_ffprobe()` path.
-- Fresh audit found `run_ffprobe()` using `Command::output()`, retaining complete stderr in memory.
-- Spawn ffprobe explicitly, drain stderr concurrently, and retain at most 64 KiB with an explicit truncation notice.
-- Preserve the existing `Output`-based callers, small structured stdout behavior, status handling, diagnostic formatting, and duration fallback order.
-- Added focused regression coverage for multi-megabyte ffprobe stderr retention.
+- Branch: `fix/m3-186-project-load-size-cap`.
+- Scope: prevent unbounded memory allocation while loading `.frameflow.json` project files.
+- Fresh audit found `open_project()` using `fs::read_to_string()` without a file-size limit.
+- Open project files explicitly and read through a `Read::take()` limit of 16 MiB + 1 byte.
+- Reject content above 16 MiB while preserving UTF-8 decoding and the existing project-open command contract.
+- Added focused regression coverage for exactly 16 MiB and just above the limit.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.185 — completed — 2026-09-29
+
+- Branch: `fix/m3-185-ffprobe-stderr-memory-cap`.
+- PR #200; squash-merged at `fbbf008b383152825f3261942eb4ae1e7707d5f1`.
+- User reported PASS.
+- PR head `be3933ff79ffae9d474a7717df9d9a7be1ea6d6b` was verified before merge.
+- `main` was verified at the merge SHA.
+- Spawned ffprobe explicitly, drained stderr concurrently, and bounded retained diagnostics to 64 KiB.
+- Preserved structured stdout behavior, status handling, diagnostic formatting, and duration fallback order.
+- Added focused regression coverage for large stderr.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.186 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.184 — completed — 2026-09-29
 
