@@ -7,8 +7,10 @@
 - Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
 - Added focused regression coverage at the exact limit and one above it.
 - Implementation is complete.
-- Draft PR not created yet.
-- Local validation is pending.
+- Two pre-existing repository-wide lint blockers were discovered during validation and fixed within this PR as validation-enabling, behavior-preserving cleanup.
+- Existing waveform-selection regression coverage remains applicable to the refactor.
+- Draft PR #220 exists and remains pending final local validation.
+- Local validation is pending; do not infer lint/test/build/cargo/manual success.
 
 ## M3.202 — completed — 2026-09-29
 
