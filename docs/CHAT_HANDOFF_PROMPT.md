@@ -1,14 +1,25 @@
-## M3.200 — active — 2026-09-29
+## M3.201 — active — 2026-09-29
 
-- Branch: `fix/m3-200-unified-av-video-input-path-cap`.
-- Scope: cap individual unified AV video input path strings.
-- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_inputs` paths had no maximum length.
-- Reject video input paths above 4,096 bytes before filesystem probing.
-- Preserve existing unified AV video validation/render behavior.
-- Added focused regression coverage at the exact byte limit and one above it.
+- Branch: `fix/m3-201-video-audio-mix-audio-input-count-cap`.
+- Scope: cap the number of legacy video/audio mix audio inputs.
+- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_inputs` had no maximum count.
+- Reject requests above 256 audio inputs before filesystem probing.
+- Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage for exactly 256 and 257 inputs.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.200 — completed — 2026-09-29
+
+- Branch: `fix/m3-200-unified-av-video-input-path-cap`.
+- PR #215; squash-merged at `de501ffed1c464e5c5075c2f55d43a9506d33295`.
+- User reported PASS.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 bytes per unified AV video input path and rejected oversized values before filesystem probing.
+- Preserved existing unified AV video validation/render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
 
 ## M3.199 — completed — 2026-09-29
 
