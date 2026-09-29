@@ -1,13 +1,26 @@
-### M3.186 — Project File Load Size Cap — active — 2026-09-29
+### M3.187 — Project Save Size Cap — active — 2026-09-29
 
-- Branch: `fix/m3-186-project-load-size-cap`.
-- Fresh audit found `open_project()` using `fs::read_to_string()` without a maximum file size.
-- Bound project loading to 16 MiB using a limited reader while preserving UTF-8 decoding and the existing project-open command contract.
-- Files above 16 MiB are rejected with an explicit size-limit error.
-- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte.
+- Branch: `fix/m3-187-project-save-size-cap`.
+- Fresh audit found `save_project()` still accepting project content without a size boundary after M3.186 bounded project loading.
+- Enforced the same 16 MiB project-file limit before creating directories or temporary output files.
+- Preserved the atomic temporary-file write and rename flow, project-path validation, and UTF-8 handling.
+- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte save payloads.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.186 — Project File Load Size Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-186-project-load-size-cap`.
+- PR #201; squash-merged at `5a4527ee14eae03308d4464337aea3714fe9c847`.
+- User reported PASS.
+- Bounded project loading to 16 MiB using a limited reader and rejected files above the limit.
+- Preserved UTF-8 decoding and project path validation.
+- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte.
+- PR head `5e1c2b3751b8d9fc96ff919a15b50acce0142601` was verified before merge.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit identified M3.187 as the next project resource-boundary milestone.
 
 ### M3.185 — FFprobe Stderr Memory Cap — completed — 2026-09-29
 

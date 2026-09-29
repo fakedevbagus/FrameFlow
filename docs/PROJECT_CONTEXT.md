@@ -1,28 +1,60 @@
-## M3.186 — Project File Load Size Cap — active — 2026-09-29
+## M3.187 — Project Save Size Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-186-project-load-size-cap`
+`fix/m3-187-project-save-size-cap`
 
 Fresh audit finding:
-- `open_project()` used `fs::read_to_string()` without a maximum file size.
-- A malformed, accidentally huge, or adversarial `.frameflow.json` could therefore cause project loading to allocate memory proportional to the entire file size.
-- The project path extension check alone does not establish a resource boundary.
+- After M3.186 bounded project loading to 16 MiB, `save_project()` still accepted an unbounded `String` and wrote it directly.
+- An oversized project payload could therefore consume unnecessary filesystem and application resources even though the corresponding load path had a defined limit.
+- The save and load contracts lacked a shared size invariant.
 
 Scope:
-- Bound project-file loading to 16 MiB while preserving UTF-8 decoding and the existing project-open command contract.
+- Enforce the same 16 MiB project-file size boundary before writing project content.
 
 Implementation:
-- Open the project file explicitly and read through a `Read::take()` limit of 16 MiB plus one byte.
-- Reject files exceeding the 16 MiB limit before returning project content.
-- Preserve the existing absolute-path and `.frameflow.json` validation and error mapping.
-- Add focused regression coverage for content exactly at the limit and just above it.
+- Added a shared `validate_project_save_content()` check using the existing 16 MiB limit.
+- Reject oversized project content before creating directories or temporary output files.
+- Preserve the existing atomic temporary-file write and rename flow.
+- Preserve project-path validation and UTF-8 string handling.
+- Add focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte save payloads.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.186 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.187 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.186 — Project File Load Size Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-186-project-load-size-cap`
+
+PR:
+#201
+
+Merge SHA:
+`5a4527ee14eae03308d4464337aea3714fe9c847`
+
+User validation:
+- User reported PASS for M3.186.
+- PR #201 was refreshed at head `5e1c2b3751b8d9fc96ff919a15b50acce0142601`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `5a4527ee14eae03308d4464337aea3714fe9c847`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `open_project()` used `fs::read_to_string()` without a size limit.
+- A very large `.frameflow.json` could therefore cause memory allocation proportional to the complete file size.
+
+Implementation:
+- Opened project files explicitly and read through a `Read::take()` limit of 16 MiB + 1 byte.
+- Rejected files above 16 MiB before returning content.
+- Preserved UTF-8 decoding and existing project-open behavior.
+- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.187 as the next project resource-boundary milestone.
 
 ## M3.185 — FFprobe Stderr Memory Cap — completed — 2026-09-29
 

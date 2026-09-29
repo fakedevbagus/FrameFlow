@@ -541,16 +541,22 @@ fn read_project_content<R: Read>(reader: &mut R) -> Result<String, String> {
     .read_to_string(&mut content)
     .map_err(|error| format!("Could not read project file: {error}"))?;
 
+  Ok(content)
+}
+
+fn validate_project_save_content(content: &str) -> Result<(), String> {
   if content.as_bytes().len() as u64 > MAX_PROJECT_FILE_BYTES {
     return Err("Project file is too large; maximum supported size is 16 MiB.".to_string());
   }
 
-  Ok(content)
+  Ok(())
 }
 
-#[tauri::command]
 fn save_project(path: String, content: String) -> Result<(), String> {
   let project_path = project_path(&path)?;
+
+  validate_project_save_content(&content)?;
+
   let parent = project_path
     .parent()
     .ok_or_else(|| "Project path must have a parent directory.".to_string())?;
@@ -2001,6 +2007,21 @@ pub fn run() {
 mod tests {
   use super::{media_type, parse_duration_ms, preview_cache_key, temporary_path};
   use std::path::Path;
+
+  #[test]
+  fn rejects_project_save_content_above_size_limit() {
+    let oversized = "x".repeat(super::MAX_PROJECT_FILE_BYTES as usize + 1);
+    let error = super::validate_project_save_content(&oversized)
+      .expect_err("project save content above the configured limit must be rejected");
+
+    assert!(error.contains("maximum supported size is 16 MiB"));
+  }
+
+  #[test]
+  fn accepts_project_save_content_at_size_limit() {
+    let content = "x".repeat(super::MAX_PROJECT_FILE_BYTES as usize);
+    assert!(super::validate_project_save_content(&content).is_ok());
+  }
 
   #[test]
   fn rejects_project_content_above_size_limit() {
