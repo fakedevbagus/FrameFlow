@@ -1,3 +1,15 @@
+### M3.181 — FFprobe Audio Packet Stream — active — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- Fresh audit found `probe_duration_from_audio_packets()` buffering the complete ffprobe packet stdout via `Command::output()`.
+- Stream ffprobe packet stdout incrementally so memory use no longer grows with the number of audio packets.
+- Drain ffprobe stderr concurrently with fixed memory so diagnostics cannot block stdout processing.
+- Preserve existing duration parsing and fallback behavior.
+- Added focused regression coverage for large streamed packet output.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: create the Draft PR and provide the local validation workflow.
+
 ### M3.180 — Export FFmpeg Stderr Memory Cap — active — 2026-09-29
 
 - Branch: `fix/m3-180-export-stderr-memory-cap`.
@@ -10,6 +22,31 @@
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create/refresh the Draft PR and provide the local validation workflow.
+
+### M3.181 — FFprobe Audio Packet Stream — active — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- PR #196 created as Draft; validation is pending.
+- Fresh audit found `probe_duration_from_audio_packets()` buffering complete ffprobe packet stdout via `Command::output()`.
+- Stream packet stdout incrementally, keep only the latest computed end timestamp, and drain ffprobe stderr concurrently with fixed memory.
+- Preserve duration parsing semantics and fallback order.
+- Added focused regression coverage for large packet-like stdout.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: complete local validation of M3.181; after PASS refresh, merge, reconcile docs, verify `main`, and audit again.
+
+### M3.180 — Export FFmpeg Stderr Memory Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-180-export-stderr-memory-cap`.
+- PR #195; squash-merged at `84b016979eb4e3f375496f29a2aadf3f971954f8`.
+- User reported PASS.
+- Kept concurrent stderr draining while bounding retained diagnostics to 64 KiB and explicitly marking truncation.
+- Added focused regression coverage for multi-megabyte stderr.
+- No project schema change.
+- PR head `110e4d9164129254e4e29188bbb171b525c65236` was verified before merge.
+- `main` was verified at merge commit `84b016979eb4e3f375496f29a2aadf3f971954f8`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.181 as the next focused process/resource-safety milestone.
 
 ### M3.179 — Media Server File Open TOCTOU — completed — 2026-09-29
 

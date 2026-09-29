@@ -1,3 +1,16 @@
+## M3.181 — active — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- Scope: prevent unbounded ffprobe packet stdout retention during audio duration probing.
+- Fresh audit found `probe_duration_from_audio_packets()` using `Command::output()`, which buffered complete packet stdout before parsing.
+- Stream ffprobe stdout through a reusable line buffer and keep only the latest packet end timestamp.
+- Drain ffprobe stderr concurrently with fixed memory.
+- Preserve the existing packet parsing semantics and fallback order.
+- Added focused regression coverage using large packet-like stdout with a later timestamp.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
 ## M3.180 — active — 2026-09-29
 
 - Branch: `fix/m3-180-export-stderr-memory-cap`.
@@ -13,6 +26,31 @@
 - Draft PR #195 is open.
 - Local validation is pending.
 
+
+## M3.181 — active — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- PR #196 created as Draft; validation is pending.
+- Scope: prevent unbounded ffprobe packet stdout retention during audio duration probing.
+- Fresh audit found `probe_duration_from_audio_packets()` using `Command::output()`, which buffered complete packet stdout before parsing.
+- Stream ffprobe stdout through a reusable line buffer and keep only the latest packet end timestamp.
+- Drain ffprobe stderr concurrently with fixed memory.
+- Preserve the existing packet parsing semantics and fallback order.
+- Added focused regression coverage using large packet-like stdout with a later timestamp.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- No project schema version change.
+
+## M3.180 — completed — 2026-09-29
+
+- Branch: `fix/m3-180-export-stderr-memory-cap`.
+- PR #195; squash-merged at `84b016979eb4e3f375496f29a2aadf3f971954f8`.
+- User reported PASS.
+- Bounded retained FFmpeg stderr to 64 KiB while continuing to drain the complete stream to EOF.
+- Added explicit truncation marking and focused regression coverage.
+- No project schema version change.
+- PR head `110e4d9164129254e4e29188bbb171b525c65236` was verified before merge.
+- `main` was verified at `84b016979eb4e3f375496f29a2aadf3f971954f8`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 ## M3.179 — completed — 2026-09-29
 
