@@ -1,4 +1,28 @@
-## M3.197 — active — 2026-09-29
+## M3.198 — active — 2026-09-29
+
+- Branch: `fix/m3-198-unified-av-audio-filter-size-cap`.
+- Scope: cap the user-supplied unified AV audio `filter_complex` size.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.audio_filter_complex` had no maximum size.
+- Reject audio filter graphs above 256 KiB before filesystem/source probing.
+- Preserve existing unified AV graph validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.197 — completed — 2026-09-29
+
+- Branch: `fix/m3-197-unified-av-video-filter-size-cap`.
+- PR #212; squash-merged at `e3f2f2b762f575ef84f2209282a0396bb05d7f14`.
+- User reported PASS.
+- PR head `fd8ac0764e55c2c050e6c7225325dac16b7fc41a` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 KiB unified AV video `filter_complex` size and rejected oversized graphs before filesystem/source probing.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
 
 - Branch: `fix/m3-197-unified-av-video-filter-size-cap`.
 - Scope: cap the user-supplied unified AV video `filter_complex` size.
