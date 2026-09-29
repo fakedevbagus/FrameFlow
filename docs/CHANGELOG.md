@@ -7,11 +7,12 @@
 - Preserved existing input, path, duration, map, source identity, rendering, cleanup, and audio-graph behavior.
 - Added focused regression coverage at 262,144 and 262,145 bytes.
 - No project schema change.
-- User reported PASS.
-- PR #219; squash-merged at `d025afcdda8222a8d54f41b28073574b7c77e04c`.
-- `main` was verified identical to the merge SHA.
-- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
-- Next step: fresh audit from verified `main` identified M3.203 as the next legacy video/audio mix resource-boundary milestone.
+- Validation exposed two pre-existing repository-wide lint blockers outside the native M3.203 logic.
+- Removed the unused `assertPositiveInteger` helper from `src/features/project/domain.ts`.
+- Replaced the synchronous waveform-selection reset effect in `src/features/timeline/Timeline.tsx` with derived selection validity tied to the current clip source/range context.
+- Preserved the existing waveform selection behavior and its regression coverage.
+- PR #220 remains Draft; local full validation is pending.
+- No lint/test/build/cargo/manual validation pass is inferred from this state.
 
 ### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
