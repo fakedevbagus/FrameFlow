@@ -19,13 +19,16 @@
 
 ## M3.204 — active — 2026-09-30
 
-- Scope: cap legacy video/audio mix `video_source_path` length.
-- Fresh audit finding: `NativeVideoWithAudioGraphRenderRequest.video_source_path` is still not bounded even though legacy audio input paths and audio filter graphs are bounded.
-- Intended boundary: 4,096 bytes.
-- Reject oversized video source paths before filesystem/media probing.
-- Preserve absolute-path, media-type, source identity, rendering, cleanup, and output behavior.
-- Add exact-limit and over-limit regression coverage.
+- Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
+- Scope: cap legacy video/audio mix `video_source_path` at 4,096 bytes.
+- Fresh audit found the primary legacy video/audio mix video input path was not bounded.
+- Added the 4 KiB boundary before filesystem/media probing and focused exact-limit/over-limit regression coverage.
+- Existing absolute-path, media-type, source identity, rendering, cleanup, and output behavior remain unchanged.
 - No project schema change.
+- Implementation is complete; local validation is pending.
+- On user `PASS`: refresh PR/head/base state, ensure branch is not behind `main`, mark Ready for Review, squash-merge with the freshly verified head SHA, verify the merge SHA on `main`, reconcile all three docs, audit again, and create the next milestone.
+- Protected PR #76 and unrelated PR #22 must remain untouched.
+
 ## M3.202 — completed — 2026-09-29
 
 - Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
