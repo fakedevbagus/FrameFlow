@@ -282,12 +282,10 @@ function validateAssets(value: unknown): MediaAsset[] {
     assertMediaType(asset.mediaType, fieldPrefix + " mediaType");
     assertNonEmptyString(asset.sourcePath, fieldPrefix + " sourcePath");
 
-    if (asset.durationMs !== null) {
-      assertFiniteNonNegativeIntegerMilliseconds(
-        asset.durationMs,
-        fieldPrefix + " durationMs",
-      );
-    }
+    assertNullableDurationMilliseconds(
+      asset.durationMs,
+      fieldPrefix + " durationMs",
+    );
 
     const validatedAsset: MediaAsset = {
       id: asset.id,
@@ -1314,6 +1312,22 @@ function assertFiniteNonNegativeIntegerMilliseconds(
     );
   }
 }
+
+function assertNullableDurationMilliseconds(
+  value: unknown,
+  field: string,
+): asserts value is number | null {
+  if (
+    value !== null &&
+    (!isFiniteNumber(value) || !Number.isSafeInteger(value) || value < 0)
+  ) {
+    throw new ProjectValidationError(
+      field +
+        " must be null or a non-negative integer number of milliseconds.",
+    );
+  }
+}
+
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
