@@ -1,4 +1,28 @@
-## M3.198 — active — 2026-09-29
+## M3.199 — active — 2026-09-29
+
+- Branch: `fix/m3-199-unified-av-audio-input-path-cap`.
+- Scope: cap individual unified AV audio input path strings.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.audio_inputs` paths had no maximum length.
+- Reject audio input paths above 4,096 bytes before filesystem probing.
+- Preserve existing unified AV audio validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.198 — completed — 2026-09-29
+
+- Branch: `fix/m3-198-unified-av-audio-filter-size-cap`.
+- PR #213; squash-merged at `0c480d388683b1999febbb86e5f608e8ebf85666`.
+- User reported PASS.
+- PR head `725756d5be147d84d91b4b201a10ca1a24c4e37a` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 KiB unified AV audio `filter_complex` size and rejected oversized graphs before filesystem/source probing.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
 
 - Branch: `fix/m3-198-unified-av-audio-filter-size-cap`.
 - Scope: cap the user-supplied unified AV audio `filter_complex` size.

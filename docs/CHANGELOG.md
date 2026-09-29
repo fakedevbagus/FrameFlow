@@ -1,4 +1,29 @@
-### M3.198 — Unified AV Audio Filter Size Cap — active — 2026-09-29
+### M3.199 — Unified AV Audio Input Path Length Cap — active — 2026-09-29
+
+- Branch: `fix/m3-199-unified-av-audio-input-path-cap`.
+- Fresh audit found individual `NativeVideoAudioGraphRenderRequest.audio_inputs` path strings had no maximum length.
+- A pathological audio input path could therefore increase request memory and path-processing work before filesystem validation.
+- Added a maximum of 4,096 bytes per unified AV audio input path and reject oversized values during metadata validation before filesystem probing.
+- Preserved existing audio input count, absolute-path, existence, media-type, output collision, source identity, graph, rendering, and cleanup behavior.
+- Added focused regression coverage at 4,096 and 4,097 bytes.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.198 — Unified AV Audio Filter Size Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-198-unified-av-audio-filter-size-cap`.
+- PR #213; squash-merged at `0c480d388683b1999febbb86e5f608e8ebf85666`.
+- User reported PASS.
+- PR head `725756d5be147d84d91b4b201a10ca1a24c4e37a` was verified before merge; `main` was verified identical to the merge SHA.
+- Added a maximum of 256 KiB for unified AV audio `filter_complex` and rejected oversized graphs during metadata validation.
+- Preserved existing unified AV input, source-audio, map, output, render, and cleanup behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.199 as the next unified AV renderer resource-boundary milestone.
+
+ Unified AV Audio Filter Size Cap — active — 2026-09-29
 
 - Branch: `fix/m3-198-unified-av-audio-filter-size-cap`.
 - Fresh audit found `NativeVideoAudioGraphRenderRequest.audio_filter_complex` had no maximum size.

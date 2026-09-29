@@ -18,6 +18,7 @@ const MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES: usize = 256 * 1024;
+const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -412,6 +413,14 @@ fn validate_video_audio_graph_request(
     return Err(format!(
       "Native unified AV graph supports at most {MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS} audio inputs."
     ));
+  }
+
+  for (index, path) in request.audio_inputs.iter().enumerate() {
+    if path.len() > MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES {
+      return Err(format!(
+        "Native unified AV graph audio input at index {index} exceeds the maximum path length of {MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES} bytes."
+      ));
+    }
   }
 
   if request.audio_inputs.is_empty() && request.source_audio_segments.is_empty() {
@@ -2101,6 +2110,64 @@ mod tests {
       video_filter_complex: "[0:v:0]null[vout]".to_string(),
       video_map: "[vout]".to_string(),
       audio_filter_complex: "x".repeat(MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    assert!(validate_video_audio_graph_request(&request).is_ok());
+  }
+
+  #[test]
+  fn rejects_unified_video_audio_graph_audio_input_path_above_size_limit() {
+    let request = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec![format!(
+        "/media/{}",
+        "a".repeat(
+          MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES
+            .saturating_sub("/media/".len())
+            + 1
+        )
+      )],
+      source_audio_segments: Vec::new(),
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    let error = validate_video_audio_graph_request(&request)
+      .expect_err("unified AV graph audio input paths above the configured limit must be rejected");
+
+    assert!(error.contains("exceeds the maximum path length of 4096 bytes"));
+  }
+
+  #[test]
+  fn accepts_unified_video_audio_graph_audio_input_path_at_size_limit() {
+    let request = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec![format!(
+        "/media/{}",
+        "a".repeat(
+          MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES
+            .saturating_sub("/media/".len())
+        )
+      )],
+      source_audio_segments: Vec::new(),
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
       audio_map: "[aout]".to_string(),
       duration_ms: 5_000,
       width: 1_280,
