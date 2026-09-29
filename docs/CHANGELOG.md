@@ -1,13 +1,27 @@
-### M3.187 — Project Save Size Cap — active — 2026-09-29
+### M3.188 — Multi-Segment Render Count Cap — active — 2026-09-29
 
-- Branch: `fix/m3-187-project-save-size-cap`.
-- Fresh audit found `save_project()` still accepting project content without a size boundary after M3.186 bounded project loading.
-- Enforced the same 16 MiB project-file limit before creating directories or temporary output files.
-- Preserved the atomic temporary-file write and rename flow, project-path validation, and UTF-8 handling.
-- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte save payloads.
+- Branch: `fix/m3-188-multi-segment-count-cap`.
+- Fresh audit found `NativeVideoSegmentsRenderRequest.segments` had no maximum count.
+- A single request could therefore trigger arbitrarily many source probes, temporary files, FFmpeg invocations, and concat-list entries.
+- Added a maximum of 4,096 segments and reject oversized requests before source probing or temporary render directory creation.
+- Preserved existing duration, source, path, range, ordering, audio, and concat behavior.
+- Added focused regression coverage at 4,096 segments and 4,097 segments.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.187 — Project Save Size Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-187-project-save-size-cap`.
+- PR #202; squash-merged at `aaf7cd24cb8448b1a738b9e860342f3a10a49586`.
+- User reported PASS.
+- Enforced the 16 MiB project-file limit before save writes.
+- Preserved atomic temp-file + rename behavior and project path/UTF-8 handling.
+- Added focused regression coverage at and above the limit.
+- PR head `b599b79cfc2b1aea6ff72163ff92e2d5f99ef86f` was verified before merge.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.188 as the next renderer resource-boundary milestone.
 
 ### M3.186 — Project File Load Size Cap — completed — 2026-09-29
 
