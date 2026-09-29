@@ -38,6 +38,7 @@ const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
+const MAX_MEDIA_PATH_BYTES: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1340,7 +1341,18 @@ fn build_ffmpeg_export_args(
   args
 }
 
+fn validate_media_path_length(value: &str) -> Result<(), String> {
+  if value.as_bytes().len() > MAX_MEDIA_PATH_BYTES {
+    return Err(format!(
+      "Selected media path exceeds the maximum length of {MAX_MEDIA_PATH_BYTES} bytes."
+    ));
+  }
+
+  Ok(())
+}
+
 fn media_path(value: &str) -> Result<PathBuf, String> {
+  validate_media_path_length(value)?;
   let path = PathBuf::from(value);
 
   if !path.is_file() {
@@ -2254,6 +2266,21 @@ mod tests {
       u64::MAX,
       "Native test",
     ).is_err());
+  }
+
+  #[test]
+  fn rejects_media_paths_above_size_limit() {
+    let path = "a".repeat(super::MAX_MEDIA_PATH_BYTES + 1);
+    let error = super::validate_media_path_length(&path)
+      .expect_err("media paths above the configured limit must be rejected");
+
+    assert!(error.contains("maximum length of 4096 bytes"));
+  }
+
+  #[test]
+  fn accepts_media_paths_at_size_limit() {
+    let path = "a".repeat(super::MAX_MEDIA_PATH_BYTES);
+    assert!(super::validate_media_path_length(&path).is_ok());
   }
 
   #[test]
