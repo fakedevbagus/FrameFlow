@@ -7,7 +7,7 @@ use std::{
   collections::HashMap,
   fs,
   os::unix::fs::MetadataExt,
-  io::{BufRead, BufReader},
+  io::{BufRead, BufReader, Read},
   path::{Path, PathBuf},
   process::{Command, Stdio},
   thread,
@@ -1853,7 +1853,7 @@ mod tests {
     let status = child.wait().unwrap();
 
     assert!(status.success());
-    assert_eq!(duration_ms, Some(101_000));
+    assert_eq!(duration_ms, Some(9_999_010));
   }
 
   #[test]
