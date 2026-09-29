@@ -15,7 +15,9 @@
 - Latest local validation reached `npm run test`: 528/529 tests passed; one transition-endpoint boundary fixture failed because its first clip ended at MAX_SAFE_INTEGER + 1.
 - Corrected the fixture to use MAX_SAFE_INTEGER - 50, making the derived transition endpoint exactly MAX_SAFE_INTEGER without changing production validation.
 - Commit: `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
-- Full validation remains pending.
+- Fixed the remaining `track.type` TypeScript narrowing error in `validateClip()` by capturing and asserting the track type before optional audio-field validation; validation semantics are unchanged.
+- Latest code fix commit: `f759d4706192f01af8c142a74ffa4823071e59db`.
+- Full validation remains pending after this code fix.
 - The next test run exposed two domain regression assertions caused only by changed asset-duration error wording after TypeScript narrowing cleanup.
 - Restored the established nullable-duration error contract with a dedicated narrowing helper; validation semantics remain unchanged.
 - Commit: `9b91f3f86f42aeb9be1e1aa2e7fddad46ae590cc`.
