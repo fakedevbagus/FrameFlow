@@ -10,7 +10,7 @@
 - Preserve current FFmpeg progress, cancellation, failure-detail, and export behavior.
 - Added focused regression coverage that emits multi-megabyte stderr, verifies child termination, verifies retained output stays within 64 KiB, and verifies truncation is marked.
 - Implementation is complete.
-- Draft PR not created yet.
+- Draft PR #195 is open.
 - Local validation is pending.
 
 
