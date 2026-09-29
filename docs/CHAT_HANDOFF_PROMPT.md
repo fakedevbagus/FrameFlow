@@ -1,3 +1,16 @@
+## M3.181 — active — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- Scope: prevent unbounded ffprobe packet stdout retention during audio duration probing.
+- Fresh audit found `probe_duration_from_audio_packets()` using `Command::output()`, which buffered complete packet stdout before parsing.
+- Stream ffprobe stdout through a reusable line buffer and keep only the latest packet end timestamp.
+- Drain ffprobe stderr concurrently with fixed memory.
+- Preserve the existing packet parsing semantics and fallback order.
+- Added focused regression coverage using large packet-like stdout with a later timestamp.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
 ## M3.180 — active — 2026-09-29
 
 - Branch: `fix/m3-180-export-stderr-memory-cap`.
