@@ -39,6 +39,12 @@
 - Latest test-only fix commits: `c99508a90457e37590df1175cbd6931f68a56966`, `855e75cccf90a77d791248739a495239c9e0d702`.
 - Full validation remains pending.
 
+- Latest Rust test run reduced failures to 7 while frontend tests/build remained successful.
+- Fixed the remaining test/validation issues: canonical source-audio filter formatting, required query-field precedence, project read-size enforcement, and the large packet-stream fixture.
+- No M3.203 resource-limit semantics were weakened.
+- Latest fixes: `222e96b7ccf1e472243f81b0963fc05e764c6265`, `738647de2992e0c288bcdd1474594b5e0e34ced7`, `d7ff2e34299bdfe4189d2f1dfefadc13e969af63`.
+- Full validation remains pending.
+
 ### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
 - Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
