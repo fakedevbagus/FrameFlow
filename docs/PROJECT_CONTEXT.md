@@ -25,7 +25,7 @@ Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.180, validate locally, then on PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- PR #195 is open as Draft. Validate M3.180 locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
 ## M3.179 — Media Server File Open TOCTOU — completed — 2026-09-29
 
