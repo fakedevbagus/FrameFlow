@@ -22,7 +22,7 @@
 Next step:
 - Fresh audit from verified `main` identified M3.206: shared media path length cap.
 
-### M3.204### M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
+### M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
 
 - Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
 - PR #221; squash-merged at `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`.
