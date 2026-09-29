@@ -1,4 +1,59 @@
-## M3.197 — Unified AV Video Filter Size Cap — active — 2026-09-29
+## M3.198 — Unified AV Audio Filter Size Cap — active — 2026-09-29
+
+Branch:
+`fix/m3-198-unified-av-audio-filter-size-cap`
+
+Fresh audit finding:
+- `NativeVideoAudioGraphRenderRequest.audio_filter_complex` had no maximum size validation.
+- With unified AV inputs, source-audio segments, keyframes, and video filter size bounded, a large user-supplied audio filter graph could still increase retained request memory and FFmpeg filter-graph processing.
+
+Scope:
+- Cap unified AV audio `filter_complex` at 256 KiB.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES = 256 * 1024`.
+- Reject oversized unified AV audio filter graphs during metadata validation before filesystem/source probing.
+- Preserve existing unified AV input, source-audio, map, output, rendering, and cleanup behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Create the Draft PR for M3.198 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.197 — Unified AV Video Filter Size Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-197-unified-av-video-filter-size-cap`
+
+PR:
+#212
+
+Merge SHA:
+`e3f2f2b762f575ef84f2209282a0396bb05d7f14`
+
+User validation:
+- User reported PASS for M3.197.
+- PR #212 was refreshed at head `fd8ac0764e55c2c050e6c7225325dac16b7fc41a`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `e3f2f2b762f575ef84f2209282a0396bb05d7f14`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `NativeVideoAudioGraphRenderRequest.video_filter_complex` had no maximum size validation.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES = 256 * 1024`.
+- Reject oversized unified AV video filter graphs during metadata validation before filesystem/source probing.
+- Preserved existing unified AV input, source-audio, map, output, rendering, and cleanup behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.198 as the next unified AV renderer resource-boundary milestone.
+
+ Unified AV Video Filter Size Cap — active — 2026-09-29
 
 Branch:
 `fix/m3-197-unified-av-video-filter-size-cap`
