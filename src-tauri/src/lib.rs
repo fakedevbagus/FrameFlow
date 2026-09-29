@@ -30,6 +30,9 @@ const PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
 const MAX_FFMPEG_DURATION_PROBE_STDERR_BYTES: usize = 64 * 1024;
 const FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[FFmpeg duration probe stderr truncated by FrameFlow]\n";
+const MAX_FFPROBE_STDERR_BYTES: usize = 64 * 1024;
+const FFPROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
+  b"\n[ffprobe stderr truncated by FrameFlow]\n";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1484,12 +1487,91 @@ fn probe_duration_ms(path: &Path) -> Result<u64, String> {
 }
 
 fn run_ffprobe(path: &Path, args: &[&str]) -> Result<std::process::Output, String> {
-  Command::new("ffprobe")
+  let mut child = Command::new("ffprobe")
     .args(["-v", "error"])
     .args(args)
     .arg(path)
-    .output()
-    .map_err(|error| format!("Could not run ffprobe: {error}"))
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
+    .spawn()
+    .map_err(|error| format!("Could not run ffprobe: {error}"))?;
+
+  let mut stdout = child
+    .stdout
+    .take()
+    .ok_or_else(|| "ffprobe output could not be opened.".to_string())?;
+  let stderr = match child.stderr.take() {
+    Some(stderr) => stderr,
+    None => {
+      let _ = child.kill();
+      let _ = child.wait();
+      return Err("ffprobe error output could not be opened.".to_string());
+    }
+  };
+
+  let stderr_reader = thread::spawn(move || {
+    collect_bounded_ffprobe_stderr(stderr)
+  });
+
+  let mut stdout_output = Vec::new();
+  if let Err(error) = stdout.read_to_end(&mut stdout_output) {
+    let _ = child.kill();
+    let _ = child.wait();
+    let _ = stderr_reader.join();
+    return Err(format!("Could not read ffprobe output: {error}"));
+  }
+
+  let status = match child.wait() {
+    Ok(status) => status,
+    Err(error) => {
+      let _ = child.kill();
+      let _ = stderr_reader.join();
+      return Err(format!("Could not finish ffprobe: {error}"));
+    }
+  };
+
+  let stderr_output = stderr_reader
+    .join()
+    .unwrap_or_else(|_| FFPROBE_STDERR_TRUNCATION_NOTICE.to_vec());
+
+  Ok(std::process::Output {
+    status,
+    stdout: stdout_output,
+    stderr: stderr_output,
+  })
+}
+
+fn collect_bounded_ffprobe_stderr<R: Read>(mut reader: R) -> Vec<u8> {
+  let retain_limit = MAX_FFPROBE_STDERR_BYTES
+    .saturating_sub(FFPROBE_STDERR_TRUNCATION_NOTICE.len());
+  let mut retained = Vec::with_capacity(MAX_FFPROBE_STDERR_BYTES.min(8 * 1024));
+  let mut buffer = [0_u8; 8192];
+  let mut truncated = false;
+
+  loop {
+    match reader.read(&mut buffer) {
+      Ok(0) | Err(_) => break,
+      Ok(read) => {
+        if retained.len() < retain_limit {
+          let remaining = retain_limit - retained.len();
+          let copied = read.min(remaining);
+          retained.extend_from_slice(&buffer[..copied]);
+
+          if copied < read {
+            truncated = true;
+          }
+        } else {
+          truncated = true;
+        }
+      }
+    }
+  }
+
+  if truncated {
+    retained.extend_from_slice(FFPROBE_STDERR_TRUNCATION_NOTICE);
+  }
+
+  retained
 }
 
 fn probe_duration_from_audio_packets(path: &Path) -> Result<Option<u64>, String> {
@@ -1977,6 +2059,16 @@ mod tests {
       .expect_err("removed single-source media must invalidate the export");
     assert!(error.contains("Native export source changed or became unavailable"));
 
+  }
+
+  #[test]
+  fn bounds_ffprobe_stderr_diagnostics() {
+    let payload = vec![b'x'; 4 * 1024 * 1024];
+
+    let retained = super::collect_bounded_ffprobe_stderr(std::io::Cursor::new(payload));
+
+    assert!(retained.len() <= super::MAX_FFPROBE_STDERR_BYTES);
+    assert!(retained.ends_with(super::FFPROBE_STDERR_TRUNCATION_NOTICE));
   }
 
   #[test]
