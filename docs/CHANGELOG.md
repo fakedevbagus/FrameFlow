@@ -29,6 +29,11 @@
 - PR #220 remains Draft; local full validation is pending.
 - No lint/test/build/cargo/manual validation pass is inferred from this state.
 
+- Latest validation passed `npm run test` at 529/529 and completed the frontend `npm run build`; `cargo test` then stopped at Rust compilation with 49 errors and 2 warnings.
+- Fixed the reported Rust compile/test-scope issues without weakening M3.203 resource limits or render validation: restored `save_project` command registration, added required imports/scopes, restored Unix metadata trait visibility, fixed invalid-UTF8 request-buffer ownership, updated typed media-path assertions, and removed the test fixture's unnecessary `Clone` requirement.
+- Latest Rust fix commits: `3127df90ca4abfe6ac4b85354a6d64347fd79890`, `82e2ae946dfda7ccd28e00d50a6ecd465eb1a184`, `48f4edccafc6d9a1c32ff2987a859d92993dc2e4`, `fcffa76fad57d9e39559127dfb522fe3049793fe`.
+- Full validation remains pending.
+
 ### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
 - Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
