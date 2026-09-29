@@ -1,4 +1,16 @@
-## M3.202 — active — 2026-09-29
+## M3.203 — active — 2026-09-29
+
+- Branch: `fix/m3-203-video-audio-mix-audio-filter-size-cap`.
+- Scope: cap legacy video/audio mix `audio_filter_complex`.
+- Fresh audit found the audio filter graph had no maximum size.
+- Reject audio filter graphs above 256 KiB before filesystem probing.
+- Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.202 — completed — 2026-09-29
 
 - Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
 - Scope: cap individual legacy video/audio mix audio input path strings.
