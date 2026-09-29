@@ -46,6 +46,12 @@ Implementation:
 - Latest test-only fix commits: `c99508a90457e37590df1175cbd6931f68a56966` and `855e75cccf90a77d791248739a495239c9e0d702`.
 - Full validation remains pending after these fixes.
 
+- Latest `cargo test` execution reached the Rust test suite and reduced failures to 7. The frontend remained 529/529 with Vite build successful.
+- The 7 failures were isolated: four stale embedded-source-audio filter assertions using pre-normalized time formatting, the media query missing-parameter fixture prioritization, project-file read size enforcement, and the ffprobe packet-stream fixture using repeated timestamps.
+- Fixed the four filter assertions to match current canonical millisecond formatting, made required media query parameters take precedence before unknown-parameter reporting, enforced the 16 MiB project content limit after bounded reads, and corrected the packet-stream fixture to validate a large monotonically increasing stream.
+- Latest fixes: `222e96b7ccf1e472243f81b0963fc05e764c6265`, `738647de2992e0c288bcdd1474594b5e0e34ced7`, `d7ff2e34299bdfe4189d2f1dfefadc13e969af63`.
+- Full validation is pending after these fixes.
+
 Validation:
 - `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
 - The first lint run failed only on the two pre-existing lint blockers described above.
