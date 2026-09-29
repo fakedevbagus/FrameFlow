@@ -34,6 +34,11 @@
 - Latest Rust fix commits: `3127df90ca4abfe6ac4b85354a6d64347fd79890`, `82e2ae946dfda7ccd28e00d50a6ecd465eb1a184`, `48f4edccafc6d9a1c32ff2987a859d92993dc2e4`, `fcffa76fad57d9e39559127dfb522fe3049793fe`.
 - Full validation remains pending.
 
+- The follow-up Rust compile reduced the remaining failures to five test-only typing/scope issues involving `Cow<str>` assertions and Unix metadata trait visibility.
+- Fixed the remaining assertions/import scope without changing production behavior or M3.203 limits.
+- Latest test-only fix commits: `c99508a90457e37590df1175cbd6931f68a56966`, `855e75cccf90a77d791248739a495239c9e0d702`.
+- Full validation remains pending.
+
 ### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
 - Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
