@@ -62,7 +62,19 @@ describe("audio waveform", () => {
         7_500,
         4,
       ),
-    ).toEqual([0, 0.25, 0.75, 1]);
+    const resampled = getWaveformPeaksForSourceRange(
+      [0, 0, 1, 1],
+      10_000,
+      2_500,
+      7_500,
+      4,
+    );
+
+    expect(resampled).toHaveLength(4);
+    expect(resampled[0]).toBe(0);
+    expect(resampled[1]).toBeCloseTo(0.25, 12);
+    expect(resampled[2]).toBeCloseTo(0.75, 12);
+    expect(resampled[3]).toBe(1);
 
     expect(
       getWaveformPeaksForSourceRange(
