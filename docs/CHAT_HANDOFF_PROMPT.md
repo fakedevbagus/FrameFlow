@@ -1,14 +1,28 @@
-## M3.200 — active — 2026-09-29
+## M3.201 — active — 2026-09-29
 
-- Branch: `fix/m3-200-unified-av-video-input-path-cap`.
-- Scope: cap individual unified AV video input path strings.
-- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_inputs` paths had no maximum length.
-- Reject video input paths above 4,096 bytes before filesystem probing.
-- Preserve existing unified AV video validation/render behavior.
-- Added focused regression coverage at the exact byte limit and one above it.
+- Branch: `fix/m3-201-legacy-audio-mix-input-count-cap`.
+- Scope: cap the legacy `NativeVideoWithAudioGraphRenderRequest.audio_inputs` list.
+- Fresh audit found the legacy video/audio mix audio-input list had no maximum count.
+- Reject requests above 256 audio inputs before filesystem probing and FFmpeg argument construction.
+- Preserve existing required-input, absolute-path, media-type, output-collision, source-identity, graph, rendering, and cleanup behavior.
+- Added focused regression coverage for 256 accepted and 257 rejected inputs.
+- No project schema change.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+- After PASS: refresh PR/head, ensure based on latest `main`, mark ready, squash-merge with freshly verified head SHA, record merge SHA, reconcile docs, verify `main`, then fresh-audit the next gap.
+
+## M3.200 — completed — 2026-09-29
+
+- Branch: `fix/m3-200-unified-av-video-input-path-cap`.
+- PR #215; merged at `de501ffed1c464e5c5075c2f55d43a9506d33295`.
+- User reported PASS.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 bytes per unified AV video input path and rejected oversized values before filesystem probing.
+- Preserved existing unified AV validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 ## M3.199 — completed — 2026-09-29
 
