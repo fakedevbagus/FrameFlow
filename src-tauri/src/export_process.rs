@@ -13,6 +13,10 @@ use tauri::{Emitter, State};
 
 pub const EXPORT_PROGRESS_EVENT: &str = "export-progress";
 
+const MAX_FFMPEG_STDERR_BYTES: usize = 64 * 1024;
+const FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
+  b"\n[FFmpeg stderr truncated by FrameFlow]\n";
+
 type SharedChild = Arc<Mutex<Child>>;
 
 #[derive(Default)]
@@ -181,12 +185,7 @@ pub fn run_ffmpeg_with_progress(
   });
 
   let stderr_thread = stderr.map(|stderr| {
-    thread::spawn(move || {
-      let mut bytes = Vec::new();
-      let mut reader = BufReader::new(stderr);
-      let _ = reader.read_to_end(&mut bytes);
-      bytes
-    })
+    thread::spawn(move || collect_ffmpeg_stderr(stderr))
   });
 
   let status = loop {
@@ -240,6 +239,43 @@ pub fn run_ffmpeg_with_progress(
   Ok(status)
 }
 
+fn collect_ffmpeg_stderr<R: Read>(mut reader: R) -> Vec<u8> {
+  let reserved_notice = FFMPEG_STDERR_TRUNCATION_NOTICE.len();
+  let retained_limit = MAX_FFMPEG_STDERR_BYTES.saturating_sub(reserved_notice);
+  let mut output = Vec::with_capacity(MAX_FFMPEG_STDERR_BYTES.min(retained_limit));
+  let mut buffer = [0_u8; 8192];
+  let mut truncated = false;
+
+  loop {
+    let read = match reader.read(&mut buffer) {
+      Ok(read) => read,
+      Err(_) => break,
+    };
+
+    if read == 0 {
+      break;
+    }
+
+    if output.len() < retained_limit {
+      let remaining = retained_limit - output.len();
+      let take = remaining.min(read);
+      output.extend_from_slice(&buffer[..take]);
+
+      if take < read {
+        truncated = true;
+      }
+    } else {
+      truncated = true;
+    }
+  }
+
+  if truncated {
+    output.extend_from_slice(FFMPEG_STDERR_TRUNCATION_NOTICE);
+  }
+
+  output
+}
+
 fn append_progress_arguments(args: &mut Vec<OsString>) {
   let Some(output_path) = args.pop() else {
     return;
@@ -285,6 +321,7 @@ fn emit_progress(app: &tauri::AppHandle, job_id: &str, stage: &str, progress: f6
 mod tests {
   use super::{
     append_progress_arguments,
+    collect_ffmpeg_stderr,
     parse_progress_line_ms,
     ExportProcessState,
     ExportProgressEvent,
@@ -342,6 +379,32 @@ mod tests {
         "-nostats",
         "/tmp/export.mp4",
       ],
+    );
+  }
+
+  #[test]
+  fn drains_large_ffmpeg_stderr_while_bounding_retained_diagnostics() {
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new("sh")
+      .args([
+        "-c",
+        "i=0; while [ $i -lt 65536 ]; do printf 'frameflow-export-error-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\n' >&2; i=$((i + 1)); done",
+      ])
+      .stdout(Stdio::null())
+      .stderr(Stdio::piped())
+      .spawn()
+      .unwrap();
+
+    let stderr = child.stderr.take().unwrap();
+    let retained = collect_ffmpeg_stderr(stderr);
+    let status = child.wait().unwrap();
+
+    assert!(status.success());
+    assert!(retained.len() <= super::MAX_FFMPEG_STDERR_BYTES);
+    assert!(
+      retained.ends_with(super::FFMPEG_STDERR_TRUNCATION_NOTICE),
+      "large stderr output must be explicitly marked as truncated"
     );
   }
 
