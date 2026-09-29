@@ -7,7 +7,7 @@
 - Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
 - Added focused regression coverage for exactly 256 and 257 inputs.
 - Implementation is complete.
-- Draft PR not created yet.
+- PR #218 is open as a Draft.
 - Local validation is pending.
 
 ## M3.200 — completed — 2026-09-29
