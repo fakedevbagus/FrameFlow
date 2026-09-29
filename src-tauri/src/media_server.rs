@@ -1673,7 +1673,8 @@ mod tests {
 
   #[test]
   fn rejects_media_path_above_size_limit() {
-    let path = Path::new(&"a".repeat(crate::MAX_MEDIA_PATH_BYTES + 1));
+    let value = "a".repeat(crate::MAX_MEDIA_PATH_BYTES + 1);
+    let path = Path::new(&value);
     assert_eq!(
       validate_media_path_length(path),
       Err(MediaPathError::PathTooLong)
