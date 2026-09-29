@@ -1,4 +1,29 @@
-## M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — active — 2026-09-29
+## M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — active — 2026-09-29
+
+Branch:
+`fix/m3-203-video-audio-mix-audio-filter-size-cap`
+
+Fresh audit finding:
+- `NativeVideoWithAudioGraphRenderRequest.audio_filter_complex` had no maximum size validation.
+- The value is incorporated directly into the FFmpeg `-filter_complex` argument, so an oversized graph can increase retained request memory and FFmpeg processing work before or during export.
+
+Scope:
+- Cap legacy video/audio mix `audio_filter_complex` at 256 KiB.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES = 256 * 1024`.
+- Reject oversized audio filter graphs during metadata validation before filesystem probing.
+- Preserve existing input, path, duration, map, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+
+Validation:
+- User local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Create the Draft PR for M3.203 and validate locally; after PASS follow refresh → merge → docs → verify main → fresh audit.
+
+## M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
 Branch:
 `fix/m3-202-video-audio-mix-audio-input-path-cap`
@@ -17,11 +42,13 @@ Implementation:
 - Added focused regression coverage at 4,096 and 4,097 bytes.
 - No project schema change.
 
-Validation:
-- User local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+User validation:
+- User reported PASS for M3.202.
+- PR #219 was squash-merged at `d025afcdda8222a8d54f41b28073574b7c77e04c` and `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 Next step:
-- Create the Draft PR for M3.202 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Fresh audit from verified `main` identified M3.203 as the next legacy video/audio mix resource-boundary milestone.
 
 ## M3.201 — Legacy Video/Audio Mix Audio Input Count Cap — completed — 2026-09-29
 
