@@ -1,14 +1,34 @@
-## M3.186 — active — 2026-09-29
+## M3.187 — active — 2026-09-29
 
-- Branch: `fix/m3-186-project-load-size-cap`.
-- Scope: prevent unbounded memory allocation while loading `.frameflow.json` project files.
-- Fresh audit found `open_project()` using `fs::read_to_string()` without a file-size limit.
-- Open project files explicitly and read through a `Read::take()` limit of 16 MiB + 1 byte.
-- Reject content above 16 MiB while preserving UTF-8 decoding and the existing project-open command contract.
-- Added focused regression coverage for exactly 16 MiB and just above the limit.
+- Branch: `fix/m3-187-project-save-size-cap`.
+- Scope: enforce the same 16 MiB project-file size boundary when saving `.frameflow.json` content.
+- Fresh audit found `save_project()` accepting an unbounded `String` after M3.186 bounded project loading.
+- Reject oversized save content before directory creation or temporary-file writes.
+- Preserve the atomic temporary-file write and rename flow, project path validation, and UTF-8 handling.
+- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte save payloads.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.186 — completed — 2026-09-29
+
+- Branch: `fix/m3-186-project-load-size-cap`.
+- PR #201; squash-merged at `5a4527ee14eae03308d4464337aea3714fe9c847`.
+- User reported PASS.
+- PR head `5e1c2b3751b8d9fc96ff919a15b50acce0142601` was verified before merge.
+- `main` was verified at the merge SHA.
+- Bounded project-file loading to 16 MiB and rejected larger files.
+- Preserved UTF-8 decoding and project path validation.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.187 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.185 — completed — 2026-09-29
 
