@@ -35,6 +35,12 @@ Implementation:
 - Latest code fix commit: `f759d4706192f01af8c142a74ffa4823071e59db`.
 - Full validation remains pending after this code fix.
 
+- Latest user validation: `npm run test` passed 529/529 and `npm run build` completed successfully; `cargo test` then failed during Rust compilation with 49 errors and 2 warnings.
+- Root causes were isolated to missing Tauri command registration for `save_project`, missing test-scope imports for Rust modules/constants and `HashMap`, missing Unix `MetadataExt`, a moved request buffer in invalid-UTF8 handling, stale typed `MediaPathError` assertions, and test fixtures unnecessarily requiring `NativeVideoSegment: Clone`.
+- Applied behavior-preserving fixes across `src-tauri/src/lib.rs`, `src-tauri/src/audio_render.rs`, and `src-tauri/src/media_server.rs`.
+- Latest Rust fix commits: `3127df90ca4abfe6ac4b85354a6d64347fd79890`, `82e2ae946dfda7ccd28e00d50a6ecd465eb1a184`, `48f4edccafc6d9a1c32ff2987a859d92993dc2e4`, `fcffa76fad57d9e39559127dfb522fe3049793fe`.
+- Full validation is pending again after these fixes.
+
 Validation:
 - `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
 - The first lint run failed only on the two pre-existing lint blockers described above.
