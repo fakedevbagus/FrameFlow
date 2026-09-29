@@ -614,14 +614,17 @@ function validateClip(
     );
   }
 
+  const trackType = track.type;
+  assertTrackType(trackType, fieldPrefix + " track type");
+
   const expectedTrackType = asset.mediaType === "audio" ? "audio" : "video";
-  if (track.type !== expectedTrackType) {
+  if (trackType !== expectedTrackType) {
     throw new ProjectValidationError(
       fieldPrefix +
         " uses media type " +
         asset.mediaType +
         " on a " +
-        track.type +
+        trackType +
         " track.",
     );
   }
@@ -632,7 +635,7 @@ function validateClip(
     validateVisualPayloads(value, fieldPrefix);
   }
 
-  validateOptionalAudioFields(value, fieldPrefix, track.type, asset.mediaType);
+  validateOptionalAudioFields(value, fieldPrefix, trackType, asset.mediaType);
 }
 
 function validateVisualPayloads(
