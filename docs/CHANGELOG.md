@@ -1,15 +1,17 @@
-### M3.179 — Media Server File Open TOCTOU — active — 2026-09-29
+### M3.179 — Media Server File Open TOCTOU — completed — 2026-09-29
 
 - Branch: `fix/m3-179-media-file-open-toctou`.
-- Draft PR #194 created with validation pending.
-- Fresh audit found a validation-to-open TOCTOU after media-path canonicalization and allowlist validation.
-- A local pathname replacement with an outside symlink could redirect the later file open.
-- Scope: pin the validated file identity and stream from one verified file handle.
-- Captured device/inode identity is checked against the opened file; full-file and Range responses reuse the verified handle.
-- Added focused regression coverage for replacement by symlink before open.
+- PR #194; squash-merged at `709c57fbf081d165dcf00474d685a50f2bf128d3`.
+- User reported `continue`, treated as PASS under the established workflow.
+- Closed the validation-to-open pathname race by capturing device/inode identity, verifying the opened file against that identity, and reusing one verified file handle for full and Range streaming.
+- Added focused regression coverage for replacement of the validated file with a symlink before open.
+- Preserved existing media HTTP, capability-token, canonical-path, allowlist, media-type, Range, and HEAD behavior.
 - No project schema change.
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.179; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- PR head `c88e39f402a2cae0a08d5e499551b644aa6592db` was verified before merge.
+- `main` was verified at merge commit `709c57fbf081d165dcf00474d685a50f2bf128d3`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS-equivalent confirmation.
+- Next step: fresh audit from verified `main` identified M3.180 as the next focused process/resource-safety milestone.
+
 
 ### M3.178 — Audio Waveform FFmpeg Pipe Liveness — completed — 2026-09-28
 
