@@ -1,3 +1,31 @@
+## M3.181 — FFprobe Audio Packet Stream — active — 2026-09-29
+
+Branch:
+`fix/m3-181-ffprobe-packet-stream`
+
+Fresh audit finding:
+- `probe_duration_from_audio_packets()` used `ffprobe` with `Command::output()` and loaded the complete packet-oriented stdout into memory before parsing.
+- Long audio streams can contain a very large number of packet records, making retained stdout memory grow with media length.
+- The same buffered process boundary could also retain unnecessary child output instead of parsing incrementally.
+
+Scope:
+- Stream ffprobe audio-packet stdout incrementally and fully drain stderr concurrently without retaining the complete packet output in memory.
+
+Implementation:
+- Replace buffered `run_ffprobe()` usage for the packet-duration path with an explicit child process using piped stdout/stderr.
+- Parse packet records incrementally through a reusable line buffer.
+- Keep only the latest computed end timestamp instead of retaining all packet stdout.
+- Drain ffprobe stderr concurrently with fixed memory.
+- Preserve existing packet-duration parsing semantics and fallback order.
+- Add focused regression coverage with large packet-like stdout and a final later timestamp.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Create Draft PR for M3.181 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
 ## M3.180 — Export FFmpeg Stderr Memory Cap — active — 2026-09-29
 
 Branch:
