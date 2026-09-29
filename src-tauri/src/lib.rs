@@ -27,6 +27,9 @@ struct MediaProbe {
 const MAX_PREVIEW_FFMPEG_STDERR_BYTES: usize = 64 * 1024;
 const PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[FFmpeg preview stderr truncated by FrameFlow]\n";
+const MAX_FFMPEG_DURATION_PROBE_STDERR_BYTES: usize = 64 * 1024;
+const FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
+  b"\n[FFmpeg duration probe stderr truncated by FrameFlow]\n";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1380,8 +1383,8 @@ fn run_ffmpeg_preview(source_path: &Path, temporary_path: &Path) -> Result<(std:
   let stderr_reader = thread::spawn(move || {
     collect_bounded_ffmpeg_stderr(
       stderr,
-      MAX_PREVIEW_FFMPEG_STDERR_BYTES,
-      PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE,
+      MAX_FFMPEG_DURATION_PROBE_STDERR_BYTES,
+      FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE,
     )
   });
 
@@ -1594,18 +1597,85 @@ fn parse_audio_packet_duration_stream<R: BufRead>(reader: R) -> Option<u64> {
 }
 
 fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
-  let output = Command::new("ffmpeg")
+  let mut child = Command::new("ffmpeg")
     .args(["-hide_banner", "-nostats", "-i"])
     .arg(path)
     .args(["-map", "0:0", "-f", "null", "-", "-progress", "pipe:1"])
-    .output()
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
+    .spawn()
     .map_err(|error| format!("Could not run ffmpeg: {error}"))?;
 
-  if let Some(duration_ms) = parse_ffmpeg_duration(&output.stderr) {
+  let stdout = child
+    .stdout
+    .take()
+    .ok_or_else(|| "FFmpeg progress output could not be opened.".to_string())?;
+  let stderr = match child.stderr.take() {
+    Some(stderr) => stderr,
+    None => {
+      let _ = child.kill();
+      let _ = child.wait();
+      return Err("FFmpeg error output could not be opened.".to_string());
+    }
+  };
+
+  let stderr_reader = thread::spawn(move || {
+    collect_bounded_ffmpeg_stderr(
+      stderr,
+      MAX_FFMPEG_DURATION_PROBE_STDERR_BYTES,
+      FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE,
+    )
+  });
+
+  let progress = parse_ffmpeg_progress_stream(BufReader::new(stdout));
+
+  let status = match child.wait() {
+    Ok(status) => status,
+    Err(error) => {
+      let _ = child.kill();
+      let _ = stderr_reader.join();
+      return Err(format!("Could not finish ffmpeg: {error}"));
+    }
+  };
+
+  let stderr = stderr_reader
+    .join()
+    .unwrap_or_else(|_| FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE.to_vec());
+
+  if let Some(duration_ms) = parse_ffmpeg_duration(&stderr) {
     return Ok(Some(duration_ms));
   }
 
-  Ok(parse_ffmpeg_progress(&output.stdout))
+  Ok(progress)
+}
+
+fn parse_ffmpeg_progress_stream<R: BufRead>(reader: R) -> Option<u64> {
+  let mut last_out_time_ms = None;
+  let mut line = String::new();
+  let mut reader = reader;
+
+  loop {
+    line.clear();
+
+    let read = match reader.read_line(&mut line) {
+      Ok(read) => read,
+      Err(_) => break,
+    };
+
+    if read == 0 {
+      break;
+    }
+
+    let Some(value) = line.strip_prefix("out_time_ms=") else {
+      continue;
+    };
+
+    if let Ok(out_time_us) = value.trim().parse::<u64>() {
+      last_out_time_ms = Some(out_time_us / 1000);
+    }
+  }
+
+  last_out_time_ms
 }
 
 fn parse_ffmpeg_duration(output: &[u8]) -> Option<u64> {
@@ -1907,6 +1977,19 @@ mod tests {
       .expect_err("removed single-source media must invalidate the export");
     assert!(error.contains("Native export source changed or became unavailable"));
 
+  }
+
+  #[test]
+  fn streams_large_ffmpeg_progress_output_without_retaining_the_whole_stream() {
+    let payload = (0..100_000)
+      .map(|index| format!("out_time_ms={}\n", (index + 1) * 1_000_000_u64))
+      .collect::<String>();
+
+    let duration_ms = super::parse_ffmpeg_progress_stream(std::io::BufReader::new(
+      std::io::Cursor::new(payload),
+    ));
+
+    assert_eq!(duration_ms, Some(100_000_000));
   }
 
   #[test]

@@ -1,29 +1,62 @@
-## M3.182 — Preview FFmpeg Stderr Memory Cap — active — 2026-09-29
+## M3.183 — FFmpeg Duration Probe Stream — active — 2026-09-29
 
 Branch:
-`fix/m3-182-preview-ffmpeg-stderr-memory-cap`
+`fix/m3-183-ffmpeg-duration-probe-stream`
 
 Fresh audit finding:
-- `prepare_media_preview()` invoked FFmpeg with `Command::output()`, which retained complete stdout/stderr in memory until the preview process exited.
-- Preview generation writes media to a file and does not consume stdout, while FFmpeg stderr is diagnostic output that can become unexpectedly large on pathological inputs or repeated failures.
-- The retained preview stderr therefore had no explicit memory ceiling.
+- `probe_duration_with_ffmpeg()` still invoked FFmpeg with `Command::output()`.
+- The fallback emits progress records on stdout and FFmpeg diagnostics on stderr, so buffering the complete process output made memory usage grow with the amount of output produced.
+- This fallback is intended for duration recovery, so it does not need to retain the complete progress stream after extracting the latest usable timestamp.
 
 Scope:
-- Replace buffered preview-process output capture with a dedicated FFmpeg child that discards stdout, drains stderr concurrently, and retains at most 64 KiB of diagnostics.
+- Stream FFmpeg duration-probe stdout incrementally, drain stderr concurrently, and retain only bounded diagnostics.
 
 Implementation:
-- Run preview FFmpeg with stdout redirected to `Stdio::null()` instead of buffering it.
-- Drain stderr on a dedicated thread so the child cannot block on stderr pipe backpressure.
-- Retain only the first bounded diagnostic excerpt and append an explicit truncation notice when additional stderr is discarded.
-- Preserve existing preview arguments, source-identity validation, temporary-file behavior, cache finalization, and error mapping.
-- Add focused regression coverage for multi-megabyte stderr retention.
+- Spawn the FFmpeg duration probe with piped stdout/stderr.
+- Parse `out_time_ms=` progress records incrementally through a reusable line buffer.
+- Drain stderr concurrently and cap retained diagnostics at 64 KiB with an explicit truncation notice.
+- Preserve the existing `Duration:`-from-stderr preference followed by progress fallback semantics.
+- Preserve the existing FFmpeg arguments and duration-probing fallback order.
+- Add focused regression coverage for large progress output.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.182 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.183 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.182 — Preview FFmpeg Stderr Memory Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-182-preview-ffmpeg-stderr-memory-cap`
+
+PR:
+#197
+
+Merge SHA:
+`05b7cbaf4acb2acba19274d875b73152651da2b4`
+
+User validation:
+- User reported PASS for M3.182.
+- PR #197 was refreshed at head `d5902cd163e911f5a38ae19e524ae34f0e97e469`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `05b7cbaf4acb2acba19274d875b73152651da2b4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `prepare_media_preview()` used `Command::output()`, retaining complete FFmpeg stdout/stderr in memory.
+- Preview generation does not consume stdout, and stderr is diagnostic output that can become unexpectedly large.
+
+Implementation:
+- Redirect preview FFmpeg stdout to `Stdio::null()`.
+- Drain stderr concurrently to preserve pipe liveness.
+- Bound retained preview diagnostics to 64 KiB and append an explicit truncation notice.
+- Preserve preview arguments, source identity validation, temporary output handling, cache finalization, and error mapping.
+- Added focused regression coverage for multi-megabyte stderr retention.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.183 as the next focused process/resource-safety milestone.
 
 ## M3.181 — FFprobe Audio Packet Stream — completed — 2026-09-29
 
