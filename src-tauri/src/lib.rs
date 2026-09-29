@@ -36,6 +36,7 @@ const FFPROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
 const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
+const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1119,6 +1120,12 @@ fn validate_native_video_graph_request_metadata(
 
   if request.filter_complex.trim().is_empty() {
     return Err("Native video graph render requires a filter graph.".to_string());
+  }
+
+  if request.filter_complex.as_bytes().len() > MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES {
+    return Err(format!(
+      "Native video graph filter graph exceeds the {MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES} byte limit."
+    ));
   }
 
   if request.video_map != "[vout]" {
@@ -2623,6 +2630,43 @@ mod tests {
       height: 720,
       frame_rate: 30.0,
       filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+    };
+
+    assert!(
+      super::validate_native_video_graph_request_metadata(&request).is_ok()
+    );
+  }
+
+  #[test]
+  fn rejects_native_video_graph_filter_above_size_limit() {
+    let request = super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/tmp/input.mp4".to_string()],
+      input_media_types: Vec::new(),
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "x".repeat(super::MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES + 1),
+      video_map: "[vout]".to_string(),
+    };
+
+    let error = super::validate_native_video_graph_request_metadata(&request)
+      .expect_err("video graph filters above the configured byte limit must be rejected");
+
+    assert!(error.contains("262144 byte limit"));
+  }
+
+  #[test]
+  fn accepts_native_video_graph_filter_at_size_limit() {
+    let request = super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/tmp/input.mp4".to_string()],
+      input_media_types: Vec::new(),
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "x".repeat(super::MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES),
       video_map: "[vout]".to_string(),
     };
 
