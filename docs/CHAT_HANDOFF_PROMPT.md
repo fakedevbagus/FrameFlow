@@ -1,4 +1,28 @@
-## M3.195 — active — 2026-09-29
+## M3.196 — active — 2026-09-29
+
+- Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
+- Scope: cap per-segment unified AV source-audio volume keyframes.
+- Fresh audit found `NativeSourceAudioSegment.audio_volume_keyframes` had no maximum count.
+- Reject segments above 4,096 keyframes before source probing or filter generation.
+- Preserve existing unified AV graph validation/render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.195 — completed — 2026-09-29
+
+- Branch: `fix/m3-195-unified-av-source-audio-segment-count-cap`.
+- PR #210; squash-merged at `785942ed938454ebe1d9d960fcecda28cde7b8d7`.
+- User reported PASS.
+- PR head `b1702f1aea3a90dcb412c606c9c72a2759084851` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 unified AV graph source audio segments and rejected oversized requests before source probing/segment resolution.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
 
 - Branch: `fix/m3-195-unified-av-source-audio-segment-count-cap`.
 - Scope: cap the number of unified AV source audio segments in one request.
