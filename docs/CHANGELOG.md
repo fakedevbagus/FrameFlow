@@ -1,6 +1,7 @@
 ### M3.179 — Media Server File Open TOCTOU — active — 2026-09-29
 
 - Branch: `fix/m3-179-media-file-open-toctou`.
+- Draft PR #194 created with validation pending.
 - Fresh audit found a validation-to-open TOCTOU after media-path canonicalization and allowlist validation.
 - A local pathname replacement with an outside symlink could redirect the later file open.
 - Scope: pin the validated file identity and stream from one verified file handle.
