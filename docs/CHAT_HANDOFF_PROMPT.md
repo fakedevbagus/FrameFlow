@@ -2,13 +2,16 @@
 
 - Branch: `fix/m3-180-export-stderr-memory-cap`.
 - Scope: prevent unbounded FFmpeg stderr retention in the export process while continuing to drain stderr concurrently.
-- Fresh audit from verified `main` found `export_process::run_ffmpeg_with_progress()` drains stderr on a dedicated thread but retains the entire stderr stream in an unbounded `Vec<u8>`.
-- Preserve concurrent pipe draining so FFmpeg cannot deadlock on stderr backpressure, but retain only a bounded diagnostic excerpt.
-- Add focused regression coverage proving large stderr output is fully drained while retained diagnostic memory stays bounded.
+- Fresh audit found `export_process::run_ffmpeg_with_progress()` draining stderr on a dedicated thread but retaining the entire stream in an unbounded `Vec<u8>`.
+- Added a 64 KiB maximum retained stderr size.
+- Continue draining the full stderr stream to EOF so FFmpeg cannot deadlock on stderr backpressure.
+- Retain only the bounded diagnostic excerpt and append an explicit truncation notice when excess output was discarded.
 - Preserve current FFmpeg progress, cancellation, failure-detail, and export behavior.
-- Implementation is not started yet.
-- No PR yet.
-- Local validation is not applicable yet.
+- Added focused regression coverage that emits multi-megabyte stderr, verifies child termination, verifies retained output stays within 64 KiB, and verifies truncation is marked.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
 
 ## M3.179 — completed — 2026-09-29
 
