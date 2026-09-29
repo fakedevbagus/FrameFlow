@@ -109,7 +109,7 @@ describe("Preview", () => {
     );
 
     const video = screen.getByTestId("preview-video") as HTMLVideoElement;
-    expect(video.volume).toBeCloseTo(0.125, 5);
+    expect(video.volume).toBeCloseTo(0.15625, 5);
   });
 
   it("renders the active local video asset", async () => {

@@ -282,19 +282,20 @@ function validateAssets(value: unknown): MediaAsset[] {
     assertMediaType(asset.mediaType, fieldPrefix + " mediaType");
     assertNonEmptyString(asset.sourcePath, fieldPrefix + " sourcePath");
 
-    if (
-      asset.durationMs !== null &&
-      (!isFiniteNumber(asset.durationMs) ||
-        !Number.isSafeInteger(asset.durationMs) ||
-        asset.durationMs < 0)
-    ) {
-      throw new ProjectValidationError(
-        fieldPrefix +
-          " durationMs must be null or a non-negative integer number of milliseconds.",
-      );
-    }
+    assertNullableDurationMilliseconds(
+      asset.durationMs,
+      fieldPrefix + " durationMs",
+    );
 
-    assets.push(asset as MediaAsset);
+    const validatedAsset: MediaAsset = {
+      id: asset.id,
+      name: asset.name,
+      mediaType: asset.mediaType,
+      sourcePath: asset.sourcePath,
+      durationMs: asset.durationMs,
+    };
+
+    assets.push(validatedAsset);
   }
 
   return assets;
@@ -330,11 +331,7 @@ function validateTracks(
 
     assertNonEmptyString(track.name, fieldPrefix + " name");
 
-    if (track.type !== "audio" && track.type !== "video") {
-      throw new ProjectValidationError(
-        fieldPrefix + " type must be audio or video.",
-      );
-    }
+    assertTrackType(track.type, fieldPrefix + " type");
 
     if (typeof track.isLocked !== "boolean") {
       throw new ProjectValidationError(
@@ -617,14 +614,17 @@ function validateClip(
     );
   }
 
+  const trackType = track.type;
+  assertTrackType(trackType, fieldPrefix + " track type");
+
   const expectedTrackType = asset.mediaType === "audio" ? "audio" : "video";
-  if (track.type !== expectedTrackType) {
+  if (trackType !== expectedTrackType) {
     throw new ProjectValidationError(
       fieldPrefix +
         " uses media type " +
         asset.mediaType +
         " on a " +
-        track.type +
+        trackType +
         " track.",
     );
   }
@@ -635,7 +635,7 @@ function validateClip(
     validateVisualPayloads(value, fieldPrefix);
   }
 
-  validateOptionalAudioFields(value, fieldPrefix, track.type, asset.mediaType);
+  validateOptionalAudioFields(value, fieldPrefix, trackType, asset.mediaType);
 }
 
 function validateVisualPayloads(
@@ -1240,6 +1240,12 @@ function assertMediaType(value: unknown, field: string): asserts value is MediaT
   }
 }
 
+function assertTrackType(value: unknown, field: string): asserts value is TrackType {
+  if (value !== "audio" && value !== "video") {
+    throw new ProjectValidationError(field + " must be audio or video.");
+  }
+}
+
 function addSafeTimelineMilliseconds(
   startMs: number,
   durationMs: number,
@@ -1310,6 +1316,22 @@ function assertFiniteNonNegativeIntegerMilliseconds(
   }
 }
 
+function assertNullableDurationMilliseconds(
+  value: unknown,
+  field: string,
+): asserts value is number | null {
+  if (
+    value !== null &&
+    (!isFiniteNumber(value) || !Number.isSafeInteger(value) || value < 0)
+  ) {
+    throw new ProjectValidationError(
+      field +
+        " must be null or a non-negative integer number of milliseconds.",
+    );
+  }
+}
+
+
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
@@ -1353,7 +1375,7 @@ function assertIsoTimestamp(value: unknown, field: string): asserts value is str
   assertNonEmptyString(value, field);
 
   if (
-    !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/.test(value) ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) ||
     Number.isNaN(Date.parse(value))
   ) {
     throw new ProjectValidationError(
@@ -1375,22 +1397,6 @@ function assertPositiveEvenInteger(
   ) {
     throw new ProjectValidationError(
       `${field} must be a positive even integer.`,
-    );
-  }
-}
-
-function assertPositiveInteger(
-  value: unknown,
-  field: string,
-): asserts value is number {
-  if (
-    typeof value !== "number" ||
-    !Number.isFinite(value) ||
-    !Number.isInteger(value) ||
-    value <= 0
-  ) {
-    throw new ProjectValidationError(
-      `${field} must be a positive integer.`,
     );
   }
 }

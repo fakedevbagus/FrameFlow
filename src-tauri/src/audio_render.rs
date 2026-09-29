@@ -22,6 +22,7 @@ const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUT_PATH_BYTES: usize = 4096;
+const MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES: usize = 256 * 1024;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1179,6 +1180,12 @@ fn validate_video_audio_mix_request(
     return Err("Native video/audio mix requires an audio filter graph.".to_string());
   }
 
+  if request.audio_filter_complex.len() > MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES {
+    return Err(format!(
+      "Native video/audio mix supports at most {MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES} bytes in the audio filter graph."
+    ));
+  }
+
   if request.audio_map != "[aout]" {
     return Err("Native video/audio mix requires the [aout] audio map.".to_string());
   }
@@ -1535,6 +1542,18 @@ mod tests {
     NativeSourceAudioSegment, NativeSourceAudioVolumeKeyframe,
     NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
+    MAX_NATIVE_AUDIO_GRAPH_INPUTS,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS,
+    MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUT_PATH_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS,
   };
   use std::path::{Path, PathBuf};
 
@@ -1687,7 +1706,7 @@ mod tests {
       .expect_err("changed legacy video/audio sources must invalidate the render");
 
     assert!(error.contains("Unified AV source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -1750,6 +1769,39 @@ mod tests {
         )
       )],
       audio_filter_complex: "anullsrc=r=48000:cl=stereo[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    assert!(validate_video_audio_mix_request(&request).is_ok());
+  }
+
+  #[test]
+  fn rejects_video_audio_mix_audio_filter_above_size_limit() {
+    let request = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      audio_filter_complex: "a".repeat(
+        MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES + 1
+      ),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    let error = validate_video_audio_mix_request(&request)
+      .expect_err("video/audio mix filter graphs above the configured limit must be rejected");
+
+    assert!(error.contains("supports at most 262144 bytes in the audio filter graph"));
+  }
+
+  #[test]
+  fn accepts_video_audio_mix_audio_filter_at_size_limit() {
+    let request = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      audio_filter_complex: "a".repeat(MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES),
       audio_map: "[aout]".to_string(),
       duration_ms: 5_000,
       output_path: "/tmp/final.mp4".to_string(),
@@ -1831,7 +1883,7 @@ mod tests {
       .expect_err("changed audio graph sources must invalidate the render");
 
     assert!(error.contains("Unified AV source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -1863,7 +1915,7 @@ mod tests {
       .expect_err("changed unified AV sources must invalidate the render");
 
     assert!(error.contains("Unified AV source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -2808,7 +2860,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume='0.65*if(lt(t,2),1+(-0.6)*((t-0)/2),0.4)':eval=frame,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume='0.65*if(lt(t,2.000),1+(-0.6)*((t-0.000)/2.000),0.4)':eval=frame,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
     ));
     assert!(filter.contains("[frameflow_explicit_audio]"));
     assert!(filter.contains(
@@ -2994,7 +3046,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "volume=0.85,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,equalizer=f=120:t=q:w=0.8:g=2,equalizer=f=1000:t=q:w=1:g=-1,equalizer=f=8000:t=q:w=0.8:g=3,acompressor=threshold=0.125893:ratio=6:attack=10:release=300,afade=t=in:st=0:d=0.5,adelay=250:all=1[frameflow_source_audio_0]"
+      "volume=0.85,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,equalizer=f=120:t=q:w=0.8:g=2,equalizer=f=1000:t=q:w=1:g=-1,equalizer=f=8000:t=q:w=0.8:g=3,acompressor=threshold=0.125893:ratio=6:attack=10:release=300,afade=t=in:st=0:d=0.500,adelay=250:all=1[frameflow_source_audio_0]"
     ));
   }
 
@@ -3045,7 +3097,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0:end=4,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=1,afade=t=in:st=0:d=0.5,afade=t=out:st=3:d=1,adelay=250:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.000:end=4.000,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=1,afade=t=in:st=0:d=0.500,afade=t=out:st=3.000:d=1.000,adelay=250:all=1[frameflow_source_audio_0]"
     ));
   }
 
@@ -3099,7 +3151,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "volume='0.75*if(lt(t,2),0.2+(0.6)*((t-0)/2),0.8)':eval=frame"
+      "volume='0.75*if(lt(t,2.000),0.2+(0.6)*((t-0.000)/2.000),0.8)':eval=frame"
     ));
     assert!(filter.contains("[frameflow_source_audio_0]"));
     assert!(filter.contains(

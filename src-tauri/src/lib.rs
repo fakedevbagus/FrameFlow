@@ -218,8 +218,6 @@ fn render_single_source_to_mp4(
 
   let source_identity_snapshot = audio_render::source_identity(&source_path)?;
 
-  let source_identity_snapshot = audio_render::source_identity(&source_path)?;
-
   let args = build_ffmpeg_export_args(
     &source_path,
     &output_path,
@@ -545,6 +543,10 @@ fn read_project_content<R: Read>(reader: &mut R) -> Result<String, String> {
     .read_to_string(&mut content)
     .map_err(|error| format!("Could not read project file: {error}"))?;
 
+  if content.as_bytes().len() as u64 > MAX_PROJECT_FILE_BYTES {
+    return Err("Project file is too large; maximum supported size is 16 MiB.".to_string());
+  }
+
   Ok(content)
 }
 
@@ -556,6 +558,7 @@ fn validate_project_save_content(content: &str) -> Result<(), String> {
   Ok(())
 }
 
+#[tauri::command]
 fn save_project(path: String, content: String) -> Result<(), String> {
   let project_path = project_path(&path)?;
 
@@ -1656,7 +1659,7 @@ fn probe_duration_from_audio_packets(path: &Path) -> Result<Option<u64>, String>
     .stdout
     .take()
     .ok_or_else(|| "ffprobe packet output could not be opened.".to_string())?;
-  let stderr = child
+  let mut stderr = child
     .stderr
     .take()
     .ok_or_else(|| "ffprobe error output could not be opened.".to_string())?;
@@ -2035,8 +2038,13 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-  use super::{media_type, parse_duration_ms, preview_cache_key, temporary_path};
-  use std::path::Path;
+  use super::{
+    audio_render, media_type, parse_duration_ms, preview_cache_key, temporary_path,
+  };
+  use std::{
+    collections::HashMap,
+    path::Path,
+  };
 
   #[test]
   fn rejects_project_save_content_above_size_limit() {
@@ -2146,7 +2154,7 @@ mod tests {
     let error = super::validate_single_source_identity_snapshot(&path, &snapshot)
       .expect_err("changed single-source media must invalidate the export");
     assert!(error.contains("Native export source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(&path).unwrap();
     let error = super::validate_single_source_identity_snapshot(&path, &snapshot)
@@ -2188,7 +2196,7 @@ mod tests {
     let mut child = Command::new("sh")
       .args([
         "-c",
-        "i=0; while [ $i -lt 100000 ]; do printf '1.000000,0.010000\\n'; i=$((i + 1)); done",
+        r#"i=1; while [ $i -le 100000 ]; do printf '%d.000000,0.010000\n' "$i"; i=$((i + 1)); done"#,
       ])
       .stdout(Stdio::piped())
       .stderr(Stdio::null())
@@ -2200,7 +2208,7 @@ mod tests {
     let status = child.wait().unwrap();
 
     assert!(status.success());
-    assert_eq!(duration_ms, Some(9_999_010));
+    assert_eq!(duration_ms, Some(100_000_010));
   }
 
   #[test]
@@ -2320,7 +2328,7 @@ mod tests {
     let error = super::validate_video_graph_source_identity_snapshot(&snapshot)
       .expect_err("changed video graph sources must invalidate the render");
     assert!(error.contains("Video graph source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -2558,7 +2566,7 @@ mod tests {
     let error = super::validate_video_segments_source_identity_snapshot(&snapshot)
       .expect_err("changed multi-segment sources must invalidate the render");
     assert!(error.contains("Multi-segment source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -2566,14 +2574,13 @@ mod tests {
   #[test]
   fn rejects_native_video_segments_above_count_limit() {
     let request = super::NativeVideoSegmentsRenderRequest {
-      segments: vec![
-        super::NativeVideoSegment {
+      segments: (0..super::MAX_NATIVE_VIDEO_SEGMENTS + 1)
+        .map(|_| super::NativeVideoSegment {
           source_path: None,
           source_start_ms: None,
           duration_ms: 1,
-        };
-        super::MAX_NATIVE_VIDEO_SEGMENTS + 1
-      ],
+        })
+        .collect(),
       output_path: "/tmp/output.mp4".to_string(),
       width: 1280,
       height: 720,
@@ -2590,14 +2597,13 @@ mod tests {
   #[test]
   fn accepts_native_video_segments_at_count_limit() {
     let request = super::NativeVideoSegmentsRenderRequest {
-      segments: vec![
-        super::NativeVideoSegment {
+      segments: (0..super::MAX_NATIVE_VIDEO_SEGMENTS)
+        .map(|_| super::NativeVideoSegment {
           source_path: None,
           source_start_ms: None,
           duration_ms: 1,
-        };
-        super::MAX_NATIVE_VIDEO_SEGMENTS
-      ],
+        })
+        .collect(),
       output_path: "/tmp/output.mp4".to_string(),
       width: 1280,
       height: 720,

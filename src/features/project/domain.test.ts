@@ -1199,21 +1199,21 @@ describe("project domain", () => {
     );
   });
 
-  it("rejects a persisted transition when its derived endpoint is unsafe", () => {
-    const project = createProject({ id: "timeline-unsafe-transition-endpoint" });
+  it("accepts a persisted transition whose derived endpoint reaches the maximum safe integer", () => {
+    const project = createProject({ id: "timeline-safe-transition-endpoint" });
     const firstAsset = {
       id: "video-transition-first",
       name: "First",
       mediaType: "video" as const,
       sourcePath: "/tmp/transition-first.mp4",
-      durationMs: 2,
+      durationMs: 50,
     };
     const secondAsset = {
       id: "video-transition-second",
       name: "Second",
       mediaType: "video" as const,
       sourcePath: "/tmp/transition-second.mp4",
-      durationMs: 1,
+      durationMs: 50,
     };
     const persistedProject = {
       ...project,
@@ -1226,12 +1226,12 @@ describe("project domain", () => {
                 {
                   id: "clip-transition-first",
                   assetId: firstAsset.id,
-                  timelineStartMs: Number.MAX_SAFE_INTEGER - 1,
+                  timelineStartMs: Number.MAX_SAFE_INTEGER - 50,
                   sourceStartMs: 0,
-                  sourceEndMs: 2,
+                  sourceEndMs: 50,
                   transitionOut: {
                     type: "dissolve" as const,
-                    durationMs: 1,
+                    durationMs: 50,
                   },
                 },
                 {
@@ -1239,7 +1239,7 @@ describe("project domain", () => {
                   assetId: secondAsset.id,
                   timelineStartMs: Number.MAX_SAFE_INTEGER,
                   sourceStartMs: 0,
-                  sourceEndMs: 1,
+                  sourceEndMs: 50,
                 },
               ],
             }
@@ -1247,8 +1247,8 @@ describe("project domain", () => {
       ),
     };
 
-    expect(() => parseProject(JSON.stringify(persistedProject))).toThrow(
-      "Clip 0.0 transition endpoint exceeds the supported safe millisecond range.",
+    expect(parseProject(JSON.stringify(persistedProject))).toEqual(
+      persistedProject,
     );
   });
 
@@ -1584,6 +1584,13 @@ describe("project domain", () => {
                     },
                   ],
                 },
+                {
+                  id: "clip-2",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 4000,
+                  sourceStartMs: 0,
+                  sourceEndMs: 1000,
+                },
               ],
             }
           : track,
@@ -1656,7 +1663,7 @@ describe("project domain", () => {
 
     expect(() =>
       parseProject(JSON.stringify(makeProject({
-        crop: { top: 0.7, right: 0.4, bottom: 0, left: 0 },
+        crop: { top: 0.7, right: 0.4, bottom: 0.4, left: 0 },
       }))),
     ).toThrow("crop must leave a positive visible region.");
 
@@ -2080,6 +2087,39 @@ describe("project domain", () => {
   });
 
   it("rejects transform keyframes without a persisted transform payload", () => {
+    const project = createProject({
+      id: "missing-transform-keyframe-payload",
+      now: new Date("2026-09-29T00:00:00.000Z"),
+    });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const makeProject = (changes: Record<string, unknown>) => ({
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  ...changes,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
     const missingTransform = makeProject({
       transformKeyframes: [{ timeMs: 1000 } as never],
     });
@@ -2258,7 +2298,7 @@ describe("project domain", () => {
       };
 
       expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
-        `Canvas ${dimension} must be a positive integer.`,
+        `Canvas ${dimension} must be a positive even integer.`,
       );
     }
   });

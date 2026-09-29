@@ -176,7 +176,6 @@ function renderVideoOnlyPlanToMp4(
   const videoSegments = plan.segments.filter(
     (segment) => segment.trackType === "video",
   );
-  const graph = compileVideoTracksGraph(plan);
   const requiresVideoGraph = videoSegments.some((segment) => {
     const transform = getClipTransform(segment.transform);
 
@@ -233,6 +232,8 @@ function renderVideoOnlyPlanToMp4(
       ? renderSingleSourceToMp4(request, jobId)
       : renderSingleSourceToMp4(request);
   }
+
+  const graph = compileVideoTracksGraph(plan);
 
   const videoTrackIds = new Set(videoSegments.map((segment) => segment.trackId));
 

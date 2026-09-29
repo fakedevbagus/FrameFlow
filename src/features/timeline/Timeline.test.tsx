@@ -4,6 +4,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -820,7 +821,8 @@ describe("Timeline", () => {
 
     render(<Timeline project={populated} />);
 
-    const waveform = await screen.findByTestId("timeline-audio-waveform");
+    const clip = screen.getByRole("button", { name: "Select waveform.mp3 clip" });
+    const waveform = await within(clip).findByTestId("timeline-audio-waveform");
 
     expect(waveform).toBeInTheDocument();
     expect(waveform).toHaveAttribute("viewBox", "0 0 512 20");
@@ -895,7 +897,8 @@ describe("Timeline", () => {
       />,
     );
 
-    const waveform = await screen.findByTestId("timeline-audio-waveform");
+    const clip = screen.getByRole("button", { name: "Select waveform-seek.mp3 clip" });
+    const waveform = await within(clip).findByTestId("timeline-audio-waveform");
 
     vi.spyOn(waveform, "getBoundingClientRect").mockReturnValue({
       left: 10,
@@ -962,7 +965,8 @@ describe("Timeline", () => {
       />,
     );
 
-    const waveform = await screen.findByTestId("timeline-audio-waveform");
+    const clip = screen.getByRole("button", { name: "Select waveform-selection.mp3 clip" });
+    const waveform = await within(clip).findByTestId("timeline-audio-waveform");
 
     vi.spyOn(waveform, "getBoundingClientRect").mockReturnValue({
       left: 10,

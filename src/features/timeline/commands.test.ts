@@ -744,7 +744,7 @@ describe("clip transforms", () => {
     expect(project.tracks[0].clips[0].transformKeyframes?.map((keyframe) => keyframe.timeMs))
       .toEqual([1000]);
 
-    project = updateTransformKeyframeEasing(project, clipId, 1000.6, "ease-in");
+    project = updateTransformKeyframeEasing(project, clipId, 1000.4, "ease-in");
     expect(project.tracks[0].clips[0].transformKeyframes?.[0]).toMatchObject({
       timeMs: 1000,
       easing: "ease-in",
@@ -934,7 +934,7 @@ describe("updateAudioClipCompressor", () => {
     project = {
       ...project,
       assets: [{
-        id: "video", name: "clip.mp4", mediaType: "video", sourcePath: "/clip.mp4", durationMs: 5000,
+        id: "video", name: "clip.mp4", mediaType: "image", sourcePath: "/clip.png", durationMs: 5000,
       }, {
         id: "audio", name: "voice.mp3", mediaType: "audio", sourcePath: "/voice.mp3", durationMs: 5000,
       }],
@@ -1203,7 +1203,7 @@ describe("updateAudioClipFades", () => {
 
     expect(() =>
       updateAudioClipFades(populated, clipId, -1, 0),
-    ).toThrow("non-negative integers");
+    ).toThrow("Audio fade durations must be non-negative safe integers.");
     expect(() =>
       updateAudioClipFades(populated, clipId, 3000, 2500),
     ).toThrow("cannot overlap");
@@ -1233,7 +1233,7 @@ describe("updateAudioClipFades", () => {
         Number.MAX_SAFE_INTEGER,
         1,
       ),
-    ).toThrow("safe integers");
+    ).toThrow("Audio fade total exceeds the supported safe millisecond range.");
 
     expect(() =>
       updateAudioClipFades(
@@ -1251,7 +1251,9 @@ describe("updateAudioClipFades", () => {
         Number.MAX_SAFE_INTEGER,
         1,
       ),
-    ).toThrow("safe integers");
+    ).toThrow(
+      "Audio fade total exceeds the supported safe millisecond range.",
+    );
   });
 
   it("updates audio fades for a video clip with embedded source audio", () => {
@@ -1404,9 +1406,9 @@ describe("updateAudioClipEq", () => {
     const project = createProject({ id: "audio-eq-errors" });
     project.assets.push({
       id: "video",
-      name: "clip.mp4",
-      mediaType: "video",
-      sourcePath: "/clip.mp4",
+      name: "clip.png",
+      mediaType: "image",
+      sourcePath: "/clip.png",
       durationMs: 5000,
     });
 
@@ -1680,7 +1682,7 @@ describe("clip command time normalization", () => {
     populated.tracks[0].clips[0] = {
       ...clip,
       sourceStartMs: Number.MAX_SAFE_INTEGER,
-      sourceEndMs: Number.MAX_SAFE_INTEGER + 2,
+      sourceEndMs: Number.MAX_SAFE_INTEGER + 3,
     };
 
     expect(() =>
@@ -2403,6 +2405,7 @@ describe("timeline endpoint safety", () => {
     id: string,
     timelineStartMs: number,
     sourceEndMs: number,
+    assetDurationMs: number = sourceEndMs,
   ) {
     const project = createProject({ id });
     project.assets.push({
@@ -2410,7 +2413,7 @@ describe("timeline endpoint safety", () => {
       name: `${id}.mp4`,
       mediaType: "video",
       sourcePath: `/${id}.mp4`,
-      durationMs: sourceEndMs,
+      durationMs: assetDurationMs,
     });
     project.tracks[0].clips.push({
       id: `clip-${id}`,
@@ -2485,7 +2488,8 @@ describe("timeline endpoint safety", () => {
     const project = createProjectWithClip(
       "timeline-trim-end-overflow",
       maxSafeMs - 1,
-      1,
+      2,
+      2,
     );
     const clipId = project.tracks[0].clips[0].id;
 

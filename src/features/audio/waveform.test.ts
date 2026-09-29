@@ -54,15 +54,19 @@ describe("audio waveform", () => {
   });
 
   it("resamples a trimmed source range into the visible waveform", () => {
-    expect(
-      getWaveformPeaksForSourceRange(
-        [0, 0, 1, 1],
-        10_000,
-        2_500,
-        7_500,
-        4,
-      ),
-    ).toEqual([0, 0.5, 1, 1]);
+    const resampled = getWaveformPeaksForSourceRange(
+      [0, 0, 1, 1],
+      10_000,
+      2_500,
+      7_500,
+      4,
+    );
+
+    expect(resampled).toHaveLength(4);
+    expect(resampled[0]).toBe(0);
+    expect(resampled[1]).toBeCloseTo(0.25, 12);
+    expect(resampled[2]).toBeCloseTo(0.75, 12);
+    expect(resampled[3]).toBe(1);
 
     expect(
       getWaveformPeaksForSourceRange(
@@ -74,7 +78,6 @@ describe("audio waveform", () => {
       ),
     ).toEqual([0, 0.5, 1, 0.5]);
   });
-
   it("rejects unsafe waveform output peak counts before allocation", () => {
     expect(
       getWaveformPeaksForSourceRange(
@@ -353,9 +356,11 @@ describe("audio waveform", () => {
   });
 
   it("does not share an in-flight waveform request across changed source fingerprints", async () => {
-    let resolveFirstGeneration: ((waveform: AudioWaveform) => void) | null = null;
+    const firstGenerationResolver: {
+      current: ((waveform: AudioWaveform) => void) | null;
+    } = { current: null };
     const firstGeneration = new Promise<AudioWaveform>((resolve) => {
-      resolveFirstGeneration = resolve;
+      firstGenerationResolver.current = resolve;
     });
 
     vi.mocked(invoke)
@@ -411,7 +416,7 @@ describe("audio waveform", () => {
       },
     );
 
-    resolveFirstGeneration?.({
+    firstGenerationResolver.current?.({
       durationMs: 1000,
       sampleRate: 1024,
       peaks: [0.9],

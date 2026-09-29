@@ -1,6 +1,7 @@
 use std::{
   fs::{self, File},
   io::{self, Read, Seek, SeekFrom, Write},
+  os::unix::fs::MetadataExt,
   net::{TcpListener, TcpStream},
   path::{Path, PathBuf},
   sync::{
@@ -688,9 +689,10 @@ fn read_request(stream: &mut TcpStream) -> Result<String, MediaRequestError> {
     }
 
     if buffer.windows(4).any(|window| window == b"\r\n\r\n") {
-      return String::from_utf8(buffer).map_err(|_| MediaRequestError::InvalidUtf8 {
-        suppress_body: is_head_request(&buffer),
-      });
+      return String::from_utf8(buffer).map_err(|error| {
+      let suppress_body = error.as_bytes().starts_with(b"HEAD ");
+      MediaRequestError::InvalidUtf8 { suppress_body }
+    });
     }
   }
 }
@@ -852,6 +854,7 @@ fn write_media_path_error(
 fn extract_media_request(query: &str) -> Result<(&str, &str), &'static str> {
   let mut encoded_path = None;
   let mut token = None;
+  let mut has_unknown_parameter = false;
 
   for part in query.split('&') {
     if let Some(path) = part.strip_prefix("path=") {
@@ -872,11 +875,15 @@ fn extract_media_request(query: &str) -> Result<(&str, &str), &'static str> {
       continue;
     }
 
-    return Err("Unknown media server query parameter.");
+    has_unknown_parameter = true;
   }
 
   let encoded_path = encoded_path.ok_or("Missing media path.")?;
   let token = token.ok_or("Missing media server capability token.")?;
+
+  if has_unknown_parameter {
+    return Err("Unknown media server query parameter.");
+  }
 
   Ok((encoded_path, token))
 }
@@ -997,6 +1004,7 @@ mod tests {
     RangeResult,
   };
   use std::{
+    os::unix::fs::MetadataExt,
     path::Path,
     sync::{
       atomic::{AtomicUsize, Ordering},
@@ -1504,7 +1512,7 @@ mod tests {
       expected_body.len()
     )));
     assert!(response_text.ends_with("\r\n\r\n"));
-    assert!(!response_text.ends_with(&String::from_utf8_lossy(expected_body)));
+    assert!(!response_text.ends_with(String::from_utf8_lossy(expected_body).as_ref()));
 
     server.join().unwrap();
   }
@@ -1544,7 +1552,7 @@ mod tests {
   fn rejects_relative_media_paths_before_resolution() {
     let error = super::validate_media_path(Path::new("relative/file.mp4"))
       .expect_err("relative media paths must be rejected");
-    assert!(error.contains("Media path must be absolute"));
+    assert!(error.to_string().contains("Media path must be absolute"));
   }
 
   #[test]
@@ -1554,7 +1562,9 @@ mod tests {
 
     let error = super::validate_media_path(&path)
       .expect_err("unsupported file extensions must be rejected");
-    assert!(error.contains("Media file type is not supported"));
+    assert!(error
+      .to_string()
+      .contains("Media file type is not supported"));
 
     std::fs::remove_file(path).unwrap();
   }
