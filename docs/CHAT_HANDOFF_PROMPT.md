@@ -24,6 +24,10 @@ Implementation target:
 - Add exact-limit and over-limit regression coverage.
 - No project schema change.
 
+M3.207 validation correction:
+- Initial user validation reached 529/529 frontend tests and successful client build, but `cargo test` failed because the two new media-server boundary tests omitted `validate_media_path_length` from their local test-module imports.
+- Corrected the test import only; no production boundary or scope change.
+
 Validation:
 - Implementation complete.
 - Local validation pending user run.
