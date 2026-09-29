@@ -1,23 +1,27 @@
-### M3.204 — video path boundary fixture correction — 2026-09-30
+# M3.205 — Native Audio Graph Input Path Length Cap — active — 2026-09-30
 
-- Corrected the M3.204 exact-limit and over-limit video source path fixtures to include a `.mp4` extension.
-- The previous exact-limit fixture was rejected by the media-type validator because it had no extension, so it did not actually exercise the intended boundary acceptance path.
-- Production validation behavior was unchanged.
-- Commit: `b4a8c419533ca2164046459b9067ba95a58e40c6`.
-- Full validation remains pending.
-
-### M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — active — 2026-09-30
-
-- Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
-- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.video_source_path` had no maximum length validation.
-- Added a maximum of 4,096 bytes for the legacy video/audio mix video source path and reject oversized values before filesystem/media probing.
-- Preserved absolute-path, media-type, source identity, rendering, cleanup, and output behavior.
-- Added focused regression coverage at 4,096 and 4,097 bytes.
+- Branch: `fix/m3-205-native-audio-graph-input-path-cap`.
+- Fresh audit found `NativeAudioGraphRenderRequest.inputs` already bounded by count but not by individual path length.
+- Scope: reject native audio graph input paths above 4,096 bytes before filesystem probing.
+- Preserve existing absolute-path, existence, media-type, output-collision, FFmpeg argument, rendering, and cleanup behavior.
+- Add focused exact-limit and over-limit regression coverage.
 - No project schema change.
-- Implementation is complete; local validation is pending.
+- Implementation is pending local validation; do not infer test/build/lint/cargo success.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow; after PASS follow refresh → Ready for Review → squash merge → verify `main` → docs → fresh audit.
+- Run the complete Pull/Fetch + Validation workflow. After user PASS, follow refresh → Ready for Review → squash merge → verify `main` → docs → fresh audit.
+
+### M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
+- PR #221; squash-merged at `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full validation.
+- Added a 4,096-byte cap to the legacy video/audio mix primary video source path before filesystem/media probing.
+- Added exact-limit and over-limit regression coverage.
+- Corrected the exact-limit fixture to include `.mp4` while retaining the intended 4,096-byte boundary.
+- Validation reported: 529/529 frontend tests, successful lint/build, and 135/135 Rust tests.
+- Protected PR #76 and unrelated PR #22 remained untouched.
 
 ### M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — completed — 2026-09-30
 
