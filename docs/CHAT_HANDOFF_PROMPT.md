@@ -1,16 +1,26 @@
-## M3.179 — active — 2026-09-29
+## M3.180 — active — 2026-09-29
+
+- Branch: `fix/m3-180-export-stderr-memory-cap`.
+- Scope: prevent unbounded FFmpeg stderr retention in the export process while continuing to drain stderr concurrently.
+- Fresh audit from verified `main` found `export_process::run_ffmpeg_with_progress()` drains stderr on a dedicated thread but retains the entire stderr stream in an unbounded `Vec<u8>`.
+- Preserve concurrent pipe draining so FFmpeg cannot deadlock on stderr backpressure, but retain only a bounded diagnostic excerpt.
+- Add focused regression coverage proving large stderr output is fully drained while retained diagnostic memory stays bounded.
+- Preserve current FFmpeg progress, cancellation, failure-detail, and export behavior.
+- Implementation is not started yet.
+- No PR yet.
+- Local validation is not applicable yet.
+
+## M3.179 — completed — 2026-09-29
 
 - Branch: `fix/m3-179-media-file-open-toctou`.
-- Draft PR #194 created; validation is pending.
-- Scope: prevent media-server pathname replacement between canonical/allowlist validation and file open.
-- Fresh audit found `handle_connection()` validating a canonical media path and later reopening the pathname; a local replacement with an outside symlink could redirect the later `File::open`.
-- Capture the validated file device/inode identity before open.
-- Open the path once and reject the open if the file's device/inode differs from the captured identity.
-- Reuse the verified `File` handle for full and Range streaming.
-- Add focused regression coverage for a validated-file replacement with a symlink.
-- Preserve existing media HTTP, capability-token, canonical-path, allowlist, media-type, Range, and HEAD behavior.
-- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- PR #194; squash-merged at `709c57fbf081d165dcf00474d685a50f2bf128d3`.
+- User reported `continue`, treated as PASS under the established workflow.
+- Closed the validation-to-open pathname race using device/inode identity verification and one verified file handle for full/Range streaming.
+- Added focused regression coverage for replacement by symlink before open.
 - No project schema version change.
+- PR head `c88e39f402a2cae0a08d5e499551b644aa6592db` was verified before merge.
+- `main` was verified at `709c57fbf081d165dcf00474d685a50f2bf128d3`.
+
 
 ## M3.178 — completed — 2026-09-28
 
