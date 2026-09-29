@@ -1,3 +1,8 @@
+
+- Follow-up Rust validation reduced the remaining suite to 1 failure: `tests::streams_large_ffprobe_packet_output_without_retaining_the_whole_stream`. The production parser correctly computes the maximum packet end timestamp, but the test fixture still emitted 100,000 identical timestamps while asserting an increasing-stream result.
+- Corrected that test-only fixture to emit monotonically increasing packet timestamps from 1 through 100,000 seconds while retaining 0.010-second packet durations. This validates large streamed ffprobe input without changing production duration semantics.
+- Fix commit: `456ef4ddb3a804bb19cca87a3357ccd6713a66ba`.
+- The uploaded validation showed 132/133 Rust tests before this fixture correction; full validation remains pending and no PASS is inferred.
 ## M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — active — 2026-09-29
 
 Branch:
