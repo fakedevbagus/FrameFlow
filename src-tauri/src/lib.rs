@@ -2196,7 +2196,7 @@ mod tests {
     let mut child = Command::new("sh")
       .args([
         "-c",
-        "i=0; while [ $i -lt 100000 ]; do printf '1.000000,0.010000\\n'; i=$((i + 1)); done",
+        "i=1; while [ $i -le 100000 ]; do printf '%d.000000,0.010000\\n' "$i"; i=$((i + 1)); done",
       ])
       .stdout(Stdio::piped())
       .stderr(Stdio::null())
