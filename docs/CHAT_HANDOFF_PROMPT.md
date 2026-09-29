@@ -1,3 +1,6 @@
+- Latest validation passed frontend tests at 529/529 and completed the Vite build, but Rust compilation failed because the corrected ffprobe fixture used unescaped shell quotes inside a normal Rust string literal.
+- Replaced that fixture command with a Rust raw string in commit ed8c84178b688cb23fe64e1c69f67b53e61edc3b; production behavior is unchanged.
+- Re-run the complete Pull/Fetch + Validation workflow from the latest branch head before declaring PASS or merging PR #220.
 - Latest validation reached 132/133 Rust tests with exactly one remaining failure: the large ffprobe packet-stream fixture still emitted repeated timestamps despite an increasing-stream assertion.
 - Corrected the test fixture to emit monotonically increasing timestamps from 1 through 100,000 seconds; production parser behavior was unchanged.
 - Fix commit: `456ef4ddb3a804bb19cca87a3357ccd6713a66ba`.
