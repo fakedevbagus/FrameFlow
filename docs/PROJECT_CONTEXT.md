@@ -22,6 +22,9 @@ Implementation:
 - Replaced the synchronous waveform-selection reset effect in `src/features/timeline/Timeline.tsx` with derived selection validity keyed to the current clip source/range context.
 - Synchronized stale regression tests with current production contracts for waveform interpolation, deferred M3.36 mute policy, preview audio gain interpolation, transform-keyframe time normalization, audio EQ/compressor routing, audio fade error messages, and safe timeline/source boundaries.
 - Preserved existing runtime behavior; tests were changed where their expectations no longer matched the documented/current implementation.
+- Latest local validation: `npm ci` completed with 0 vulnerabilities; `npm run lint` passed; `npm run test` reached 528/529 passing with one boundary-fixture failure in `domain.test.ts` where the first clip started at MAX_SAFE_INTEGER - 49 and therefore ended one millisecond beyond the safe range.
+- Corrected that test fixture to start at MAX_SAFE_INTEGER - 50 so its derived transition endpoint reaches exactly MAX_SAFE_INTEGER; commit `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
+- Full validation is pending again after this fixture-only correction; do not infer test/build/cargo/manual success.
 
 Validation:
 - `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
