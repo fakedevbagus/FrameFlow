@@ -1,14 +1,26 @@
-## M3.188 — active — 2026-09-29
+## M3.189 — active — 2026-09-29
 
-- Branch: `fix/m3-188-multi-segment-count-cap`.
-- Scope: cap the number of native multi-segment render segments in one request.
-- Fresh audit found `NativeVideoSegmentsRenderRequest.segments` had no maximum count.
-- Reject requests above 4,096 segments before source probing or temporary render directory creation.
-- Preserve existing positive-duration, source-type, path, range, rendering order, audio, and concat behavior.
+- Branch: `fix/m3-189-video-graph-input-count-cap`.
+- Scope: cap the number of native video graph inputs in one request.
+- Fresh audit found `NativeVideoGraphRenderRequest.inputs` had no maximum count.
+- Reject requests above 256 inputs before media-path probing or source-identity snapshot work.
+- Preserve existing graph validation and render behavior.
 - Added focused regression coverage at the exact limit and one above it.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.188 — completed — 2026-09-29
+
+- Branch: `fix/m3-188-multi-segment-count-cap`.
+- PR #203; squash-merged at `d4ff7b13e23a13ab540aa9a4444be4a618dc4bb4`.
+- User reported PASS.
+- PR head `c380b209ef79acf53c9afd39686fbe3cedd50609` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 native multi-segment render inputs and reject oversized requests before probing/temp-directory creation.
+- Preserved existing segment validation, rendering order, audio, concat, and cleanup behavior.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
 
 ## M3.187 — completed — 2026-09-29
 
@@ -25,7 +37,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.188 is the active milestone.
+- M3.189 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
