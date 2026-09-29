@@ -39,9 +39,6 @@ PR:
 Base SHA:
 `de501ffed1c464e5c5075c2f55d43a9506d33295`
 
-Current PR head:
-`1fca5ece13332db6b059eb8ffe75aa7b4af086dd`
-
 Fresh audit finding:
 - `NativeVideoWithAudioGraphRenderRequest.audio_inputs` had no maximum count validation.
 - The render command iterates over every supplied audio input after metadata validation, so an oversized request could trigger unbounded path/media validation, source-identity capture, and FFmpeg input/graph construction work.
