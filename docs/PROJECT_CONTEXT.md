@@ -1,3 +1,29 @@
+## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — active — 2026-09-30
+
+Branch:
+`fix/m3-204-video-audio-mix-video-input-path-cap`
+
+Fresh audit finding:
+- `NativeVideoWithAudioGraphRenderRequest.video_source_path` had no maximum length validation.
+- Legacy audio input paths and the audio filter graph were already bounded, but the primary video source path could still carry an oversized request string into path/media probing.
+
+Scope:
+- Cap legacy video/audio mix `video_source_path` at 4,096 bytes.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES = 4096`.
+- Reject oversized video source paths during metadata validation before filesystem/media probing.
+- Preserve existing absolute-path, media-type, source identity, rendering, cleanup, and output behavior.
+- Added focused regression coverage at 4,096 and 4,097 bytes.
+- No project schema change.
+
+Validation:
+- Implementation is complete.
+- Local validation is pending; do not infer lint/test/build/cargo/manual success until the user reports it.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow. After user PASS, refresh PR state and merge using the standard workflow.
+
 ## M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — completed — 2026-09-30
 
 Branch:
