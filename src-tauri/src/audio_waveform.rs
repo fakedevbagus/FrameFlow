@@ -14,6 +14,9 @@ const MAX_PEAK_COUNT: usize = 2048;
 const MIN_SAMPLE_RATE: u32 = 1000;
 const MAX_SAMPLE_RATE: u32 = 8000;
 const SAMPLES_PER_PEAK: u32 = 8;
+const MAX_WAVEFORM_FFMPEG_STDERR_BYTES: usize = 64 * 1024;
+const WAVEFORM_FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
+  b"\n[FFmpeg waveform stderr truncated by FrameFlow]\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -84,8 +87,35 @@ fn spawn_stderr_reader(child: &mut Child) -> Result<std::thread::JoinHandle<Vec<
     .ok_or_else(|| "FFmpeg waveform error output could not be opened.".to_string())?;
 
   Ok(std::thread::spawn(move || {
-    let mut output = Vec::new();
-    let _ = stderr.read_to_end(&mut output);
+    let mut output = Vec::with_capacity(MAX_WAVEFORM_FFMPEG_STDERR_BYTES.min(8 * 1024));
+    let retain_limit =
+      MAX_WAVEFORM_FFMPEG_STDERR_BYTES.saturating_sub(WAVEFORM_FFMPEG_STDERR_TRUNCATION_NOTICE.len());
+    let mut buffer = [0_u8; 8192];
+    let mut truncated = false;
+
+    loop {
+      match stderr.read(&mut buffer) {
+        Ok(0) | Err(_) => break,
+        Ok(read) => {
+          if output.len() < retain_limit {
+            let remaining = retain_limit - output.len();
+            let copied = read.min(remaining);
+            output.extend_from_slice(&buffer[..copied]);
+
+            if copied < read {
+              truncated = true;
+            }
+          } else {
+            truncated = true;
+          }
+        }
+      }
+    }
+
+    if truncated {
+      output.extend_from_slice(WAVEFORM_FFMPEG_STDERR_TRUNCATION_NOTICE);
+    }
+
     output
   }))
 }
@@ -445,7 +475,8 @@ mod tests {
     let stderr_output = stderr_reader.join().unwrap();
 
     assert!(status.success());
-    assert!(stderr_output.len() > 64 * 1024);
+    assert!(stderr_output.len() <= MAX_WAVEFORM_FFMPEG_STDERR_BYTES);
+    assert!(stderr_output.ends_with(WAVEFORM_FFMPEG_STDERR_TRUNCATION_NOTICE));
   }
 
   #[test]

@@ -1,15 +1,34 @@
-## M3.183 — active — 2026-09-29
+## M3.184 — active — 2026-09-29
 
-- Branch: `fix/m3-183-ffmpeg-duration-probe-stream`.
-- Scope: prevent unbounded FFmpeg duration-probe output retention.
-- Fresh audit found `probe_duration_with_ffmpeg()` using `Command::output()`, buffering complete progress stdout and stderr.
-- Stream progress stdout incrementally through a reusable line buffer and keep only the latest `out_time_ms=` value.
-- Drain stderr concurrently and retain at most 64 KiB of duration-probe diagnostics with an explicit truncation notice.
-- Preserve the existing `Duration:`-from-stderr preference, progress fallback, FFmpeg arguments, and duration fallback order.
-- Added focused regression coverage using large progress output.
+- Branch: `fix/m3-184-waveform-stderr-memory-cap`.
+- Scope: prevent unbounded retained FFmpeg stderr during audio waveform generation.
+- Fresh audit found `audio_waveform::spawn_stderr_reader()` using `read_to_end(&mut Vec<u8>)`, retaining complete stderr in memory.
+- Continue draining stderr concurrently, but retain at most 64 KiB with an explicit truncation notice.
+- Preserve waveform decoding, peak reduction, normalization, failure handling, process liveness, and FFmpeg arguments.
+- Updated the existing large-stderr regression to assert the bound and marker.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.183 — completed — 2026-09-29
+
+- Branch: `fix/m3-183-ffmpeg-duration-probe-stream`.
+- PR #198; squash-merged at `3803e4d13d1ea6a220cd7b5d6cde6c35c707e270`.
+- User reported PASS.
+- PR head `d1e563df0c140f5041d955d97fb3d685b91e396e` was verified before merge.
+- `main` was verified at the merge SHA.
+- Streamed FFmpeg duration-probe progress stdout incrementally and retained only the latest progress timestamp.
+- Drained stderr concurrently with a bounded 64 KiB retained diagnostic buffer.
+- Preserved duration parsing preference, progress fallback, FFmpeg arguments, and fallback order.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.184 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.182 — completed — 2026-09-29
 
