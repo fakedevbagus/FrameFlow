@@ -28,6 +28,10 @@ Implementation:
 - The next validation run produced 529/529 passing tests and a clean lint, then `npm run build` exposed three TypeScript errors: the deferred waveform test resolver narrowed to `never`, an unsafe `Record<string, unknown>` to `MediaAsset` cast, and `track.type` remaining `unknown` when passed to audio-field validation.
 - Fixed those type-level issues without changing validation policy: construct a validated `MediaAsset`, add an `assertTrackType()` assertion, and use an object holder for the deferred waveform resolver.
 - Full validation remains pending after commits `59cb1f15f1dc9e1962668fb5af7ea9b51ef06f99` and `f0937b492e7feb40fa5c877e4b8b9dcc8f86ec2e`.
+- The next validation run exposed two project-domain regression assertions after the TypeScript fixes: the new nullable-duration helper changed the established asset-duration error wording.
+- Restored the existing `null or a non-negative integer number of milliseconds` error contract with dedicated nullable-duration type narrowing; no validation rule was weakened.
+- Latest fix commit: `9b91f3f86f42aeb9be1e1aa2e7fddad46ae590cc`.
+- Full validation remains pending again.
 
 Validation:
 - `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
