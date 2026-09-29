@@ -1,14 +1,26 @@
-## M3.193 — active — 2026-09-29
+## M3.194 — active — 2026-09-29
 
-- Branch: `fix/m3-193-unified-av-video-input-count-cap`.
-- Scope: cap the number of unified AV graph video inputs in one request.
-- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_inputs` had no maximum count.
-- Reject requests above 256 video inputs before filesystem/media probing or source-identity work.
+- Branch: `fix/m3-194-unified-av-audio-input-count-cap`.
+- Scope: cap the number of unified AV graph audio inputs in one request.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.audio_inputs` had no maximum count.
+- Reject requests above 256 audio inputs before filesystem/media probing or source-identity work.
 - Preserve existing unified AV graph validation/render behavior.
 - Added focused regression coverage at the exact limit and one above it.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.193 — completed — 2026-09-29
+
+- Branch: `fix/m3-193-unified-av-video-input-count-cap`.
+- PR #208; squash-merged at `9fe64afb4e9169800d734ce755b198a3c7ade10c`.
+- User reported PASS.
+- PR head `a2f37774d0fbb41a36b87244b9ddc8fa0d44210a` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 unified AV graph video inputs and rejected oversized requests before filesystem probing.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
 
 ## M3.192 — completed — 2026-09-29
 
