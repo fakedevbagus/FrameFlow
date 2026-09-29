@@ -7,8 +7,10 @@ use std::{
   collections::HashMap,
   fs,
   os::unix::fs::MetadataExt,
+  io::{BufRead, BufReader},
   path::{Path, PathBuf},
-  process::Command,
+  process::{Command, Stdio},
+  thread,
   sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -1410,25 +1412,79 @@ fn run_ffprobe(path: &Path, args: &[&str]) -> Result<std::process::Output, Strin
 }
 
 fn probe_duration_from_audio_packets(path: &Path) -> Result<Option<u64>, String> {
-  let output = run_ffprobe(
-    path,
-    &[
+  let mut child = Command::new("ffprobe")
+    .args(["-v", "error"])
+    .args([
       "-select_streams",
       "a:0",
       "-show_entries",
       "packet=pts_time,duration_time",
       "-of",
       "csv=p=0",
-    ],
-  )?;
+    ])
+    .arg(path)
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
+    .spawn()
+    .map_err(|error| format!("Could not run ffprobe: {error}"))?;
 
-  if !output.status.success() {
+  let stdout = child
+    .stdout
+    .take()
+    .ok_or_else(|| "ffprobe packet output could not be opened.".to_string())?;
+  let stderr = child
+    .stderr
+    .take()
+    .ok_or_else(|| "ffprobe error output could not be opened.".to_string())?;
+
+  let stderr_reader = thread::spawn(move || {
+    let mut buffer = [0_u8; 8192];
+
+    loop {
+      match stderr.read(&mut buffer) {
+        Ok(0) | Err(_) => break,
+        Ok(_) => {}
+      }
+    }
+  });
+
+  let latest_end_ms = parse_audio_packet_duration_stream(BufReader::new(stdout));
+
+  let status = match child.wait() {
+    Ok(status) => status,
+    Err(error) => {
+      let _ = child.kill();
+      let _ = stderr_reader.join();
+      return Err(format!("Could not finish ffprobe: {error}"));
+    }
+  };
+
+  let _ = stderr_reader.join();
+
+  if !status.success() {
     return Ok(None);
   }
 
-  let mut latest_end_ms = None;
+  Ok(latest_end_ms)
+}
 
-  for line in String::from_utf8_lossy(&output.stdout).lines() {
+fn parse_audio_packet_duration_stream<R: BufRead>(reader: R) -> Option<u64> {
+  let mut latest_end_ms = None;
+  let mut line = String::new();
+  let mut reader = reader;
+
+  loop {
+    line.clear();
+
+    let read = match reader.read_line(&mut line) {
+      Ok(read) => read,
+      Err(_) => break,
+    };
+
+    if read == 0 {
+      break;
+    }
+
     let mut values = line.split(',').map(str::trim);
     let Some(pts_text) = values.next() else {
       continue;
@@ -1456,7 +1512,7 @@ fn probe_duration_from_audio_packets(path: &Path) -> Result<Option<u64>, String>
     }
   }
 
-  Ok(latest_end_ms)
+  latest_end_ms
 }
 
 fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
@@ -1773,6 +1829,31 @@ mod tests {
       .expect_err("removed single-source media must invalidate the export");
     assert!(error.contains("Native export source changed or became unavailable"));
 
+  }
+
+  #[test]
+  fn streams_large_ffprobe_packet_output_without_retaining_the_whole_stream() {
+    use std::{
+      io::BufReader,
+      process::{Command, Stdio},
+    };
+
+    let mut child = Command::new("sh")
+      .args([
+        "-c",
+        "i=0; while [ $i -lt 100000 ]; do printf '1.000000,0.010000\\n'; i=$((i + 1)); done",
+      ])
+      .stdout(Stdio::piped())
+      .stderr(Stdio::null())
+      .spawn()
+      .unwrap();
+
+    let stdout = child.stdout.take().unwrap();
+    let duration_ms = super::parse_audio_packet_duration_stream(BufReader::new(stdout));
+    let status = child.wait().unwrap();
+
+    assert!(status.success());
+    assert_eq!(duration_ms, Some(101_000));
   }
 
   #[test]
