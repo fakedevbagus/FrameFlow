@@ -1,3 +1,8 @@
+- Latest validation reached 132/133 Rust tests with exactly one remaining failure: the large ffprobe packet-stream fixture still emitted repeated timestamps despite an increasing-stream assertion.
+- Corrected the test fixture to emit monotonically increasing timestamps from 1 through 100,000 seconds; production parser behavior was unchanged.
+- Fix commit: `456ef4ddb3a804bb19cca87a3357ccd6713a66ba`.
+- Re-run the complete Pull/Fetch + Validation workflow from the latest branch head; do not declare PASS until the full suite succeeds and the user reports PASS.
+
 ## M3.203 — active — 2026-09-29
 
 - Branch: `fix/m3-203-video-audio-mix-audio-filter-size-cap`.
