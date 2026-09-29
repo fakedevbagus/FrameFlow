@@ -1,29 +1,58 @@
-## M3.193 — Unified AV Video Input Count Cap — active — 2026-09-29
+## M3.194 — Unified AV Audio Input Count Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-193-unified-av-video-input-count-cap`
+`fix/m3-194-unified-av-audio-input-count-cap`
 
 Fresh audit finding:
-- `NativeVideoAudioGraphRenderRequest.video_inputs` had no maximum count validation.
-- A large unified AV request could therefore trigger arbitrarily many filesystem checks, media-type checks, source-identity snapshots, FFmpeg inputs, and graph construction work.
-- The parallel native video/audio graph path has a 256-input bound, but the unified AV path did not establish its own request-level visual input boundary.
+- `NativeVideoAudioGraphRenderRequest.audio_inputs` had no maximum count validation.
+- After M3.193 bounded unified AV video inputs, a large unified AV request could still trigger arbitrarily many filesystem checks, media-type checks, source-identity snapshots, FFmpeg audio inputs, and graph argument growth through `audio_inputs`.
 
 Scope:
-- Cap unified AV graph video inputs at 256.
+- Cap unified AV graph audio inputs at 256.
 
 Implementation:
-- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS = 256`.
-- Reject oversized unified AV video input lists during metadata validation before filesystem probing.
-- Preserve existing media-type count checks, allowed media types, source-audio segment semantics, path/output validation, graph construction, rendering, and cleanup.
-- Added focused regression coverage at 256 and 257 video inputs.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS = 256`.
+- Reject oversized unified AV audio input lists during metadata validation before filesystem probing.
+- Preserve existing unified AV video input validation, source-audio segment semantics, audio media-type checks, path/output validation, graph construction, rendering, and cleanup.
+- Added focused regression coverage at 256 and 257 audio inputs.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.193 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create the Draft PR for M3.194 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
+## M3.193 — Unified AV Video Input Count Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-193-unified-av-video-input-count-cap`
+
+PR:
+#208
+
+Merge SHA:
+`9fe64afb4e9169800d734ce755b198a3c7ade10c`
+
+User validation:
+- User reported PASS for M3.193.
+- PR #208 was refreshed at head `a2f37774d0fbb41a36b87244b9ddc8fa0d44210a`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `9fe64afb4e9169800d734ce755b198a3c7ade10c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `NativeVideoAudioGraphRenderRequest.video_inputs` had no maximum count validation.
+- A large unified AV request could therefore trigger arbitrarily many filesystem checks, media-type checks, source-identity snapshots, FFmpeg inputs, and graph construction work.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS = 256`.
+- Reject oversized unified AV video input lists during metadata validation before filesystem probing.
+- Preserved existing media-type count checks, allowed media types, source-audio segment semantics, path/output validation, graph construction, rendering, and cleanup.
+- Added focused regression coverage at 256 and 257 video inputs.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.194 as the next unified AV renderer resource-boundary milestone.
 ## M3.192 — Native Audio Graph Input Count Cap — completed — 2026-09-29
 
 Branch:
