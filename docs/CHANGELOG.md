@@ -1,15 +1,29 @@
-### M3.183 — FFmpeg Duration Probe Stream — active — 2026-09-29
+### M3.184 — Waveform FFmpeg Stderr Memory Cap — active — 2026-09-29
 
-- Branch: `fix/m3-183-ffmpeg-duration-probe-stream`.
-- Fresh audit found `probe_duration_with_ffmpeg()` using `Command::output()`, buffering complete FFmpeg progress stdout and stderr.
-- Stream FFmpeg progress stdout incrementally and keep only the latest `out_time_ms=` value.
-- Drain stderr concurrently and cap retained duration-probe diagnostics at 64 KiB with an explicit truncation notice.
-- Preserve the existing stderr `Duration:` preference and progress fallback behavior.
-- Preserve FFmpeg arguments and duration fallback order.
-- Added focused regression coverage for large progress output.
+- Branch: `fix/m3-184-waveform-stderr-memory-cap`.
+- Fresh audit found `audio_waveform::spawn_stderr_reader()` retaining the complete FFmpeg stderr stream with `read_to_end(&mut Vec<u8>)`.
+- Kept concurrent stderr draining but bounded retained waveform diagnostics to 64 KiB.
+- Excess stderr continues to drain and is discarded after the retention limit; truncated diagnostics receive an explicit marker.
+- Preserved waveform decoding, reduction, normalization, process liveness, failure mapping, and FFmpeg arguments.
+- Updated the existing large-stderr regression to verify the bounded retained size and truncation marker.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.183 — FFmpeg Duration Probe Stream — completed — 2026-09-29
+
+- Branch: `fix/m3-183-ffmpeg-duration-probe-stream`.
+- PR #198; squash-merged at `3803e4d13d1ea6a220cd7b5d6cde6c35c707e270`.
+- User reported PASS.
+- Streamed FFmpeg duration-probe progress stdout incrementally and retained only the latest progress timestamp.
+- Drained stderr concurrently with a bounded 64 KiB retained diagnostic buffer and explicit truncation marker.
+- Preserved `Duration:` parsing preference, progress fallback, FFmpeg arguments, and duration fallback order.
+- Added focused regression coverage for large progress output.
+- No project schema change.
+- PR head `d1e563df0c140f5041d955d97fb3d685b91e396e` was verified before merge.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.184 as the next process/resource-safety milestone.
 
 ### M3.182 — Preview FFmpeg Stderr Memory Cap — completed — 2026-09-29
 
