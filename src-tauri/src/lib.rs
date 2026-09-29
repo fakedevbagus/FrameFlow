@@ -541,12 +541,9 @@ fn read_project_content<R: Read>(reader: &mut R) -> Result<String, String> {
     .read_to_string(&mut content)
     .map_err(|error| format!("Could not read project file: {error}"))?;
 
-  validate_project_save_content(&content)?;
-
   Ok(content)
 }
 
-#[tauri::command]
 fn validate_project_save_content(content: &str) -> Result<(), String> {
   if content.as_bytes().len() as u64 > MAX_PROJECT_FILE_BYTES {
     return Err("Project file is too large; maximum supported size is 16 MiB.".to_string());
@@ -558,9 +555,7 @@ fn validate_project_save_content(content: &str) -> Result<(), String> {
 fn save_project(path: String, content: String) -> Result<(), String> {
   let project_path = project_path(&path)?;
 
-  if content.as_bytes().len() as u64 > MAX_PROJECT_FILE_BYTES {
-    return Err("Project file is too large; maximum supported size is 16 MiB.".to_string());
-  }
+  validate_project_save_content(&content)?;
 
   let parent = project_path
     .parent()
