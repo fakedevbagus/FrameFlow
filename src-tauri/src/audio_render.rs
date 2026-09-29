@@ -2860,7 +2860,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume='0.65*if(lt(t,2),1+(-0.6)*((t-0)/2),0.4)':eval=frame,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.250:end=4.250,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume='0.65*if(lt(t,2.000),1+(-0.6)*((t-0.000)/2.000),0.4)':eval=frame,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,adelay=1000:all=1[frameflow_source_audio_0]"
     ));
     assert!(filter.contains("[frameflow_explicit_audio]"));
     assert!(filter.contains(
@@ -3046,7 +3046,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "volume=0.85,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,equalizer=f=120:t=q:w=0.8:g=2,equalizer=f=1000:t=q:w=1:g=-1,equalizer=f=8000:t=q:w=0.8:g=3,acompressor=threshold=0.125893:ratio=6:attack=10:release=300,afade=t=in:st=0:d=0.5,adelay=250:all=1[frameflow_source_audio_0]"
+      "volume=0.85,pan=stereo|c0=0.83147*c0|c1=0.55557*c1,equalizer=f=120:t=q:w=0.8:g=2,equalizer=f=1000:t=q:w=1:g=-1,equalizer=f=8000:t=q:w=0.8:g=3,acompressor=threshold=0.125893:ratio=6:attack=10:release=300,afade=t=in:st=0:d=0.500,adelay=250:all=1[frameflow_source_audio_0]"
     ));
   }
 
@@ -3097,7 +3097,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "[0:a:0]atrim=start=0:end=4,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=1,afade=t=in:st=0:d=0.5,afade=t=out:st=3:d=1,adelay=250:all=1[frameflow_source_audio_0]"
+      "[0:a:0]atrim=start=0.000:end=4.000,asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,volume=1,afade=t=in:st=0:d=0.500,afade=t=out:st=3.000:d=1.000,adelay=250:all=1[frameflow_source_audio_0]"
     ));
   }
 
@@ -3151,7 +3151,7 @@ mod tests {
       .expect("filter_complex argument should exist");
 
     assert!(filter.contains(
-      "volume='0.75*if(lt(t,2),0.2+(0.6)*((t-0)/2),0.8)':eval=frame"
+      "volume='0.75*if(lt(t,2.000),0.2+(0.6)*((t-0.000)/2.000),0.8)':eval=frame"
     ));
     assert!(filter.contains("[frameflow_source_audio_0]"));
     assert!(filter.contains(
