@@ -266,26 +266,13 @@ describe("render video pipeline", () => {
       ],
     };
 
-    vi.mocked(renderSingleSourceToMp4).mockResolvedValueOnce({
-      outputPath: "/tmp/video-muted.mp4",
-    });
-
     await expect(
       renderVideoPlanToMp4(plan, "/tmp/video-muted.mp4"),
-    ).resolves.toEqual({
-      outputPath: "/tmp/video-muted.mp4",
-    });
+    ).rejects.toThrow(
+      "M3.36 does not compile track mute state yet; audio/video graph policy is deferred.",
+    );
 
-    expect(renderSingleSourceToMp4).toHaveBeenCalledWith({
-      sourcePath: "/media/a.mp4",
-      outputPath: "/tmp/video-muted.mp4",
-      width: 406,
-      height: 720,
-      frameRate: 30,
-      sourceStartMs: 0,
-      sourceDurationMs: 4000,
-      includeAudio: false,
-    });
+    expect(renderSingleSourceToMp4).not.toHaveBeenCalled();
     expect(renderVideoAudioGraphToMp4).not.toHaveBeenCalled();
     expect(renderVideoSegmentsToMp4).not.toHaveBeenCalled();
   });
