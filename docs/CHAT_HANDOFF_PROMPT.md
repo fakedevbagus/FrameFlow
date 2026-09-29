@@ -15,6 +15,9 @@
 - Fixed the fixture-only arithmetic boundary by changing the first clip start from MAX_SAFE_INTEGER - 49 to MAX_SAFE_INTEGER - 50 so the transition endpoint is exactly MAX_SAFE_INTEGER.
 - New commit: `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
 - Re-run the complete validation workflow before declaring PASS or merging PR #220.
+- Latest validation reached 529/529 passing tests and clean lint, then build failed on three TypeScript narrowing errors.
+- Fixed the two project-domain narrowing issues and the waveform deferred-resolver test typing issue in commits `59cb1f15f1dc9e1962668fb5af7ea9b51ef06f99` and `f0937b492e7feb40fa5c877e4b8b9dcc8f86ec2e`.
+- Re-run the complete validation workflow before declaring PASS or merging PR #220.
 - Draft PR #220 exists and remains pending final local validation.
 - Local validation is pending; do not infer lint/test/build/cargo/manual success.
 
