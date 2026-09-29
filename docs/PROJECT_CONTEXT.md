@@ -1,14 +1,51 @@
-## M3.178 — Audio Waveform FFmpeg Pipe Liveness — active — 2026-09-28
+## M3.179 — Media Server File Open TOCTOU — active — 2026-09-29
+
+Branch:
+`fix/m3-179-media-file-open-toctou`
+
+Fresh audit finding:
+- `handle_connection()` canonicalized and allowlisted the requested media path, then later reopened that pathname with `File::open(&path)`.
+- A local process could replace the validated pathname between resolution and open, including replacing it with a symlink to a file outside the allowed media roots.
+- The later open could therefore follow a different file than the one that passed the media-path security boundary.
+
+Scope:
+- Pin the validated media file identity before opening it and stream from the same opened file handle so pathname replacement cannot redirect the media response.
+
+Implementation:
+- Capture the validated file device/inode identity immediately after canonical-path validation.
+- Open the validated path once and compare the opened file's device/inode identity against the captured identity.
+- Reject identity changes during the validation-to-open window.
+- Reuse the verified `File` handle for both full-file streaming and Range streaming instead of reopening the pathname.
+- Preserve existing HTTP, token, path allowlist, media-type, Range, and HEAD behavior.
+- Add a focused regression test that replaces the validated file with a symlink before open and verifies the identity mismatch is rejected.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Validate M3.179 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.178 — Audio Waveform FFmpeg Pipe Liveness — completed — 2026-09-28
 
 Branch:
 `fix/m3-178-waveform-ffmpeg-pipe-deadlock`
 
-Fresh audit finding:
-- `audio_waveform::decode_and_reduce_waveform()` spawns FFmpeg with both stdout and stderr piped, but stderr was only collected after stdout reached EOF.
-- A sufficiently large FFmpeg stderr stream could fill the OS pipe while FFmpeg was producing waveform stdout, causing the child process and parent reader to deadlock.
+PR:
+#193
 
-Scope:
-- Ensure waveform FFmpeg stderr is drained concurrently with stdout so large diagnostic output cannot block waveform generation.
+Merge SHA:
+`55433db6e844238516c89b2ea65a34fc585687be`
+
+User validation:
+- User reported PASS for M3.178.
+- PR #193 was refreshed at head `403a93dbe08cf62f870b1d314990bbf8408607ae`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `55433db6e844238516c89b2ea65a34fc585687be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `audio_waveform::decode_and_reduce_waveform()` spawned FFmpeg with both stdout and stderr piped, but stderr was only collected after stdout reached EOF.
+- A sufficiently large FFmpeg stderr stream could fill the OS pipe while FFmpeg was producing waveform stdout, causing the child process and parent reader to deadlock.
 
 Implementation:
 - Drain the FFmpeg stderr pipe on a dedicated reader thread while waveform samples are consumed from stdout.
@@ -16,13 +53,9 @@ Implementation:
 - Kill and reap the child if waveform stdout/stderr pipe setup or stdout reading fails.
 - Replace `wait_with_output()` with explicit child wait plus the concurrently collected stderr output.
 - Add focused regression coverage that writes more than 64 KiB of stderr and verifies the child can terminate without deadlock.
+- Preserve existing waveform sample reduction, normalization, source validation, and FFmpeg arguments.
 - No project schema change.
 
-Validation:
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
-Next step:
-- Validate M3.178 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
 ## M3.177 — Media Server Connection Concurrency Cap — completed — 2026-09-28
 
