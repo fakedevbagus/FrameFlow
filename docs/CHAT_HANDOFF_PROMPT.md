@@ -1,4 +1,28 @@
-## M3.196 — active — 2026-09-29
+## M3.197 — active — 2026-09-29
+
+- Branch: `fix/m3-197-unified-av-video-filter-size-cap`.
+- Scope: cap the user-supplied unified AV video `filter_complex` size.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_filter_complex` had no maximum size.
+- Reject video filter graphs above 256 KiB before filesystem/source probing.
+- Preserve existing unified AV graph validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.196 — completed — 2026-09-29
+
+- Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
+- PR #211; squash-merged at `bae49044a25350380715771e9422050b7b664653`.
+- User reported PASS.
+- PR head `f615fa7a034143452f8c991ee8dd3cf247003715` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 unified AV source-audio volume keyframes per segment and rejected oversized lists before source probing/filter generation.
+- Preserved existing keyframe validation and render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
 
 - Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
 - Scope: cap per-segment unified AV source-audio volume keyframes.
