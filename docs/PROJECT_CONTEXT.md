@@ -1,3 +1,7 @@
+- Validation found one test-fixture issue in the exact 4,096-byte video-source-path boundary: the fixture omitted a `.mp4` extension, so the normal media-type validator rejected it for a reason unrelated to the path-length boundary. Corrected both exact-limit and over-limit fixtures to retain the video extension while preserving the intended byte boundaries.
+- Fix commit: `b4a8c419533ca2164046459b9067ba95a58e40c6`.
+- Full validation remains pending; do not infer PASS.
+
 ## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — active — 2026-09-30
 
 Branch:
