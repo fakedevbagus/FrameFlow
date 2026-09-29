@@ -1,30 +1,59 @@
-## M3.185 — FFprobe Stderr Memory Cap — active — 2026-09-29
+## M3.186 — Project File Load Size Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-185-ffprobe-stderr-memory-cap`
+`fix/m3-186-project-load-size-cap`
 
 Fresh audit finding:
-- `run_ffprobe()` used `Command::output()`, which retained the complete ffprobe stderr stream in memory.
-- The callers use ffprobe for small structured outputs (format duration, stream duration, and audio-stream presence), but stderr is diagnostic data and could become unexpectedly large on malformed or pathological inputs.
-- The buffered stderr path therefore had no explicit retained-memory ceiling.
+- `open_project()` used `fs::read_to_string()` without a maximum file size.
+- A malformed, accidentally huge, or adversarial `.frameflow.json` could therefore cause project loading to allocate memory proportional to the entire file size.
+- The project path extension check alone does not establish a resource boundary.
 
 Scope:
-- Keep ffprobe stdout behavior compatible with its existing small structured-output callers, while draining stderr concurrently and bounding retained diagnostics to 64 KiB.
+- Bound project-file loading to 16 MiB while preserving UTF-8 decoding and the existing project-open command contract.
 
 Implementation:
-- Spawn ffprobe with piped stdout/stderr instead of `Command::output()`.
-- Drain stderr on a dedicated thread so stderr backpressure cannot block ffprobe.
-- Retain at most 64 KiB of ffprobe diagnostics and append an explicit truncation notice when excess output is discarded.
-- Read the existing structured stdout to completion because the current callers intentionally consume only small ffprobe outputs.
-- Preserve existing `Output`-based callers, status handling, diagnostic formatting, and fallback order.
-- Add focused regression coverage for multi-megabyte ffprobe stderr retention.
+- Open the project file explicitly and read through a `Read::take()` limit of 16 MiB plus one byte.
+- Reject files exceeding the 16 MiB limit before returning project content.
+- Preserve the existing absolute-path and `.frameflow.json` validation and error mapping.
+- Add focused regression coverage for content exactly at the limit and just above it.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.185 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.186 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.185 — FFprobe Stderr Memory Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-185-ffprobe-stderr-memory-cap`
+
+PR:
+#200
+
+Merge SHA:
+`fbbf008b383152825f3261942eb4ae1e7707d5f1`
+
+User validation:
+- User reported PASS for M3.185.
+- PR #200 was refreshed at head `be3933ff79ffae9d474a7717df9d9a7be1ea6d6b`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `fbbf008b383152825f3261942eb4ae1e7707d5f1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- Shared `run_ffprobe()` previously used `Command::output()`, retaining complete ffprobe stderr in memory.
+- Diagnostic stderr could become unexpectedly large even though current callers consume small structured stdout.
+
+Implementation:
+- Spawn ffprobe explicitly with piped stdout/stderr.
+- Drain stderr concurrently and retain at most 64 KiB with an explicit truncation notice.
+- Preserve existing structured stdout behavior, `Output` compatibility, status handling, diagnostic formatting, and duration fallback order.
+- Added focused regression coverage for multi-megabyte stderr retention.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.186 as the next focused resource-safety milestone.
 
 ## M3.184 — Waveform FFmpeg Stderr Memory Cap — completed — 2026-09-29
 
