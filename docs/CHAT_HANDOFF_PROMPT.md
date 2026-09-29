@@ -1,4 +1,16 @@
-## M3.201 — active — 2026-09-29
+## M3.202 — active — 2026-09-29
+
+- Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
+- Scope: cap individual legacy video/audio mix audio input path strings.
+- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_inputs` paths had no maximum length after the input count was bounded.
+- Reject audio input paths above 4,096 bytes before filesystem probing.
+- Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.201 — completed — 2026-09-29
 
 - Branch: `fix/m3-201-video-audio-mix-audio-input-count-cap`.
 - Scope: cap the number of legacy video/audio mix audio inputs.
@@ -6,9 +18,9 @@
 - Reject requests above 256 audio inputs before filesystem probing.
 - Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
 - Added focused regression coverage for exactly 256 and 257 inputs.
-- Implementation is complete.
-- PR #218 is open as a Draft.
-- Local validation is pending.
+- User reported PASS.
+- PR #218; squash-merged at `8e37ba4efe8b4fea52763cc3946ce30851d3ada6`.
+- `main` was verified at the merge SHA.
 
 ## M3.200 — completed — 2026-09-29
 
