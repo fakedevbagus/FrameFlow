@@ -1,14 +1,27 @@
-### M3.188 — Multi-Segment Render Count Cap — active — 2026-09-29
+### M3.189 — Native Video Graph Input Count Cap — active — 2026-09-29
 
-- Branch: `fix/m3-188-multi-segment-count-cap`.
-- Fresh audit found `NativeVideoSegmentsRenderRequest.segments` had no maximum count.
-- A single request could therefore trigger arbitrarily many source probes, temporary files, FFmpeg invocations, and concat-list entries.
-- Added a maximum of 4,096 segments and reject oversized requests before source probing or temporary render directory creation.
-- Preserved existing duration, source, path, range, ordering, audio, and concat behavior.
-- Added focused regression coverage at 4,096 segments and 4,097 segments.
+- Branch: `fix/m3-189-video-graph-input-count-cap`.
+- Fresh audit found `NativeVideoGraphRenderRequest.inputs` had no maximum count.
+- One graph request could therefore trigger arbitrarily many source resolutions/probes, FFmpeg inputs, source-identity checks, and filter-graph growth.
+- Added a maximum of 256 inputs and reject oversized requests before media-path probing.
+- Preserved existing non-empty-input, media-type, path, source-type, output-path, filter, video-map, rendering, and cleanup behavior.
+- Added focused regression coverage at 256 and 257 inputs.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.188 — Multi-Segment Render Count Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-188-multi-segment-count-cap`.
+- PR #203; squash-merged at `d4ff7b13e23a13ab540aa9a4444be4a618dc4bb4`.
+- User reported PASS.
+- PR head `c380b209ef79acf53c9afd39686fbe3cedd50609` was verified before merge; `main` was verified identical to the merge SHA.
+- Added a maximum of 4,096 segments and rejected oversized requests before source probing or temporary render directory creation.
+- Preserved existing segment duration/source/path/range validation and rendering/concat behavior.
+- Added focused regression coverage at 4,096 and 4,097 segments.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.189 as the next renderer resource-boundary milestone.
 
 ### M3.187 — Project Save Size Cap — completed — 2026-09-29
 
