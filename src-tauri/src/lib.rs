@@ -1388,7 +1388,7 @@ fn run_ffmpeg_preview(source_path: &Path, temporary_path: &Path) -> Result<(std:
     )
   });
 
-  let _status = match child.wait() {
+  let status = match child.wait() {
     Ok(status) => status,
     Err(error) => {
       let _ = child.kill();
@@ -1622,8 +1622,8 @@ fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
   let stderr_reader = thread::spawn(move || {
     collect_bounded_ffmpeg_stderr(
       stderr,
-      MAX_PREVIEW_FFMPEG_STDERR_BYTES,
-      PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE,
+      MAX_FFMPEG_DURATION_PROBE_STDERR_BYTES,
+      FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE,
     )
   });
 
