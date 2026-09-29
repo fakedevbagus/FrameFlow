@@ -1,14 +1,57 @@
-## M3.200 — active — 2026-09-29
+## M3.201 — active — 2026-09-29
+
+- Branch: `fix/m3-201-legacy-audio-input-count-cap`.
+- PR #216; based on verified `main` commit `de501ffed1c464e5c5075c2f55d43a9506d33295`.
+- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_inputs` was unbounded.
+- Added a 256-entry maximum and reject 257+ inputs before filesystem probing.
+- Preserved existing legacy video/audio mix validation and render behavior.
+- Added exact-boundary regression coverage for 256 and 257 inputs.
+- No project schema version change.
+- Draft PR is open and local validation is pending.
+
+### Local validation for M3.201
+
+```bash
+cd "/media/fakedevbagus/WD BLUE/BACKUP LINUX/PROJECTS/FrameFlow"
+
+git fetch origin --prune
+git checkout fix/m3-201-legacy-audio-input-count-cap
+git pull --ff-only origin fix/m3-201-legacy-audio-input-count-cap
+
+git status
+git log -1 --oneline
+
+npm ci
+npm run lint
+npm run test
+npm run build
+
+cd src-tauri
+cargo test
+cd ..
+```
+
+Manual focus:
+- 256 legacy video/audio mix audio inputs remain accepted by metadata validation.
+- 257+ inputs are rejected before filesystem probing.
+- Existing legacy video/audio mix behavior remains unchanged.
+- No unrelated behavior changes.
+
+Known remaining audit targets:
+- Individual legacy video/audio mix audio input path length.
+- Legacy video/audio mix audio filter graph size.
+
+## M3.200 — completed — 2026-09-29
 
 - Branch: `fix/m3-200-unified-av-video-input-path-cap`.
-- Scope: cap individual unified AV video input path strings.
-- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_inputs` paths had no maximum length.
-- Reject video input paths above 4,096 bytes before filesystem probing.
-- Preserve existing unified AV video validation/render behavior.
+- PR #215; squash-merged at `de501ffed1c464e5c5075c2f55d43a9506d33295`.
+- User reported PASS.
+- PR head `6502b9d8e1731cacad53fdafd18c603de0222020` was verified before merge.
+- `main` was verified identical to the merge SHA.
+- Added a maximum of 4,096 bytes per unified AV video input path and rejected oversized values before filesystem probing.
+- Preserved existing unified AV video validation/render behavior.
 - Added focused regression coverage at the exact byte limit and one above it.
-- Implementation is complete.
-- Draft PR not created yet.
-- Local validation is pending.
+- No project schema version change.
 
 ## M3.199 — completed — 2026-09-29
 
