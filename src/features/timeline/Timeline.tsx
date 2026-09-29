@@ -2270,12 +2270,21 @@ function AudioWaveformPreview({
   }));
   const [selectionState, setSelectionState] = useState<{
     sourcePath: string;
+    durationMs: number;
+    sourceStartMs: number;
+    sourceEndMs: number | null;
     startMs: number;
     endMs: number;
   } | null>(null);
 
   const selection =
-    selectionState?.sourcePath === sourcePath ? selectionState : null;
+    selectionState &&
+    selectionState.sourcePath === sourcePath &&
+    selectionState.durationMs === durationMs &&
+    selectionState.sourceStartMs === sourceStartMs &&
+    selectionState.sourceEndMs === sourceEndMs
+      ? selectionState
+      : null;
   const selectionStartClientXRef = useRef<number | null>(null);
   const selectionPointerIdRef = useRef<number | null>(null);
   const selectionMovedRef = useRef(false);
@@ -2294,10 +2303,6 @@ function AudioWaveformPreview({
     ? buildWaveformPath(visiblePeaks, AUDIO_WAVEFORM_PEAK_COUNT, 20)
     : "";
   const isLoading = !isCurrentSource || waveformState.isLoading;
-
-  useEffect(() => {
-    setSelectionState(null);
-  }, [durationMs, sourceEndMs, sourcePath, sourceStartMs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2394,6 +2399,9 @@ function AudioWaveformPreview({
     if (selectionMovedRef.current && nextSelection) {
       setSelectionState({
         sourcePath,
+        durationMs,
+        sourceStartMs,
+        sourceEndMs,
         ...nextSelection,
       });
     } else if (!selectionMovedRef.current) {
@@ -2489,9 +2497,12 @@ function AudioWaveformPreview({
         selectionMovedRef.current = true;
         if (nextSelection) {
           setSelectionState({
-            sourcePath,
-            ...nextSelection,
-          });
+        sourcePath,
+        durationMs,
+        sourceStartMs,
+        sourceEndMs,
+        ...nextSelection,
+      });
         }
       }}
       onPointerUp={finishSelection}
