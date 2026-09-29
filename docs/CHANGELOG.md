@@ -1,4 +1,29 @@
-### M3.196 — Unified AV Audio Keyframe Count Cap — active — 2026-09-29
+### M3.197 — Unified AV Video Filter Size Cap — active — 2026-09-29
+
+- Branch: `fix/m3-197-unified-av-video-filter-size-cap`.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_filter_complex` had no maximum size.
+- A large user-supplied video filter graph could therefore increase retained request memory and FFmpeg filter-graph processing.
+- Added a maximum of 256 KiB for unified AV video `filter_complex` and reject oversized graphs during metadata validation before filesystem/source probing.
+- Preserved existing unified AV input, source-audio, map, output, render, and cleanup behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.196 — Unified AV Audio Keyframe Count Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
+- PR #211; squash-merged at `bae49044a25350380715771e9422050b7b664653`.
+- User reported PASS.
+- PR head `f615fa7a034143452f8c991ee8dd3cf247003715` was verified before merge; `main` was verified identical to the merge SHA.
+- Added a maximum of 4,096 audio volume keyframes per unified AV source-audio segment and rejected oversized lists during metadata validation.
+- Preserved existing keyframe ordering, timing, value validation, volume semantics, and render behavior.
+- Added focused regression coverage at 4,096 and 4,097 keyframes.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.197 as the next unified AV renderer resource-boundary milestone.
+
+ Unified AV Audio Keyframe Count Cap — active — 2026-09-29
 
 - Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
 - Fresh audit found `NativeSourceAudioSegment.audio_volume_keyframes` had no maximum count.
