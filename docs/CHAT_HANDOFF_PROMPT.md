@@ -16,7 +16,7 @@
 - Branch: `fix/m3-182-preview-ffmpeg-stderr-memory-cap`.
 - PR #197; squash-merged at `05b7cbaf4acb2acba19274d875b73152651da2b4`.
 - User reported PASS.
-- PR head `d5902cd163e911f5a38ae19e524ae34f0e97f4e469` was verified before merge.
+- PR head `d5902cd163e911f5a38ae19e524ae34f0e97e469` was verified before merge.
 - Preview FFmpeg stdout is discarded, stderr is drained concurrently, and retained diagnostics are capped at 64 KiB with an explicit truncation notice.
 - Preserved preview behavior and source identity/cache finalization flow.
 - Added focused regression coverage for multi-megabyte stderr.
