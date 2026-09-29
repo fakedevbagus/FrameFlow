@@ -356,9 +356,11 @@ describe("audio waveform", () => {
   });
 
   it("does not share an in-flight waveform request across changed source fingerprints", async () => {
-    let resolveFirstGeneration: ((waveform: AudioWaveform) => void) | null = null;
+    const firstGenerationResolver: {
+      current: ((waveform: AudioWaveform) => void) | null;
+    } = { current: null };
     const firstGeneration = new Promise<AudioWaveform>((resolve) => {
-      resolveFirstGeneration = resolve;
+      firstGenerationResolver.current = resolve;
     });
 
     vi.mocked(invoke)
@@ -414,7 +416,7 @@ describe("audio waveform", () => {
       },
     );
 
-    resolveFirstGeneration?.({
+    firstGenerationResolver.current?.({
       durationMs: 1000,
       sampleRate: 1024,
       peaks: [0.9],
