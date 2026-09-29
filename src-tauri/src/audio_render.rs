@@ -12,6 +12,7 @@ use crate::{
 };
 
 const MAX_NATIVE_AUDIO_GRAPH_INPUTS: usize = 256;
+const MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS: usize = 4096;
@@ -1414,6 +1415,14 @@ fn validate_request(request: &NativeAudioGraphRenderRequest) -> Result<(), Strin
     ));
   }
 
+  for (index, path) in request.inputs.iter().enumerate() {
+    if path.len() > MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES {
+      return Err(format!(
+        "Native audio graph input at index {index} exceeds the maximum path length of {MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES} bytes."
+      ));
+    }
+  }
+
   if request.filter_complex.trim().is_empty() {
     return Err("Native audio graph render requires a filter graph.".to_string());
   }
@@ -1549,6 +1558,7 @@ mod tests {
     NativeSourceAudioSegment, NativeSourceAudioVolumeKeyframe,
     NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
+    MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES,
     MAX_NATIVE_AUDIO_GRAPH_INPUTS,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES,
@@ -1590,6 +1600,48 @@ mod tests {
   fn accepts_audio_graph_inputs_at_count_limit() {
     let request = NativeAudioGraphRenderRequest {
       inputs: vec!["/media/music.mp3".to_string(); MAX_NATIVE_AUDIO_GRAPH_INPUTS],
+      output_path: "/tmp/audio.mp4".to_string(),
+      filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+    };
+
+    assert!(validate_request(&request).is_ok());
+  }
+
+  #[test]
+  fn rejects_audio_graph_input_path_above_size_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec![format!(
+        "/media/{}.mp3",
+        "a".repeat(
+          MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES
+            .saturating_sub("/media/".len())
+            .saturating_sub(".mp3".len())
+            + 1
+        )
+      )],
+      output_path: "/tmp/audio.mp4".to_string(),
+      filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+    };
+
+    let error = validate_request(&request)
+      .expect_err("audio graph input paths above the configured limit must be rejected");
+
+    assert!(error.contains("exceeds the maximum path length of 4096 bytes"));
+  }
+
+  #[test]
+  fn accepts_audio_graph_input_path_at_size_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec![format!(
+        "/media/{}.mp3",
+        "a".repeat(
+          MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES
+            .saturating_sub("/media/".len())
+            .saturating_sub(".mp3".len())
+        )
+      )],
       output_path: "/tmp/audio.mp4".to_string(),
       filter_complex: "anullsrc[aout]".to_string(),
       audio_map: "[aout]".to_string(),
