@@ -1,4 +1,16 @@
-### M3.201 — Legacy Video/Audio Mix Audio Input Count Cap — active — 2026-09-29
+### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — active — 2026-09-29
+
+- Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
+- Fresh audit found individual `NativeVideoWithAudioGraphRenderRequest.audio_inputs` path strings had no maximum length validation after the input count was bounded.
+- A pathological audio input path could therefore increase request memory and path-processing work before filesystem validation.
+- Added a maximum of 4,096 bytes per legacy video/audio mix audio input path and reject oversized values during metadata validation before filesystem probing.
+- Preserved existing input count, media-type, absolute-path, existence, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage at 4,096 and 4,097 bytes.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: run the local validation workflow; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+### M3.201 — Legacy Video/Audio Mix Audio Input Count Cap — completed — 2026-09-29
 
 - Branch: `fix/m3-201-video-audio-mix-audio-input-count-cap`.
 - Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_inputs` had no maximum count validation.
@@ -7,8 +19,11 @@
 - Preserved existing validation, source identity, rendering, cleanup, and audio-graph behavior.
 - Added focused regression coverage for exactly 256 inputs and 257 inputs.
 - No project schema change.
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: run the local validation workflow and, after PASS, refresh PR #218, mark it Ready for Review, squash-merge using the freshly verified head, reconcile docs, verify `main`, and perform a fresh audit.
+- User reported PASS.
+- PR #218; squash-merged at `8e37ba4efe8b4fea52763cc3946ce30851d3ada6`.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.202 as the next legacy video/audio mix resource-boundary milestone.
 
 ### M3.200 — Unified AV Video Input Path Length Cap — completed — 2026-09-29
 
