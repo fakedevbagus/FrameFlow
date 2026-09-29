@@ -27,6 +27,9 @@ struct MediaProbe {
 const MAX_PREVIEW_FFMPEG_STDERR_BYTES: usize = 64 * 1024;
 const PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[FFmpeg preview stderr truncated by FrameFlow]\n";
+const MAX_FFMPEG_DURATION_PROBE_STDERR_BYTES: usize = 64 * 1024;
+const FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
+  b"\n[FFmpeg duration probe stderr truncated by FrameFlow]\n";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1380,12 +1383,12 @@ fn run_ffmpeg_preview(source_path: &Path, temporary_path: &Path) -> Result<(std:
   let stderr_reader = thread::spawn(move || {
     collect_bounded_ffmpeg_stderr(
       stderr,
-      MAX_PREVIEW_FFMPEG_STDERR_BYTES,
-      PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE,
+      MAX_FFMPEG_DURATION_PROBE_STDERR_BYTES,
+      FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE,
     )
   });
 
-  let status = match child.wait() {
+  let _status = match child.wait() {
     Ok(status) => status,
     Err(error) => {
       let _ = child.kill();
@@ -1637,9 +1640,7 @@ fn probe_duration_with_ffmpeg(path: &Path) -> Result<Option<u64>, String> {
 
   let stderr = stderr_reader
     .join()
-    .unwrap_or_else(|_| PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE.to_vec());
-
-  let _ = status;
+    .unwrap_or_else(|_| FFMPEG_DURATION_PROBE_STDERR_TRUNCATION_NOTICE.to_vec());
 
   if let Some(duration_ms) = parse_ffmpeg_duration(&stderr) {
     return Ok(Some(duration_ms));
