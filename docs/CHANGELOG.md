@@ -1,13 +1,26 @@
-### M3.185 — FFprobe Stderr Memory Cap — active — 2026-09-29
+### M3.186 — Project File Load Size Cap — active — 2026-09-29
 
-- Branch: `fix/m3-185-ffprobe-stderr-memory-cap`.
-- Fresh audit found `run_ffprobe()` retaining complete ffprobe stderr via `Command::output()`.
-- Spawned ffprobe explicitly, drained stderr concurrently, and bounded retained diagnostics to 64 KiB with an explicit truncation notice.
-- Preserved the existing `Output`-based callers, small structured stdout behavior, status handling, diagnostic formatting, and duration fallback order.
-- Added focused regression coverage for multi-megabyte ffprobe stderr retention.
+- Branch: `fix/m3-186-project-load-size-cap`.
+- Fresh audit found `open_project()` using `fs::read_to_string()` without a maximum file size.
+- Bound project loading to 16 MiB using a limited reader while preserving UTF-8 decoding and the existing project-open command contract.
+- Files above 16 MiB are rejected with an explicit size-limit error.
+- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.185 — FFprobe Stderr Memory Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-185-ffprobe-stderr-memory-cap`.
+- PR #200; squash-merged at `fbbf008b383152825f3261942eb4ae1e7707d5f1`.
+- User reported PASS.
+- Spawned ffprobe explicitly, drained stderr concurrently, and bounded retained diagnostics to 64 KiB with an explicit truncation notice.
+- Preserved existing structured stdout behavior, `Output` compatibility, status handling, diagnostic formatting, and duration fallback order.
+- Added focused regression coverage for multi-megabyte ffprobe stderr retention.
+- PR head `be3933ff79ffae9d474a7717df9d9a7be1ea6d6b` was verified before merge.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.186 as the next resource-safety milestone.
 
 ### M3.184 — Waveform FFmpeg Stderr Memory Cap — completed — 2026-09-29
 
