@@ -38,7 +38,7 @@ const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
-const MAX_MEDIA_PATH_BYTES: usize = 4096;
+pub(crate) const MAX_MEDIA_PATH_BYTES: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
