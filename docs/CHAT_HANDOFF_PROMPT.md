@@ -1,15 +1,36 @@
-## M3.181 — active — 2026-09-29
+## M3.182 — active — 2026-09-29
 
-- Branch: `fix/m3-181-ffprobe-packet-stream`.
-- Scope: prevent unbounded ffprobe packet stdout retention during audio duration probing.
-- Fresh audit found `probe_duration_from_audio_packets()` using `Command::output()`, which buffered complete packet stdout before parsing.
-- Stream ffprobe stdout through a reusable line buffer and keep only the latest packet end timestamp.
-- Drain ffprobe stderr concurrently with fixed memory.
-- Preserve the existing packet parsing semantics and fallback order.
-- Added focused regression coverage using large packet-like stdout with a later timestamp.
+- Branch: `fix/m3-182-preview-ffmpeg-stderr-memory-cap`.
+- Scope: prevent unbounded retained FFmpeg stderr during preview generation.
+- Fresh audit found `prepare_media_preview()` using `Command::output()`, retaining complete preview-process stdout/stderr in memory.
+- Replaced the preview process boundary with explicit piped stderr, discarded stdout, concurrent stderr draining, and a 64 KiB retained stderr cap.
+- Excess stderr continues to drain so pipe backpressure cannot block FFmpeg.
+- Retain a bounded diagnostic excerpt with an explicit truncation notice.
+- Preserve existing preview arguments, source identity validation, temporary-file behavior, cache finalization, and error mapping.
+- Added focused regression coverage for multi-megabyte stderr retention.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.181 — completed — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- PR #196; squash-merged at `407c2cd9675f446348bd51454140ab1c0a1f4e55`.
+- User reported PASS.
+- PR head `4d64917be64b5249cef5ccc085d64a0abf9b46de` was verified before merge.
+- `main` was verified at the merge SHA.
+- Streamed ffprobe audio packet stdout incrementally and drained stderr concurrently with fixed memory.
+- Preserved packet duration parsing semantics and fallback order.
+- Added focused regression coverage using large packet-like stdout.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.182 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.180 — active — 2026-09-29
 
