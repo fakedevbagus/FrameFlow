@@ -20,6 +20,7 @@ const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES: usize = 4096;
+const MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS: usize = 256;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1155,6 +1156,12 @@ fn validate_video_audio_mix_request(
     return Err("Native video/audio mix requires at least one audio input.".to_string());
   }
 
+  if request.audio_inputs.len() > MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS {
+    return Err(format!(
+      "Native video/audio mix supports at most {MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS} audio inputs."
+    ));
+  }
+
   if request.duration_ms == 0 {
     return Err("Native video/audio mix requires a positive duration.".to_string());
   }
@@ -1674,6 +1681,28 @@ mod tests {
     assert!(error.contains(&path.to_string_lossy()));
 
     fs::remove_file(path).unwrap();
+  }
+
+  #[test]
+  fn rejects_video_audio_mix_audio_input_count_above_limit() {
+    let mut request = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: (0..=MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS)
+        .map(|index| format!("/media/audio-{index}.mp3"))
+        .collect(),
+      audio_filter_complex: "anullsrc=r=48000:cl=stereo[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    let error = validate_video_audio_mix_request(&request)
+      .expect_err("video/audio mix requests above the audio-input limit must be rejected");
+
+    assert!(error.contains("supports at most 256 audio inputs"));
+
+    request.audio_inputs.truncate(MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS);
+    assert!(validate_video_audio_mix_request(&request).is_ok());
   }
 
   #[test]
