@@ -1542,6 +1542,18 @@ mod tests {
     NativeSourceAudioSegment, NativeSourceAudioVolumeKeyframe,
     NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
+    MAX_NATIVE_AUDIO_GRAPH_INPUTS,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS,
+    MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUT_PATH_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS,
   };
   use std::path::{Path, PathBuf};
 
@@ -1694,7 +1706,7 @@ mod tests {
       .expect_err("changed legacy video/audio sources must invalidate the render");
 
     assert!(error.contains("Unified AV source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -1871,7 +1883,7 @@ mod tests {
       .expect_err("changed audio graph sources must invalidate the render");
 
     assert!(error.contains("Unified AV source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -1903,7 +1915,7 @@ mod tests {
       .expect_err("changed unified AV sources must invalidate the render");
 
     assert!(error.contains("Unified AV source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
