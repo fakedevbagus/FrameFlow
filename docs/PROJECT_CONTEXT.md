@@ -16,12 +16,18 @@ Implementation:
 - Preserve existing input, path, duration, map, source identity, rendering, cleanup, and audio-graph behavior.
 - Added focused regression coverage at 262,144 and 262,145 bytes.
 - No project schema change.
+- During validation, two pre-existing repository-wide lint blockers were found outside the native M3.203 logic.
+- Removed the unused `assertPositiveInteger` helper from `src/features/project/domain.ts`.
+- Replaced the synchronous waveform-selection reset effect in `src/features/timeline/Timeline.tsx` with derived selection validity keyed to the current clip source/range context.
+- Preserved the existing waveform selection behavior; the existing Timeline regression test for clearing selection after source-range changes remains the behavioral guard.
 
 Validation:
-- User local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- `npm ci` completed successfully with 0 vulnerabilities.
+- Before the lint-blocker fixes, `npm run lint` failed only on the two pre-existing errors above.
+- Local full validation is pending again after these fixes; do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create the Draft PR for M3.203 and validate locally; after PASS follow refresh → merge → docs → verify main → fresh audit.
+- Re-run the complete M3.203 validation workflow; after PASS follow refresh → merge → docs → verify main → fresh audit.
 
 ## M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
