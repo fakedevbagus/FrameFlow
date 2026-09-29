@@ -1379,22 +1379,6 @@ function assertPositiveEvenInteger(
   }
 }
 
-function assertPositiveInteger(
-  value: unknown,
-  field: string,
-): asserts value is number {
-  if (
-    typeof value !== "number" ||
-    !Number.isFinite(value) ||
-    !Number.isInteger(value) ||
-    value <= 0
-  ) {
-    throw new ProjectValidationError(
-      `${field} must be a positive integer.`,
-    );
-  }
-}
-
 function assertPositiveNumber(value: unknown, field: string): asserts value is number {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
     throw new ProjectValidationError(`${field} must be a positive number.`);
