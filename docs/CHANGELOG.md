@@ -1,4 +1,29 @@
-### M3.195 — Unified AV Source Audio Segment Count Cap — active — 2026-09-29
+### M3.196 — Unified AV Audio Keyframe Count Cap — active — 2026-09-29
+
+- Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
+- Fresh audit found `NativeSourceAudioSegment.audio_volume_keyframes` had no maximum count.
+- A single unified AV source-audio segment could therefore carry an arbitrarily large keyframe list, increasing request memory, validation work, generated volume expressions, and FFmpeg filter-graph size.
+- Added a maximum of 4,096 audio volume keyframes per source-audio segment and reject oversized lists during metadata validation before source probing or filter generation.
+- Preserved existing keyframe ordering, time bounds, finite/range validation, volume semantics, and render behavior.
+- Added focused regression coverage at 4,096 and 4,097 keyframes.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.195 — Unified AV Source Audio Segment Count Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-195-unified-av-source-audio-segment-count-cap`.
+- PR #210; squash-merged at `785942ed938454ebe1d9d960fcecda28cde7b8d7`.
+- User reported PASS.
+- PR head `b1702f1aea3a90dcb412c606c9c72a2759084851` was verified before merge; `main` was verified identical to the merge SHA.
+- Added a maximum of 4,096 unified AV source audio segments and rejected oversized requests during metadata validation.
+- Preserved existing unified AV validation and render behavior.
+- Added focused regression coverage at 4,096 and 4,097 source audio segments.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.196 as the next unified AV renderer resource-boundary milestone.
+
+ Unified AV Source Audio Segment Count Cap — active — 2026-09-29
 
 - Branch: `fix/m3-195-unified-av-source-audio-segment-count-cap`.
 - Fresh audit found `NativeVideoAudioGraphRenderRequest.source_audio_segments` had no maximum count.
