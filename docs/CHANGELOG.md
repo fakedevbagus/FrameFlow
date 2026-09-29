@@ -1,14 +1,29 @@
-### M3.182 — Preview FFmpeg Stderr Memory Cap — active — 2026-09-29
+### M3.183 — FFmpeg Duration Probe Stream — active — 2026-09-29
 
-- Branch: `fix/m3-182-preview-ffmpeg-stderr-memory-cap`.
-- Fresh audit found `prepare_media_preview()` using `Command::output()`, which retained complete FFmpeg stdout/stderr in memory until preview generation exited.
-- Reworked the preview process boundary so stdout is discarded, stderr is drained concurrently, and retained stderr diagnostics are capped at 64 KiB.
-- Excess stderr continues to be drained and discarded; retained diagnostics receive an explicit truncation notice.
-- Preserved existing preview arguments, source identity checks, temporary output handling, cache finalization, and error mapping.
-- Added focused regression coverage for multi-megabyte stderr retention.
+- Branch: `fix/m3-183-ffmpeg-duration-probe-stream`.
+- Fresh audit found `probe_duration_with_ffmpeg()` using `Command::output()`, buffering complete FFmpeg progress stdout and stderr.
+- Stream FFmpeg progress stdout incrementally and keep only the latest `out_time_ms=` value.
+- Drain stderr concurrently and cap retained duration-probe diagnostics at 64 KiB with an explicit truncation notice.
+- Preserve the existing stderr `Duration:` preference and progress fallback behavior.
+- Preserve FFmpeg arguments and duration fallback order.
+- Added focused regression coverage for large progress output.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.182 — Preview FFmpeg Stderr Memory Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-182-preview-ffmpeg-stderr-memory-cap`.
+- PR #197; squash-merged at `05b7cbaf4acb2acba19274d875b73152651da2b4`.
+- User reported PASS.
+- Preview FFmpeg stdout is now discarded, stderr is drained concurrently, and retained diagnostics are capped at 64 KiB with an explicit truncation notice.
+- Preserved preview arguments, source identity validation, temporary output handling, cache finalization, and error mapping.
+- Added focused regression coverage for multi-megabyte stderr retention.
+- No project schema change.
+- PR head `d5902cd163e911f5a38ae19e524ae34f0e97e469` was verified before merge.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.183 as the next process/resource-safety milestone.
 
 ### M3.181 — FFprobe Audio Packet Stream — completed — 2026-09-29
 
