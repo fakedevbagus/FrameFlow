@@ -22,7 +22,9 @@
 - Fixed the two project-domain narrowing issues and the waveform deferred-resolver test typing issue in commits `59cb1f15f1dc9e1962668fb5af7ea9b51ef06f99` and `f0937b492e7feb40fa5c877e4b8b9dcc8f86ec2e`.
 - Re-run the complete validation workflow before declaring PASS or merging PR #220.
 - Draft PR #220 exists and remains pending final local validation.
-- Local validation is pending; do not infer lint/test/build/cargo/manual success.
+- Fixed the remaining `track.type` TypeScript narrowing error in `validateClip()` by capturing and asserting the track type before optional audio-field validation; validation semantics are unchanged.
+- Latest code fix commit: `f759d4706192f01af8c142a74ffa4823071e59db`.
+- Local validation remains pending; do not infer lint/test/build/cargo/manual success.
 
 ## M3.202 — completed — 2026-09-29
 
