@@ -1,3 +1,35 @@
+## M3.207 — Media Server Path Length Cap — active — 2026-09-30
+
+Branch:
+`fix/m3-207-media-server-path-length-cap`
+
+Previous milestone:
+- M3.206 — Shared Media Path Length Cap
+- PR #223
+- Squash merge SHA: `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`
+- `main` verified identical to that merge SHA.
+- User reported PASS after full local validation.
+
+Fresh audit finding:
+- `src-tauri/src/media_server.rs` maintains a separate `validate_media_path()` boundary for local HTTP media access.
+- That validator had no 4,096-byte path limit, so media paths arriving through the local media-server URL/request path remained unbounded before canonicalization/filesystem probing.
+
+Scope:
+- Enforce the shared 4,096-byte media path contract in the media server.
+- Reject oversized decoded media paths before canonicalization.
+- Reuse the shared `MAX_MEDIA_PATH_BYTES` constant from the native command layer.
+- Preserve existing capability-token, path-allowlist, media-type, identity, range, and response behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation complete.
+- Local validation pending user run; do not infer lint/test/build/cargo/manual success.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.207.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
 ## M3.206 — Shared Media Path Length Cap — active — 2026-09-30
 
 Branch:
