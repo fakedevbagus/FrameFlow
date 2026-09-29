@@ -1,42 +1,47 @@
-## Current State — M3.205 active — 2026-09-30
+## Current State — M3.206 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
-- Latest merged M3.204 PR: #221.
-- M3.204 squash merge SHA: `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`.
-- `main` was verified identical to that merge SHA before documentation reconciliation.
-- User reported PASS after full local validation: 529/529 frontend tests, successful lint/build, and 135/135 Rust tests.
-- Fresh audit identified M3.205 as the next focused hardening milestone.
+- Latest merged milestone: M3.205.
+- M3.205 PR #222; squash merge SHA: `44a3e7926cfdaada243a7bc9b64200a1d8759d03`.
+- `main` was verified identical to that merge SHA.
+- User reported PASS after full local validation: 529/529 frontend tests, lint PASS, frontend build PASS, and 137/137 Rust tests.
+- Fresh audit identified M3.206 as the next focused hardening milestone.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 
-## M3.205 — Native Audio Graph Input Path Length Cap
+## M3.206 — Shared Media Path Length Cap
 
 Branch:
-`fix/m3-205-native-audio-graph-input-path-cap`
+`fix/m3-206-shared-media-path-length-cap`
 
 Audit finding:
-- `NativeAudioGraphRenderRequest.inputs` is capped at 256 entries but individual input path strings have no maximum length.
-- Oversized path strings can increase request memory and path-processing work before filesystem/media validation.
+- Shared `media_path()` accepted arbitrarily long media path strings before filesystem probing.
+- The helper is used by media inspection, preview preparation, waveform generation, single-source export, multi-segment render, and native video-graph input flows.
 
 Implementation target:
-- Add a 4,096-byte maximum path length to each native audio graph input.
-- Reject oversized paths during metadata validation before filesystem probing.
-- Preserve existing absolute-path, existence, media-type, output-collision, FFmpeg argument, rendering, and cleanup behavior.
-- Add exact 4,096-byte and over-limit 4,097-byte regression coverage.
+- Add a centralized 4,096-byte maximum to shared media path validation.
+- Reject oversized values before filesystem probing.
+- Preserve existing behavior and add exact-limit/over-limit regression coverage.
 - No project schema change.
 
 Validation:
-- Implementation is pending local user validation.
+- Implementation complete.
+- Local validation pending user run.
 - Never claim lint/test/build/cargo/manual success until the user reports it.
 
-## Workflow
-
-- Work one audited milestone at a time.
-- Update `docs/PROJECT_CONTEXT.md`, `docs/CHANGELOG.md`, and `docs/CHAT_HANDOFF_PROMPT.md` every milestone or meaningful validation correction.
-- On user `PASS` / `pass` / `lanjutkan`: refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge using the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused branch/PR.
+Workflow:
+- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused branch/PR.
 - Pull/Fetch + Validation must remain one combined copy-paste command block.
-- Do not invent local validation results.
-- UI/UX/frontend redesign remains blocked until the mandatory stability gate; current work stays focused on stability/correctness.
+- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.205 — completed — 2026-09-30
+
+- Branch: `fix/m3-205-native-audio-graph-input-path-cap`.
+- PR #222; squash-merged at `44a3e7926cfdaada243a7bc9b64200a1d8759d03`.
+- `main` was verified at the merge SHA.
+- User reported PASS after full local validation.
+- Added the native audio graph per-input path cap of 4,096 bytes with exact-limit and over-limit regression coverage.
+- No project schema change.
 
 ## M3.204 — completed — 2026-09-30
 

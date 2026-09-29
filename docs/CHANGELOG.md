@@ -1,15 +1,26 @@
-# M3.205 — Native Audio Graph Input Path Length Cap — active — 2026-09-30
+# M3.206 — Shared Media Path Length Cap — active — 2026-09-30
 
-- Branch: `fix/m3-205-native-audio-graph-input-path-cap`.
-- Fresh audit found `NativeAudioGraphRenderRequest.inputs` already bounded by count but not by individual path length.
-- Scope: reject native audio graph input paths above 4,096 bytes before filesystem probing.
-- Preserve existing absolute-path, existence, media-type, output-collision, FFmpeg argument, rendering, and cleanup behavior.
+- Branch: `fix/m3-206-shared-media-path-length-cap`.
+- Fresh audit found the shared `media_path()` helper accepted arbitrarily long media path strings before filesystem probing.
+- Scope: reject shared media paths above 4,096 bytes through one centralized validation boundary.
+- Preserve existing media inspection, preview, waveform, native export, multi-segment render, and video-graph behavior.
 - Add focused exact-limit and over-limit regression coverage.
 - No project schema change.
-- Implementation is pending local validation; do not infer test/build/lint/cargo success.
+- Implementation complete; local validation pending user run. Do not infer test/build/lint/cargo success.
+
+## M3.205 — Native Audio Graph Input Path Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-205-native-audio-graph-input-path-cap`.
+- PR #222; squash-merged at `44a3e7926cfdaada243a7bc9b64200a1d8759d03`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation: 529/529 frontend tests, lint PASS, frontend build PASS, and 137/137 Rust tests.
+- Added a 4,096-byte cap to each `NativeAudioGraphRenderRequest.inputs` path before filesystem probing.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+- Protected PR #76 and unrelated PR #22 remained untouched.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow. After user PASS, follow refresh → Ready for Review → squash merge → verify `main` → docs → fresh audit.
+- Fresh audit from verified `main` identified M3.206: shared media path length cap.
 
 ### M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
 
