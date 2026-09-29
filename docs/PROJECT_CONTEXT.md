@@ -1,4 +1,59 @@
-## M3.199 — Unified AV Audio Input Path Length Cap — active — 2026-09-29
+## M3.200 — Unified AV Video Input Path Length Cap — active — 2026-09-29
+
+Branch:
+`fix/m3-200-unified-av-video-input-path-cap`
+
+Fresh audit finding:
+- Individual `NativeVideoAudioGraphRenderRequest.video_inputs` path strings had no maximum length validation.
+- Even with the unified AV video input count bounded, a pathological video input path could still increase request memory and path-processing work before filesystem validation.
+
+Scope:
+- Cap unified AV video input path strings at 4,096 bytes.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES = 4096`.
+- Reject oversized unified AV video input path strings during metadata validation before filesystem probing.
+- Preserve existing video input count, media-type, absolute-path, existence, source-audio, filter, output collision, source identity, graph, rendering, and cleanup behavior.
+- Added focused regression coverage at 4,096 and 4,097 bytes.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Create the Draft PR for M3.200 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.199 — Unified AV Audio Input Path Length Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-199-unified-av-audio-input-path-cap`
+
+PR:
+#214
+
+Merge SHA:
+`80e03ee8a211d343c478c44d2b7a3e4b9599ba26`
+
+User validation:
+- User reported PASS for M3.199.
+- PR #214 was refreshed at head `58c2c720e0335ae8f9813ae79aed15f34c658d5c`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `80e03ee8a211d343c478c44d2b7a3e4b9599ba26`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- Individual `NativeVideoAudioGraphRenderRequest.audio_inputs` path strings had no maximum length validation.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES = 4096`.
+- Reject oversized unified AV audio input path strings during metadata validation before filesystem probing.
+- Preserved existing audio input count, absolute-path, existence, media-type, output collision, source identity, graph, rendering, and cleanup behavior.
+- Added focused regression coverage at 4,096 and 4,097 bytes.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.200 as the next unified AV renderer resource-boundary milestone.
+
+ Unified AV Audio Input Path Length Cap — active — 2026-09-29
 
 Branch:
 `fix/m3-199-unified-av-audio-input-path-cap`

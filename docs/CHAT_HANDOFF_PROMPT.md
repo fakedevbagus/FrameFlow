@@ -1,4 +1,28 @@
-## M3.199 — active — 2026-09-29
+## M3.200 — active — 2026-09-29
+
+- Branch: `fix/m3-200-unified-av-video-input-path-cap`.
+- Scope: cap individual unified AV video input path strings.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_inputs` paths had no maximum length.
+- Reject video input paths above 4,096 bytes before filesystem probing.
+- Preserve existing unified AV video validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.199 — completed — 2026-09-29
+
+- Branch: `fix/m3-199-unified-av-audio-input-path-cap`.
+- PR #214; squash-merged at `80e03ee8a211d343c478c44d2b7a3e4b9599ba26`.
+- User reported PASS.
+- PR head `58c2c720e0335ae8f9813ae79aed15f34c658d5c` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 unified AV audio input path bytes and rejected oversized values before filesystem probing.
+- Preserved existing unified AV audio validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
 
 - Branch: `fix/m3-199-unified-av-audio-input-path-cap`.
 - Scope: cap individual unified AV audio input path strings.
