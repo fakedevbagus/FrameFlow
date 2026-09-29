@@ -37,6 +37,7 @@ const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
+const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1116,6 +1117,14 @@ fn validate_native_video_graph_request_metadata(
     return Err(format!(
       "Native video graph supports at most {MAX_NATIVE_VIDEO_GRAPH_INPUTS} inputs."
     ));
+  }
+
+  for input in &request.inputs {
+    if input.as_bytes().len() > MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES {
+      return Err(format!(
+        "Native video graph input path exceeds the {MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES} byte limit."
+      ));
+    }
   }
 
   if request.filter_complex.trim().is_empty() {
@@ -2624,6 +2633,47 @@ mod tests {
   fn accepts_native_video_graph_inputs_at_count_limit() {
     let request = super::NativeVideoGraphRenderRequest {
       inputs: vec!["/tmp/input.mp4".to_string(); super::MAX_NATIVE_VIDEO_GRAPH_INPUTS],
+      input_media_types: Vec::new(),
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+    };
+
+    assert!(
+      super::validate_native_video_graph_request_metadata(&request).is_ok()
+    );
+  }
+
+  #[test]
+  fn rejects_native_video_graph_input_path_above_size_limit() {
+    let request = super::NativeVideoGraphRenderRequest {
+      inputs: vec![
+        "x".repeat(super::MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES + 1)
+      ],
+      input_media_types: Vec::new(),
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+    };
+
+    let error = super::validate_native_video_graph_request_metadata(&request)
+      .expect_err("graph input paths above the configured byte limit must be rejected");
+
+    assert!(error.contains("4096 byte limit"));
+  }
+
+  #[test]
+  fn accepts_native_video_graph_input_path_at_size_limit() {
+    let request = super::NativeVideoGraphRenderRequest {
+      inputs: vec![
+        "x".repeat(super::MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES)
+      ],
       input_media_types: Vec::new(),
       output_path: "/tmp/output.mp4".to_string(),
       width: 1280,
