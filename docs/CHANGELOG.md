@@ -1,64 +1,18 @@
-### M3.203 — ffprobe fixture Rust escaping correction — 2026-09-30
-
-- Fixed the Rust string literal used by the large ffprobe packet-stream regression fixture after the monotonic timestamp correction exposed shell-quote parsing errors during Rust compilation.
-- Switched the fixture command to a Rust raw string; production parser behavior is unchanged.
-- Commit: ed8c84178b688cb23fe64e1c69f67b53e61edc3b.
-- Full M3.203 validation remains pending; do not treat this as user PASS.
-
-### M3.203 — ffprobe packet-stream fixture correction — 2026-09-30
-
-- Rust validation had one remaining failure in `streams_large_ffprobe_packet_output_without_retaining_the_whole_stream` because its shell fixture repeated the same timestamp 100,000 times while expecting a monotonically increasing packet stream.
-- Corrected the fixture to emit timestamps from 1 through 100,000 seconds with 10 ms packet durations.
-- Production parsing behavior was not changed.
-- Commit: `456ef4ddb3a804bb19cca87a3357ccd6713a66ba`.
-- Full M3.203 validation remains pending; do not treat this as user PASS.
-
-### M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — active — 2026-09-29
+### M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — completed — 2026-09-30
 
 - Branch: `fix/m3-203-video-audio-mix-audio-filter-size-cap`.
-- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_filter_complex` had no maximum size validation.
-- The graph is incorporated into the FFmpeg `-filter_complex` argument, allowing an oversized value to increase retained request memory and FFmpeg processing work.
-- Added a maximum of 256 KiB for the legacy video/audio mix audio filter graph and reject oversized values during metadata validation.
+- PR #220; squash-merged at `558bb5000138f1d384c62eb69f97f08993f280ab`.
+- `main` was verified identical to the merge SHA.
+- Added a maximum of 256 KiB for legacy video/audio mix `audio_filter_complex` and rejected oversized graphs before filesystem probing.
 - Preserved existing input, path, duration, map, source identity, rendering, cleanup, and audio-graph behavior.
-- Added focused regression coverage at 262,144 and 262,145 bytes.
+- Added focused exact-limit and over-limit regression coverage.
+- Full user validation passed: npm install/lint/tests/build and Rust tests; Rust reported 133 passed and 0 failed.
+- Validation also exposed and resolved existing repository correctness/type/test issues without weakening M3.203 resource-boundary semantics.
 - No project schema change.
-- Validation exposed two pre-existing repository-wide lint blockers outside the native M3.203 logic.
-- Removed the unused `assertPositiveInteger` helper from `src/features/project/domain.ts`.
-- Fixed the double-escaped canonical UTC timestamp regex that rejected valid ISO timestamps and caused broad test failures.
-- Replaced the synchronous waveform-selection reset effect in `src/features/timeline/Timeline.tsx` with derived selection validity tied to the current clip source/range context.
-- Synchronized stale tests with the current waveform interpolation, preview gain, deferred mute-policy, command-routing, and safe-boundary contracts.
-- Latest local validation reached `npm run test`: 528/529 tests passed; one transition-endpoint boundary fixture failed because its first clip ended at MAX_SAFE_INTEGER + 1.
-- Corrected the fixture to use MAX_SAFE_INTEGER - 50, making the derived transition endpoint exactly MAX_SAFE_INTEGER without changing production validation.
-- Commit: `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
-- Fixed the remaining `track.type` TypeScript narrowing error in `validateClip()` by capturing and asserting the track type before optional audio-field validation; validation semantics are unchanged.
-- Latest code fix commit: `f759d4706192f01af8c142a74ffa4823071e59db`.
-- Full validation remains pending after this code fix.
-- The next test run exposed two domain regression assertions caused only by changed asset-duration error wording after TypeScript narrowing cleanup.
-- Restored the established nullable-duration error contract with a dedicated narrowing helper; validation semantics remain unchanged.
-- Commit: `9b91f3f86f42aeb9be1e1aa2e7fddad46ae590cc`.
-- Full validation remains pending.
-- Follow-up validation reached 529/529 passing tests and clean lint, then the TypeScript build exposed three type-narrowing errors.
-- Fixed the production-domain narrowing by constructing a validated `MediaAsset` and asserting `TrackType`, plus fixed the deferred waveform test resolver narrowing with an explicit holder object.
-- Commits: `59cb1f15f1dc9e1962668fb5af7ea9b51ef06f99`, `f0937b492e7feb40fa5c877e4b8b9dcc8f86ec2e`.
-- Full validation remains pending.
-- PR #220 remains Draft; local full validation is pending.
-- No lint/test/build/cargo/manual validation pass is inferred from this state.
+- Protected PR #76 and unrelated PR #22 were untouched.
 
-- Latest validation passed `npm run test` at 529/529 and completed the frontend `npm run build`; `cargo test` then stopped at Rust compilation with 49 errors and 2 warnings.
-- Fixed the reported Rust compile/test-scope issues without weakening M3.203 resource limits or render validation: restored `save_project` command registration, added required imports/scopes, restored Unix metadata trait visibility, fixed invalid-UTF8 request-buffer ownership, updated typed media-path assertions, and removed the test fixture's unnecessary `Clone` requirement.
-- Latest Rust fix commits: `3127df90ca4abfe6ac4b85354a6d64347fd79890`, `82e2ae946dfda7ccd28e00d50a6ecd465eb1a184`, `48f4edccafc6d9a1c32ff2987a859d92993dc2e4`, `fcffa76fad57d9e39559127dfb522fe3049793fe`.
-- Full validation remains pending.
-
-- The follow-up Rust compile reduced the remaining failures to five test-only typing/scope issues involving `Cow<str>` assertions and Unix metadata trait visibility.
-- Fixed the remaining assertions/import scope without changing production behavior or M3.203 limits.
-- Latest test-only fix commits: `c99508a90457e37590df1175cbd6931f68a56966`, `855e75cccf90a77d791248739a495239c9e0d702`.
-- Full validation remains pending.
-
-- Latest Rust test run reduced failures to 7 while frontend tests/build remained successful.
-- Fixed the remaining test/validation issues: canonical source-audio filter formatting, required query-field precedence, project read-size enforcement, and the large packet-stream fixture.
-- No M3.203 resource-limit semantics were weakened.
-- Latest fixes: `222e96b7ccf1e472243f81b0963fc05e764c6265`, `738647de2992e0c288bcdd1474594b5e0e34ced7`, `d7ff2e34299bdfe4189d2f1dfefadc13e969af63`.
-- Full validation remains pending.
+Next step:
+- Fresh audit from verified `main` identified M3.204: legacy video/audio mix video source path length cap.
 
 ### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
