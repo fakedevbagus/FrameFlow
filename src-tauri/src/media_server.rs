@@ -1011,6 +1011,7 @@ mod tests {
   use super::{
     open_media_file_with_identity,
     parse_range_header,
+    validate_media_path_length,
     percent_decode,
     percent_encode_path,
     MediaPathError,
