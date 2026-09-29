@@ -1,14 +1,27 @@
-### M3.190 — Native Video Graph Filter Size Cap — active — 2026-09-29
+### M3.191 — Native Video Graph Input Path Size Cap — active — 2026-09-29
 
-- Branch: `fix/m3-190-video-graph-filter-length-cap`.
-- Fresh audit found `NativeVideoGraphRenderRequest.filter_complex` had no maximum byte length.
-- A pathological graph string could therefore expand retained request data and FFmpeg argument storage/processing without a request-level boundary.
-- Added a 256 KiB (262,144-byte) maximum and reject oversized filter graphs during metadata validation.
-- Preserved existing graph input-count, media-type, path, source-type, output-path, video-map, rendering, and cleanup behavior.
-- Added focused regression coverage at 262,144 and 262,145 bytes.
+- Branch: `fix/m3-191-video-graph-input-path-cap`.
+- Fresh audit found each `NativeVideoGraphRenderRequest.inputs` path string was unbounded.
+- A pathological path string could therefore enlarge request memory and path-processing work before filesystem validation.
+- Added a maximum of 4,096 bytes per graph input path and reject oversized paths during metadata validation before media probing.
+- Preserved existing graph input-count, media-type, path, source-type, output-path, filter, video-map, rendering, and cleanup behavior.
+- Added focused regression coverage at 4,096 and 4,097 bytes.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.190 — Native Video Graph Filter Size Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-190-video-graph-filter-length-cap`.
+- PR #205; squash-merged at `a11d548d5518a56ace3af440c5346e2a73974793`.
+- User reported PASS.
+- PR head `373038b7f986bc51bee690dbdf1d99aa7bf7f9d3` was verified before merge; `main` was verified identical to the merge SHA.
+- Added a 256 KiB maximum for native video graph `filter_complex` and rejected oversized filters during metadata validation.
+- Preserved existing graph input-count, media-type, path, source-type, output-path, video-map, rendering, and cleanup behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.191 as the next renderer resource-boundary milestone.
 
 ### M3.189 — Native Video Graph Input Count Cap — completed — 2026-09-29
 

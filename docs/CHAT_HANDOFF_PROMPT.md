@@ -1,14 +1,26 @@
-## M3.190 — active — 2026-09-29
+## M3.191 — active — 2026-09-29
 
-- Branch: `fix/m3-190-video-graph-filter-length-cap`.
-- Scope: cap the byte length of the native video graph `filter_complex` payload.
-- Fresh audit found the filter graph was unbounded even after the graph input count was capped.
-- Reject filter graphs above 256 KiB before media-path probing or source-identity snapshot work.
+- Branch: `fix/m3-191-video-graph-input-path-cap`.
+- Scope: cap the byte length of each native video graph input path.
+- Fresh audit found graph input path strings remained unbounded after the graph input-count cap.
+- Reject graph input paths above 4,096 bytes before media-path probing or source-identity work.
 - Preserve existing graph validation/render behavior.
 - Added focused regression coverage at the exact byte limit and one above it.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.190 — completed — 2026-09-29
+
+- Branch: `fix/m3-190-video-graph-filter-length-cap`.
+- PR #205; squash-merged at `a11d548d5518a56ace3af440c5346e2a73974793`.
+- User reported PASS.
+- PR head `373038b7f986bc51bee690dbdf1d99aa7bf7f9d3` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a 256 KiB native video graph `filter_complex` size cap and rejected oversized filters during metadata validation.
+- Preserved existing graph validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
 
 ## M3.189 — completed — 2026-09-29
 
@@ -49,7 +61,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.190 is the active milestone.
+- M3.191 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
