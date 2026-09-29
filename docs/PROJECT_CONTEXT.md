@@ -30,7 +30,7 @@ Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.206.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
-## M3.204## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
+## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
 
 Branch:
 `fix/m3-204-video-audio-mix-video-input-path-cap`
