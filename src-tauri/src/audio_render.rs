@@ -11,6 +11,8 @@ use crate::{
   export_process, probe_duration_ms, probe_has_audio, validate_native_export_settings,
 };
 
+const MAX_NATIVE_AUDIO_GRAPH_INPUTS: usize = 256;
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeAudioGraphRenderRequest {
@@ -1315,6 +1317,12 @@ fn validate_request(request: &NativeAudioGraphRenderRequest) -> Result<(), Strin
     return Err("Native audio graph render requires at least one input.".to_string());
   }
 
+  if request.inputs.len() > MAX_NATIVE_AUDIO_GRAPH_INPUTS {
+    return Err(format!(
+      "Native audio graph supports at most {MAX_NATIVE_AUDIO_GRAPH_INPUTS} inputs."
+    ));
+  }
+
   if request.filter_complex.trim().is_empty() {
     return Err("Native audio graph render requires a filter graph.".to_string());
   }
@@ -1457,6 +1465,33 @@ mod tests {
   fn recognizes_audio_extensions() {
     assert_eq!(media_type(Path::new("music.MP3")).unwrap(), "audio");
     assert_eq!(media_type(Path::new("voice.wav")).unwrap(), "audio");
+  }
+
+  #[test]
+  fn rejects_audio_graph_inputs_above_count_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec!["/media/music.mp3".to_string(); MAX_NATIVE_AUDIO_GRAPH_INPUTS + 1],
+      output_path: "/tmp/audio.mp4".to_string(),
+      filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+    };
+
+    let error = validate_request(&request)
+      .expect_err("audio graph requests above the configured input limit must be rejected");
+
+    assert!(error.contains("supports at most 256 inputs"));
+  }
+
+  #[test]
+  fn accepts_audio_graph_inputs_at_count_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec!["/media/music.mp3".to_string(); MAX_NATIVE_AUDIO_GRAPH_INPUTS],
+      output_path: "/tmp/audio.mp4".to_string(),
+      filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+    };
+
+    assert!(validate_request(&request).is_ok());
   }
 
   #[test]

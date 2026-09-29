@@ -1,14 +1,26 @@
-## M3.191 — active — 2026-09-29
+## M3.192 — active — 2026-09-29
 
-- Branch: `fix/m3-191-video-graph-input-path-cap`.
-- Scope: cap the byte length of each native video graph input path.
-- Fresh audit found graph input path strings remained unbounded after the graph input-count cap.
-- Reject graph input paths above 4,096 bytes before media-path probing or source-identity work.
-- Preserve existing graph validation/render behavior.
-- Added focused regression coverage at the exact byte limit and one above it.
+- Branch: `fix/m3-192-audio-graph-input-count-cap`.
+- Scope: cap the number of native audio graph inputs in one request.
+- Fresh audit found `NativeAudioGraphRenderRequest.inputs` had no maximum count.
+- Reject requests above 256 inputs before filesystem probing or source-identity snapshot work.
+- Preserve existing audio graph validation/render behavior.
+- Added focused regression coverage at the exact limit and one above it.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.191 — completed — 2026-09-29
+
+- Branch: `fix/m3-191-video-graph-input-path-cap`.
+- PR #206; squash-merged at `2f257b961ee2e9d4232643674536c20e62a1c798`.
+- User reported PASS.
+- PR head `e7a614079b213d96615240ff8b19aeb4016630b2` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 bytes per native video graph input path and rejected oversized paths before media probing.
+- Preserved existing graph validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
 
 ## M3.190 — completed — 2026-09-29
 
@@ -61,7 +73,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.191 is the active milestone.
+- M3.192 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
