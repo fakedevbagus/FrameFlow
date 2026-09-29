@@ -1941,13 +1941,12 @@ mod tests {
           track_pan: 0.0,
           audio_fade_in_ms: 0,
           audio_fade_out_ms: 0,
-          audio_volume_keyframes: vec![
-            NativeSourceAudioVolumeKeyframe {
+          audio_volume_keyframes: (0..=MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES)
+            .map(|index| NativeSourceAudioVolumeKeyframe {
               time_ms: index as u64,
               volume: 1.0,
-            }
-            for index in 0..=MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES
-          ],
+            })
+            .collect(),
           audio_eq: None,
           audio_compressor: None,
         },
