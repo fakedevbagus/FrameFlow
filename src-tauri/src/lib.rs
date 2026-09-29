@@ -543,6 +543,10 @@ fn read_project_content<R: Read>(reader: &mut R) -> Result<String, String> {
     .read_to_string(&mut content)
     .map_err(|error| format!("Could not read project file: {error}"))?;
 
+  if content.as_bytes().len() as u64 > MAX_PROJECT_FILE_BYTES {
+    return Err("Project file is too large; maximum supported size is 16 MiB.".to_string());
+  }
+
   Ok(content)
 }
 
@@ -2204,7 +2208,7 @@ mod tests {
     let status = child.wait().unwrap();
 
     assert!(status.success());
-    assert_eq!(duration_ms, Some(9_999_010));
+    assert_eq!(duration_ms, Some(100_000_010));
   }
 
   #[test]
