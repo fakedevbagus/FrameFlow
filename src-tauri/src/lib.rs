@@ -35,6 +35,7 @@ const FFPROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[ffprobe stderr truncated by FrameFlow]\n";
 const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
+const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1108,6 +1109,12 @@ fn validate_native_video_graph_request_metadata(
 
   if request.inputs.is_empty() {
     return Err("Native video graph render requires at least one input.".to_string());
+  }
+
+  if request.inputs.len() > MAX_NATIVE_VIDEO_GRAPH_INPUTS {
+    return Err(format!(
+      "Native video graph supports at most {MAX_NATIVE_VIDEO_GRAPH_INPUTS} inputs."
+    ));
   }
 
   if request.filter_complex.trim().is_empty() {
@@ -2584,6 +2591,43 @@ mod tests {
 
     assert!(
       super::validate_native_video_segments_request_metadata(&request).is_ok()
+    );
+  }
+
+  #[test]
+  fn rejects_native_video_graph_inputs_above_count_limit() {
+    let request = super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/tmp/input.mp4".to_string(); super::MAX_NATIVE_VIDEO_GRAPH_INPUTS + 1],
+      input_media_types: Vec::new(),
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+    };
+
+    let error = super::validate_native_video_graph_request_metadata(&request)
+      .expect_err("video graph requests above the configured input limit must be rejected");
+
+    assert!(error.contains("supports at most 256 inputs"));
+  }
+
+  #[test]
+  fn accepts_native_video_graph_inputs_at_count_limit() {
+    let request = super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/tmp/input.mp4".to_string(); super::MAX_NATIVE_VIDEO_GRAPH_INPUTS],
+      input_media_types: Vec::new(),
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+    };
+
+    assert!(
+      super::validate_native_video_graph_request_metadata(&request).is_ok()
     );
   }
 
