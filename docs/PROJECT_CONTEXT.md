@@ -56,7 +56,9 @@ Implementation:
 
 Next step:
 - Fresh audit from verified `main` identified M3.182 as the next focused process/resource-safety milestone.
-\n## M3.180 — Export FFmpeg Stderr Memory Cap — active — 2026-09-29
+
+
+## M3.180 — Export FFmpeg Stderr Memory Cap — active — 2026-09-29
 
 Branch:
 `fix/m3-180-export-stderr-memory-cap`
