@@ -3,7 +3,7 @@
 - Repository: `fakedevbagus/FrameFlow`.
 - Latest merged milestone: M3.205.
 - M3.205 PR #222; squash merge SHA: `44a3e7926cfdaada243a7bc9b64200a1d8759d03`.
-- `main) was verified identical to that merge SHA.
+- `main` was verified identical to that merge SHA.
 - User reported PASS after full local validation: 529/529 frontend tests, lint PASS, frontend build PASS, and 137/137 Rust tests.
 - Fresh audit identified M3.206 as the next focused hardening milestone.
 - Protected PR #76 and unrelated PR #22 remain untouched.
@@ -43,7 +43,7 @@ Workflow:
 - Added the native audio graph per-input path cap of 4,096 bytes with exact-limit and over-limit regression coverage.
 - No project schema change.
 
-## M3.204## M3.204 — completed — 2026-09-30
+## M3.204 — completed — 2026-09-30
 
 - Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
 - PR #221; squash-merged at `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`.
