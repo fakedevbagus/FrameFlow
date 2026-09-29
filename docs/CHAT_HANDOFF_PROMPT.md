@@ -26,6 +26,11 @@
 - Latest code fix commit: `f759d4706192f01af8c142a74ffa4823071e59db`.
 - Local validation remains pending; do not infer lint/test/build/cargo/manual success.
 
+- Latest validation: 529/529 frontend tests passed and `npm run build` completed; `cargo test` failed during Rust compilation before executing the test suite, reporting 49 errors and 2 warnings.
+- Applied behavior-preserving Rust fixes for the reported failures: restored the `save_project` Tauri command annotation, added missing module/constants/import scopes, imported Unix `MetadataExt`, fixed the moved invalid-UTF8 request buffer, converted typed `MediaPathError` assertions to string assertions, and changed segment test fixture construction to avoid requiring `Clone`.
+- Latest Rust fix commits: `3127df90ca4abfe6ac4b85354a6d64347fd79890`, `82e2ae946dfda7ccd28e00d50a6ecd465eb1a184`, `48f4edccafc6d9a1c32ff2987a859d92993dc2e4`, `fcffa76fad57d9e39559127dfb522fe3049793fe`.
+- Re-run the complete Pull/Fetch + Validation workflow from the latest branch head before declaring PASS or merging PR #220.
+
 ## M3.202 — completed — 2026-09-29
 
 - Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
