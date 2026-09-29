@@ -20,6 +20,7 @@ const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES: usize = 4096;
+const MAX_NATIVE_VIDEO_WITH_AUDIO_GRAPH_AUDIO_INPUTS: usize = 256;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1155,6 +1156,12 @@ fn validate_video_audio_mix_request(
     return Err("Native video/audio mix requires at least one audio input.".to_string());
   }
 
+  if request.audio_inputs.len() > MAX_NATIVE_VIDEO_WITH_AUDIO_GRAPH_AUDIO_INPUTS {
+    return Err(format!(
+      "Native video/audio mix supports at most {MAX_NATIVE_VIDEO_WITH_AUDIO_GRAPH_AUDIO_INPUTS} audio inputs."
+    ));
+  }
+
   if request.duration_ms == 0 {
     return Err("Native video/audio mix requires a positive duration.".to_string());
   }
@@ -1692,6 +1699,27 @@ mod tests {
     let mut missing_audio = valid;
     missing_audio.audio_inputs.clear();
     assert!(validate_video_audio_mix_request(&missing_audio).is_err());
+
+    let mut too_many_audio_inputs = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec![
+        "/media/music.mp3".to_string();
+        MAX_NATIVE_VIDEO_WITH_AUDIO_GRAPH_AUDIO_INPUTS + 1
+      ],
+      audio_filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    let error = validate_video_audio_mix_request(&too_many_audio_inputs)
+      .expect_err("legacy video/audio mix requests above the configured audio input limit must be rejected");
+    assert!(error.contains("supports at most 256 audio inputs"));
+
+    too_many_audio_inputs.audio_inputs = vec![
+      "/media/music.mp3".to_string();
+      MAX_NATIVE_VIDEO_WITH_AUDIO_GRAPH_AUDIO_INPUTS
+    ];
+    assert!(validate_video_audio_mix_request(&too_many_audio_inputs).is_ok());
 
     let mut missing_graph = NativeVideoWithAudioGraphRenderRequest {
       video_source_path: "/media/video.mp4".to_string(),
