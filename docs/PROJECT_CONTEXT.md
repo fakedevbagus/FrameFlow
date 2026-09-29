@@ -1,32 +1,62 @@
-## M3.181 — FFprobe Audio Packet Stream — active — 2026-09-29
+## M3.182 — Preview FFmpeg Stderr Memory Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-181-ffprobe-packet-stream`
+`fix/m3-182-preview-ffmpeg-stderr-memory-cap`
 
 Fresh audit finding:
-- `probe_duration_from_audio_packets()` used `ffprobe` with `Command::output()` and loaded the complete packet-oriented stdout into memory before parsing.
-- Long audio streams can contain a very large number of packet records, making retained stdout memory grow with media length.
-- The same buffered process boundary could also retain unnecessary child output instead of parsing incrementally.
+- `prepare_media_preview()` invoked FFmpeg with `Command::output()`, which retained complete stdout/stderr in memory until the preview process exited.
+- Preview generation writes media to a file and does not consume stdout, while FFmpeg stderr is diagnostic output that can become unexpectedly large on pathological inputs or repeated failures.
+- The retained preview stderr therefore had no explicit memory ceiling.
 
 Scope:
-- Stream ffprobe audio-packet stdout incrementally and fully drain stderr concurrently without retaining the complete packet output in memory.
+- Replace buffered preview-process output capture with a dedicated FFmpeg child that discards stdout, drains stderr concurrently, and retains at most 64 KiB of diagnostics.
 
 Implementation:
-- Replace buffered `run_ffprobe()` usage for the packet-duration path with an explicit child process using piped stdout/stderr.
-- Parse packet records incrementally through a reusable line buffer.
-- Keep only the latest computed end timestamp instead of retaining all packet stdout.
-- Drain ffprobe stderr concurrently with fixed memory.
-- Preserve existing packet-duration parsing semantics and fallback order.
-- Add focused regression coverage with large packet-like stdout and a final later timestamp.
+- Run preview FFmpeg with stdout redirected to `Stdio::null()` instead of buffering it.
+- Drain stderr on a dedicated thread so the child cannot block on stderr pipe backpressure.
+- Retain only the first bounded diagnostic excerpt and append an explicit truncation notice when additional stderr is discarded.
+- Preserve existing preview arguments, source-identity validation, temporary-file behavior, cache finalization, and error mapping.
+- Add focused regression coverage for multi-megabyte stderr retention.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.181 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.182 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
-## M3.180 — Export FFmpeg Stderr Memory Cap — active — 2026-09-29
+## M3.181 — FFprobe Audio Packet Stream — completed — 2026-09-29
+
+Branch:
+`fix/m3-181-ffprobe-packet-stream`
+
+PR:
+#196
+
+Merge SHA:
+`407c2cd9675f446348bd51454140ab1c0a1f4e55`
+
+User validation:
+- User reported PASS for M3.181.
+- PR #196 was refreshed at head `4d64917be64b5249cef5ccc085d64a0abf9b46de`, marked Ready for Review, and squash-merged.
+- `main` was subsequently verified against the merge commit `407c2cd9675f446348bd51454140ab1c0a1f4e55`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `probe_duration_from_audio_packets()` buffered complete ffprobe packet stdout through `Command::output()`.
+- Long audio streams could therefore make retained stdout memory grow with the number of packets.
+
+Implementation:
+- Stream ffprobe packet stdout incrementally through a reusable line buffer.
+- Keep only the latest computed packet end timestamp.
+- Drain ffprobe stderr concurrently with fixed memory.
+- Preserve packet duration parsing semantics and fallback order.
+- Added focused regression coverage using 100,000 packet-like lines plus a later timestamp.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.182 as the next focused process/resource-safety milestone.
+\n## M3.180 — Export FFmpeg Stderr Memory Cap — active — 2026-09-29
 
 Branch:
 `fix/m3-180-export-stderr-memory-cap`
