@@ -396,9 +396,19 @@ fn handle_connection(
     }
   };
 
-  let metadata = file
-    .metadata()
-    .map_err(|error| format!("Could not inspect media file metadata: {error}"))?;
+  let metadata = match file.metadata() {
+    Ok(metadata) => metadata,
+    Err(_) => {
+      write_status(
+        &mut stream,
+        404,
+        "Not Found",
+        b"Media file could not be found.",
+        method != "HEAD",
+      )?;
+      return Ok(());
+    }
+  };
 
   if !metadata.is_file() {
     write_status(
