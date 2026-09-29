@@ -1,13 +1,30 @@
-### M3.178 — Audio Waveform FFmpeg Pipe Liveness — active — 2026-09-28
+### M3.179 — Media Server File Open TOCTOU — active — 2026-09-29
 
-- Branch: `fix/m3-178-waveform-ffmpeg-pipe-deadlock`.
-- Fresh audit found the waveform FFmpeg child could deadlock when piped stderr filled while the parent was consuming stdout.
-- Added concurrent stderr draining while waveform stdout is consumed.
-- Preserved FFmpeg failure detail from stderr and added child kill/reap handling for output-pipe/read failures.
-- Added focused regression coverage for more than 64 KiB of child stderr.
+- Branch: `fix/m3-179-media-file-open-toctou`.
+- Draft PR #194 created with validation pending.
+- Fresh audit found a validation-to-open TOCTOU after media-path canonicalization and allowlist validation.
+- A local pathname replacement with an outside symlink could redirect the later file open.
+- Scope: pin the validated file identity and stream from one verified file handle.
+- Captured device/inode identity is checked against the opened file; full-file and Range responses reuse the verified handle.
+- Added focused regression coverage for replacement by symlink before open.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: complete user local validation of M3.178; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+- Next step: complete user local validation of M3.179; after PASS, refresh the active PR, merge using the verified head SHA, reconcile documentation, verify `main`, and start the next focused audit.
+
+### M3.178 — Audio Waveform FFmpeg Pipe Liveness — completed — 2026-09-28
+
+- Branch: `fix/m3-178-waveform-ffmpeg-pipe-deadlock`.
+- PR #193; squash-merged at `55433db6e844238516c89b2ea65a34fc585687be`.
+- User reported PASS for M3.178.
+- Drained FFmpeg stderr concurrently while waveform stdout was consumed and preserved FFmpeg failure detail.
+- Added child kill/reap handling for waveform pipe/read failures and focused regression coverage for more than 64 KiB of stderr.
+- Preserved waveform reduction, normalization, source validation, and FFmpeg arguments.
+- No project schema change.
+- PR head `403a93dbe08cf62f870b1d314990bbf8408607ae` was verified before merge.
+- `main` was verified at merge commit `55433db6e844238516c89b2ea65a34fc585687be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.179 as the next focused media-file resource/security milestone.
+
 
 ### M3.177 — Media Server Connection Concurrency Cap — completed — 2026-09-28
 

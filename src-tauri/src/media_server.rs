@@ -368,7 +368,35 @@ fn handle_connection(
     }
   };
 
-  let metadata = match fs::metadata(&path) {
+  let expected_identity = match capture_media_file_identity(&path) {
+    Ok(identity) => identity,
+    Err(_) => {
+      write_status(
+        &mut stream,
+        404,
+        "Not Found",
+        b"Media file could not be found.",
+        method != "HEAD",
+      )?;
+      return Ok(());
+    }
+  };
+
+  let mut file = match open_media_file_with_identity(&path, expected_identity) {
+    Ok(file) => file,
+    Err(_) => {
+      write_status(
+        &mut stream,
+        404,
+        "Not Found",
+        b"Media file could not be resolved.",
+        method != "HEAD",
+      )?;
+      return Ok(());
+    }
+  };
+
+  let metadata = match file.metadata() {
     Ok(metadata) => metadata,
     Err(_) => {
       write_status(
@@ -440,7 +468,7 @@ fn handle_connection(
       )?;
 
       if method == "GET" {
-        stream_file_range(&mut stream, &path, start, length)?;
+        stream_file_range(&mut stream, &mut file, start, length)?;
       }
     }
     RangeResult::None => {
@@ -454,9 +482,6 @@ fn handle_connection(
       )?;
 
       if method == "GET" {
-        let mut file = File::open(&path)
-          .map_err(|error| format!("Could not open media file: {error}"))?;
-
         io::copy(&mut file, &mut stream)
           .map_err(|error| format!("Could not stream media file: {error}"))?;
       }
@@ -610,13 +635,10 @@ fn parse_range_header(request: &str, len: u64) -> RangeResult {
 
 fn stream_file_range(
   stream: &mut TcpStream,
-  path: &Path,
+  file: &mut File,
   start: u64,
   length: u64,
 ) -> Result<(), String> {
-  let mut file = File::open(path)
-    .map_err(|error| format!("Could not open media file: {error}"))?;
-
   file
     .seek(SeekFrom::Start(start))
     .map_err(|error| format!("Could not seek media file: {error}"))?;
@@ -748,6 +770,41 @@ Connection: close\r\n\
   stream
     .write_all(headers.as_bytes())
     .map_err(|error| format!("Could not write range error: {error}"))
+}
+
+fn capture_media_file_identity(path: &Path) -> Result<(u64, u64), String> {
+  let metadata = fs::metadata(path)
+    .map_err(|error| format!("Could not inspect media file identity: {error}"))?;
+
+  if !metadata.is_file() {
+    return Err("Media file is not a regular file.".to_string());
+  }
+
+  Ok((metadata.dev(), metadata.ino()))
+}
+
+fn open_media_file_with_identity(
+  path: &Path,
+  expected_identity: (u64, u64),
+) -> Result<File, String> {
+  let file = File::open(path)
+    .map_err(|error| format!("Could not open media file: {error}"))?;
+
+  let metadata = file
+    .metadata()
+    .map_err(|error| format!("Could not inspect opened media file: {error}"))?;
+
+  let actual_identity = (metadata.dev(), metadata.ino());
+
+  if actual_identity != expected_identity {
+    return Err("Media file changed during secure open; please retry.".to_string());
+  }
+
+  if !metadata.is_file() {
+    return Err("Opened media path is not a regular file.".to_string());
+  }
+
+  Ok(file)
 }
 
 fn validate_media_path(path: &Path) -> Result<PathBuf, MediaPathError> {
@@ -932,7 +989,12 @@ fn content_type_for_path(path: &Path) -> &'static str {
 #[cfg(test)]
 mod tests {
   use super::{
-    parse_range_header, percent_decode, percent_encode_path, MediaPathError, RangeResult,
+    open_media_file_with_identity,
+    parse_range_header,
+    percent_decode,
+    percent_encode_path,
+    MediaPathError,
+    RangeResult,
   };
   use std::{
     path::Path,
@@ -1495,6 +1557,43 @@ mod tests {
     assert!(error.contains("Media file type is not supported"));
 
     std::fs::remove_file(path).unwrap();
+  }
+
+  #[test]
+  fn rejects_media_file_replacement_between_validation_and_open() {
+    use std::{
+      fs,
+      os::unix::fs::symlink,
+      time::{SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let directory = std::env::temp_dir().join(format!(
+      "frameflow-media-toctou-{unique_suffix}"
+    ));
+    let canonical_path = directory.join("media.mp4");
+    let outside_path = directory.join("outside.mp4");
+
+    fs::create_dir_all(&directory).unwrap();
+    fs::write(&canonical_path, b"inside").unwrap();
+    fs::write(&outside_path, b"outside").unwrap();
+
+    let metadata = fs::metadata(&canonical_path).unwrap();
+    let expected_identity = (metadata.dev(), metadata.ino());
+
+    fs::remove_file(&canonical_path).unwrap();
+    symlink(&outside_path, &canonical_path).unwrap();
+
+    let error = open_media_file_with_identity(&canonical_path, expected_identity)
+      .expect_err("replacement of the validated file must be rejected");
+    assert!(error.contains("changed during secure open"));
+
+    fs::remove_file(&canonical_path).unwrap();
+    fs::remove_file(&outside_path).unwrap();
+    fs::remove_dir(&directory).unwrap();
   }
 
   #[test]
