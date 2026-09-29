@@ -60,6 +60,7 @@ impl Drop for MediaConnectionGuard {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum MediaPathError {
   BadRequest,
+  PathTooLong,
   NotFound,
   UnsupportedMediaType,
   Forbidden,
@@ -69,6 +70,7 @@ impl MediaPathError {
   fn status(self) -> (u16, &'static str) {
     match self {
       Self::BadRequest => (400, "Bad Request"),
+      Self::PathTooLong => (400, "Bad Request"),
       Self::NotFound => (404, "Not Found"),
       Self::UnsupportedMediaType => (415, "Unsupported Media Type"),
       Self::Forbidden => (403, "Forbidden"),
@@ -78,6 +80,7 @@ impl MediaPathError {
   fn message(self) -> &'static str {
     match self {
       Self::BadRequest => "Media path must be absolute.",
+      Self::PathTooLong => "Media path exceeds the maximum length of 4096 bytes.",
       Self::NotFound => "Media file could not be resolved.",
       Self::UnsupportedMediaType => "Media file type is not supported.",
       Self::Forbidden => "Media path is outside the allowed local media directories.",
@@ -809,7 +812,17 @@ fn open_media_file_with_identity(
   Ok(file)
 }
 
+fn validate_media_path_length(path: &Path) -> Result<(), MediaPathError> {
+  if path.to_string_lossy().as_bytes().len() > crate::MAX_MEDIA_PATH_BYTES {
+    return Err(MediaPathError::PathTooLong);
+  }
+
+  Ok(())
+}
+
 fn validate_media_path(path: &Path) -> Result<PathBuf, MediaPathError> {
+  validate_media_path_length(path)?;
+
   if path.is_relative() {
     return Err(MediaPathError::BadRequest);
   }
@@ -1655,6 +1668,22 @@ mod tests {
       ),
       RangeResult::DuplicateHeaders
     ));
+  }
+
+  #[test]
+  fn rejects_media_path_above_size_limit() {
+    let path = Path::new(&"a".repeat(crate::MAX_MEDIA_PATH_BYTES + 1));
+    assert_eq!(
+      validate_media_path_length(path),
+      Err(MediaPathError::PathTooLong)
+    );
+  }
+
+  #[test]
+  fn accepts_media_path_at_size_limit_for_length_validation() {
+    let value = "a".repeat(crate::MAX_MEDIA_PATH_BYTES);
+    let path = Path::new(&value);
+    assert!(validate_media_path_length(path).is_ok());
   }
 
   #[test]
