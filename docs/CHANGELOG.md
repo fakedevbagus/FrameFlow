@@ -1,4 +1,19 @@
-### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — active — 2026-09-29
+### M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — active — 2026-09-29
+
+- Branch: `fix/m3-203-video-audio-mix-audio-filter-size-cap`.
+- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_filter_complex` had no maximum size validation.
+- The graph is incorporated into the FFmpeg `-filter_complex` argument, allowing an oversized value to increase retained request memory and FFmpeg processing work.
+- Added a maximum of 256 KiB for the legacy video/audio mix audio filter graph and reject oversized values during metadata validation.
+- Preserved existing input, path, duration, map, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+- User reported PASS.
+- PR #219; squash-merged at `d025afcdda8222a8d54f41b28073574b7c77e04c`.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.203 as the next legacy video/audio mix resource-boundary milestone.
+
+### M3.202 — Legacy Video/Audio Mix Audio Input Path Length Cap — completed — 2026-09-29
 
 - Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
 - Fresh audit found individual `NativeVideoWithAudioGraphRenderRequest.audio_inputs` path strings had no maximum length validation after the input count was bounded.
