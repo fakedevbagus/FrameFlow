@@ -1,30 +1,61 @@
-## M3.183 — FFmpeg Duration Probe Stream — active — 2026-09-29
+## M3.184 — Waveform FFmpeg Stderr Memory Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-183-ffmpeg-duration-probe-stream`
+`fix/m3-184-waveform-stderr-memory-cap`
 
 Fresh audit finding:
-- `probe_duration_with_ffmpeg()` still invoked FFmpeg with `Command::output()`.
-- The fallback emits progress records on stdout and FFmpeg diagnostics on stderr, so buffering the complete process output made memory usage grow with the amount of output produced.
-- This fallback is intended for duration recovery, so it does not need to retain the complete progress stream after extracting the latest usable timestamp.
+- `audio_waveform::spawn_stderr_reader()` drained FFmpeg stderr with `read_to_end(&mut Vec<u8>)`, retaining the entire diagnostic stream in memory.
+- The concurrent reader prevents stderr pipe deadlock, but it had no retained-memory ceiling.
+- Pathological waveform failures could therefore grow process memory with diagnostic output volume.
 
 Scope:
-- Stream FFmpeg duration-probe stdout incrementally, drain stderr concurrently, and retain only bounded diagnostics.
+- Continue draining waveform FFmpeg stderr to EOF while bounding retained diagnostics to 64 KiB.
 
 Implementation:
-- Spawn the FFmpeg duration probe with piped stdout/stderr.
-- Parse `out_time_ms=` progress records incrementally through a reusable line buffer.
-- Drain stderr concurrently and cap retained diagnostics at 64 KiB with an explicit truncation notice.
-- Preserve the existing `Duration:`-from-stderr preference followed by progress fallback semantics.
-- Preserve the existing FFmpeg arguments and duration-probing fallback order.
-- Add focused regression coverage for large progress output.
+- Added a 64 KiB maximum retained waveform FFmpeg stderr size.
+- Continue reading until EOF and discard excess bytes after the retention limit is reached.
+- Append an explicit truncation notice when output is truncated.
+- Preserve waveform decoding, sample reduction, normalization, process liveness, failure mapping, and FFmpeg arguments.
+- Updated the existing large-stderr regression to assert the bounded retained size and truncation marker.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.183 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.184 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.183 — FFmpeg Duration Probe Stream — completed — 2026-09-29
+
+Branch:
+`fix/m3-183-ffmpeg-duration-probe-stream`
+
+PR:
+#198
+
+Merge SHA:
+`3803e4d13d1ea6a220cd7b5d6cde6c35c707e270`
+
+User validation:
+- User reported PASS for M3.183.
+- PR #198 was refreshed at head `d1e563df0c140f5041d955d97fb3d685b91e396e`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `3803e4d13d1ea6a220cd7b5d6cde6c35c707e270`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `probe_duration_with_ffmpeg()` buffered complete FFmpeg progress stdout and stderr through `Command::output()`.
+- Duration fallback output could therefore grow in memory with FFmpeg output volume.
+
+Implementation:
+- Spawned the FFmpeg duration probe with piped stdout/stderr.
+- Parsed `out_time_ms=` progress incrementally through a reusable line buffer.
+- Drained stderr concurrently with a bounded 64 KiB retained diagnostic buffer and explicit truncation notice.
+- Preserved the `Duration:`-from-stderr preference, progress fallback, FFmpeg arguments, and duration fallback order.
+- Added focused regression coverage for large progress output.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.184 as the next focused process/resource-safety milestone.
 
 ## M3.182 — Preview FFmpeg Stderr Memory Cap — completed — 2026-09-29
 
