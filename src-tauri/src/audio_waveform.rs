@@ -3,7 +3,7 @@ use std::{
   io::Read,
   os::unix::fs::MetadataExt,
   path::Path,
-  process::{Command, Stdio},
+  process::{Child, Command, Stdio},
   time::UNIX_EPOCH,
 };
 
@@ -77,6 +77,19 @@ pub fn generate_audio_waveform(
   })
 }
 
+fn spawn_stderr_reader(child: &mut Child) -> Result<std::thread::JoinHandle<Vec<u8>>, String> {
+  let mut stderr = child
+    .stderr
+    .take()
+    .ok_or_else(|| "FFmpeg waveform error output could not be opened.".to_string())?;
+
+  Ok(std::thread::spawn(move || {
+    let mut output = Vec::new();
+    let _ = stderr.read_to_end(&mut output);
+    output
+  }))
+}
+
 fn validate_audio_source(source_path: &Path) -> Result<(), String> {
   let media_type = super::media_type(source_path)?;
 
@@ -128,10 +141,23 @@ fn decode_and_reduce_waveform(
     .spawn()
     .map_err(|error| format!("Could not run ffmpeg for waveform generation: {error}"))?;
 
-  let mut stdout = child
-    .stdout
-    .take()
-    .ok_or_else(|| "FFmpeg waveform output could not be opened.".to_string())?;
+  let mut stdout = match child.stdout.take() {
+    Some(stdout) => stdout,
+    None => {
+      let _ = child.kill();
+      let _ = child.wait();
+      return Err("FFmpeg waveform output could not be opened.".to_string());
+    }
+  };
+
+  let stderr_reader = match spawn_stderr_reader(&mut child) {
+    Ok(reader) => reader,
+    Err(error) => {
+      let _ = child.kill();
+      let _ = child.wait();
+      return Err(error);
+    }
+  };
 
   let mut peaks = vec![0.0_f32; peak_count];
   let expected_samples = ((duration_ms as f64 / 1000.0) * sample_rate as f64)
@@ -143,9 +169,15 @@ fn decode_and_reduce_waveform(
   let mut buffer = [0_u8; 64 * 1024];
 
   loop {
-    let read = stdout
-      .read(&mut buffer)
-      .map_err(|error| format!("Could not read FFmpeg waveform output: {error}"))?;
+    let read = match stdout.read(&mut buffer) {
+      Ok(read) => read,
+      Err(error) => {
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = stderr_reader.join();
+        return Err(format!("Could not read FFmpeg waveform output: {error}"));
+      }
+    };
 
     if read == 0 {
       break;
@@ -205,12 +237,21 @@ fn decode_and_reduce_waveform(
     }
   }
 
-  let output = child
-    .wait_with_output()
-    .map_err(|error| format!("Could not finish FFmpeg waveform generation: {error}"))?;
+  let status = match child.wait() {
+    Ok(status) => status,
+    Err(error) => {
+      let _ = child.kill();
+      let _ = stderr_reader.join();
+      return Err(format!(
+        "Could not finish FFmpeg waveform generation: {error}"
+      ));
+    }
+  };
 
-  if !output.status.success() {
-    let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+  let stderr_output = stderr_reader.join().unwrap_or_default();
+
+  if !status.success() {
+    let detail = String::from_utf8_lossy(&stderr_output).trim().to_string();
 
     return Err(if detail.is_empty() {
       "FFmpeg could not generate an audio waveform.".to_string()
@@ -383,6 +424,28 @@ mod tests {
     update_peak(&mut peaks, f32::INFINITY, 0, 1);
 
     assert_eq!(peaks, vec![0.25]);
+  }
+
+  #[test]
+  fn drains_large_ffmpeg_stderr_without_deadlocking_child_wait() {
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new("sh")
+      .args([
+        "-c",
+        "i=0; while [ $i -lt 4096 ]; do printf 'frameflow-waveform-error-output-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n' >&2; i=$((i + 1)); done",
+      ])
+      .stdout(Stdio::null())
+      .stderr(Stdio::piped())
+      .spawn()
+      .unwrap();
+
+    let stderr_reader = spawn_stderr_reader(&mut child).unwrap();
+    let status = child.wait().unwrap();
+    let stderr_output = stderr_reader.join().unwrap();
+
+    assert!(status.success());
+    assert!(stderr_output.len() > 64 * 1024);
   }
 
   #[test]

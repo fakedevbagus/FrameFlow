@@ -1,14 +1,29 @@
-## M3.177 — active — 2026-09-28
+## M3.178 — active — 2026-09-28
 
-- Branch: `fix/m3-177-media-server-connection-cap`.
-- Scope: cap concurrently handled media-server connections so local connection bursts cannot create an unbounded number of server threads.
-- Fresh audit found `MediaServerState::start()` spawning one dedicated OS thread for every accepted connection without an active-connection ceiling.
-- Add a fixed 32-connection active-handler ceiling using an atomic slot counter and RAII release guard.
-- Excess accepted connections are closed without spawning another handler thread.
-- Preserve the existing 15-second request-read timeout, 15-second response-write timeout, and all media response/status/header/range/query/token/path/media-type/HTTP/HEAD/OPTIONS behavior.
-- Added focused regression coverage for the connection cap and slot reuse.
+- Branch: `fix/m3-178-waveform-ffmpeg-pipe-deadlock`.
+- Scope: prevent waveform FFmpeg child/process liveness deadlock caused by piped stderr backpressure.
+- Fresh audit found `audio_waveform::decode_and_reduce_waveform()` consuming FFmpeg stdout while stderr remained piped until `wait_with_output()`; sufficiently large stderr could fill the pipe and block FFmpeg.
+- Drain stderr concurrently on a dedicated reader thread while stdout samples are consumed.
+- Preserve FFmpeg failure detail from stderr.
+- Kill/reap the child when waveform output-pipe setup or stdout reading fails.
+- Add focused regression coverage that emits more than 64 KiB of stderr and verifies the child can terminate without deadlock.
+- Preserve existing waveform sample reduction, normalization, source validation, and FFmpeg arguments.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - No project schema version change.
+
+## M3.177 — completed — 2026-09-28
+
+- Branch: `fix/m3-177-media-server-connection-cap`.
+- PR #192; squash-merged at `f319afae3289e18308165d535ad810c1cc96e663`.
+- User reported PASS.
+- Added a fixed 32-connection active-handler ceiling with an atomic slot counter and RAII release guard.
+- Excess accepted connections are closed without spawning another handler thread.
+- Existing request/response timeouts and media HTTP behavior remain preserved.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `66cba3991383c379f8c8a5c4dcaf1c6257fcebfa` was verified before merge.
+- `main` was verified at `f319afae3289e18308165d535ad810c1cc96e663`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
 
 ## M3.176 — completed — 2026-09-28
 
@@ -16,7 +31,7 @@
 - PR #191; squash-merged at `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
 - User reported PASS.
 - Added a fixed 15-second `TcpStream` write timeout so stalled response writes cannot block a media-server connection thread indefinitely.
-- Existing request-read timeout and all media response behavior remain preserved.
+- Existing request-read timeout and media response behavior remain preserved.
 - Added focused regression coverage.
 - No project schema version change.
 - PR head `bf8db3dd6bfca6f46cfc7c6730e706cb913a02e2` was verified before merge.
@@ -31,6 +46,23 @@
 - Added generic request-header field-name validation; malformed header lines now return HTTP 400.
 - Existing valid headers, Range parsing, and HEAD behavior remain preserved.
 - No project schema version change.
+
+## M3.174 — completed — 2026-09-28
+
+- Branch: `fix/m3-174-media-server-request-read-timeout`.
+- PR #189; squash-merged at `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
+- User reported PASS.
+- Added a fixed 15-second request-header read timeout.
+- Existing response streaming behavior remains preserved.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.178 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.174 — completed — 2026-09-28
 
