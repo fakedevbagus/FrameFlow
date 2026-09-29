@@ -25,6 +25,9 @@ Implementation:
 - Latest local validation: `npm ci` completed with 0 vulnerabilities; `npm run lint` passed; `npm run test` reached 528/529 passing with one boundary-fixture failure in `domain.test.ts` where the first clip started at MAX_SAFE_INTEGER - 49 and therefore ended one millisecond beyond the safe range.
 - Corrected that test fixture to start at MAX_SAFE_INTEGER - 50 so its derived transition endpoint reaches exactly MAX_SAFE_INTEGER; commit `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
 - Full validation is pending again after this fixture-only correction; do not infer test/build/cargo/manual success.
+- The next validation run produced 529/529 passing tests and a clean lint, then `npm run build` exposed three TypeScript errors: the deferred waveform test resolver narrowed to `never`, an unsafe `Record<string, unknown>` to `MediaAsset` cast, and `track.type` remaining `unknown` when passed to audio-field validation.
+- Fixed those type-level issues without changing validation policy: construct a validated `MediaAsset`, add an `assertTrackType()` assertion, and use an object holder for the deferred waveform resolver.
+- Full validation remains pending after commits `59cb1f15f1dc9e1962668fb5af7ea9b51ef06f99` and `f0937b492e7feb40fa5c877e4b8b9dcc8f86ec2e`.
 
 Validation:
 - `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
