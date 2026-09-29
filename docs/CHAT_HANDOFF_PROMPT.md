@@ -1,3 +1,8 @@
+- Latest validation reached 529/529 frontend tests and a successful Vite build; Rust tests ran 135 tests with exactly one failure in the M3.204 exact-limit video source path fixture.
+- Root cause: the exact-limit fixture omitted `.mp4`, so `media_type()` rejected it before the test could verify the 4,096-byte boundary.
+- Corrected both boundary fixtures to include `.mp4` while preserving exact 4,096-byte and over-limit cases in commit `b4a8c419533ca2164046459b9067ba95a58e40c6`.
+- Re-run the complete Pull/Fetch + Validation workflow from the latest branch head before declaring PASS or merging PR #221.
+
 ## M3.203 — completed — 2026-09-30
 
 - Branch: `fix/m3-203-video-audio-mix-audio-filter-size-cap`.
