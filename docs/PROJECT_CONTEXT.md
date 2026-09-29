@@ -3,6 +3,9 @@
 Branch:
 `fix/m3-180-export-stderr-memory-cap`
 
+PR:
+#195
+
 Fresh audit finding:
 - `export_process::run_ffmpeg_with_progress()` drains FFmpeg stderr on a dedicated thread, but previously retained the entire stderr stream in an unbounded `Vec<u8>`.
 - Large or pathological FFmpeg diagnostic output could therefore consume process memory even though stderr pipe liveness was already protected by concurrent draining.
