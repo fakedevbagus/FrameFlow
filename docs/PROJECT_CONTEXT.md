@@ -1,4 +1,4 @@
-## M3.179 — Media Server File Open TOCTOU — active — 2026-09-29
+## M3.179 — Media Server File Open TOCTOU — completed — 2026-09-29
 
 Branch:
 `fix/m3-179-media-file-open-toctou`
@@ -6,13 +6,19 @@ Branch:
 PR:
 #194
 
-Fresh audit finding:
+Merge SHA:
+`709c57fbf081d165dcf00474d685a50f2bf128d3`
+
+User validation:
+- User reported `continue`, which the established workflow treats as explicit PASS confirmation for the active milestone.
+- PR #194 was refreshed at head `c88e39f402a2cae0a08d5e499551b644aa6592db`, verified against `main`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `709c57fbf081d165dcf00474d685a50f2bf128d3`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS-equivalent confirmation.
+
+Audit finding:
 - `handle_connection()` canonicalized and allowlisted the requested media path, then later reopened that pathname with `File::open(&path)`.
 - A local process could replace the validated pathname between resolution and open, including replacing it with a symlink to a file outside the allowed media roots.
 - The later open could therefore follow a different file than the one that passed the media-path security boundary.
-
-Scope:
-- Pin the validated media file identity before opening it and stream from the same opened file handle so pathname replacement cannot redirect the media response.
 
 Implementation:
 - Capture the validated file device/inode identity immediately after canonical-path validation.
@@ -23,11 +29,9 @@ Implementation:
 - Add a focused regression test that replaces the validated file with a symlink before open and verifies the identity mismatch is rejected.
 - No project schema change.
 
-Validation:
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Validate M3.179 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Fresh audit from verified `main` identified M3.180 as the next focused process/resource-safety milestone.
+
 
 ## M3.178 — Audio Waveform FFmpeg Pipe Liveness — completed — 2026-09-28
 
