@@ -1,3 +1,11 @@
+### M3.203 — ffprobe packet-stream fixture correction — 2026-09-30
+
+- Rust validation had one remaining failure in `streams_large_ffprobe_packet_output_without_retaining_the_whole_stream` because its shell fixture repeated the same timestamp 100,000 times while expecting a monotonically increasing packet stream.
+- Corrected the fixture to emit timestamps from 1 through 100,000 seconds with 10 ms packet durations.
+- Production parsing behavior was not changed.
+- Commit: `456ef4ddb3a804bb19cca87a3357ccd6713a66ba`.
+- Full M3.203 validation remains pending; do not treat this as user PASS.
+
 ### M3.203 — Legacy Video/Audio Mix Audio Filter Size Cap — active — 2026-09-29
 
 - Branch: `fix/m3-203-video-audio-mix-audio-filter-size-cap`.
