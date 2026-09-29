@@ -1,28 +1,36 @@
-## M3.205 — Native Audio Graph Input Path Length Cap — active — 2026-09-30
+## M3.206 — Shared Media Path Length Cap — active — 2026-09-30
 
 Branch:
-`fix/m3-205-native-audio-graph-input-path-cap`
+`fix/m3-206-shared-media-path-length-cap`
+
+Previous milestone:
+- M3.205 — Native Audio Graph Input Path Length Cap
+- PR #222
+- Squash merge SHA: `44a3e7926cfdaada243a7bc9b64200a1d8759d03`
+- `main` verified identical to that merge SHA.
+- User reported PASS after full local validation: 529/529 frontend tests, lint PASS, frontend build PASS, and 137/137 Rust tests.
 
 Fresh audit finding:
-- `NativeAudioGraphRenderRequest.inputs` is bounded to 256 entries, but each input path string remains unbounded.
-- A pathological path string can still increase request memory and path-processing work before filesystem/media validation.
+- The shared `media_path()` helper still accepted arbitrarily long media path strings before filesystem probing.
+- That helper is used by media inspection, preview preparation, waveform generation, single-source export, multi-segment export, and native video-graph input flows.
+- This left a common media-input request boundary inconsistent with the path caps already applied to individual native graph request fields.
 
 Scope:
-- Cap each native audio graph input path at 4,096 bytes.
-- Reject oversized paths during metadata validation before filesystem probing.
-- Preserve existing absolute-path, existence, media-type, output-collision, FFmpeg argument, rendering, and cleanup behavior.
+- Add a centralized 4,096-byte maximum to shared `media_path()` input validation.
+- Reject oversized media paths before `PathBuf` filesystem probing.
+- Preserve existing existence, media-type, export, preview, waveform, and rendering behavior.
 - Add exact-limit and over-limit regression coverage.
 - No project schema change.
 
 Validation:
-- Implementation is not yet validated locally.
-- Do not infer lint/test/build/cargo/manual success until the user reports it.
+- Implementation complete.
+- Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
 
-Workflow:
-- After user PASS, refresh PR/head/base state, ensure the branch is not behind `main`, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, audit again, and create the next focused milestone.
-- Keep protected PR #76 and unrelated PR #22 untouched.
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.206.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
-## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
+## M3.204## M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — completed — 2026-09-30
 
 Branch:
 `fix/m3-204-video-audio-mix-video-input-path-cap`
