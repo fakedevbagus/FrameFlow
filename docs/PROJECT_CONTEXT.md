@@ -1,28 +1,59 @@
-## M3.191 — Native Video Graph Input Path Size Cap — active — 2026-09-29
+## M3.192 — Native Audio Graph Input Count Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-191-video-graph-input-path-cap`
+`fix/m3-192-audio-graph-input-count-cap`
 
 Fresh audit finding:
-- After M3.189 capped graph input count and M3.190 capped `filter_complex`, each `NativeVideoGraphRenderRequest.inputs` element was still an unbounded `String`.
-- A pathological input path string could therefore enlarge request memory and filesystem/path-processing work before the existing file/type checks rejected it.
-- The graph input-count cap bounds the number of path strings, but not the size of each one.
+- After bounding native video graph input counts, `NativeAudioGraphRenderRequest.inputs` still had no maximum count.
+- A large audio graph request could therefore cause arbitrarily many filesystem checks, source-identity snapshots, FFmpeg inputs, and graph argument growth.
+- The existing non-empty-input validation did not establish a request-level resource boundary.
 
 Scope:
-- Cap each native video graph input path at 4,096 bytes.
+- Cap native audio graph render requests at 256 inputs.
 
 Implementation:
-- Added `MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES = 4096`.
-- Reject oversized input path strings during graph metadata validation, before filesystem media-path probing.
-- Preserve existing non-empty-input, input-count, media-type, path, source-type, output-path, filter, video-map, rendering, and cleanup behavior.
-- Added focused regression coverage at 4,096 and 4,097 bytes.
+- Added `MAX_NATIVE_AUDIO_GRAPH_INPUTS = 256`.
+- Reject oversized audio graph input lists during metadata validation before filesystem probing.
+- Preserve existing non-empty-input, filter graph, output-path, audio-map, source validation, rendering, and cleanup behavior.
+- Added focused regression coverage at 256 and 257 inputs.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.191 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.192 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.191 — Native Video Graph Input Path Size Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-191-video-graph-input-path-cap`
+
+PR:
+#206
+
+Merge SHA:
+`2f257b961ee2e9d4232643674536c20e62a1c798`
+
+User validation:
+- User reported PASS for M3.191.
+- PR #206 was refreshed at head `e7a614079b213d96615240ff8b19aeb4016630b2`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `2f257b961ee2e9d4232643674536c20e62a1c798`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- Each `NativeVideoGraphRenderRequest.inputs` path string was unbounded after graph input count had been capped.
+- A pathological path string could therefore enlarge request memory and path-processing work before filesystem validation.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES = 4096`.
+- Reject oversized graph input path strings before media probing.
+- Preserved existing graph input count, media-type, path, source-type, output-path, filter, video-map, rendering, and cleanup behavior.
+- Added focused regression coverage at 4,096 and 4,097 bytes.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.192 as the next renderer resource-boundary milestone.
 
 ## M3.190 — Native Video Graph Filter Size Cap — completed — 2026-09-29
 
