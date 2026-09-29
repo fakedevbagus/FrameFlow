@@ -12,6 +12,10 @@
 - Fixed the double-escaped canonical UTC timestamp regex that rejected valid ISO timestamps and caused broad test failures.
 - Replaced the synchronous waveform-selection reset effect in `src/features/timeline/Timeline.tsx` with derived selection validity tied to the current clip source/range context.
 - Synchronized stale tests with the current waveform interpolation, preview gain, deferred mute-policy, command-routing, and safe-boundary contracts.
+- Latest local validation reached `npm run test`: 528/529 tests passed; one transition-endpoint boundary fixture failed because its first clip ended at MAX_SAFE_INTEGER + 1.
+- Corrected the fixture to use MAX_SAFE_INTEGER - 50, making the derived transition endpoint exactly MAX_SAFE_INTEGER without changing production validation.
+- Commit: `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
+- Full validation remains pending.
 - PR #220 remains Draft; local full validation is pending.
 - No lint/test/build/cargo/manual validation pass is inferred from this state.
 
