@@ -403,7 +403,9 @@ export function addAssetToTrack(
     timelineStartMs: requestedStartMs,
     sourceStartMs: 0,
     sourceEndMs: durationMs,
-    transform: { ...DEFAULT_CLIP_TRANSFORM },
+    ...(asset.mediaType !== "audio"
+      ? { transform: { ...DEFAULT_CLIP_TRANSFORM } }
+      : {}),
   };
 
   const tracks = project.tracks.map((candidate, index) =>
