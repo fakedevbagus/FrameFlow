@@ -1,14 +1,27 @@
-### M3.189 — Native Video Graph Input Count Cap — active — 2026-09-29
+### M3.190 — Native Video Graph Filter Size Cap — active — 2026-09-29
 
-- Branch: `fix/m3-189-video-graph-input-count-cap`.
-- Fresh audit found `NativeVideoGraphRenderRequest.inputs` had no maximum count.
-- One graph request could therefore trigger arbitrarily many source resolutions/probes, FFmpeg inputs, source-identity checks, and filter-graph growth.
-- Added a maximum of 256 inputs and reject oversized requests before media-path probing.
-- Preserved existing non-empty-input, media-type, path, source-type, output-path, filter, video-map, rendering, and cleanup behavior.
-- Added focused regression coverage at 256 and 257 inputs.
+- Branch: `fix/m3-190-video-graph-filter-length-cap`.
+- Fresh audit found `NativeVideoGraphRenderRequest.filter_complex` had no maximum byte length.
+- A pathological graph string could therefore expand retained request data and FFmpeg argument storage/processing without a request-level boundary.
+- Added a 256 KiB (262,144-byte) maximum and reject oversized filter graphs during metadata validation.
+- Preserved existing graph input-count, media-type, path, source-type, output-path, video-map, rendering, and cleanup behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.189 — Native Video Graph Input Count Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-189-video-graph-input-count-cap`.
+- PR #204; squash-merged at `7f59b969621ae385cad4667081b935d2e9998c5b`.
+- User reported PASS.
+- PR head `4435055711e2270b59d919e80e69c5484f0a52a1` was verified before merge; `main` was verified identical to the merge SHA.
+- Added a maximum of 256 native video graph inputs and rejected oversized requests before media-path probing.
+- Preserved existing graph validation and render behavior.
+- Added focused regression coverage at 256 and 257 inputs.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.190 as the next renderer resource-boundary milestone.
 
 ### M3.188 — Multi-Segment Render Count Cap — completed — 2026-09-29
 
