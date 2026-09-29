@@ -34,6 +34,7 @@ const MAX_FFPROBE_STDERR_BYTES: usize = 64 * 1024;
 const FFPROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[ffprobe stderr truncated by FrameFlow]\n";
 const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024;
+const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -647,6 +648,12 @@ fn validate_native_video_segments_request_metadata(
 
   if request.segments.is_empty() {
     return Err("Native multi-segment render requires at least one segment.".to_string());
+  }
+
+  if request.segments.len() > MAX_NATIVE_VIDEO_SEGMENTS {
+    return Err(format!(
+      "Native multi-segment render supports at most {MAX_NATIVE_VIDEO_SEGMENTS} segments."
+    ));
   }
 
   for segment in &request.segments {
@@ -2531,6 +2538,53 @@ mod tests {
     assert!(error.contains(&path.to_string_lossy()));
 
     fs::remove_file(path).unwrap();
+  }
+
+  #[test]
+  fn rejects_native_video_segments_above_count_limit() {
+    let request = super::NativeVideoSegmentsRenderRequest {
+      segments: vec![
+        super::NativeVideoSegment {
+          source_path: None,
+          source_start_ms: None,
+          duration_ms: 1,
+        };
+        super::MAX_NATIVE_VIDEO_SEGMENTS + 1
+      ],
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      include_audio: false,
+    };
+
+    let error = super::validate_native_video_segments_request_metadata(&request)
+      .expect_err("multi-segment requests above the configured count limit must be rejected");
+
+    assert!(error.contains("supports at most 4096 segments"));
+  }
+
+  #[test]
+  fn accepts_native_video_segments_at_count_limit() {
+    let request = super::NativeVideoSegmentsRenderRequest {
+      segments: vec![
+        super::NativeVideoSegment {
+          source_path: None,
+          source_start_ms: None,
+          duration_ms: 1,
+        };
+        super::MAX_NATIVE_VIDEO_SEGMENTS
+      ],
+      output_path: "/tmp/output.mp4".to_string(),
+      width: 1280,
+      height: 720,
+      frame_rate: 30.0,
+      include_audio: false,
+    };
+
+    assert!(
+      super::validate_native_video_segments_request_metadata(&request).is_ok()
+    );
   }
 
   #[test]

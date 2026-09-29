@@ -1,29 +1,59 @@
-## M3.187 — Project Save Size Cap — active — 2026-09-29
+## M3.188 — Multi-Segment Render Count Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-187-project-save-size-cap`
+`fix/m3-188-multi-segment-count-cap`
 
 Fresh audit finding:
-- After M3.186 bounded project loading to 16 MiB, `save_project()` still accepted an unbounded `String` and wrote it directly.
-- An oversized project payload could therefore consume unnecessary filesystem and application resources even though the corresponding load path had a defined limit.
-- The save and load contracts lacked a shared size invariant.
+- `NativeVideoSegmentsRenderRequest.segments` had no maximum count validation.
+- A single renderer request could therefore contain an arbitrarily large segment list, causing repeated source probing, temporary-file creation, FFmpeg invocations, and concat-list growth.
+- The individual segment duration/range checks did not establish a request-level resource boundary.
 
 Scope:
-- Enforce the same 16 MiB project-file size boundary before writing project content.
+- Cap native multi-segment render requests at 4,096 segments.
 
 Implementation:
-- Added a shared `validate_project_save_content()` check using the existing 16 MiB limit.
-- Reject oversized project content before creating directories or temporary output files.
-- Preserve the existing atomic temporary-file write and rename flow.
-- Preserve project-path validation and UTF-8 string handling.
-- Add focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte save payloads.
+- Added `MAX_NATIVE_VIDEO_SEGMENTS = 4096`.
+- Reject requests above the limit before source probing or temporary render directory creation.
+- Preserve existing positive-duration, source-type, path, and range validation.
+- Preserve segment rendering order, audio behavior, and concat output flow.
+- Added focused regression coverage at the exact limit and one above it.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.187 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.188 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.187 — Project Save Size Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-187-project-save-size-cap`
+
+PR:
+#202
+
+Merge SHA:
+`aaf7cd24cb8448b1a738b9e860342f3a10a49586`
+
+User validation:
+- User reported PASS for M3.187.
+- PR #202 was refreshed at head `b599b79cfc2b1aea6ff72163ff92e2d5f99ef86f`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `aaf7cd24cb8448b1a738b9e860342f3a10a49586`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `save_project()` accepted project content without a size boundary after M3.186 bounded project loading.
+- Oversized project content could therefore consume resources despite the load path having a 16 MiB limit.
+
+Implementation:
+- Enforced the same 16 MiB limit before directory creation or temporary-file writes.
+- Preserved atomic temp-file + rename save behavior, project path validation, and UTF-8 handling.
+- Added focused regression coverage at and above the limit.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.188 as the next renderer resource-boundary milestone.
 
 ## M3.186 — Project File Load Size Cap — completed — 2026-09-29
 
