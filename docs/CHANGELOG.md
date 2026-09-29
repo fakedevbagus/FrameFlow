@@ -1,3 +1,27 @@
+# M3.207 — Media Server Path Length Cap — active — 2026-09-30
+
+- Branch: `fix/m3-207-media-server-path-length-cap`.
+- Fresh audit found the local HTTP media server had a separate media-path validator without the 4,096-byte path boundary.
+- Added the shared 4,096-byte media path limit to the media server before canonicalization/filesystem probing.
+- Reused `MAX_MEDIA_PATH_BYTES` from the native command layer.
+- Preserved capability-token, allowlist, media-type, identity, range, and response behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+- Implementation complete; local validation pending user run. Do not infer test/build/lint/cargo success.
+
+## M3.206 — Shared Media Path Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-206-shared-media-path-length-cap`.
+- PR #223; squash-merged at `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation.
+- Added a centralized 4,096-byte path limit to the shared `media_path()` helper before filesystem probing.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.207: media-server path length cap.
+
 # M3.206 — Shared Media Path Length Cap — active — 2026-09-30
 
 - Branch: `fix/m3-206-shared-media-path-length-cap`.
