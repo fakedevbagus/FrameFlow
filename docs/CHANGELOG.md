@@ -8,7 +8,7 @@
 - Added focused regression coverage for exactly 256 inputs and 257 inputs.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-- Next step: run the local validation workflow and, after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Next step: run the local validation workflow and, after PASS, refresh PR #218, mark it Ready for Review, squash-merge using the freshly verified head, reconcile docs, verify `main`, and perform a fresh audit.
 
 ### M3.200 — Unified AV Video Input Path Length Cap — completed — 2026-09-29
 
