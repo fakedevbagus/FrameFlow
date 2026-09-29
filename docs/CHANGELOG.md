@@ -1,3 +1,11 @@
+### M3.204 — video path boundary fixture correction — 2026-09-30
+
+- Corrected the M3.204 exact-limit and over-limit video source path fixtures to include a `.mp4` extension.
+- The previous exact-limit fixture was rejected by the media-type validator because it had no extension, so it did not actually exercise the intended boundary acceptance path.
+- Production validation behavior was unchanged.
+- Commit: `b4a8c419533ca2164046459b9067ba95a58e40c6`.
+- Full validation remains pending.
+
 ### M3.204 — Legacy Video/Audio Mix Video Input Path Length Cap — active — 2026-09-30
 
 - Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
