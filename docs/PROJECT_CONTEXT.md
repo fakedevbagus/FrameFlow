@@ -1,3 +1,6 @@
+- A follow-up build exposed a Rust string-literal escaping error in the large ffprobe packet-stream test fixture after the timestamp fixture was corrected. The fixture now uses a Rust raw string so shell quotes and $i are preserved correctly; production parsing behavior is unchanged.
+- Fix commit: ed8c84178b688cb23fe64e1c69f67b53e61edc3b.
+- The latest validation already showed 529/529 frontend tests and a successful Vite build before Rust compilation reached this fixture error. Full validation remains pending; no PASS is inferred.
 
 - Follow-up Rust validation reduced the remaining suite to 1 failure: `tests::streams_large_ffprobe_packet_output_without_retaining_the_whole_stream`. The production parser correctly computes the maximum packet end timestamp, but the test fixture still emitted 100,000 identical timestamps while asserting an increasing-stream result.
 - Corrected that test-only fixture to emit monotonically increasing packet timestamps from 1 through 100,000 seconds while retaining 0.010-second packet durations. This validates large streamed ffprobe input without changing production duration semantics.
