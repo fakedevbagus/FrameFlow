@@ -62,7 +62,7 @@ describe("audio waveform", () => {
         7_500,
         4,
       ),
-    ).toEqual([0, 0.5, 1, 1]);
+    ).toEqual([0, 0.25, 0.75, 1]);
 
     expect(
       getWaveformPeaksForSourceRange(
