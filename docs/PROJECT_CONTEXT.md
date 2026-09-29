@@ -1,3 +1,28 @@
+## M3.197 — Unified AV Video Filter Size Cap — active — 2026-09-29
+
+Branch:
+`fix/m3-197-unified-av-video-filter-size-cap`
+
+Fresh audit finding:
+- `NativeVideoAudioGraphRenderRequest.video_filter_complex` had no maximum size validation.
+- After unified AV input, segment, and keyframe counts were bounded, a large user-supplied video filter graph could still increase retained request memory and FFmpeg filter-graph processing.
+
+Scope:
+- Cap unified AV video `filter_complex` at 256 KiB.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES = 256 * 1024`.
+- Reject oversized unified AV video filter graphs during metadata validation before filesystem/source probing.
+- Preserve existing unified AV input, source-audio, map, output, render, and cleanup behavior.
+- Added focused regression coverage at 262,144 and 262,145 bytes.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Create the Draft PR for M3.197 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
 ## M3.196 — Unified AV Audio Keyframe Count Cap — active — 2026-09-29
 
 Branch:
