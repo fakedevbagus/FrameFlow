@@ -854,6 +854,7 @@ fn write_media_path_error(
 fn extract_media_request(query: &str) -> Result<(&str, &str), &'static str> {
   let mut encoded_path = None;
   let mut token = None;
+  let mut has_unknown_parameter = false;
 
   for part in query.split('&') {
     if let Some(path) = part.strip_prefix("path=") {
@@ -874,11 +875,15 @@ fn extract_media_request(query: &str) -> Result<(&str, &str), &'static str> {
       continue;
     }
 
-    return Err("Unknown media server query parameter.");
+    has_unknown_parameter = true;
   }
 
   let encoded_path = encoded_path.ok_or("Missing media path.")?;
   let token = token.ok_or("Missing media server capability token.")?;
+
+  if has_unknown_parameter {
+    return Err("Unknown media server query parameter.");
+  }
 
   Ok((encoded_path, token))
 }
