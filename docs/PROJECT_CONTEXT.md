@@ -55,6 +55,68 @@ Validation:
 Next step:
 - PR #195 is open as Draft. Validate M3.180 locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
 
+## M3.181 — FFprobe Audio Packet Stream — active — 2026-09-29
+
+Branch:
+`fix/m3-181-ffprobe-packet-stream`
+
+PR:
+#196
+
+Fresh audit finding:
+- `probe_duration_from_audio_packets()` used `ffprobe` with `Command::output()` and loaded the complete packet-oriented stdout into memory before parsing.
+- Long audio streams can produce a very large packet stream, so retained stdout memory grew with media length.
+
+Scope:
+- Stream ffprobe audio-packet stdout incrementally and fully drain stderr concurrently without retaining the complete packet output in memory.
+
+Implementation:
+- Replace the buffered packet-duration process path with an explicit ffprobe child using piped stdout/stderr.
+- Parse packet records incrementally through a reusable line buffer.
+- Keep only the latest computed end timestamp instead of retaining all packet stdout.
+- Drain ffprobe stderr concurrently with fixed memory.
+- Preserve existing duration parsing semantics and fallback order.
+- Add focused regression coverage with large packet-like stdout and a later timestamp.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Validate M3.181 locally; after PASS, follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.180 — Export FFmpeg Stderr Memory Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-180-export-stderr-memory-cap`
+
+PR:
+#195
+
+Merge SHA:
+`84b016979eb4e3f375496f29a2aadf3f971954f8`
+
+User validation:
+- User reported PASS for M3.180.
+- PR #195 was refreshed at head `110e4d9164129254e4e29188bbb171b525c65236`, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `84b016979eb4e3f375496f29a2aadf3f971954f8`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `export_process::run_ffmpeg_with_progress()` drained FFmpeg stderr on a dedicated thread but previously retained the entire stream in an unbounded `Vec<u8>`.
+- Large or pathological FFmpeg diagnostics could therefore consume unbounded process memory despite concurrent pipe draining.
+
+Implementation:
+- Bound retained FFmpeg stderr diagnostics to 64 KiB.
+- Continue draining the complete stderr stream to EOF and discard excess bytes.
+- Append an explicit truncation notice when the retained diagnostic exceeds the limit.
+- Preserve FFmpeg progress handling, cancellation, failure mapping, and successful export behavior.
+- Added focused regression coverage for multi-megabyte stderr and bounded retained memory.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.181 as the next focused process/resource-safety milestone.
+
 ## M3.179 — Media Server File Open TOCTOU — completed — 2026-09-29
 
 Branch:
