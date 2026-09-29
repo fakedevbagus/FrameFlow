@@ -9,8 +9,9 @@
 - No project schema change.
 - Validation exposed two pre-existing repository-wide lint blockers outside the native M3.203 logic.
 - Removed the unused `assertPositiveInteger` helper from `src/features/project/domain.ts`.
+- Fixed the double-escaped canonical UTC timestamp regex that rejected valid ISO timestamps and caused broad test failures.
 - Replaced the synchronous waveform-selection reset effect in `src/features/timeline/Timeline.tsx` with derived selection validity tied to the current clip source/range context.
-- Preserved the existing waveform selection behavior and its regression coverage.
+- Synchronized stale tests with the current waveform interpolation, preview gain, deferred mute-policy, command-routing, and safe-boundary contracts.
 - PR #220 remains Draft; local full validation is pending.
 - No lint/test/build/cargo/manual validation pass is inferred from this state.
 
