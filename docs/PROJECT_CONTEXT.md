@@ -31,7 +31,9 @@ Implementation:
 - The next validation run exposed two project-domain regression assertions after the TypeScript fixes: the new nullable-duration helper changed the established asset-duration error wording.
 - Restored the existing `null or a non-negative integer number of milliseconds` error contract with dedicated nullable-duration type narrowing; no validation rule was weakened.
 - Latest fix commit: `9b91f3f86f42aeb9be1e1aa2e7fddad46ae590cc`.
-- Full validation remains pending again.
+- Fixed the remaining `track.type` TypeScript narrowing error in `validateClip()` by capturing and asserting the track type before passing it to optional audio-field validation; validation semantics are unchanged.
+- Latest code fix commit: `f759d4706192f01af8c142a74ffa4823071e59db`.
+- Full validation remains pending after this code fix.
 
 Validation:
 - `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
