@@ -1,16 +1,35 @@
-## M3.182 — active — 2026-09-29
+## M3.183 — active — 2026-09-29
 
-- Branch: `fix/m3-182-preview-ffmpeg-stderr-memory-cap`.
-- Scope: prevent unbounded retained FFmpeg stderr during preview generation.
-- Fresh audit found `prepare_media_preview()` using `Command::output()`, retaining complete preview-process stdout/stderr in memory.
-- Replaced the preview process boundary with explicit piped stderr, discarded stdout, concurrent stderr draining, and a 64 KiB retained stderr cap.
-- Excess stderr continues to drain so pipe backpressure cannot block FFmpeg.
-- Retain a bounded diagnostic excerpt with an explicit truncation notice.
-- Preserve existing preview arguments, source identity validation, temporary-file behavior, cache finalization, and error mapping.
-- Added focused regression coverage for multi-megabyte stderr retention.
+- Branch: `fix/m3-183-ffmpeg-duration-probe-stream`.
+- Scope: prevent unbounded FFmpeg duration-probe output retention.
+- Fresh audit found `probe_duration_with_ffmpeg()` using `Command::output()`, buffering complete progress stdout and stderr.
+- Stream progress stdout incrementally through a reusable line buffer and keep only the latest `out_time_ms=` value.
+- Drain stderr concurrently and retain at most 64 KiB of duration-probe diagnostics with an explicit truncation notice.
+- Preserve the existing `Duration:`-from-stderr preference, progress fallback, FFmpeg arguments, and duration fallback order.
+- Added focused regression coverage using large progress output.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.182 — completed — 2026-09-29
+
+- Branch: `fix/m3-182-preview-ffmpeg-stderr-memory-cap`.
+- PR #197; squash-merged at `05b7cbaf4acb2acba19274d875b73152651da2b4`.
+- User reported PASS.
+- PR head `d5902cd163e911f5a38ae19e524ae34f0e97f4e469` was verified before merge.
+- Preview FFmpeg stdout is discarded, stderr is drained concurrently, and retained diagnostics are capped at 64 KiB with an explicit truncation notice.
+- Preserved preview behavior and source identity/cache finalization flow.
+- Added focused regression coverage for multi-megabyte stderr.
+- No project schema version change.
+- `main` was verified at the merge SHA.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.183 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.181 — completed — 2026-09-29
 
