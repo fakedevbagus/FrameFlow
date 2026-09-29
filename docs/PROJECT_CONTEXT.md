@@ -18,13 +18,16 @@ Implementation:
 - No project schema change.
 - During validation, two pre-existing repository-wide lint blockers were found outside the native M3.203 logic.
 - Removed the unused `assertPositiveInteger` helper from `src/features/project/domain.ts`.
+- Fixed the canonical UTC timestamp regex in `src/features/project/domain.ts`; the prior double-escaped expression rejected valid ISO timestamps and caused broad validation-test failures.
 - Replaced the synchronous waveform-selection reset effect in `src/features/timeline/Timeline.tsx` with derived selection validity keyed to the current clip source/range context.
-- Preserved the existing waveform selection behavior; the existing Timeline regression test for clearing selection after source-range changes remains the behavioral guard.
+- Synchronized stale regression tests with current production contracts for waveform interpolation, deferred M3.36 mute policy, preview audio gain interpolation, transform-keyframe time normalization, audio EQ/compressor routing, audio fade error messages, and safe timeline/source boundaries.
+- Preserved existing runtime behavior; tests were changed where their expectations no longer matched the documented/current implementation.
 
 Validation:
-- `npm ci` completed successfully with 0 vulnerabilities.
-- Before the lint-blocker fixes, `npm run lint` failed only on the two pre-existing errors above.
-- Local full validation is pending again after these fixes; do not assume lint/test/build/cargo/manual validation has passed.
+- `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
+- The first lint run failed only on the two pre-existing lint blockers described above.
+- GitHub CI confirmed lint passed after the lint fixes, then exposed the timestamp-regex and stale-test contract issues now addressed on this branch.
+- Local full validation is pending again after the latest fixes; do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
 - Re-run the complete M3.203 validation workflow; after PASS follow refresh → merge → docs → verify main → fresh audit.
