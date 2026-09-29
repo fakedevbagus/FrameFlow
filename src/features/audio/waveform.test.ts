@@ -54,14 +54,6 @@ describe("audio waveform", () => {
   });
 
   it("resamples a trimmed source range into the visible waveform", () => {
-    expect(
-      getWaveformPeaksForSourceRange(
-        [0, 0, 1, 1],
-        10_000,
-        2_500,
-        7_500,
-        4,
-      ),
     const resampled = getWaveformPeaksForSourceRange(
       [0, 0, 1, 1],
       10_000,
@@ -86,7 +78,6 @@ describe("audio waveform", () => {
       ),
     ).toEqual([0, 0.5, 1, 0.5]);
   });
-
   it("rejects unsafe waveform output peak counts before allocation", () => {
     expect(
       getWaveformPeaksForSourceRange(
