@@ -1,6 +1,7 @@
 ## M3.180 — active — 2026-09-29
 
 - Branch: `fix/m3-180-export-stderr-memory-cap`.
+- Draft PR #195 created; validation is pending.
 - Scope: prevent unbounded FFmpeg stderr retention in the export process while continuing to drain stderr concurrently.
 - Fresh audit found `export_process::run_ffmpeg_with_progress()` draining stderr on a dedicated thread but retaining the entire stream in an unbounded `Vec<u8>`.
 - Added a 64 KiB maximum retained stderr size.
