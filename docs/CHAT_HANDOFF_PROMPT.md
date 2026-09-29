@@ -11,6 +11,10 @@
 - The canonical UTC timestamp regex bug was fixed; it had been rejecting valid timestamps and cascading through many tests.
 - Waveform selection reset is now derived from clip source/range context instead of a synchronous effect.
 - Stale tests were synchronized to current waveform interpolation, preview gain, deferred mute policy, command routing, and safe-boundary semantics.
+- Latest local validation: checkout/pull clean; `npm ci` passed with 0 vulnerabilities; `npm run lint` passed; `npm run test` passed 528/529 before one unsafe transition-endpoint fixture failed.
+- Fixed the fixture-only arithmetic boundary by changing the first clip start from MAX_SAFE_INTEGER - 49 to MAX_SAFE_INTEGER - 50 so the transition endpoint is exactly MAX_SAFE_INTEGER.
+- New commit: `7ca1ec8b3338a804d98a489f7bf9a578adf1c218`.
+- Re-run the complete validation workflow before declaring PASS or merging PR #220.
 - Draft PR #220 exists and remains pending final local validation.
 - Local validation is pending; do not infer lint/test/build/cargo/manual success.
 
