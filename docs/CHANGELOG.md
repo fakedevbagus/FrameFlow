@@ -1,14 +1,26 @@
-### M3.184 — Waveform FFmpeg Stderr Memory Cap — active — 2026-09-29
+### M3.185 — FFprobe Stderr Memory Cap — active — 2026-09-29
 
-- Branch: `fix/m3-184-waveform-stderr-memory-cap`.
-- Fresh audit found `audio_waveform::spawn_stderr_reader()` retaining the complete FFmpeg stderr stream with `read_to_end(&mut Vec<u8>)`.
-- Kept concurrent stderr draining but bounded retained waveform diagnostics to 64 KiB.
-- Excess stderr continues to drain and is discarded after the retention limit; truncated diagnostics receive an explicit marker.
-- Preserved waveform decoding, reduction, normalization, process liveness, failure mapping, and FFmpeg arguments.
-- Updated the existing large-stderr regression to verify the bounded retained size and truncation marker.
+- Branch: `fix/m3-185-ffprobe-stderr-memory-cap`.
+- Fresh audit found `run_ffprobe()` retaining complete ffprobe stderr via `Command::output()`.
+- Spawned ffprobe explicitly, drained stderr concurrently, and bounded retained diagnostics to 64 KiB with an explicit truncation notice.
+- Preserved the existing `Output`-based callers, small structured stdout behavior, status handling, diagnostic formatting, and duration fallback order.
+- Added focused regression coverage for multi-megabyte ffprobe stderr retention.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.184 — Waveform FFmpeg Stderr Memory Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-184-waveform-stderr-memory-cap`.
+- PR #199; squash-merged at `d8bd8724f7acd019be18e3c7fbeafa8a81a935b5`.
+- User reported PASS.
+- Bounded retained waveform FFmpeg stderr to 64 KiB while continuing to drain the stream to EOF.
+- Added explicit truncation marking and updated the large-stderr regression.
+- Preserved waveform decoding, reduction, normalization, process liveness, failure mapping, and FFmpeg arguments.
+- PR head `2a26f4920fa0386f621b533ae73a6a61b14c137e` was verified before merge.
+- `main` was verified identical to the merge SHA.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.185 as the next process/resource-safety milestone.
 
 ### M3.183 — FFmpeg Duration Probe Stream — completed — 2026-09-29
 

@@ -1,14 +1,33 @@
-## M3.184 — active — 2026-09-29
+## M3.185 — active — 2026-09-29
 
-- Branch: `fix/m3-184-waveform-stderr-memory-cap`.
-- Scope: prevent unbounded retained FFmpeg stderr during audio waveform generation.
-- Fresh audit found `audio_waveform::spawn_stderr_reader()` using `read_to_end(&mut Vec<u8>)`, retaining complete stderr in memory.
-- Continue draining stderr concurrently, but retain at most 64 KiB with an explicit truncation notice.
-- Preserve waveform decoding, peak reduction, normalization, failure handling, process liveness, and FFmpeg arguments.
-- Updated the existing large-stderr regression to assert the bound and marker.
+- Branch: `fix/m3-185-ffprobe-stderr-memory-cap`.
+- Scope: prevent unbounded retained ffprobe stderr diagnostics in the shared `run_ffprobe()` path.
+- Fresh audit found `run_ffprobe()` using `Command::output()`, retaining complete stderr in memory.
+- Spawn ffprobe explicitly, drain stderr concurrently, and retain at most 64 KiB with an explicit truncation notice.
+- Preserve the existing `Output`-based callers, small structured stdout behavior, status handling, diagnostic formatting, and duration fallback order.
+- Added focused regression coverage for multi-megabyte ffprobe stderr retention.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.184 — completed — 2026-09-29
+
+- Branch: `fix/m3-184-waveform-stderr-memory-cap`.
+- PR #199; squash-merged at `d8bd8724f7acd019be18e3c7fbeafa8a81a935b5`.
+- User reported PASS.
+- PR head `2a26f4920fa0386f621b533ae73a6a61b14c137e` was verified before merge.
+- `main` was verified at the merge SHA.
+- Bounded retained waveform FFmpeg stderr to 64 KiB while continuing to drain stderr.
+- Added explicit truncation marking and preserved waveform processing behavior.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.185 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.183 — completed — 2026-09-29
 

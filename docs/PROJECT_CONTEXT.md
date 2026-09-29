@@ -1,29 +1,62 @@
-## M3.184 — Waveform FFmpeg Stderr Memory Cap — active — 2026-09-29
+## M3.185 — FFprobe Stderr Memory Cap — active — 2026-09-29
 
 Branch:
-`fix/m3-184-waveform-stderr-memory-cap`
+`fix/m3-185-ffprobe-stderr-memory-cap`
 
 Fresh audit finding:
-- `audio_waveform::spawn_stderr_reader()` drained FFmpeg stderr with `read_to_end(&mut Vec<u8>)`, retaining the entire diagnostic stream in memory.
-- The concurrent reader prevents stderr pipe deadlock, but it had no retained-memory ceiling.
-- Pathological waveform failures could therefore grow process memory with diagnostic output volume.
+- `run_ffprobe()` used `Command::output()`, which retained the complete ffprobe stderr stream in memory.
+- The callers use ffprobe for small structured outputs (format duration, stream duration, and audio-stream presence), but stderr is diagnostic data and could become unexpectedly large on malformed or pathological inputs.
+- The buffered stderr path therefore had no explicit retained-memory ceiling.
 
 Scope:
-- Continue draining waveform FFmpeg stderr to EOF while bounding retained diagnostics to 64 KiB.
+- Keep ffprobe stdout behavior compatible with its existing small structured-output callers, while draining stderr concurrently and bounding retained diagnostics to 64 KiB.
 
 Implementation:
-- Added a 64 KiB maximum retained waveform FFmpeg stderr size.
-- Continue reading until EOF and discard excess bytes after the retention limit is reached.
-- Append an explicit truncation notice when output is truncated.
-- Preserve waveform decoding, sample reduction, normalization, process liveness, failure mapping, and FFmpeg arguments.
-- Updated the existing large-stderr regression to assert the bounded retained size and truncation marker.
+- Spawn ffprobe with piped stdout/stderr instead of `Command::output()`.
+- Drain stderr on a dedicated thread so stderr backpressure cannot block ffprobe.
+- Retain at most 64 KiB of ffprobe diagnostics and append an explicit truncation notice when excess output is discarded.
+- Read the existing structured stdout to completion because the current callers intentionally consume only small ffprobe outputs.
+- Preserve existing `Output`-based callers, status handling, diagnostic formatting, and fallback order.
+- Add focused regression coverage for multi-megabyte ffprobe stderr retention.
 - No project schema change.
 
 Validation:
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 
 Next step:
-- Create Draft PR for M3.184 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Create Draft PR for M3.185 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.184 — Waveform FFmpeg Stderr Memory Cap — completed — 2026-09-29
+
+Branch:
+`fix/m3-184-waveform-stderr-memory-cap`
+
+PR:
+#199
+
+Merge SHA:
+`d8bd8724f7acd019be18e3c7fbeafa8a81a935b5`
+
+User validation:
+- User reported PASS for M3.184.
+- PR #199 was refreshed at head `2a26f4920fa0386f621b533ae73a6a61b14c137e`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `d8bd8724f7acd019be18e3c7fbeafa8a81a935b5`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
+- `audio_waveform::spawn_stderr_reader()` used `read_to_end(&mut Vec<u8>)`, retaining complete FFmpeg waveform stderr.
+- Concurrent draining protected process liveness, but retained diagnostic memory had no explicit upper bound.
+
+Implementation:
+- Bounded retained waveform FFmpeg stderr diagnostics to 64 KiB.
+- Continued draining stderr to EOF and discarded excess bytes.
+- Added an explicit truncation notice.
+- Preserved waveform decoding, peak reduction, normalization, process liveness, failure mapping, and FFmpeg arguments.
+- Updated the existing large-stderr regression to verify the bound and marker.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.185 as the next focused process/resource-safety milestone.
 
 ## M3.183 — FFmpeg Duration Probe Stream — completed — 2026-09-29
 
