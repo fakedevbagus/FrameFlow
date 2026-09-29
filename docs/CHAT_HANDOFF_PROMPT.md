@@ -1,14 +1,34 @@
-## M3.187 — active — 2026-09-29
+## M3.188 — active — 2026-09-29
 
-- Branch: `fix/m3-187-project-save-size-cap`.
-- Scope: enforce the same 16 MiB project-file size boundary when saving `.frameflow.json` content.
-- Fresh audit found `save_project()` accepting an unbounded `String` after M3.186 bounded project loading.
-- Reject oversized save content before directory creation or temporary-file writes.
-- Preserve the atomic temporary-file write and rename flow, project path validation, and UTF-8 handling.
-- Added focused regression coverage for exactly 16 MiB and 16 MiB + 1 byte save payloads.
+- Branch: `fix/m3-188-multi-segment-count-cap`.
+- Scope: cap the number of native multi-segment render segments in one request.
+- Fresh audit found `NativeVideoSegmentsRenderRequest.segments` had no maximum count.
+- Reject requests above 4,096 segments before source probing or temporary render directory creation.
+- Preserve existing positive-duration, source-type, path, range, rendering order, audio, and concat behavior.
+- Added focused regression coverage at the exact limit and one above it.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.187 — completed — 2026-09-29
+
+- Branch: `fix/m3-187-project-save-size-cap`.
+- PR #202; squash-merged at `aaf7cd24cb8448b1a738b9e860342f3a10a49586`.
+- User reported PASS.
+- PR head `b599b79cfc2b1aea6ff72163ff92e2d5f99ef86f` was verified before merge.
+- `main` was verified at the merge SHA.
+- Enforced the same 16 MiB project-file limit before save writes.
+- Preserved atomic temp-file + rename behavior, project path validation, and UTF-8 handling.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.188 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
 
 ## M3.186 — completed — 2026-09-29
 
