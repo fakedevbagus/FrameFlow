@@ -1251,7 +1251,9 @@ describe("updateAudioClipFades", () => {
         Number.MAX_SAFE_INTEGER,
         1,
       ),
-    ).toThrow("safe integers");
+    ).toThrow(
+      "Audio fade total exceeds the supported safe millisecond range.",
+    );
   });
 
   it("updates audio fades for a video clip with embedded source audio", () => {
