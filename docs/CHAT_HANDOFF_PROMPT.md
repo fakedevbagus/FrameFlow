@@ -1,38 +1,54 @@
-- Latest validation reached 529/529 frontend tests and a successful Vite build; Rust tests ran 135 tests with exactly one failure in the M3.204 exact-limit video source path fixture.
-- Root cause: the exact-limit fixture omitted `.mp4`, so `media_type()` rejected it before the test could verify the 4,096-byte boundary.
-- Corrected both boundary fixtures to include `.mp4` while preserving exact 4,096-byte and over-limit cases in commit `b4a8c419533ca2164046459b9067ba95a58e40c6`.
-- Re-run the complete Pull/Fetch + Validation workflow from the latest branch head before declaring PASS or merging PR #221.
+## Current State — M3.205 active — 2026-09-30
 
-## M3.203 — completed — 2026-09-30
+- Repository: `fakedevbagus/FrameFlow`.
+- Latest merged M3.204 PR: #221.
+- M3.204 squash merge SHA: `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`.
+- `main` was verified identical to that merge SHA before documentation reconciliation.
+- User reported PASS after full local validation: 529/529 frontend tests, successful lint/build, and 135/135 Rust tests.
+- Fresh audit identified M3.205 as the next focused hardening milestone.
+- Protected PR #76 and unrelated PR #22 remain untouched.
 
-- Branch: `fix/m3-203-video-audio-mix-audio-filter-size-cap`.
-- Scope: cap legacy video/audio mix `audio_filter_complex` at 256 KiB.
-- PR #220 was marked Ready for Review and squash-merged at `558bb5000138f1d384c62eb69f97f08993f280ab`.
-- `main` was verified equal to the merge SHA.
-- User reported PASS after full local validation.
-- Validation reported: 529/529 frontend tests, successful Vite build, and 133/133 Rust tests.
-- Three required docs were kept synchronized throughout the milestone.
-- No M3.203 resource-boundary semantics were weakened; protected PR #76 and unrelated PR #22 remain untouched.
-- Fresh audit from verified `main` identified M3.204.
+## M3.205 — Native Audio Graph Input Path Length Cap
 
-## Current workflow
+Branch:
+`fix/m3-205-native-audio-graph-input-path-cap`
+
+Audit finding:
+- `NativeAudioGraphRenderRequest.inputs` is capped at 256 entries but individual input path strings have no maximum length.
+- Oversized path strings can increase request memory and path-processing work before filesystem/media validation.
+
+Implementation target:
+- Add a 4,096-byte maximum path length to each native audio graph input.
+- Reject oversized paths during metadata validation before filesystem probing.
+- Preserve existing absolute-path, existence, media-type, output-collision, FFmpeg argument, rendering, and cleanup behavior.
+- Add exact 4,096-byte and over-limit 4,097-byte regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation is pending local user validation.
+- Never claim lint/test/build/cargo/manual success until the user reports it.
+
+## Workflow
 
 - Work one audited milestone at a time.
-- On user `PASS` / `pass` / `lanjutkan`: refresh PR/head/base state, ensure branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, verify the merge SHA on `main`, reconcile all three docs, audit again, and create the next milestone branch/PR.
-- Never claim local lint/test/build/cargo/manual validation unless the user reports it.
-- Keep `docs/PROJECT_CONTEXT.md`, `docs/CHANGELOG.md`, and `docs/CHAT_HANDOFF_PROMPT.md` updated every milestone or meaningful bug fix.
+- Update `docs/PROJECT_CONTEXT.md`, `docs/CHANGELOG.md`, and `docs/CHAT_HANDOFF_PROMPT.md` every milestone or meaningful validation correction.
+- On user `PASS` / `pass` / `lanjutkan`: refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge using the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused branch/PR.
+- Pull/Fetch + Validation must remain one combined copy-paste command block.
+- Do not invent local validation results.
+- UI/UX/frontend redesign remains blocked until the mandatory stability gate; current work stays focused on stability/correctness.
+- Keep protected PR #76 and unrelated PR #22 untouched.
 
-## M3.204 — active — 2026-09-30
+## M3.204 — completed — 2026-09-30
 
 - Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
-- Scope: cap legacy video/audio mix `video_source_path` at 4,096 bytes.
-- Fresh audit found the primary legacy video/audio mix video input path was not bounded.
-- Added the 4 KiB boundary before filesystem/media probing and focused exact-limit/over-limit regression coverage.
-- Existing absolute-path, media-type, source identity, rendering, cleanup, and output behavior remain unchanged.
+- PR #221; squash-merged at `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation.
+- Added a 4,096-byte legacy video/audio mix video source path cap before filesystem/media probing.
+- Added exact-limit and over-limit regression coverage.
+- Corrected the exact-limit fixture to include `.mp4` while retaining the intended 4,096-byte boundary.
+- Validation: 529/529 frontend tests passed, lint/build succeeded, and 135/135 Rust tests passed.
 - No project schema change.
-- Implementation is complete; local validation is pending.
-- On user `PASS`: refresh PR/head/base state, ensure branch is not behind `main`, mark Ready for Review, squash-merge with the freshly verified head SHA, verify the merge SHA on `main`, reconcile all three docs, audit again, and create the next milestone.
-- Protected PR #76 and unrelated PR #22 must remain untouched.
 
 ## M3.202 — completed — 2026-09-29
 
