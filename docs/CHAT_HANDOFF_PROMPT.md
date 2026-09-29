@@ -1,15 +1,29 @@
-## M3.178 — active — 2026-09-28
+## M3.179 — active — 2026-09-29
 
-- Branch: `fix/m3-178-waveform-ffmpeg-pipe-deadlock`.
-- Scope: prevent waveform FFmpeg child/process liveness deadlock caused by piped stderr backpressure.
-- Fresh audit found `audio_waveform::decode_and_reduce_waveform()` consuming FFmpeg stdout while stderr remained piped until `wait_with_output()`; sufficiently large stderr could fill the pipe and block FFmpeg.
-- Drain stderr concurrently on a dedicated reader thread while stdout samples are consumed.
-- Preserve FFmpeg failure detail from stderr.
-- Kill/reap the child when waveform output-pipe setup or stdout reading fails.
-- Add focused regression coverage that emits more than 64 KiB of stderr and verifies the child can terminate without deadlock.
-- Preserve existing waveform sample reduction, normalization, source validation, and FFmpeg arguments.
+- Branch: `fix/m3-179-media-file-open-toctou`.
+- Scope: prevent media-server pathname replacement between canonical/allowlist validation and file open.
+- Fresh audit found `handle_connection()` validating a canonical media path and later reopening the pathname; a local replacement with an outside symlink could redirect the later `File::open`.
+- Capture the validated file device/inode identity before open.
+- Open the path once and reject the open if the file's device/inode differs from the captured identity.
+- Reuse the verified `File` handle for full and Range streaming.
+- Add focused regression coverage for a validated-file replacement with a symlink.
+- Preserve existing media HTTP, capability-token, canonical-path, allowlist, media-type, Range, and HEAD behavior.
 - Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - No project schema version change.
+
+## M3.178 — completed — 2026-09-28
+
+- Branch: `fix/m3-178-waveform-ffmpeg-pipe-deadlock`.
+- PR #193; squash-merged at `55433db6e844238516c89b2ea65a34fc585687be`.
+- User reported PASS.
+- Drained FFmpeg stderr concurrently, preserved failure detail, and added child cleanup handling for waveform output-pipe/read failures.
+- Added focused regression coverage for more than 64 KiB of stderr.
+- Preserved waveform reduction, normalization, source validation, and FFmpeg arguments.
+- No project schema version change.
+- PR head `403a93dbe08cf62f870b1d314990bbf8408607ae` was verified before merge.
+- `main` was verified at `55433db6e844238516c89b2ea65a34fc585687be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
 
 ## M3.177 — completed — 2026-09-28
 
