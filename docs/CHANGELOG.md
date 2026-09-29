@@ -1,14 +1,27 @@
-### M3.192 — Native Audio Graph Input Count Cap — active — 2026-09-29
+### M3.193 — Unified AV Video Input Count Cap — active — 2026-09-29
 
-- Branch: `fix/m3-192-audio-graph-input-count-cap`.
-- Fresh audit found `NativeAudioGraphRenderRequest.inputs` had no maximum count.
-- A large audio graph request could trigger arbitrarily many filesystem checks, source-identity snapshots, FFmpeg inputs, and graph argument growth.
-- Added a maximum of 256 audio graph inputs and reject oversized requests during metadata validation before filesystem probing.
-- Preserved existing non-empty-input, filter graph, output-path, audio-map, source validation, rendering, and cleanup behavior.
-- Added focused regression coverage at 256 and 257 inputs.
+- Branch: `fix/m3-193-unified-av-video-input-count-cap`.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_inputs` had no maximum count.
+- A large unified AV request could trigger arbitrarily many filesystem checks, media-type checks, source-identity snapshots, FFmpeg inputs, and graph construction work.
+- Added a maximum of 256 unified AV video inputs and reject oversized requests during metadata validation before filesystem probing.
+- Preserved existing media-type count validation, allowed values, source-audio segment semantics, output/path checks, graph construction, rendering, and cleanup behavior.
+- Added focused regression coverage at 256 and 257 video inputs.
 - No project schema change.
 - Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
 - Next step: create the Draft PR and provide the local validation workflow.
+
+### M3.192 — Native Audio Graph Input Count Cap — completed — 2026-09-29
+
+- Branch: `fix/m3-192-audio-graph-input-count-cap`.
+- PR #207; squash-merged at `ba93ba2a90c7281aed835a3323d2f1fec6118598`.
+- User reported PASS.
+- PR head `fdba5a6582c88d2e3b6b9c6588efbed50b3bb110` was verified before merge; `main` was verified identical to the merge SHA.
+- Added a maximum of 256 native audio graph inputs and rejected oversized requests during metadata validation.
+- Preserved existing audio graph validation and render behavior.
+- Added focused regression coverage at 256 and 257 inputs.
+- No project schema change.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main` identified M3.193 as the next unified AV renderer resource-boundary milestone.
 
 ### M3.191 — Native Video Graph Input Path Size Cap — completed — 2026-09-29
 

@@ -1,14 +1,26 @@
-## M3.192 — active — 2026-09-29
+## M3.193 — active — 2026-09-29
 
-- Branch: `fix/m3-192-audio-graph-input-count-cap`.
-- Scope: cap the number of native audio graph inputs in one request.
-- Fresh audit found `NativeAudioGraphRenderRequest.inputs` had no maximum count.
-- Reject requests above 256 inputs before filesystem probing or source-identity snapshot work.
-- Preserve existing audio graph validation/render behavior.
+- Branch: `fix/m3-193-unified-av-video-input-count-cap`.
+- Scope: cap the number of unified AV graph video inputs in one request.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_inputs` had no maximum count.
+- Reject requests above 256 video inputs before filesystem/media probing or source-identity work.
+- Preserve existing unified AV graph validation/render behavior.
 - Added focused regression coverage at the exact limit and one above it.
 - Implementation is complete.
 - Draft PR not created yet.
 - Local validation is pending.
+
+## M3.192 — completed — 2026-09-29
+
+- Branch: `fix/m3-192-audio-graph-input-count-cap`.
+- PR #207; squash-merged at `ba93ba2a90c7281aed835a3323d2f1fec6118598`.
+- User reported PASS.
+- PR head `fdba5a6582c88d2e3b6b9c6588efbed50b3bb110` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 native audio graph inputs and rejected oversized requests before filesystem probing.
+- Preserved existing audio graph validation and render behavior.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
 
 ## M3.191 — completed — 2026-09-29
 
@@ -73,7 +85,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.192 is the active milestone.
+- M3.193 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
