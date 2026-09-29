@@ -1,6 +1,7 @@
 ## M3.179 — active — 2026-09-29
 
 - Branch: `fix/m3-179-media-file-open-toctou`.
+- Draft PR #194 created; validation is pending.
 - Scope: prevent media-server pathname replacement between canonical/allowlist validation and file open.
 - Fresh audit found `handle_connection()` validating a canonical media path and later reopening the pathname; a local replacement with an outside symlink could redirect the later `File::open`.
 - Capture the validated file device/inode identity before open.
@@ -73,7 +74,7 @@
 ## Workflow for this chat
 
 - Inspect actual `main` SHA, branch state, and open PRs before acting.
-- M3.178 is the active milestone.
+- M3.179 is the active milestone.
 - On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
 - Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
 - Keep parked PR #76 and unrelated PR #22 untouched.
