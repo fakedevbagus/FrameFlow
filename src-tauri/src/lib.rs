@@ -1368,10 +1368,14 @@ fn run_ffmpeg_preview(source_path: &Path, temporary_path: &Path) -> Result<(std:
     .spawn()
     .map_err(|error| format!("Could not run ffmpeg for preview generation: {error}"))?;
 
-  let stderr = child
-    .stderr
-    .take()
-    .ok_or_else(|| "FFmpeg preview error output could not be opened.".to_string())?;
+  let stderr = match child.stderr.take() {
+    Some(stderr) => stderr,
+    None => {
+      let _ = child.kill();
+      let _ = child.wait();
+      return Err("FFmpeg preview error output could not be opened.".to_string());
+    }
+  };
 
   let stderr_reader = thread::spawn(move || {
     collect_bounded_ffmpeg_stderr(
