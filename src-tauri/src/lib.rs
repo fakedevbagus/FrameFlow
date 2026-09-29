@@ -2324,7 +2324,7 @@ mod tests {
     let error = super::validate_video_graph_source_identity_snapshot(&snapshot)
       .expect_err("changed video graph sources must invalidate the render");
     assert!(error.contains("Video graph source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
@@ -2562,7 +2562,7 @@ mod tests {
     let error = super::validate_video_segments_source_identity_snapshot(&snapshot)
       .expect_err("changed multi-segment sources must invalidate the render");
     assert!(error.contains("Multi-segment source changed during rendering"));
-    assert!(error.contains(&path.to_string_lossy()));
+    assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
   }
