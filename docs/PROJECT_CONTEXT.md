@@ -1,15 +1,49 @@
-## M3.188 — Multi-Segment Render Count Cap — active — 2026-09-29
+## M3.189 — Native Video Graph Input Count Cap — active — 2026-09-29
+
+Branch:
+`fix/m3-189-video-graph-input-count-cap`
+
+Fresh audit finding:
+- `NativeVideoGraphRenderRequest.inputs` had no maximum count validation.
+- One native graph request could therefore force arbitrarily many media-path resolutions, source-type probes, source-identity snapshots, FFmpeg inputs, and a larger filter graph/argument set.
+- Existing media-type length consistency checks did not establish a request-level resource boundary.
+
+Scope:
+- Cap native video graph render requests at 256 inputs.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_GRAPH_INPUTS = 256`.
+- Reject oversized graph input lists before media-path probing or source-identity snapshot work.
+- Preserve existing non-empty-input, media-type, path, source-type, output-path, filter, video-map, rendering, and cleanup behavior.
+- Added focused regression coverage at 256 and 257 inputs.
+- No project schema change.
+
+Validation:
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+
+Next step:
+- Create Draft PR for M3.189 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+
+## M3.188 — Multi-Segment Render Count Cap — completed — 2026-09-29
 
 Branch:
 `fix/m3-188-multi-segment-count-cap`
 
-Fresh audit finding:
+PR:
+#203
+
+Merge SHA:
+`d4ff7b13e23a13ab540aa9a4444be4a618dc4bb4`
+
+User validation:
+- User reported PASS for M3.188.
+- PR #203 was refreshed at head `c380b209ef79acf53c9afd39686fbe3cedd50609`, marked Ready for Review, and squash-merged.
+- `main` was verified identical to merge commit `d4ff7b13e23a13ab540aa9a4444be4a618dc4bb4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Audit finding:
 - `NativeVideoSegmentsRenderRequest.segments` had no maximum count validation.
 - A single renderer request could therefore contain an arbitrarily large segment list, causing repeated source probing, temporary-file creation, FFmpeg invocations, and concat-list growth.
-- The individual segment duration/range checks did not establish a request-level resource boundary.
-
-Scope:
-- Cap native multi-segment render requests at 4,096 segments.
 
 Implementation:
 - Added `MAX_NATIVE_VIDEO_SEGMENTS = 4096`.
@@ -19,11 +53,8 @@ Implementation:
 - Added focused regression coverage at the exact limit and one above it.
 - No project schema change.
 
-Validation:
-- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
-
 Next step:
-- Create Draft PR for M3.188 and validate locally; after PASS follow the standard refresh → merge → docs → verify main → fresh audit workflow.
+- Fresh audit from verified `main` identified M3.189 as the next renderer resource-boundary milestone.
 
 ## M3.187 — Project Save Size Cap — completed — 2026-09-29
 
