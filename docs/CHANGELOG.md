@@ -1,3 +1,10 @@
+### M3.203 — ffprobe fixture Rust escaping correction — 2026-09-30
+
+- Fixed the Rust string literal used by the large ffprobe packet-stream regression fixture after the monotonic timestamp correction exposed shell-quote parsing errors during Rust compilation.
+- Switched the fixture command to a Rust raw string; production parser behavior is unchanged.
+- Commit: ed8c84178b688cb23fe64e1c69f67b53e61edc3b.
+- Full M3.203 validation remains pending; do not treat this as user PASS.
+
 ### M3.203 — ffprobe packet-stream fixture correction — 2026-09-30
 
 - Rust validation had one remaining failure in `streams_large_ffprobe_packet_output_without_retaining_the_whole_stream` because its shell fixture repeated the same timestamp 100,000 times while expecting a monotonically increasing packet stream.
