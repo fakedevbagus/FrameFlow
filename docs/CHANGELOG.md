@@ -1,3 +1,15 @@
+### M3.180 — Export FFmpeg Stderr Memory Cap — active — 2026-09-29
+
+- Branch: `fix/m3-180-export-stderr-memory-cap`.
+- Fresh audit found unbounded retention of the complete FFmpeg stderr stream in `export_process::run_ffmpeg_with_progress()`.
+- Kept concurrent stderr draining to preserve pipe liveness, but bounded retained diagnostics to 64 KiB.
+- Excess stderr bytes continue to be drained and discarded; retained output receives an explicit truncation notice.
+- Added focused regression coverage for multi-megabyte stderr, bounded retained size, and successful child termination.
+- Preserved FFmpeg progress, cancellation, failure-detail, and export behavior.
+- No project schema change.
+- Implementation is complete; user local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- Next step: create/refresh the Draft PR and provide the local validation workflow.
+
 ### M3.179 — Media Server File Open TOCTOU — completed — 2026-09-29
 
 - Branch: `fix/m3-179-media-file-open-toctou`.
