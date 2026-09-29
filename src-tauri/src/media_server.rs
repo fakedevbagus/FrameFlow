@@ -1546,7 +1546,7 @@ mod tests {
   fn rejects_relative_media_paths_before_resolution() {
     let error = super::validate_media_path(Path::new("relative/file.mp4"))
       .expect_err("relative media paths must be rejected");
-    assert!(error.contains("Media path must be absolute"));
+    assert!(error.to_string().contains("Media path must be absolute"));
   }
 
   #[test]
@@ -1556,7 +1556,9 @@ mod tests {
 
     let error = super::validate_media_path(&path)
       .expect_err("unsupported file extensions must be rejected");
-    assert!(error.contains("Media file type is not supported"));
+    assert!(error
+      .to_string()
+      .contains("Media file type is not supported"));
 
     std::fs::remove_file(path).unwrap();
   }
