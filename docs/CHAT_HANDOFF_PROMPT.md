@@ -8,7 +8,9 @@
 - Added focused regression coverage at the exact limit and one above it.
 - Implementation is complete.
 - Two pre-existing repository-wide lint blockers were discovered during validation and fixed within this PR as validation-enabling, behavior-preserving cleanup.
-- Existing waveform-selection regression coverage remains applicable to the refactor.
+- The canonical UTC timestamp regex bug was fixed; it had been rejecting valid timestamps and cascading through many tests.
+- Waveform selection reset is now derived from clip source/range context instead of a synchronous effect.
+- Stale tests were synchronized to current waveform interpolation, preview gain, deferred mute policy, command routing, and safe-boundary semantics.
 - Draft PR #220 exists and remains pending final local validation.
 - Local validation is pending; do not infer lint/test/build/cargo/manual success.
 
