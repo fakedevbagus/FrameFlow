@@ -41,6 +41,11 @@ Implementation:
 - Latest Rust fix commits: `3127df90ca4abfe6ac4b85354a6d64347fd79890`, `82e2ae946dfda7ccd28e00d50a6ecd465eb1a184`, `48f4edccafc6d9a1c32ff2987a859d92993dc2e4`, `fcffa76fad57d9e39559127dfb522fe3049793fe`.
 - Full validation is pending again after these fixes.
 
+- The next Rust compile reduced the remaining failures to five test-scope issues: `Cow<str>` pattern arguments, `MetadataExt` visibility inside the media-server test module, and identical path-string assertions in `lib.rs` tests.
+- Fixed these test-only Rust typing/scope issues without changing production behavior or resource-boundary validation.
+- Latest test-only fix commits: `c99508a90457e37590df1175cbd6931f68a56966` and `855e75cccf90a77d791248739a495239c9e0d702`.
+- Full validation remains pending after these fixes.
+
 Validation:
 - `npm ci` completed successfully with 0 vulnerabilities on the initial clean checkout.
 - The first lint run failed only on the two pre-existing lint blockers described above.
