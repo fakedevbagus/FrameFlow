@@ -999,6 +999,7 @@ mod tests {
     RangeResult,
   };
   use std::{
+    os::unix::fs::MetadataExt,
     path::Path,
     sync::{
       atomic::{AtomicUsize, Ordering},
@@ -1506,7 +1507,7 @@ mod tests {
       expected_body.len()
     )));
     assert!(response_text.ends_with("\r\n\r\n"));
-    assert!(!response_text.ends_with(&String::from_utf8_lossy(expected_body)));
+    assert!(!response_text.ends_with(String::from_utf8_lossy(expected_body).as_ref()));
 
     server.join().unwrap();
   }
