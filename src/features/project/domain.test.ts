@@ -2080,6 +2080,39 @@ describe("project domain", () => {
   });
 
   it("rejects transform keyframes without a persisted transform payload", () => {
+    const project = createProject({
+      id: "missing-transform-keyframe-payload",
+      now: new Date("2026-09-29T00:00:00.000Z"),
+    });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const makeProject = (changes: Record<string, unknown>) => ({
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "clip-1",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 4000,
+                  ...changes,
+                },
+              ],
+            }
+          : track,
+      ),
+    });
+
     const missingTransform = makeProject({
       transformKeyframes: [{ timeMs: 1000 } as never],
     });
