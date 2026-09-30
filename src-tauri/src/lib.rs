@@ -38,6 +38,7 @@ const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
+pub(crate) const MAX_EXPORT_PROTOCOL_LABEL_BYTES: usize = 64;
 pub(crate) const MAX_MEDIA_PATH_BYTES: usize = 4096;
 pub(crate) const MAX_EXPORT_OUTPUT_PATH_BYTES: usize = 4096;
 pub(crate) const MAX_PROJECT_PATH_BYTES: usize = 4096;
@@ -617,6 +618,19 @@ fn validate_export_output_path_request(value: &str) -> Result<(), String> {
   validate_export_output_path_length(Path::new(value))
 }
 
+pub(crate) fn validate_export_protocol_label_length(
+  value: &str,
+  field_name: &str,
+) -> Result<(), String> {
+  if value.as_bytes().len() > MAX_EXPORT_PROTOCOL_LABEL_BYTES {
+    return Err(format!(
+      "{field_name} exceeds the maximum length of {MAX_EXPORT_PROTOCOL_LABEL_BYTES} bytes."
+    ));
+  }
+
+  Ok(())
+}
+
 pub(crate) fn validate_export_output_path_length(path: &Path) -> Result<(), String> {
   if path.to_string_lossy().as_bytes().len() > MAX_EXPORT_OUTPUT_PATH_BYTES {
     return Err(format!(
@@ -1161,6 +1175,7 @@ fn validate_native_video_graph_request_metadata(
     ));
   }
 
+  validate_export_protocol_label_length(&request.video_map, "Native video graph output map")?;
   if request.video_map != "[vout]" {
     return Err("Native video graph render requires the [vout] output map.".to_string());
   }
@@ -1171,7 +1186,11 @@ fn validate_native_video_graph_request_metadata(
     return Err("Native video graph input media types must match the input count.".to_string());
   }
 
-  for media_type in &request.input_media_types {
+  for (index, media_type) in request.input_media_types.iter().enumerate() {
+    validate_export_protocol_label_length(
+      media_type,
+      &format!("Native video graph input media type at index {index}"),
+    )?;
     if media_type != "video" && media_type != "image" {
       return Err("Native video graph input media types must be video or image.".to_string());
     }
@@ -2088,6 +2107,38 @@ mod tests {
     collections::HashMap,
     path::Path,
   };
+
+  #[test]
+  fn rejects_export_protocol_label_above_size_limit() {
+    let value = "x".repeat(super::MAX_EXPORT_PROTOCOL_LABEL_BYTES + 1);
+    let error = super::validate_export_protocol_label_length(&value, "Export protocol label")
+      .expect_err("protocol labels above the configured limit must be rejected");
+
+    assert!(error.contains("maximum length of 64 bytes"));
+  }
+
+  #[test]
+  fn accepts_export_protocol_label_at_size_limit() {
+    let value = "x".repeat(super::MAX_EXPORT_PROTOCOL_LABEL_BYTES);
+    assert!(super::validate_export_protocol_label_length(&value, "Export protocol label").is_ok());
+  }
+
+  #[test]
+  fn rejects_native_video_graph_output_map_above_size_limit() {
+    let request = super::NativeVideoGraphRenderRequest {
+      inputs: vec!["/media/video.mp4".to_string()],
+      input_media_types: vec!["video".to_string()],
+      output_path: "/tmp/final.mp4".to_string(),
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "x".repeat(super::MAX_EXPORT_PROTOCOL_LABEL_BYTES + 1),
+    };
+    let error = super::validate_native_video_graph_request_metadata(&request)
+      .expect_err("oversized native video graph output map must be rejected");
+    assert!(error.contains("Native video graph output map exceeds the maximum length of 64 bytes"));
+  }
 
   #[test]
   fn rejects_project_save_content_above_size_limit() {

@@ -1,41 +1,64 @@
-## Current State — M3.213 active — 2026-09-30
+## Current State — M3.214 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.212.
-- M3.212 PR #229; squash merge SHA: `5798fd2eed98c3aae9ef1d647488751460fd643a`.
-- `main` was verified identical to that merge SHA.
+- Latest merged milestone: M3.213.
+- M3.213 PR #230; squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`.
+- `main` was verified identical to the merge SHA.
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Fresh audit identified M3.213 as the next focused hardening milestone.
+- Fresh audit identified M3.214 as the next focused hardening milestone.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 
-## M3.213 — Unified AV Aggregate Audio Keyframe Count Cap
+## M3.214 — Export Protocol Label Size Caps
 
 Branch:
-`fix/m3-213-unified-av-total-audio-keyframe-cap`
+`fix/m3-214-export-protocol-label-size-caps`
 
 Audit finding:
-- `NativeVideoAudioGraphRenderRequest.source_audio_segments` is capped at 4,096 segments.
-- Each `NativeSourceAudioSegment.audio_volume_keyframes` list is capped at 4,096 keyframes.
-- There is no aggregate keyframe count cap across all source audio segments.
-- The independent limits therefore permit a theoretical nested request shape containing 16,777,216 audio keyframes, creating an avoidable aggregate allocation/validation boundary.
+- Native video/audio graph requests accept protocol-control strings such as `video`/`image` media-type labels and `[vout]`/`[aout]` output maps.
+- These fields are ultimately exact-match validated, but they had no explicit maximum byte-length contract before those checks.
+- Oversized protocol labels therefore remained an avoidable unbounded command-input string boundary in the export request validators.
 
 Implementation:
-- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
-- Enforced the aggregate cap across all source audio segments while preserving the existing 4,096 per-segment cap.
-- Preserved existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
-- Added exact-limit (65,536) and over-limit regression coverage.
+- Added shared `MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64`.
+- Enforced the cap on native video graph input media-type labels and output map.
+- Enforced the cap on native audio graph output map.
+- Enforced the cap on native video/audio mix audio map.
+- Enforced the cap on unified AV video media-type labels, video map, and audio map.
+- Preserved exact-match protocol semantics and rendering behavior.
+- Added oversized-label regression coverage.
 - No project schema change.
 
+Validation correction:
+- First Cargo validation failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected to a crate-root test import.
+- Removed an accidentally duplicated `#[test]` attribute from the same test module.
+- Production behavior is unchanged by these corrections.
+
 Validation:
-- Implementation complete.
-- Local validation pending user run.
-- Never claim lint/test/build/cargo/manual success until the user reports the rerun result.
+- User validation reached `npm ci`, lint, 529/529 frontend tests, and build successfully.
+- Final Cargo validation is pending rerun.
+- Never claim final lint/test/build/cargo/manual success beyond the user-reported result.
 
 Workflow:
 - On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 - Pull/Fetch + Validation must remain one combined copy-paste command block.
 - UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.213 — completed — 2026-09-30
+
+- Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.
+- PR #230; squash-merged at `1aece413b1c104efcbd2617167f71f75d3697b7b`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
+- Enforced the aggregate cap across unified AV source audio segments while preserving the existing 4,096 per-segment cap.
+- Used a saturating accumulator for aggregate counting.
+- Preserved existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Next milestone:
+- M3.214 — export protocol label size caps.
 
 ## M3.212 — completed — 2026-09-30
 

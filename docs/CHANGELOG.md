@@ -1,17 +1,39 @@
-# M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — active — 2026-09-30
+# M3.214 — Export Protocol Label Size Caps — active — 2026-09-30
 
-- Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.
-- Fresh audit from verified `main` found that unified AV source-audio segments are capped at 4,096 per request and each segment's audio volume keyframes are capped at 4,096, but there is no aggregate keyframe count cap across all segments.
-- The independent limits therefore permit a theoretical nested request shape containing 16,777,216 audio keyframes.
-- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
-- Enforce the aggregate cap across all source audio segments while preserving the existing per-segment cap and validation behavior.
-- Added exact-limit and over-limit regression coverage.
+- Branch: `fix/m3-214-export-protocol-label-size-caps`.
+- Fresh audit from verified `main` found exact-match protocol fields in native video/audio export requests without an explicit size boundary.
+- Added shared `MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64`.
+- Enforced the cap on native video graph input media-type labels and output map.
+- Enforced the cap on native audio graph output map.
+- Enforced the cap on native video/audio mix audio map.
+- Enforced the cap on unified AV video media-type labels, video map, and audio map.
+- Preserved exact-match protocol semantics and rendering behavior.
+- Added oversized-label regression coverage.
+- Validation correction: the first Cargo run failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected this as a test-only crate-root import and removed a duplicated `#[test]` attribute.
+- Production behavior is unchanged by the correction.
+- User validation reached `npm ci`, lint, 529/529 frontend tests, and build successfully; final Cargo validation is pending rerun.
 - No project schema change.
-- Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.213.
+- Run the complete Pull/Fetch + Validation workflow for M3.214.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+# M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.
+- PR #230.
+- Squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
+- Enforced the aggregate cap across unified AV source audio segments while preserving the existing 4,096 per-segment cap.
+- Used a saturating accumulator for aggregate counting.
+- Preserved existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.214: export protocol label size caps.
 
 # M3.212 — Export Job ID Size Cap — completed — 2026-09-30
 
