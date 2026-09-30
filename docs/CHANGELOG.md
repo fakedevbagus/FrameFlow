@@ -10,6 +10,27 @@
 - Rust validation follow-up exposed a test-fixture lifetime error in the over-limit regression case; corrected by binding the generated `String` before borrowing it as a `Path`. No production behavior or scope change.
 - Implementation complete; local validation pending user run. Do not infer test/build/lint/cargo success.
 
+# M3.207 — Media Server Path Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-207-media-server-path-length-cap`.
+- Fresh audit found the local HTTP media server had a separate media-path validator without the 4,096-byte path boundary.
+- Enforced the shared 4,096-byte media path limit before canonicalization/filesystem probing.
+- Reused `MAX_MEDIA_PATH_BYTES` from the native command layer.
+- Preserved capability-token, allowlist, media-type, identity, range, and response behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+- Test-only validation corrections fixed the missing import and temporary-`String` lifetime fixture without changing production behavior.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- PR #224; squash-merged at `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`.
+- `main` was verified identical to the merge SHA.
+
+Next step:
+- Fresh audit from verified `main` identified M3.208: export output path length cap.
+- Scope: apply one shared 4,096-byte maximum to every export output path before output-path filesystem probing/parent-directory checks.
+- Affected renderer surfaces: native single-source export, native multi-segment export, native video graph export, native audio graph export, native unified video/audio graph export, and legacy video/audio mix export.
+- Preserve existing output-path and rendering behavior; add exact-limit and over-limit regression coverage.
+- No project schema change.
+
 ## M3.206 — Shared Media Path Length Cap — completed — 2026-09-30
 
 - Branch: `fix/m3-206-shared-media-path-length-cap`.
