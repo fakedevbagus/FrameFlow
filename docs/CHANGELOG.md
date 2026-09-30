@@ -1,4 +1,33 @@
-# M3.210 — Export Output Path Pre-Conversion Length Cap — active — 2026-09-30
+# M3.211 — Native Audio Graph Filter Size Cap — active — 2026-09-30
+
+- Branch: `fix/m3-211-native-audio-graph-filter-size-cap`.
+- Fresh audit found `NativeAudioGraphRenderRequest.filter_complex` was only checked for non-empty content before being forwarded to FFmpeg.
+- Added `MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES = 256 * 1024`.
+- Rejected oversized native audio graph filter graphs before FFmpeg argument construction.
+- Preserved existing input count/path, output path, map, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow before PASS.
+
+# M3.210 — Export Output Path Pre-Conversion Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-210-export-output-path-preconversion-length-cap`.
+- Fresh audit found the three native export commands in `src-tauri/src/lib.rs` constructed `PathBuf` from command-supplied output-path strings before invoking the existing 4,096-byte export path validator.
+- Added a request-level preflight that borrows the output string as a `Path` and applies the shared 4,096-byte length contract before `PathBuf` construction.
+- Applied the preflight to native single-source, multi-segment, and video-graph export commands.
+- Preserved existing absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage for the request-level pre-conversion gate.
+- No project schema change.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- PR #227; squash-merged at `0e177ad1a877068845bbbf75b833d658bffd566d`.
+- `main` was verified identical to the merge SHA.
+
+Next step:
+- Fresh audit from verified `main` identified M3.211: native audio graph filter size cap.
+
+
 
 - Branch: `fix/m3-210-export-output-path-preconversion-length-cap`.
 - Fresh audit found the three native export commands in `src-tauri/src/lib.rs` constructed `PathBuf` from command-supplied output-path strings before invoking the existing 4,096-byte export path validator.
