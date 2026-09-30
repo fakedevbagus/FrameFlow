@@ -26,7 +26,10 @@ Implementation target:
 - No project schema change.
 
 Validation:
-- Implementation pending.
+- Implementation complete.
+- Added shared `MAX_PROJECT_PATH_BYTES = 4096` and `validate_project_path_length()`, invoked before `PathBuf::from` in `project_path()`.
+- Added exact-limit and over-limit regression coverage.
+- Local validation pending user run.
 - Never claim lint/test/build/cargo/manual success until the user reports it.
 
 Workflow:
