@@ -28,6 +28,7 @@ export const MAX_TEXT_OVERLAY_LENGTH = 500;
 export const MAX_CANVAS_FRAME_RATE = 240;
 export const MAX_CANVAS_DIMENSION = 8192;
 export const MAX_AUDIO_VOLUME_KEYFRAMES = 4096;
+export const MAX_PROJECT_ASSETS = 4096;
 
 export interface CanvasSettings {
   width: number;
@@ -259,6 +260,14 @@ export function validateProject(value: unknown): asserts value is Project {
 function validateAssets(value: unknown): MediaAsset[] {
   if (!Array.isArray(value)) {
     throw new ProjectValidationError("Project assets must be an array.");
+  }
+
+  if (value.length > MAX_PROJECT_ASSETS) {
+    throw new ProjectValidationError(
+      "Project assets must contain at most " +
+        MAX_PROJECT_ASSETS +
+        " assets.",
+    );
   }
 
   const assets: MediaAsset[] = [];

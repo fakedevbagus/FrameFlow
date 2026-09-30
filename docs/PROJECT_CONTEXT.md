@@ -1,60 +1,57 @@
-## M3.216 — Persisted Audio Volume Keyframe Count Cap — active — 2026-09-30
+## M3.217 — Persisted Project Asset Count Cap — active — 2026-09-30
+
+Branch:
+`fix/m3-217-project-asset-count-cap`
+
+Base:
+- Verified main at M3.216 merge SHA: `c2fc7b4483476ed1e998616ad34a93fb643eafeb`.
+
+Fresh audit finding:
+- Persisted project validation accepted `assets` arrays of arbitrary length.
+- `validateAssets()` iterated the complete collection and materialized validated assets without an explicit collection ceiling.
+- This is an avoidable project-load/resource boundary.
+
+Scope:
+- Add `MAX_PROJECT_ASSETS = 4096`.
+- Reject persisted projects with more than 4,096 assets before per-asset validation/materialization.
+- Preserve asset identity, name, media type, source path, duration, and schema semantics.
+- Add exact-limit and over-limit regression coverage.
+- No project schema version change.
+
+Implementation:
+- Added `MAX_PROJECT_ASSETS = 4096`.
+- Added exact-limit acceptance and 4,097-entry rejection tests.
+- Last implementation checkpoint before documentation reconciliation: `f0fcf3486f5fc5ab5bf665628ff90a4d93442cb6`.
+
+Validation:
+- Local validation is pending user run.
+- Do not infer lint/test/build/cargo/manual success until the user reports the result.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.217.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+## M3.216 — Persisted Audio Volume Keyframe Count Cap — completed — 2026-09-30
 
 Branch:
 `fix/m3-216-project-audio-keyframe-count-cap`
 
-PR:
-#234 (Draft)
-
-Base:
-- Verified main at M3.215 merge SHA: `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
-
-Fresh audit finding:
-- Persisted project validation accepted `audioVolumeKeyframes` arrays of arbitrary length.
-- Native unified AV rendering already enforces a 4,096-keyframe ceiling per source-audio segment.
-- This left a cross-layer gap where persistence could accept data that native export later rejects.
-
-Scope:
-- Add `MAX_AUDIO_VOLUME_KEYFRAMES = 4096` to project-domain validation.
-- Reject persisted audio volume keyframe arrays above 4,096 entries.
-- Preserve existing ordering, timestamp, volume, clip-duration, audio-effect, and schema semantics.
-- Add exact-limit and over-limit regression coverage.
-- No project schema version change.
-- Keep transform keyframe handling unchanged.
-
-Implementation:
-- Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096`.
-- Persisted `audioVolumeKeyframes` now reject arrays above 4,096 entries.
-- Added exact-limit acceptance and 4,097-entry rejection tests.
-- Last implementation checkpoint before documentation reconciliation: `d864023fa1d35e9c39478a4b73b7c1ecc3afb120`.
-
-Validation:
-- Local validation is pending user run.
-- Do not infer lint/test/build/cargo/manual success until the user reports the complete result.
-
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.216.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
-
-## M3.215 — Export Canvas Dimension Caps — completed — 2026-09-30
-
-Branch:
-`fix/m3-215-export-canvas-dimension-caps`
-
 Merge:
-- PR #233
-- Squash merge SHA: `9ae21c176ac57fbe34f34dbc742f4de686fab862`
+- PR #234
+- Squash merge SHA: `c2fc7b4483476ed1e998616ad34a93fb643eafeb`
 - `main` verified identical to the merge SHA.
 - User reported PASS.
 
 Implementation:
-- Added `MAX_NATIVE_EXPORT_DIMENSION = 8192`.
-- Added `MAX_CANVAS_DIMENSION = 8192`.
-- Reused the ceiling in frontend export-setting normalization.
-- Added exact-limit and over-limit regression coverage.
-- Preserved existing positive/even dimension semantics, export behavior, and project schema compatibility.
-- Documentation was reconciled before merge.
+- Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096`.
+- Persisted audio volume keyframe arrays above 4,096 entries are rejected.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved existing keyframe ordering/time/value semantics.
 - No project schema version change.
+- Transform keyframe handling remains unchanged.
+
+Next step:
+- Fresh audit from verified `main` identified M3.217: Persisted Project Asset Count Cap.
 
 ## M3.214 — Export Protocol Label Size Caps — completed — 2026-09-30
 

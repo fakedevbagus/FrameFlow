@@ -1,36 +1,33 @@
-# M3.216 — Persisted Audio Volume Keyframe Count Cap — active — 2026-09-30
+# M3.217 — Persisted Project Asset Count Cap — active — 2026-09-30
 
-- Branch: `fix/m3-216-project-audio-keyframe-count-cap`.
-- PR #234 (Draft).
-- Fresh audit of verified `main` found persisted `audioVolumeKeyframes` arrays without an explicit count ceiling, while the native unified AV renderer already caps them at 4,096 per source-audio segment.
-- Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096` to project-domain validation.
-- Persisted audio volume keyframe arrays above 4,096 entries are rejected.
+- Branch: `fix/m3-217-project-asset-count-cap`.
+- Fresh audit of verified `main` found persisted project `assets` arrays without an explicit count ceiling.
+- Added `MAX_PROJECT_ASSETS = 4096`.
+- Persisted projects with more than 4,096 assets are rejected before per-asset validation/materialization.
 - Added exact-limit acceptance and over-limit rejection regression coverage.
-- Preserved existing keyframe ordering/time/value semantics and project schema compatibility.
-- Transform keyframe handling remains unchanged.
+- Preserved existing asset validation and project schema compatibility.
 - Local validation is pending user run.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.216.
+- Run the complete Pull/Fetch + Validation workflow for M3.217.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
-# M3.215 — Export Canvas Dimension Caps — completed — 2026-09-30
+# M3.216 — Persisted Audio Volume Keyframe Count Cap — completed — 2026-09-30
 
-- Branch: `fix/m3-215-export-canvas-dimension-caps`.
-- PR #233.
-- Squash merge SHA: `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
+- Branch: `fix/m3-216-project-audio-keyframe-count-cap`.
+- PR #234.
+- Squash merge SHA: `c2fc7b4483476ed1e998616ad34a93fb643eafeb`.
 - `main` was verified identical to the merge SHA.
 - User reported PASS.
-- Added `MAX_NATIVE_EXPORT_DIMENSION = 8192` and `MAX_CANVAS_DIMENSION = 8192`.
-- Reused the project ceiling in frontend export-setting normalization.
-- Added exact-limit and over-limit regression coverage.
-- Preserved existing positive/even dimension semantics and supported export behavior.
+- Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved existing keyframe semantics and project schema compatibility.
 - No project schema change.
 
 Next step:
-- Fresh audit from verified `main` identified M3.216: Persisted Audio Volume Keyframe Count Cap.
+- Fresh audit from verified `main` identified M3.217: Persisted Project Asset Count Cap.
 
 # M3.214 — Export Protocol Label Size Caps — completed — 2026-09-30
 
