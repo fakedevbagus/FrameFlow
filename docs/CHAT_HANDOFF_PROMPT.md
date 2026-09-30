@@ -12,43 +12,42 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest PASS:** M3.217 — Persisted Project Asset Count Cap.
-- **M3.217 PR:** #235.
-- **M3.217 squash merge SHA:** `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
+- **Latest PASS:** M3.218 — Persisted Transform Keyframe Count Cap.
+- **M3.218 PR:** #236.
+- **M3.218 squash merge SHA:** `b93ba09633c6f02194a04a264fbaed10819b71c3`.
 - `main` was verified identical to that merge SHA.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.218 — Persisted Transform Keyframe Count Cap.
-- **Current branch:** `fix/m3-218-transform-keyframe-count-cap`.
-- **M3.218 PR:** #236 (Draft).
-- **Base:** `main` at `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
-- M3.218 is **implemented but not yet validated**.
-- Current documentation checkpoint before validation: `282da90739d53d7c5abc269bd4e246aee091eade`.
-- Do not mark M3.218 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
+- **Current active milestone:** M3.219 — Persisted Project Track Count Cap.
+- **Current branch:** `fix/m3-219-project-track-count-cap`.
+- **M3.219 PR:** create after implementation/documentation reconciliation.
+- **Base:** `main` after the M3.218 merge and documentation reconciliation.
+- M3.219 is **implemented but not yet validated**.
+- Do not mark M3.219 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 
-## M3.218 — Persisted Transform Keyframe Count Cap
+## M3.219 — Persisted Project Track Count Cap
 
 ### Fresh audit finding
 
-Verified `main` still allowed persisted clip `transformKeyframes` arrays of arbitrary length. `validateTransformKeyframesPayload()` iterated the full collection and validated every keyframe during project loading. Audio volume keyframes already had the same 4,096-entry persistence boundary; transform keyframes did not.
+Verified `main` still allowed persisted project `tracks` arrays of arbitrary length. `validateTracks()` iterated the full collection, created tracking maps/sets, validated every track, and validated each track's clip topology without an explicit track-count ceiling.
 
 ### Current implementation
 
 - `src/features/project/domain.ts`
-  - Added `MAX_TRANSFORM_KEYFRAMES = 4096`.
-  - Persisted transform keyframe arrays above 4,096 entries are rejected before per-keyframe validation.
-  - Existing timing, ordering, easing, and transform-value validation remain unchanged.
+  - Add `MAX_PROJECT_TRACKS = 256`.
+  - Reject persisted projects with more than 256 tracks before per-track validation.
+  - Preserve existing track identity, lock/mute, volume/pan, clip, and topology semantics.
 - `src/features/project/domain.test.ts`
-  - Added exact-limit acceptance coverage at 4,096 keyframes.
-  - Added over-limit rejection coverage at 4,097 keyframes.
+  - Add exact-limit acceptance coverage at 256 tracks.
+  - Add over-limit rejection coverage at 257 tracks.
 - No project schema version change.
 
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state and run the complete validation for M3.218.
+First refresh the actual repository state and run the complete validation for M3.219.
 
 Use this as one combined copy-paste block:
 
@@ -56,8 +55,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-218-transform-keyframe-count-cap &&
-git pull --ff-only origin fix/m3-218-transform-keyframe-count-cap &&
+git checkout fix/m3-219-project-track-count-cap &&
+git pull --ff-only origin fix/m3-219-project-track-count-cap &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -73,7 +72,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; report any actual `src-tauri/Cargo.lock` modification instead of assuming.
-- Keep validation focused on M3.218.
+- Keep validation focused on M3.219.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -176,15 +175,15 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.218 SUMMARY
+## CURRENT M3.219 SUMMARY
 
-**Latest accepted checkpoint:** M3.217 PASS, merged to `main` at `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
+**Latest accepted checkpoint:** M3.218 PASS, merged to `main` at `b93ba09633c6f02194a04a264fbaed10819b71c3`.
 
-**Current continuation point:** M3.218 implementation branch `fix/m3-218-transform-keyframe-count-cap`.
+**Current continuation point:** M3.219 implementation branch `fix/m3-219-project-track-count-cap`.
 
 **What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
 
-**Do not describe M3.218 as PASS yet.**
+**Do not describe M3.219 as PASS yet.**
 
 ## USER WORKFLOW PREFERENCE
 
@@ -198,6 +197,17 @@ Interpret them consistently:
 
 Every milestone should leave enough precise documentation that a brand-new chat can resume without reconstructing the project from scratch.
 
+## M3.218 — completed — 2026-09-30
+
+- Branch: `fix/m3-218-transform-keyframe-count-cap`.
+- PR #236; squash-merged at `b93ba09633c6f02194a04a264fbaed10819b71c3`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS.
+- Added `MAX_TRANSFORM_KEYFRAMES = 4096`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved transform keyframe timing, ordering, easing, and transform-value semantics.
+- No project schema change.
+
 ## M3.217 — completed — 2026-09-30
 
 - Branch: `fix/m3-217-project-asset-count-cap`.
@@ -207,16 +217,6 @@ Every milestone should leave enough precise documentation that a brand-new chat 
 - Added `MAX_PROJECT_ASSETS = 4096`.
 - Added exact-limit and over-limit regression coverage.
 - Preserved existing asset identity/validation and project-schema semantics.
-- No project schema change.
-
-## M3.216 — completed — 2026-09-30
-
-- Branch: `fix/m3-216-project-audio-keyframe-count-cap`.
-- PR #234; squash-merged at `c2fc7b4483476ed1e998616ad34a93fb643eafeb`.
-- `main` was verified identical to that merge SHA.
-- User reported PASS.
-- Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096`.
-- Added exact-limit and over-limit regression coverage.
 - No project schema change.
 
 ## M3.215 — completed — 2026-09-30
