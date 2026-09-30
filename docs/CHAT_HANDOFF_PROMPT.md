@@ -1,45 +1,3 @@
-## Current State — M3.207 active — 2026-09-30
-
-- Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.206.
-- M3.206 PR #223; squash merge SHA: `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`.
-- `main` was verified identical to that merge SHA.
-- User reported PASS after full local validation.
-- Fresh audit identified M3.207 as the next focused hardening milestone.
-- Protected PR #76 and unrelated PR #22 remain untouched.
-
-## M3.207 — Media Server Path Length Cap
-
-Branch:
-`fix/m3-207-media-server-path-length-cap`
-
-Audit finding:
-- The local HTTP media server has a separate `validate_media_path()` boundary.
-- That path was not covered by the shared 4,096-byte media path limit, leaving URL/request-driven media paths unbounded before canonicalization/filesystem probing.
-
-Implementation target:
-- Enforce the shared `MAX_MEDIA_PATH_BYTES = 4096` boundary in the media server.
-- Reject oversized decoded media paths before canonicalization.
-- Preserve capability-token, path-allowlist, media-type, identity, range, and response behavior.
-- Add exact-limit and over-limit regression coverage.
-- No project schema change.
-
-M3.207 validation correction:
-- Initial user validation reached 529/529 frontend tests and successful client build, but `cargo test` failed because the two new media-server boundary tests omitted `validate_media_path_length` from their local test-module imports.
-- Corrected the test import only; no production boundary or scope change.
-- Follow-up Rust validation found the over-limit regression fixture borrowed a temporary `String`; changed it to a local binding so the `Path` borrow has a valid lifetime. No production behavior or scope change.
-
-Validation:
-- Implementation complete.
-- Local validation pending user run.
-- Never claim lint/test/build/cargo/manual success until the user reports it.
-
-Workflow:
-- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused branch/PR.
-- Pull/Fetch + Validation must remain one combined copy-paste command block.
-- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
-- Keep protected PR #76 and unrelated PR #22 untouched.
-
 ## Current State — M3.208 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
@@ -56,20 +14,18 @@ Branch:
 `fix/m3-208-export-output-path-length-cap`
 
 Audit finding:
-- Export output paths remain separately validated but lack a shared maximum byte-length boundary.
-- Native single-source, native multi-segment, native video graph, native audio graph, native unified video/audio graph, and legacy video/audio mix renderers all accept output path strings and convert them to `Path`/`PathBuf` before their existing output-path checks.
-- The output path therefore lacks a consistent resource-boundary contract before parent-directory probing or FFmpeg argument construction.
+- Export output paths lack a shared maximum byte-length boundary.
+- Native single-source, native multi-segment, native video graph, native audio graph, native unified video/audio graph, and legacy video/audio mix renderers all accept output path strings before existing output validation or FFmpeg argument construction.
 
-Implementation target:
-- Add one shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096` boundary.
-- Reject oversized output paths before output-path filesystem probing/parent-directory checks.
-- Apply consistently across all six renderer surfaces above.
-- Preserve existing absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
-- Add exact-limit and over-limit regression coverage.
+Implementation:
+- Added shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096` and `validate_export_output_path_length()`.
+- Reused the shared validator across native export validation and audio renderer output validation.
+- Added focused over-limit regression coverage.
 - No project schema change.
 
 Validation:
-- Implementation pending.
+- Implementation complete.
+- Local validation pending user run.
 - Never claim lint/test/build/cargo/manual success until the user reports it.
 
 Workflow:
@@ -77,6 +33,21 @@ Workflow:
 - Pull/Fetch + Validation must remain one combined copy-paste command block.
 - UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.207 — Media Server Path Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-207-media-server-path-length-cap`.
+- PR #224; squash-merged at `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation.
+- Enforced the shared 4,096-byte media path limit in the local media server before canonicalization/filesystem probing.
+- Added exact-limit and over-limit regression coverage.
+- Test-only validation corrections fixed the missing import and temporary-`String` lifetime fixture without changing production behavior.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.208: export output path length cap.
+- Scope: apply one shared 4,096-byte maximum to every export output path before output-path filesystem probing/parent-directory checks.
 
 ## M3.206 — completed — 2026-09-30
 

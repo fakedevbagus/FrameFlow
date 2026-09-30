@@ -1,38 +1,40 @@
-## M3.207 — Media Server Path Length Cap — active — 2026-09-30
+## M3.208 — Export Output Path Length Cap — active — 2026-09-30
 
 Branch:
-`fix/m3-207-media-server-path-length-cap`
+`fix/m3-208-export-output-path-length-cap`
 
 Previous milestone:
-- M3.206 — Shared Media Path Length Cap
-- PR #223
-- Squash merge SHA: `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`
+- M3.207 — Media Server Path Length Cap
+- PR #224
+- Squash merge SHA: `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`
 - `main` verified identical to that merge SHA.
 - User reported PASS after full local validation.
 
 Fresh audit finding:
-- `src-tauri/src/media_server.rs` maintains a separate `validate_media_path()` boundary for local HTTP media access.
-- That validator had no 4,096-byte path limit, so media paths arriving through the local media-server URL/request path remained unbounded before canonicalization/filesystem probing.
+- Export request output paths are still separately validated but have no shared byte-length boundary.
+- Native single-source, native multi-segment, native video graph, native audio graph, native unified video/audio graph, and legacy video/audio mix renderers accept output path strings before existing output-path checks or FFmpeg argument construction.
+- The resource-boundary hardening already applied to media input paths does not yet have an equivalent output-path contract.
 
 Scope:
-- Enforce the shared 4,096-byte media path contract in the media server.
-- Reject oversized decoded media paths before canonicalization.
-- Reuse the shared `MAX_MEDIA_PATH_BYTES` constant from the native command layer.
-- Preserve existing capability-token, path-allowlist, media-type, identity, range, and response behavior.
+- Add shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096`.
+- Reject oversized output paths before output-path filesystem probing or parent-directory checks.
+- Reuse the shared validator across native export paths and audio-renderer output validation.
+- Preserve absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
 - Add exact-limit and over-limit regression coverage.
 - No project schema change.
 
-M3.207 validation correction:
-- Initial user validation reached 529/529 frontend tests and successful client build, but `cargo test` failed because the two new media-server boundary tests omitted `validate_media_path_length` from their local test-module imports.
-- Corrected the test import only; no production boundary or scope change.
-- Follow-up Rust validation found the over-limit regression fixture borrowed a temporary `String`; changed it to a local binding so the `Path` borrow has a valid lifetime. No production behavior or scope change.
+Implementation:
+- Added `validate_export_output_path_length()` and the shared 4,096-byte limit in `src-tauri/src/lib.rs`.
+- Applied the shared boundary to `validate_export_output_path()`, covering native single-source, native multi-segment, and native video graph exports.
+- Applied the same boundary to audio renderer output validation, covering native audio graph, native unified video/audio graph, and legacy video/audio mix exports.
+- Added focused over-limit regression coverage for both renderer validation paths.
 
 Validation:
 - Implementation complete.
 - Local validation pending user run; do not infer lint/test/build/cargo/manual success.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.207.
+- Run the complete Pull/Fetch + Validation workflow for M3.208.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
 ## M3.207 — Media Server Path Length Cap — completed — 2026-09-30

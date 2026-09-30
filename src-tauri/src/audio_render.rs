@@ -8,7 +8,8 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-  export_process, probe_duration_ms, probe_has_audio, validate_native_export_settings,
+  export_process, probe_duration_ms, probe_has_audio, validate_export_output_path_length,
+  validate_native_export_settings,
 };
 
 const MAX_NATIVE_AUDIO_GRAPH_INPUTS: usize = 256;
@@ -1212,6 +1213,7 @@ fn validate_video_audio_mix_request(
 }
 
 fn validate_mp4_output_path(output_path: &Path) -> Result<(), String> {
+  validate_export_output_path_length(output_path)?;
   if !output_path.is_absolute() {
     return Err("Export output path must be absolute.".to_string());
   }
@@ -1432,6 +1434,7 @@ fn validate_request(request: &NativeAudioGraphRenderRequest) -> Result<(), Strin
   }
 
   let output_path = Path::new(&request.output_path);
+  validate_export_output_path_length(output_path)?;
 
   if !output_path.is_absolute() {
     return Err("Export output path must be absolute.".to_string());
@@ -1574,6 +1577,36 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES,
   };
   use std::path::{Path, PathBuf};
+
+  #[test]
+  fn rejects_audio_graph_export_output_path_above_size_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec!["/media/music.mp3".to_string()],
+      output_path: "a".repeat(crate::MAX_EXPORT_OUTPUT_PATH_BYTES + 1),
+      filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+    };
+
+    let error = validate_request(&request)
+      .expect_err("audio graph export output paths above the configured limit must be rejected");
+    assert!(error.contains("maximum length of 4096 bytes"));
+  }
+
+  #[test]
+  fn rejects_video_audio_mix_export_output_path_above_size_limit() {
+    let request = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      audio_filter_complex: "anullsrc=r=48000:cl=stereo[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 1_000,
+      output_path: "a".repeat(crate::MAX_EXPORT_OUTPUT_PATH_BYTES + 1),
+    };
+
+    let error = validate_video_audio_mix_request(&request)
+      .expect_err("legacy video/audio mix export output paths above the configured limit must be rejected");
+    assert!(error.contains("maximum length of 4096 bytes"));
+  }
 
   #[test]
   fn recognizes_audio_extensions() {

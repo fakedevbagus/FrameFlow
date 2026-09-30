@@ -1,14 +1,17 @@
-# M3.207 — Media Server Path Length Cap — active — 2026-09-30
+# M3.208 — Export Output Path Length Cap — active — 2026-09-30
 
-- Branch: `fix/m3-207-media-server-path-length-cap`.
-- Fresh audit found the local HTTP media server had a separate media-path validator without the 4,096-byte path boundary.
-- Added the shared 4,096-byte media path limit to the media server before canonicalization/filesystem probing.
-- Reused `MAX_MEDIA_PATH_BYTES` from the native command layer.
-- Preserved capability-token, allowlist, media-type, identity, range, and response behavior.
-- Added exact-limit and over-limit regression coverage.
+- Branch: `fix/m3-208-export-output-path-length-cap`.
+- Fresh audit found export output paths lacked a shared byte-length boundary across renderer surfaces.
+- Added shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096` and `validate_export_output_path_length()`.
+- Enforced the boundary before output-path filesystem/parent-directory checks in the shared native exporter validation.
+- Reused the same boundary in audio renderer output validation, covering native audio graph, unified video/audio graph, and legacy video/audio mix.
+- Added focused over-limit regression coverage.
 - No project schema change.
-- Rust validation follow-up exposed a test-fixture lifetime error in the over-limit regression case; corrected by binding the generated `String` before borrowing it as a `Path`. No production behavior or scope change.
 - Implementation complete; local validation pending user run. Do not infer test/build/lint/cargo success.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.208.
+- After user PASS, use the standard refresh → Ready for Review → squash merge → verify `main` → docs → fresh audit workflow.
 
 # M3.207 — Media Server Path Length Cap — completed — 2026-09-30
 

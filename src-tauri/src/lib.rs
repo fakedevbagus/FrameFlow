@@ -39,6 +39,7 @@ const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
 pub(crate) const MAX_MEDIA_PATH_BYTES: usize = 4096;
+pub(crate) const MAX_EXPORT_OUTPUT_PATH_BYTES: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -608,7 +609,18 @@ fn validate_native_export_settings(width: u32, height: u32, frame_rate: f64) -> 
   Ok(())
 }
 
+pub(crate) fn validate_export_output_path_length(path: &Path) -> Result<(), String> {
+  if path.to_string_lossy().as_bytes().len() > MAX_EXPORT_OUTPUT_PATH_BYTES {
+    return Err(format!(
+      "Export output path exceeds the maximum length of {MAX_EXPORT_OUTPUT_PATH_BYTES} bytes."
+    ));
+  }
+
+  Ok(())
+}
+
 fn validate_export_output_path(path: &Path) -> Result<(), String> {
+  validate_export_output_path_length(path)?;
   if !path.is_absolute() {
     return Err("Export output path must be absolute.".to_string());
   }
@@ -2281,6 +2293,21 @@ mod tests {
   fn accepts_media_paths_at_size_limit() {
     let path = "a".repeat(super::MAX_MEDIA_PATH_BYTES);
     assert!(super::validate_media_path_length(&path).is_ok());
+  }
+
+  #[test]
+  fn rejects_export_output_paths_above_size_limit() {
+    let path = "a".repeat(super::MAX_EXPORT_OUTPUT_PATH_BYTES + 1);
+    let error = super::validate_export_output_path_length(Path::new(&path))
+      .expect_err("export output paths above the configured limit must be rejected");
+
+    assert!(error.contains("maximum length of 4096 bytes"));
+  }
+
+  #[test]
+  fn accepts_export_output_paths_at_size_limit() {
+    let path = "a".repeat(super::MAX_EXPORT_OUTPUT_PATH_BYTES);
+    assert!(super::validate_export_output_path_length(Path::new(&path)).is_ok());
   }
 
   #[test]
