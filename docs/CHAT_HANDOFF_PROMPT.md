@@ -1,31 +1,32 @@
-## Current State — M3.208 active — 2026-09-30
+## Current State — M3.209 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.207.
-- M3.207 PR #224; squash merge SHA: `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`.
+- Latest merged milestone: M3.208.
+- M3.208 PR #225; squash merge SHA: `0f34f7ffaeec9fab423a2e6d0e62d5479142a4e0`.
 - `main` was verified identical to that merge SHA.
 - User reported PASS after full local validation.
-- Fresh audit identified M3.208 as the next focused hardening milestone.
+- Fresh audit identified M3.209 as the next focused hardening milestone.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 
-## M3.208 — Export Output Path Length Cap
+## M3.209 — Project Path Length Cap
 
 Branch:
-`fix/m3-208-export-output-path-length-cap`
+`fix/m3-209-project-path-length-cap`
 
 Audit finding:
-- Export output paths lack a shared maximum byte-length boundary.
-- Native single-source, native multi-segment, native video graph, native audio graph, native unified video/audio graph, and legacy video/audio mix renderers all accept output path strings before existing output validation or FFmpeg argument construction.
+- `project_path()` converts command-supplied project paths into `PathBuf` before its existing validation.
+- The project open/save boundary has no shared maximum byte-length contract comparable to the media and export path boundaries.
 
-Implementation:
-- Added shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096` and `validate_export_output_path_length()`.
-- Reused the shared validator across native export validation and audio renderer output validation.
-- Added focused over-limit regression coverage.
+Implementation target:
+- Add shared `MAX_PROJECT_PATH_BYTES = 4096`.
+- Reject oversized project paths before project-path filesystem probing or parent-directory operations.
+- Apply the boundary through the shared `project_path()` validator used by project open and save.
+- Preserve absolute-path, filename, `.frameflow.json` extension, project-content size, directory creation, temporary-file, atomic rename, and result behavior.
+- Add exact-limit and over-limit regression coverage.
 - No project schema change.
 
 Validation:
-- Implementation complete.
-- Local validation pending user run.
+- Implementation pending.
 - Never claim lint/test/build/cargo/manual success until the user reports it.
 
 Workflow:
@@ -33,6 +34,16 @@ Workflow:
 - Pull/Fetch + Validation must remain one combined copy-paste command block.
 - UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.208 — completed — 2026-09-30
+
+- Branch: `fix/m3-208-export-output-path-length-cap`.
+- PR #225; squash-merged at `0f34f7ffaeec9fab423a2e6d0e62d5479142a4e0`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation.
+- Added shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096` and reused it across all six export renderer surfaces.
+- Added focused over-limit regression coverage.
+- No project schema change.
 
 ## M3.207 — Media Server Path Length Cap — completed — 2026-09-30
 
