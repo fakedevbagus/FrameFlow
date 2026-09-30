@@ -28,6 +28,7 @@ export const MAX_TEXT_OVERLAY_LENGTH = 500;
 export const MAX_CANVAS_FRAME_RATE = 240;
 export const MAX_CANVAS_DIMENSION = 8192;
 export const MAX_AUDIO_VOLUME_KEYFRAMES = 4096;
+export const MAX_TRANSFORM_KEYFRAMES = 4096;
 export const MAX_PROJECT_ASSETS = 4096;
 
 export interface CanvasSettings {
@@ -911,6 +912,15 @@ function validateTransformKeyframesPayload(
   if (value === undefined) return;
   if (!Array.isArray(value)) {
     throw new ProjectValidationError(field + " must be an array.");
+  }
+
+  if (value.length > MAX_TRANSFORM_KEYFRAMES) {
+    throw new ProjectValidationError(
+      field +
+        " must contain at most " +
+        MAX_TRANSFORM_KEYFRAMES +
+        " keyframes.",
+    );
   }
 
   const times = new Set<number>();
