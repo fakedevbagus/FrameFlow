@@ -14,6 +14,7 @@ use tauri::{Emitter, State};
 pub const EXPORT_PROGRESS_EVENT: &str = "export-progress";
 
 const MAX_FFMPEG_STDERR_BYTES: usize = 64 * 1024;
+const MAX_EXPORT_JOB_ID_BYTES: usize = 256;
 const FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[FFmpeg stderr truncated by FrameFlow]\n";
 
@@ -107,6 +108,7 @@ pub fn cancel_export_job(
   request: CancelExportJobRequest,
   state: State<'_, ExportProcessState>,
 ) -> Result<(), String> {
+  validate_export_job_id(&request.job_id)?;
   state.cancel(&request.job_id)
 }
 
@@ -122,6 +124,7 @@ pub fn run_ffmpeg_with_progress(
   error_context: &str,
 ) -> Result<ExitStatus, String> {
   if let Some(job_id) = job_id {
+    validate_export_job_id(job_id)?;
     if state.is_cancelled(job_id) {
       if let Ok(mut cancelled) = state.cancelled.lock() {
         cancelled.remove(job_id);
@@ -239,6 +242,16 @@ pub fn run_ffmpeg_with_progress(
   Ok(status)
 }
 
+fn validate_export_job_id(job_id: &str) -> Result<(), String> {
+  if job_id.as_bytes().len() > MAX_EXPORT_JOB_ID_BYTES {
+    return Err(format!(
+      "Export job id exceeds the maximum length of {MAX_EXPORT_JOB_ID_BYTES} bytes."
+    ));
+  }
+
+  Ok(())
+}
+
 fn collect_ffmpeg_stderr<R: Read>(mut reader: R) -> Vec<u8> {
   let reserved_notice = FFMPEG_STDERR_TRUNCATION_NOTICE.len();
   let retained_limit = MAX_FFMPEG_STDERR_BYTES.saturating_sub(reserved_notice);
@@ -327,6 +340,21 @@ mod tests {
     ExportProgressEvent,
     EXPORT_PROGRESS_EVENT,
   };
+
+  #[test]
+  fn rejects_export_job_ids_above_size_limit() {
+    let job_id = "a".repeat(MAX_EXPORT_JOB_ID_BYTES + 1);
+    let error = super::validate_export_job_id(&job_id)
+      .expect_err("export job ids above the configured limit must be rejected");
+
+    assert!(error.contains("maximum length of 256 bytes"));
+  }
+
+  #[test]
+  fn accepts_export_job_ids_at_size_limit() {
+    let job_id = "a".repeat(MAX_EXPORT_JOB_ID_BYTES);
+    assert!(super::validate_export_job_id(&job_id).is_ok());
+  }
 
   #[test]
   fn parses_ffmpeg_progress_microseconds_to_milliseconds() {
