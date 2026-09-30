@@ -1,35 +1,34 @@
-## Current State — M3.212 active — 2026-09-30
+## Current State — M3.213 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.211.
-- M3.211 PR #228; squash merge SHA: `00cee51c31afc1a8fa39ecf6a03282d2eea2289d`.
+- Latest merged milestone: M3.212.
+- M3.212 PR #229; squash merge SHA: `5798fd2eed98c3aae9ef1d647488751460fd643a`.
 - `main` was verified identical to that merge SHA.
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Fresh audit identified M3.212 as the next focused hardening milestone.
+- Fresh audit identified M3.213 as the next focused hardening milestone.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 
-## M3.212 — Export Job ID Size Cap
+## M3.213 — Unified AV Aggregate Audio Keyframe Count Cap
 
 Branch:
-`fix/m3-212-export-job-id-size-cap`
+`fix/m3-213-unified-av-total-audio-keyframe-cap`
 
 Audit finding:
-- `CancelExportJobRequest.job_id` and render `job_id` values are command-supplied strings.
-- `ExportProcessState` copies these IDs into `HashMap`/`HashSet` state and progress events without an explicit maximum byte-length contract.
-- This creates an avoidable unbounded identifier allocation/state boundary in the export process lifecycle.
+- `NativeVideoAudioGraphRenderRequest.source_audio_segments` is capped at 4,096 segments.
+- Each `NativeSourceAudioSegment.audio_volume_keyframes` list is capped at 4,096 keyframes.
+- There is no aggregate keyframe count cap across all source audio segments.
+- The independent limits therefore permit a theoretical nested request shape containing 16,777,216 audio keyframes, creating an avoidable aggregate allocation/validation boundary.
 
 Implementation:
-- Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
-- Validate job IDs before cancellation state insertion and before export process/progress execution.
-- Preserved cancellation, process registration, progress events, cleanup, and result behavior.
-- Added exact-limit and over-limit regression coverage.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
+- Enforced the aggregate cap across all source audio segments while preserving the existing 4,096 per-segment cap.
+- Preserved existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
+- Added exact-limit (65,536) and over-limit regression coverage.
 - No project schema change.
 
 Validation:
 - Implementation complete.
-- User validation reached frontend lint/tests/build successfully; the Rust test command failed at test compilation because the new test cases referenced `MAX_EXPORT_JOB_ID_BYTES` without importing it into the test module.
-- Applied a test-only import correction; no production behavior changed.
-- Full validation is pending rerun.
+- Local validation pending user run.
 - Never claim lint/test/build/cargo/manual success until the user reports the rerun result.
 
 Workflow:
@@ -38,100 +37,29 @@ Workflow:
 - UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
 
+## M3.212 — completed — 2026-09-30
+
+- Branch: `fix/m3-212-export-job-id-size-cap`.
+- PR #229; squash-merged at `5798fd2eed98c3aae9ef1d647488751460fd643a`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
+- Validated cancel-request job IDs before cancellation state insertion and render job IDs before export process/progress execution.
+- Preserved cancellation, process registration, progress events, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- Corrected the test-module import discovered during validation; production behavior was unchanged.
+- No project schema change.
+
 ## M3.211 — completed — 2026-09-30
 
 - Branch: `fix/m3-211-native-audio-graph-filter-size-cap`.
-- PR #228; squash-merged at `00cee51c31afc1a8fa39ecf6a03282d2eea2289d`.
+- PR #228; squash-merged at `00cee51c31afc1a8fa39ecf6a03282d2eea2289`.
 - `main` was verified identical to the merge SHA.
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Added `MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES = 256 * 1024` and rejected oversized native audio graph filter graphs before FFmpeg argument construction.
-- Added exact-limit and over-limit regression coverage.
-- No project schema change.
-
-
-
-- Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.210.
-- M3.210 PR #227; squash merge SHA: `0e177ad1a877068845bbbf75b833d658bffd566d`.
-- `main` was verified identical to that merge SHA.
-- User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Fresh audit identified M3.211 as the next focused hardening milestone.
-- Protected PR #76 and unrelated PR #22 remain untouched.
-
-## M3.211 — Native Audio Graph Filter Size Cap
-
-Branch:
-`fix/m3-211-native-audio-graph-filter-size-cap`
-
-Audit finding:
-- `NativeAudioGraphRenderRequest.filter_complex` was checked only for non-empty content.
-- The native audio graph forwards that filter graph to FFmpeg without a maximum byte-length contract, unlike other native graph filter fields already capped at 256 KiB.
-
-Implementation:
 - Added `MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES = 256 * 1024`.
-- Rejected oversized filter graphs before FFmpeg argument construction.
-- Preserved existing input count/path, output path, `[aout]` map, render, cleanup, and result behavior.
+- Rejected oversized native audio graph filter graphs before FFmpeg argument construction.
 - Added exact-limit and over-limit regression coverage.
 - No project schema change.
-
-Validation:
-- Implementation complete.
-- Local validation pending user run.
-- Never claim lint/test/build/cargo/manual success until the user reports it.
-
-Workflow:
-- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
-- Pull/Fetch + Validation must remain one combined copy-paste command block.
-- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
-- Keep protected PR #76 and unrelated PR #22 untouched.
-
-## M3.210 — completed — 2026-09-30
-
-- Branch: `fix/m3-210-export-output-path-preconversion-length-cap`.
-- PR #227; squash-merged at `0e177ad1a877068845bbbf75b833d658bffd566d`.
-- `main` was verified identical to the merge SHA.
-- User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Added a request-level 4,096-byte export output path preflight before `PathBuf::from` in native single-source, multi-segment, and video-graph export.
-- Added exact-limit and over-limit regression coverage.
-- No project schema change.
-
-
-
-- Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.209.
-- M3.209 PR #226; squash merge SHA: `fff28c1d601b2b693c4fe33b0776de743a784ab6`.
-- `main` was verified identical to that merge SHA.
-- User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Fresh audit identified M3.210 as the next focused hardening milestone.
-- Protected PR #76 and unrelated PR #22 remain untouched.
-
-## M3.210 — Export Output Path Pre-Conversion Length Cap
-
-Branch:
-`fix/m3-210-export-output-path-preconversion-length-cap`
-
-Audit finding:
-- The shared export output path length validator already enforces the 4,096-byte contract.
-- However, native single-source, multi-segment, and video-graph export commands in `src-tauri/src/lib.rs` constructed a `PathBuf` from the command-supplied output string before invoking that validator.
-- The missing pre-conversion guard allowed an oversized request string to reach `PathBuf::from` before the configured boundary was enforced.
-
-Implementation:
-- Added `validate_export_output_path_request()`, which validates the borrowed request string through the existing shared export output path length contract.
-- Invoked the request-level preflight before `PathBuf::from` in native single-source, multi-segment, and video-graph export commands.
-- Kept audio-render output validation unchanged because those flows validate borrowed `Path` values before filesystem operations.
-- Added exact-limit and over-limit regression coverage for the request-level gate.
-- No project schema change.
-
-Validation:
-- Implementation complete.
-- Local validation pending user run.
-- Never claim lint/test/build/cargo/manual success until the user reports it.
-
-Workflow:
-- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
-- Pull/Fetch + Validation must remain one combined copy-paste command block.
-- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
-- Keep protected PR #76 and unrelated PR #22 untouched.
 
 ## M3.209 — completed — 2026-09-30
 
