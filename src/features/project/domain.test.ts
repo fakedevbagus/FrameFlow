@@ -14,6 +14,7 @@ import {
   getAudioFadeDurations,
   MAX_CANVAS_DIMENSION,
   MAX_TRANSFORM_KEYFRAMES,
+  MAX_PROJECT_TRACKS,
 } from "./domain";
 
 describe("project domain", () => {
@@ -2250,6 +2251,42 @@ describe("project domain", () => {
 
     expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "audioVolumeKeyframes must contain at most 4096 keyframes.",
+    );
+  });
+
+  it("accepts the maximum persisted project track count", () => {
+    const project = createProject({ id: "project-track-count-limit" });
+    const baseTrack = project.tracks[0];
+    const tracks = Array.from({ length: MAX_PROJECT_TRACKS }, (_, index) => ({
+      ...baseTrack,
+      id: `track-${index}`,
+      name: `Track ${index}`,
+      clips: [],
+    }));
+    const validProject = {
+      ...project,
+      tracks,
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects oversized persisted project track counts", () => {
+    const project = createProject({ id: "project-track-count-over-limit" });
+    const baseTrack = project.tracks[0];
+    const tracks = Array.from({ length: MAX_PROJECT_TRACKS + 1 }, (_, index) => ({
+      ...baseTrack,
+      id: `track-${index}`,
+      name: `Track ${index}`,
+      clips: [],
+    }));
+    const invalidProject = {
+      ...project,
+      tracks,
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Project tracks must contain at most 256 tracks.",
     );
   });
 
