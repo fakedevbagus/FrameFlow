@@ -339,6 +339,8 @@ mod tests {
     ExportProcessState,
     ExportProgressEvent,
     EXPORT_PROGRESS_EVENT,
+    MAX_EXPORT_JOB_ID_BYTES,
+
   };
 
   #[test]
