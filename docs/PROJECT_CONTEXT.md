@@ -1,26 +1,28 @@
-## M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — active — 2026-09-30
+## M3.214 — Export Protocol Label Size Caps — active — 2026-09-30
 
 Branch:
-`fix/m3-213-unified-av-total-audio-keyframe-cap`
+`fix/m3-214-export-protocol-label-size-caps`
 
 Previous milestone:
-- M3.212 — Export Job ID Size Cap
-- PR #229
-- Squash merge SHA: `5798fd2eed98c3aae9ef1d647488751460fd643a`
+- M3.213 — Unified AV Aggregate Audio Keyframe Count Cap
+- PR #230
+- Squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`
 - `main` verified identical to that merge SHA.
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
 
 Fresh audit finding:
-- `NativeVideoAudioGraphRenderRequest.source_audio_segments` is capped at 4,096 segments.
-- Each `NativeSourceAudioSegment.audio_volume_keyframes` list is capped at 4,096 keyframes.
-- There is no aggregate keyframe count cap across all source audio segments.
-- The independent limits therefore permit a theoretical nested request shape containing 16,777,216 audio keyframes, creating an avoidable aggregate allocation/validation boundary.
+- Native video/audio graph requests accept protocol-control strings such as `video`/`image` media-type labels and `[vout]`/`[aout]` output maps.
+- These fields are ultimately exact-match validated, but they had no explicit maximum byte-length contract before those checks.
+- Oversized protocol labels therefore remained an avoidable unbounded command-input string boundary in the export request validators.
 
 Scope:
-- Add `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
-- Enforce the aggregate cap across all source audio segments while preserving the existing 4,096 per-segment cap.
-- Preserve existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
-- Add exact-limit (65,536) and over-limit regression coverage.
+- Add shared `MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64`.
+- Enforce the cap on native video graph input media-type labels and output map.
+- Enforce the cap on native audio graph output map.
+- Enforce the cap on native video/audio mix audio map.
+- Enforce the cap on unified AV video media-type labels, video map, and audio map.
+- Preserve the existing exact-match protocol semantics and rendering behavior.
+- Add oversized-label regression coverage.
 - No project schema change.
 
 Validation:
@@ -28,8 +30,33 @@ Validation:
 - Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.213.
+- Run the complete Pull/Fetch + Validation workflow for M3.214.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+## M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — completed — 2026-09-30
+
+Branch:
+`fix/m3-213-unified-av-total-audio-keyframe-cap`
+
+Merge:
+- PR #230
+- Squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`
+- `main` verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
+- Enforced the aggregate cap across all unified AV source audio segments while preserving the existing 4,096 per-segment cap.
+- Used a saturating accumulator for aggregate counting.
+- Preserved existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+
+Next step:
+- Fresh audit from verified `main` identified M3.214: export protocol label size caps.
 
 ## M3.212 — Export Job ID Size Cap — completed — 2026-09-30
 
