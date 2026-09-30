@@ -28,10 +28,15 @@ Implementation:
 - Added oversized-label regression coverage.
 - No project schema change.
 
+Validation correction:
+- First Cargo validation failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected to a crate-root test import.
+- Removed an accidentally duplicated `#[test]` attribute from the same test module.
+- Production behavior is unchanged by these corrections.
+
 Validation:
-- Implementation complete.
-- Local validation pending user run.
-- Never claim lint/test/build/cargo/manual success until the user reports the rerun result.
+- User validation reached `npm ci`, lint, 529/529 frontend tests, and build successfully.
+- Final Cargo validation is pending rerun.
+- Never claim final lint/test/build/cargo/manual success beyond the user-reported result.
 
 Workflow:
 - On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
