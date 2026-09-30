@@ -40,6 +40,7 @@ const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
 pub(crate) const MAX_MEDIA_PATH_BYTES: usize = 4096;
 pub(crate) const MAX_EXPORT_OUTPUT_PATH_BYTES: usize = 4096;
+pub(crate) const MAX_PROJECT_PATH_BYTES: usize = 4096;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -2000,7 +2001,18 @@ fn preview_cache_key(path: &Path, metadata: &fs::Metadata) -> String {
   format!("{hash:016x}")
 }
 
+pub(crate) fn validate_project_path_length(value: &str) -> Result<(), String> {
+  if value.as_bytes().len() > MAX_PROJECT_PATH_BYTES {
+    return Err(format!(
+      "Project path exceeds the maximum length of {MAX_PROJECT_PATH_BYTES} bytes."
+    ));
+  }
+
+  Ok(())
+}
+
 fn project_path(value: &str) -> Result<PathBuf, String> {
+  validate_project_path_length(value)?;
   let path = PathBuf::from(value);
 
   if value.trim().is_empty() || !path.is_absolute() || path.file_name().is_none() {
@@ -2308,6 +2320,21 @@ mod tests {
   fn accepts_export_output_paths_at_size_limit() {
     let path = "a".repeat(super::MAX_EXPORT_OUTPUT_PATH_BYTES);
     assert!(super::validate_export_output_path_length(Path::new(&path)).is_ok());
+  }
+
+  #[test]
+  fn rejects_project_paths_above_size_limit() {
+    let path = "a".repeat(super::MAX_PROJECT_PATH_BYTES + 1);
+    let error = super::validate_project_path_length(&path)
+      .expect_err("project paths above the configured limit must be rejected");
+
+    assert!(error.contains("maximum length of 4096 bytes"));
+  }
+
+  #[test]
+  fn accepts_project_paths_at_size_limit() {
+    let path = "a".repeat(super::MAX_PROJECT_PATH_BYTES);
+    assert!(super::validate_project_path_length(&path).is_ok());
   }
 
   #[test]
