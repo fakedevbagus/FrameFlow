@@ -1,4 +1,52 @@
-## Current State — M3.211 active — 2026-09-30
+## Current State — M3.212 active — 2026-09-30
+
+- Repository: `fakedevbagus/FrameFlow`.
+- Latest merged milestone: M3.211.
+- M3.211 PR #228; squash merge SHA: `00cee51c31afc1a8fa39ecf6a03282d2eea2289d`.
+- `main` was verified identical to that merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Fresh audit identified M3.212 as the next focused hardening milestone.
+- Protected PR #76 and unrelated PR #22 remain untouched.
+
+## M3.212 — Export Job ID Size Cap
+
+Branch:
+`fix/m3-212-export-job-id-size-cap`
+
+Audit finding:
+- `CancelExportJobRequest.job_id` and render `job_id` values are command-supplied strings.
+- `ExportProcessState` copies these IDs into `HashMap`/`HashSet` state and progress events without an explicit maximum byte-length contract.
+- This creates an avoidable unbounded identifier allocation/state boundary in the export process lifecycle.
+
+Implementation:
+- Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
+- Validate job IDs before cancellation state insertion and before export process/progress execution.
+- Preserved cancellation, process registration, progress events, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation complete.
+- Local validation pending user run.
+- Never claim lint/test/build/cargo/manual success until the user reports it.
+
+Workflow:
+- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- Pull/Fetch + Validation must remain one combined copy-paste command block.
+- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
+- Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.211 — completed — 2026-09-30
+
+- Branch: `fix/m3-211-native-audio-graph-filter-size-cap`.
+- PR #228; squash-merged at `00cee51c31afc1a8fa39ecf6a03282d2eea2289d`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES = 256 * 1024` and rejected oversized native audio graph filter graphs before FFmpeg argument construction.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+
 
 - Repository: `fakedevbagus/FrameFlow`.
 - Latest merged milestone: M3.210.
