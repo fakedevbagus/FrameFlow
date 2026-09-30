@@ -1,5 +1,3 @@
-# FrameFlow — New Chat Continuation Prompt
-
 ## READ FIRST — Current State
 
 You are continuing development of the existing repository:
@@ -12,64 +10,45 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest PASS:** M3.214 — Export Protocol Label Size Caps.
-- **M3.214 PR:** #232.
-- **M3.214 squash merge SHA:** `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
+- **Latest PASS:** M3.215 — Export Canvas Dimension Caps.
+- **M3.215 PR:** #233.
+- **M3.215 squash merge SHA:** `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
 - `main` was verified identical to that merge SHA.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.215 — Export Canvas Dimension Caps.
-- **Current branch:** `fix/m3-215-export-canvas-dimension-caps`.
-- Implementation checkpoint before the handoff-only documentation update: `34a8198fd0777c7854ceb4b08a84f56c9c710e91`.
-- The handoff update itself created a newer branch commit; always refresh the actual branch head from GitHub before taking further action.
-- **Base:** `main` at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
-- M3.215 is **implemented but not yet validated**.
-- M3.215 currently has **no PR created yet**.
-- Do not mark M3.215 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
+- **Current active milestone:** M3.216 — Persisted Audio Volume Keyframe Count Cap.
+- **Current branch:** `fix/m3-216-project-audio-keyframe-count-cap`.
+- **M3.216 PR:** #234 (Draft).
+- **Base:** `main` at `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
+- **Last implementation checkpoint:** `d864023fa1d35e9c39478a4b73b7c1ecc3afb120`.
+- Documentation updates are part of the active branch; always refresh the actual branch head before validation or PR operations.
+- M3.216 is **implemented but not yet validated**.
+- Do not mark M3.216 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 
-## M3.215 — Export Canvas Dimension Caps
+## M3.216 — Persisted Audio Volume Keyframe Count Cap
 
 ### Fresh audit finding
 
-The fresh audit of verified `main` found that native export settings accepted arbitrarily large positive-even `width` and `height` values. Persisted project canvas validation also accepted arbitrarily large positive-even dimensions. Frontend export normalization enforced positivity/evenness but had no upper ceiling.
+Verified `main` allowed persisted `audioVolumeKeyframes` arrays of arbitrary length, while the native unified AV renderer already enforces a maximum of 4,096 audio volume keyframes per source-audio segment. This leaves a cross-layer validation gap where persisted projects can load successfully but later reach a stricter native export boundary.
 
-These dimensions flow into FFmpeg scale/pad construction, so the current hardening target is an explicit upper dimension boundary.
+### Current implementation
 
-### Current implementation on the branch
-
-The implementation currently changes exactly these areas:
-
-- `src-tauri/src/lib.rs`
-  - Added `MAX_NATIVE_EXPORT_DIMENSION = 8192`.
-  - Native export width/height validation now rejects values above 8192.
-  - Existing minimum/positive/even semantics remain unchanged.
-  - Existing 240 FPS ceiling remains unchanged.
-  - Added Rust regression coverage for the exact 8192 ceiling and over-limit width/height.
 - `src/features/project/domain.ts`
-  - Added `MAX_CANVAS_DIMENSION = 8192`.
-  - Persisted project canvas width/height are rejected above the ceiling.
-  - Existing positive/even semantics remain unchanged.
-- `src/features/export/export.ts`
-  - Export dimension normalization now clamps oversized requested dimensions to the same 8192 ceiling.
+  - Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096`.
+  - Persisted `audioVolumeKeyframes` arrays above 4,096 entries are now rejected.
+  - Existing ordering, timestamp, volume, clip-duration, fade, EQ, compressor, and schema semantics remain unchanged.
 - `src/features/project/domain.test.ts`
-  - Added exact-limit and over-limit persisted canvas coverage.
-- `src/features/export/export.test.ts`
-  - Added oversized export-dimension normalization coverage.
-
-No project schema version change is intended.
-
-### Important implementation note
-
-There is currently an exact current branch head of `34a8198...`. Always refresh the branch before validation or PR operations rather than assuming the SHA remains unchanged.
-
-The implementation has **not** been validated by the user yet.
+  - Added exact-limit acceptance coverage at 4,096 keyframes.
+  - Added over-limit rejection coverage at 4,097 keyframes.
+- No project schema version change.
+- Transform keyframe handling remains unchanged; this milestone is limited to the persisted audio-volume/native-renderer contract.
 
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state and run the complete validation for the current M3.215 branch.
+First refresh the actual repository state and run the complete validation for M3.216.
 
 Use this as one combined copy-paste block:
 
@@ -77,8 +56,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-215-export-canvas-dimension-caps &&
-git pull --ff-only origin fix/m3-215-export-canvas-dimension-caps &&
+git checkout fix/m3-216-project-audio-keyframe-count-cap &&
+git pull --ff-only origin fix/m3-216-project-audio-keyframe-count-cap &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -94,7 +73,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; `src-tauri/Cargo.lock` may appear modified and must be reported as actually observed.
-- Keep validation focused on the current milestone.
+- Keep validation focused on M3.216.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -160,7 +139,7 @@ For this project, also keep:
 
 synchronized at milestone boundaries.
 
-When replacing any large documentation file, fetch its **complete current content** first. Never reconstruct a large document from a partial response. Never overwrite a large file with truncated content.
+When replacing any large documentation file, fetch its **complete current content** first. Never reconstruct a large document from a partial response. Never overwrite a large document with truncated content.
 
 ### 5. Validation honesty rule
 
@@ -197,74 +176,15 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CONTEXT FROM THE RECENT HARDENING SERIES
+## CURRENT M3.216 SUMMARY
 
-The recent M3 work systematically closes unbounded command-input and resource-boundary risks around native export:
+**Latest accepted checkpoint:** M3.215 PASS, merged to `main` at `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
 
-- M3.203 — legacy video/audio mix audio filter size cap.
-- M3.204 — legacy video/audio mix video input path length cap.
-- M3.205 — native audio graph input path length cap.
-- M3.206 — shared media path length cap.
-- M3.207 — media server path length cap.
-- M3.208 — export output path length cap.
-- M3.209 — project path length cap.
-- M3.210 — export output path pre-conversion length cap.
-- M3.211 — native audio graph filter size cap.
-- M3.212 — export job ID size cap.
-- M3.213 — unified AV aggregate audio keyframe count cap.
-- M3.214 — export protocol label size caps.
-- M3.215 — export canvas dimension caps, currently active.
+**Current continuation point:** M3.216 implementation branch `fix/m3-216-project-audio-keyframe-count-cap`, PR #234 Draft.
 
-## IMPORTANT EXISTING CONTRACTS TO PRESERVE
+**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS mark the PR ready and follow the exact merge workflow.
 
-Current verified code already has several hardening contracts. Do not weaken or duplicate them unnecessarily.
-
-Known examples include:
-
-- shared media path length: 4096 bytes.
-- export output path length: 4096 bytes.
-- project path length: 4096 bytes.
-- native video graph input path length: 4096 bytes.
-- native audio graph input path length: 4096 bytes.
-- unified AV video/audio input paths: 4096 bytes.
-- export protocol label size: 64 bytes.
-- native video graph filter size: 256 KiB.
-- native audio graph filter size: 256 KiB.
-- unified AV video/audio filter sizes: 256 KiB.
-- legacy native video/audio mix audio filter size: 256 KiB.
-- export job ID size: 256 bytes.
-- unified AV source-audio segments: 4096.
-- per-segment audio volume keyframes: 4096.
-- aggregate unified AV source-audio keyframes: 65536.
-- media server request headers: 32 KiB.
-- project file size: 16 MiB.
-- FFmpeg/ffprobe diagnostic stderr outputs are bounded.
-- export FPS ceiling: 240.
-- audio waveform peak count and sample rate are bounded.
-
-Preserve existing exact-match protocol semantics, source identity validation, cancellation behavior, cleanup behavior, project atomic-save behavior, and rendering behavior unless a fresh audit demonstrates a concrete correctness issue.
-
-## CURRENT LARGE-FILE SAFETY RULES
-
-These files are large and must be handled carefully:
-
-- `docs/PROJECT_CONTEXT.md`
-- `docs/CHANGELOG.md`
-- `docs/CHAT_HANDOFF_PROMPT.md`
-- `src-tauri/src/audio_render.rs`
-- `src-tauri/src/lib.rs`
-
-Never use partial fetched content as a complete replacement for any of these files.
-
-## CURRENT M3.215 HANDOFF SUMMARY
-
-**Latest accepted checkpoint:** M3.214 PASS, merged to `main` at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
-
-**Current continuation point:** M3.215 implementation branch `fix/m3-215-export-canvas-dimension-caps`, head `34a8198fd0777c7854ceb4b08a84f56c9c710e91`.
-
-**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
-
-**Do not describe M3.215 as PASS yet.**
+**Do not describe M3.216 as PASS yet.**
 
 ## USER WORKFLOW PREFERENCE
 
@@ -277,28 +197,6 @@ Interpret them consistently:
 - When a validation failure is reported, resolve it before treating the milestone as accepted.
 
 Every milestone should leave enough precise documentation that a brand-new chat can resume without reconstructing the project from scratch.
-
-## FINAL RESPONSE FORMAT FOR MILESTONE CHECKPOINTS
-
-Keep progress updates concise.
-
-After implementation, report:
-
-- milestone and branch;
-- exact current SHA;
-- what changed;
-- validation command;
-- whether validation is pending or accepted.
-
-After PASS/merge, report:
-
-- milestone;
-- PR number;
-- exact merge SHA;
-- `main` verification;
-- next milestone;
-- next branch/PR;
-- combined Pull/Fetch + Validation block.
 
 ## M3.214 — completed — 2026-09-30
 
