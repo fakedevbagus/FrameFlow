@@ -27,8 +27,10 @@ Implementation:
 
 Validation:
 - Implementation complete.
-- Local validation pending user run.
-- Never claim lint/test/build/cargo/manual success until the user reports it.
+- User validation reached frontend lint/tests/build successfully; the Rust test command failed at test compilation because the new test cases referenced `MAX_EXPORT_JOB_ID_BYTES` without importing it into the test module.
+- Applied a test-only import correction; no production behavior changed.
+- Full validation is pending rerun.
+- Never claim lint/test/build/cargo/manual success until the user reports the rerun result.
 
 Workflow:
 - On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
