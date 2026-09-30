@@ -35,6 +35,54 @@ Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.207.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
+## M3.207 — Media Server Path Length Cap — completed — 2026-09-30
+
+Branch:
+`fix/m3-207-media-server-path-length-cap`
+
+Previous milestone:
+- M3.206 — Shared Media Path Length Cap
+- PR #223
+- Squash merge SHA: `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`
+- `main` verified identical to that merge SHA.
+- User reported PASS after full local validation.
+
+Fresh audit finding:
+- `src-tauri/src/media_server.rs` maintains a separate `validate_media_path()` boundary for local HTTP media access.
+- That validator had no 4,096-byte path limit, so media paths arriving through the local media-server URL/request path remained unbounded before canonicalization/filesystem probing.
+
+Implementation:
+- Enforced the shared 4,096-byte media path contract in the media server.
+- Reused the shared `MAX_MEDIA_PATH_BYTES` constant.
+- Rejected oversized decoded media paths before canonicalization/filesystem probing.
+- Preserved capability-token, path-allowlist, media-type, identity, range, and response behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+- Test-only validation corrections fixed the missing import and temporary-`String` lifetime fixture without changing production behavior.
+
+Validation:
+- User reported PASS after rerunning the complete Pull/Fetch + Validation workflow.
+- Prior reported frontend result: 529/529 tests passed and frontend build succeeded; the final PASS covered the complete requested validation workflow.
+
+Merge:
+- PR #224
+- Squash merge SHA: `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`
+- `main` verified identical to that merge SHA.
+
+Fresh audit after M3.207:
+- Export request output paths remain separately validated but are not covered by a shared maximum byte-length boundary.
+- Affected renderer surfaces include native single-source export, native multi-segment export, native video graph export, native audio graph export, native unified video/audio graph export, and legacy video/audio mix export.
+- Output paths are converted to `PathBuf`/`Path` and then reach extension/parent-directory checks or FFmpeg argument construction without a centralized size contract.
+- The next focused hardening milestone is M3.208: Export Output Path Length Cap.
+
+Scope for M3.208:
+- Add one shared 4,096-byte maximum for export output paths.
+- Reject oversized output paths before output-path filesystem probing or parent-directory checks.
+- Apply the boundary consistently across every native export renderer listed above.
+- Preserve absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
 ## M3.206 — Shared Media Path Length Cap — active — 2026-09-30
 
 Branch:
