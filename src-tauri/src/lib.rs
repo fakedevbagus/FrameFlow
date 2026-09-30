@@ -212,6 +212,7 @@ fn render_single_source_to_mp4(
     request.frame_rate,
   )?;
 
+  validate_export_output_path_request(&request.output_path)?;
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
 
@@ -294,6 +295,7 @@ fn render_video_segments_to_mp4(
 ) -> Result<NativeExportRenderResult, String> {
   validate_native_video_segments_request_metadata(&request)?;
 
+  validate_export_output_path_request(&request.output_path)?;
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
 
@@ -427,6 +429,7 @@ fn render_video_graph_to_mp4(
     return Err("Native video graph input media types must match the input count.".to_string());
   }
 
+  validate_export_output_path_request(&request.output_path)?;
   let output_path = PathBuf::from(&request.output_path);
   validate_export_output_path(&output_path)?;
 
@@ -608,6 +611,10 @@ fn validate_native_export_settings(width: u32, height: u32, frame_rate: f64) -> 
   }
 
   Ok(())
+}
+
+fn validate_export_output_path_request(value: &str) -> Result<(), String> {
+  validate_export_output_path_length(Path::new(value))
 }
 
 pub(crate) fn validate_export_output_path_length(path: &Path) -> Result<(), String> {
@@ -2320,6 +2327,21 @@ mod tests {
   fn accepts_export_output_paths_at_size_limit() {
     let path = "a".repeat(super::MAX_EXPORT_OUTPUT_PATH_BYTES);
     assert!(super::validate_export_output_path_length(Path::new(&path)).is_ok());
+  }
+
+  #[test]
+  fn rejects_export_output_request_paths_above_size_limit_before_pathbuf_conversion() {
+    let path = "a".repeat(super::MAX_EXPORT_OUTPUT_PATH_BYTES + 1);
+    let error = super::validate_export_output_path_request(&path)
+      .expect_err("oversized export output request paths must be rejected before PathBuf conversion");
+
+    assert!(error.contains("maximum length of 4096 bytes"));
+  }
+
+  #[test]
+  fn accepts_export_output_request_paths_at_size_limit_before_pathbuf_conversion() {
+    let path = "a".repeat(super::MAX_EXPORT_OUTPUT_PATH_BYTES);
+    assert!(super::validate_export_output_path_request(&path).is_ok());
   }
 
   #[test]

@@ -1,34 +1,32 @@
-## Current State — M3.209 active — 2026-09-30
+## Current State — M3.210 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.208.
-- M3.208 PR #225; squash merge SHA: `0f34f7ffaeec9fab423a2e6d0e62d5479142a4e0`.
+- Latest merged milestone: M3.209.
+- M3.209 PR #226; squash merge SHA: `fff28c1d601b2b693c4fe33b0776de743a784ab6`.
 - `main` was verified identical to that merge SHA.
-- User reported PASS after full local validation.
-- Fresh audit identified M3.209 as the next focused hardening milestone.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Fresh audit identified M3.210 as the next focused hardening milestone.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 
-## M3.209 — Project Path Length Cap
+## M3.210 — Export Output Path Pre-Conversion Length Cap
 
 Branch:
-`fix/m3-209-project-path-length-cap`
+`fix/m3-210-export-output-path-preconversion-length-cap`
 
 Audit finding:
-- `project_path()` converts command-supplied project paths into `PathBuf` before its existing validation.
-- The project open/save boundary has no shared maximum byte-length contract comparable to the media and export path boundaries.
+- The shared export output path length validator already enforces the 4,096-byte contract.
+- However, native single-source, multi-segment, and video-graph export commands in `src-tauri/src/lib.rs` constructed a `PathBuf` from the command-supplied output string before invoking that validator.
+- The missing pre-conversion guard allowed an oversized request string to reach `PathBuf::from` before the configured boundary was enforced.
 
-Implementation target:
-- Add shared `MAX_PROJECT_PATH_BYTES = 4096`.
-- Reject oversized project paths before project-path filesystem probing or parent-directory operations.
-- Apply the boundary through the shared `project_path()` validator used by project open and save.
-- Preserve absolute-path, filename, `.frameflow.json` extension, project-content size, directory creation, temporary-file, atomic rename, and result behavior.
-- Add exact-limit and over-limit regression coverage.
+Implementation:
+- Added `validate_export_output_path_request()`, which validates the borrowed request string through the existing shared export output path length contract.
+- Invoked the request-level preflight before `PathBuf::from` in native single-source, multi-segment, and video-graph export commands.
+- Kept audio-render output validation unchanged because those flows validate borrowed `Path` values before filesystem operations.
+- Added exact-limit and over-limit regression coverage for the request-level gate.
 - No project schema change.
 
 Validation:
 - Implementation complete.
-- Added shared `MAX_PROJECT_PATH_BYTES = 4096` and `validate_project_path_length()`, invoked before `PathBuf::from` in `project_path()`.
-- Added exact-limit and over-limit regression coverage.
 - Local validation pending user run.
 - Never claim lint/test/build/cargo/manual success until the user reports it.
 
@@ -37,6 +35,17 @@ Workflow:
 - Pull/Fetch + Validation must remain one combined copy-paste command block.
 - UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.209 — completed — 2026-09-30
+
+- Branch: `fix/m3-209-project-path-length-cap`.
+- PR #226; squash-merged at `fff28c1d601b2b693c4fe33b0776de743a784ab6`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added shared `MAX_PROJECT_PATH_BYTES = 4096` and `validate_project_path_length()`.
+- Invoked the validator before `PathBuf::from` inside the shared project-path helper used by project open and save.
+- Preserved existing path, extension, project-content, directory, temporary-file, atomic-save, and result behavior.
+- Added exact-limit and over-limit regression coverage.
 
 ## M3.208 — completed — 2026-09-30
 

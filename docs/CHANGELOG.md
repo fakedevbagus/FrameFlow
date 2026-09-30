@@ -1,18 +1,31 @@
-# M3.209 — Project Path Length Cap — active — 2026-09-30
+# M3.210 — Export Output Path Pre-Conversion Length Cap — active — 2026-09-30
 
-- Branch: `fix/m3-209-project-path-length-cap`.
-- Fresh audit found `project_path()` converts user-supplied project paths to `PathBuf` before existing validation, without a shared byte-length boundary.
-- Added next milestone scope for a shared 4,096-byte project path cap before project-path filesystem operations.
-- Apply through the shared validator used by project open and save.
-- Preserve existing path, extension, content-size, directory, temporary-file, and atomic-save behavior.
-- Add exact-limit and over-limit regression coverage.
+- Branch: `fix/m3-210-export-output-path-preconversion-length-cap`.
+- Fresh audit found the three native export commands in `src-tauri/src/lib.rs` constructed `PathBuf` from command-supplied output-path strings before invoking the existing 4,096-byte export path validator.
+- Added a request-level preflight that borrows the output string as a `Path` and applies the shared 4,096-byte length contract before `PathBuf` construction.
+- Applied the preflight to native single-source, multi-segment, and video-graph export commands.
+- Preserved existing absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage for the request-level pre-conversion gate.
 - No project schema change.
-- Implemented the shared 4,096-byte project path boundary before `PathBuf` construction.
-- Added exact-limit and over-limit regression coverage.
 
 Next step:
-- Implement M3.209 on branch `fix/m3-209-project-path-length-cap`.
 - Run the complete Pull/Fetch + Validation workflow before PASS.
+
+# M3.209 — Project Path Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-209-project-path-length-cap`.
+- Fresh audit found `project_path()` converted user-supplied project paths to `PathBuf` before existing validation, without a shared byte-length boundary.
+- Added shared `MAX_PROJECT_PATH_BYTES = 4096` and `validate_project_path_length()`.
+- Invoked the length validator before `PathBuf::from` inside the shared project-path helper used by project open and save.
+- Preserved existing project path, filename, extension, content-size, directory, temporary-file, atomic-save, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- PR #226; squash-merged at `fff28c1d601b2b693c4fe33b0776de743a784ab6`.
+- `main` was verified identical to the merge SHA.
+
+Next step:
+- Fresh audit from verified `main` identified M3.210: export output path pre-conversion length cap.
 
 # M3.208 — Export Output Path Length Cap — completed — 2026-09-30
 
