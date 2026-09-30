@@ -1,4 +1,51 @@
-## Current State — M3.210 active — 2026-09-30
+## Current State — M3.211 active — 2026-09-30
+
+- Repository: `fakedevbagus/FrameFlow`.
+- Latest merged milestone: M3.210.
+- M3.210 PR #227; squash merge SHA: `0e177ad1a877068845bbbf75b833d658bffd566d`.
+- `main` was verified identical to that merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Fresh audit identified M3.211 as the next focused hardening milestone.
+- Protected PR #76 and unrelated PR #22 remain untouched.
+
+## M3.211 — Native Audio Graph Filter Size Cap
+
+Branch:
+`fix/m3-211-native-audio-graph-filter-size-cap`
+
+Audit finding:
+- `NativeAudioGraphRenderRequest.filter_complex` was checked only for non-empty content.
+- The native audio graph forwards that filter graph to FFmpeg without a maximum byte-length contract, unlike other native graph filter fields already capped at 256 KiB.
+
+Implementation:
+- Added `MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES = 256 * 1024`.
+- Rejected oversized filter graphs before FFmpeg argument construction.
+- Preserved existing input count/path, output path, `[aout]` map, render, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation complete.
+- Local validation pending user run.
+- Never claim lint/test/build/cargo/manual success until the user reports it.
+
+Workflow:
+- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- Pull/Fetch + Validation must remain one combined copy-paste command block.
+- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
+- Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.210 — completed — 2026-09-30
+
+- Branch: `fix/m3-210-export-output-path-preconversion-length-cap`.
+- PR #227; squash-merged at `0e177ad1a877068845bbbf75b833d658bffd566d`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added a request-level 4,096-byte export output path preflight before `PathBuf::from` in native single-source, multi-segment, and video-graph export.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+
 
 - Repository: `fakedevbagus/FrameFlow`.
 - Latest merged milestone: M3.209.
