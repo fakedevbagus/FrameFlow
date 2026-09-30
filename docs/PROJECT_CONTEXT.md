@@ -24,7 +24,9 @@ Scope:
 
 Validation:
 - Implementation complete.
-- Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
+- User validation reached frontend lint/tests/build successfully; the Rust test command then failed at test compilation because the new test cases referenced `MAX_EXPORT_JOB_ID_BYTES` without importing it into the test module.
+- Applied a test-only import correction; no production behavior changed.
+- Full validation is pending rerun; do not infer lint/test/build/cargo/manual success beyond what the user reported.
 
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.212.
