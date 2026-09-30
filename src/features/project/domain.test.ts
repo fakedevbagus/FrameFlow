@@ -1907,6 +1907,42 @@ describe("project domain", () => {
     );
   });
 
+  it("accepts the maximum persisted asset count", () => {
+    const project = createProject({ id: "asset-count-limit" });
+    const assets = Array.from({ length: 4096 }, (_, index) => ({
+      id: `asset-${index}`,
+      name: `Asset ${index}`,
+      mediaType: "audio" as const,
+      sourcePath: `/tmp/audio-${index}.wav`,
+      durationMs: 1000,
+    }));
+    const validProject = {
+      ...project,
+      assets,
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects oversized persisted asset counts", () => {
+    const project = createProject({ id: "asset-count-over-limit" });
+    const assets = Array.from({ length: 4097 }, (_, index) => ({
+      id: `asset-${index}`,
+      name: `Asset ${index}`,
+      mediaType: "audio" as const,
+      sourcePath: `/tmp/audio-${index}.wav`,
+      durationMs: 1000,
+    }));
+    const invalidProject = {
+      ...project,
+      assets,
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Project assets must contain at most 4096 assets.",
+    );
+  });
+
   it("rejects persisted audio payloads on image clips", () => {
     const project = createProject({ id: "image-audio-payload" });
     const imageAsset = {
