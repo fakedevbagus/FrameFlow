@@ -1,3 +1,37 @@
+## M3.212 — Export Job ID Size Cap — active — 2026-09-30
+
+Branch:
+`fix/m3-212-export-job-id-size-cap`
+
+Previous milestone:
+- M3.211 — Native Audio Graph Filter Size Cap
+- PR #228
+- Squash merge SHA: `00cee51c31afc1a8fa39ecf6a03282d2eea2289d`
+- `main` verified identical to that merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+
+Fresh audit finding:
+- `CancelExportJobRequest.job_id` and render `job_id` values are command-supplied strings.
+- `ExportProcessState` copies these IDs into `HashMap`/`HashSet` state and progress events without an explicit maximum byte-length contract.
+- This creates an avoidable unbounded identifier allocation/state boundary in the export process lifecycle.
+
+Scope:
+- Add `MAX_EXPORT_JOB_ID_BYTES = 256`.
+- Validate job IDs before inserting them into cancellation/process state and before export progress execution.
+- Preserve cancellation, process registration, progress-event, cleanup, and result behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation complete.
+- User validation reached frontend lint/tests/build successfully; the Rust test command then failed at test compilation because the new test cases referenced `MAX_EXPORT_JOB_ID_BYTES` without importing it into the test module.
+- Applied a test-only import correction; no production behavior changed.
+- Full validation is pending rerun; do not infer lint/test/build/cargo/manual success beyond what the user reported.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.212.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
 ## M3.211 — Native Audio Graph Filter Size Cap — active — 2026-09-30
 
 Branch:
