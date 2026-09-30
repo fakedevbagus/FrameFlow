@@ -1,34 +1,35 @@
-## M3.217 — Persisted Project Asset Count Cap — active — 2026-09-30
+## M3.218 — Persisted Transform Keyframe Count Cap — active — 2026-09-30
 
 Branch:
-`fix/m3-217-project-asset-count-cap`
+`fix/m3-218-transform-keyframe-count-cap`
 
 Base:
-- Verified main at M3.216 merge SHA: `c2fc7b4483476ed1e998616ad34a93fb643eafeb`.
+- Verified main at M3.217 merge SHA: `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
 
 Fresh audit finding:
-- Persisted project validation accepted `assets` arrays of arbitrary length.
-- `validateAssets()` iterated the complete collection and materialized validated assets without an explicit collection ceiling.
-- This is an avoidable project-load/resource boundary.
+- Persisted clip `transformKeyframes` arrays had no count ceiling.
+- `validateTransformKeyframesPayload()` iterated the entire collection and validated each keyframe during project load.
+- Audio volume keyframes already had an aligned 4,096-entry persisted cap; transform keyframes lacked the same resource boundary.
 
 Scope:
-- Add `MAX_PROJECT_ASSETS = 4096`.
-- Reject persisted projects with more than 4,096 assets before per-asset validation/materialization.
-- Preserve asset identity, name, media type, source path, duration, and schema semantics.
+- Add `MAX_TRANSFORM_KEYFRAMES = 4096`.
+- Reject persisted transform keyframe arrays with more than 4,096 entries before per-keyframe validation.
+- Preserve existing transform keyframe ordering, timing, easing, and transform-value semantics.
 - Add exact-limit and over-limit regression coverage.
 - No project schema version change.
 
 Implementation:
-- Added `MAX_PROJECT_ASSETS = 4096`.
+- Added `MAX_TRANSFORM_KEYFRAMES = 4096`.
 - Added exact-limit acceptance and 4,097-entry rejection tests.
-- Last implementation checkpoint before documentation reconciliation: `f0fcf3486f5fc5ab5bf665628ff90a4d93442cb6`.
+- Documentation reconciled for M3.218.
 
 Validation:
+- Implementation is complete.
 - Local validation is pending user run.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.217.
+- Run the complete Pull/Fetch + Validation workflow for M3.218.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
 ## M3.216 — Persisted Audio Volume Keyframe Count Cap — completed — 2026-09-30
