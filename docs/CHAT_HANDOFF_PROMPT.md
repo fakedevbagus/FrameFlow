@@ -28,8 +28,8 @@ Implementation:
 - No project schema version change.
 
 Validation:
-- User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Never claim additional lint/test/build/cargo/manual results beyond what the user reports.
+- Local validation is pending user run.
+- Never claim lint/test/build/cargo/manual success until the user reports the result.
 
 Workflow:
 - On user PASS / pass / continue, refresh PR/head/base state, ensure the branch is not behind main, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
