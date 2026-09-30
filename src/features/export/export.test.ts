@@ -8,6 +8,28 @@ import {
 } from "./export";
 
 describe("export settings", () => {
+  it("clamps oversized export dimensions to the canvas ceiling", () => {
+    const project = createProject({ id: "normalize-export-dimension-ceiling" });
+    project.canvas = { width: 1920, height: 1080, frameRate: 30 };
+
+    expect(
+      normalizeExportSettings(
+        {
+          format: "mp4",
+          quality: "source",
+          width: MAX_CANVAS_DIMENSION + 8192,
+          height: MAX_CANVAS_DIMENSION + 1808,
+          frameRate: 30,
+          fileName: "output.mp4",
+        },
+        project,
+      ),
+    ).toMatchObject({
+      width: MAX_CANVAS_DIMENSION,
+      height: MAX_CANVAS_DIMENSION,
+    });
+  });
+
   it("derives source export settings from the project canvas", () => {
     const project = createProject({ id: "portrait-export" });
     project.canvas = { width: 1080, height: 1920, frameRate: 60 };
