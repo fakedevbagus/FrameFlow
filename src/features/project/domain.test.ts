@@ -12,6 +12,7 @@ import {
   getVisualEffects,
   getTextOverlay,
   getAudioFadeDurations,
+  MAX_CANVAS_DIMENSION,
 } from "./domain";
 
 describe("project domain", () => {
@@ -2335,6 +2336,37 @@ describe("project domain", () => {
     );
     expect(() => parseProject(JSON.stringify(oddHeight))).toThrow(
       "Canvas height must be a positive even integer.",
+    );
+
+    const atMaximum = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        width: MAX_CANVAS_DIMENSION,
+        height: MAX_CANVAS_DIMENSION,
+      },
+    };
+    const aboveMaximumWidth = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        width: MAX_CANVAS_DIMENSION + 2,
+      },
+    };
+    const aboveMaximumHeight = {
+      ...project,
+      canvas: {
+        ...project.canvas,
+        height: MAX_CANVAS_DIMENSION + 2,
+      },
+    };
+
+    expect(parseProject(JSON.stringify(atMaximum))).toEqual(atMaximum);
+    expect(() => parseProject(JSON.stringify(aboveMaximumWidth))).toThrow(
+      "Canvas width exceeds the maximum supported dimension of 8192 pixels.",
+    );
+    expect(() => parseProject(JSON.stringify(aboveMaximumHeight))).toThrow(
+      "Canvas height exceeds the maximum supported dimension of 8192 pixels.",
     );
   });
 

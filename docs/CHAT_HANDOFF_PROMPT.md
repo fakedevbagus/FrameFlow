@@ -1,49 +1,316 @@
-## Current State — M3.214 active — 2026-09-30
+# FrameFlow — New Chat Continuation Prompt
 
-- Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.213.
-- M3.213 PR #230; squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`.
+## READ FIRST — Current State
+
+You are continuing development of the existing repository:
+
+- Repository: `https://github.com/fakedevbagus/FrameFlow`
+- Product: FrameFlow, a Linux-native desktop video editor.
+- Stack: Tauri 2, React 19, TypeScript, Vite, Vitest, Rust, FFmpeg.
+- Platform constraint: Linux-native only. Do not introduce Wine or a Windows compatibility layer.
+- Repository is the source of truth. Do not invent project state from memory when GitHub can be checked.
+
+### Milestone status at the exact handoff point
+
+- **Latest PASS:** M3.214 — Export Protocol Label Size Caps.
+- **M3.214 PR:** #232.
+- **M3.214 squash merge SHA:** `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
+- `main` was verified identical to that merge SHA.
+- User explicitly reported `pass`.
+- **Current active milestone:** M3.215 — Export Canvas Dimension Caps.
+- **Current branch:** `fix/m3-215-export-canvas-dimension-caps`.
+- Implementation checkpoint before the handoff-only documentation update: `34a8198fd0777c7854ceb4b08a84f56c9c710e91`.
+- The handoff update itself created a newer branch commit; always refresh the actual branch head from GitHub before taking further action.
+- **Base:** `main` at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
+- M3.215 is **implemented but not yet validated**.
+- M3.215 currently has **no PR created yet**.
+- Do not mark M3.215 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
+- Protected PR #76 and unrelated PR #22 remain untouched.
+- Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
+
+## M3.215 — Export Canvas Dimension Caps
+
+### Fresh audit finding
+
+The fresh audit of verified `main` found that native export settings accepted arbitrarily large positive-even `width` and `height` values. Persisted project canvas validation also accepted arbitrarily large positive-even dimensions. Frontend export normalization enforced positivity/evenness but had no upper ceiling.
+
+These dimensions flow into FFmpeg scale/pad construction, so the current hardening target is an explicit upper dimension boundary.
+
+### Current implementation on the branch
+
+The implementation currently changes exactly these areas:
+
+- `src-tauri/src/lib.rs`
+  - Added `MAX_NATIVE_EXPORT_DIMENSION = 8192`.
+  - Native export width/height validation now rejects values above 8192.
+  - Existing minimum/positive/even semantics remain unchanged.
+  - Existing 240 FPS ceiling remains unchanged.
+  - Added Rust regression coverage for the exact 8192 ceiling and over-limit width/height.
+- `src/features/project/domain.ts`
+  - Added `MAX_CANVAS_DIMENSION = 8192`.
+  - Persisted project canvas width/height are rejected above the ceiling.
+  - Existing positive/even semantics remain unchanged.
+- `src/features/export/export.ts`
+  - Export dimension normalization now clamps oversized requested dimensions to the same 8192 ceiling.
+- `src/features/project/domain.test.ts`
+  - Added exact-limit and over-limit persisted canvas coverage.
+- `src/features/export/export.test.ts`
+  - Added oversized export-dimension normalization coverage.
+
+No project schema version change is intended.
+
+### Important implementation note
+
+There is currently an exact current branch head of `34a8198...`. Always refresh the branch before validation or PR operations rather than assuming the SHA remains unchanged.
+
+The implementation has **not** been validated by the user yet.
+
+## FIRST ACTION IN THE NEW CHAT
+
+Do not start another unrelated audit immediately.
+
+First refresh the actual repository state and run the complete validation for the current M3.215 branch.
+
+Use this as one combined copy-paste block:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" &&
+cd "$ROOT" &&
+git fetch origin &&
+git checkout fix/m3-215-export-canvas-dimension-caps &&
+git pull --ff-only origin fix/m3-215-export-canvas-dimension-caps &&
+git status --short &&
+git log -1 --oneline &&
+npm ci &&
+npm run lint &&
+npm run test &&
+npm run build &&
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
+Validation rules:
+
+- Only the user's actual reported output establishes validation success.
+- If any command fails, diagnose and correct the issue before accepting PASS.
+- Do not infer Cargo success from frontend success.
+- Do not infer a clean working tree; `src-tauri/Cargo.lock` may appear modified and must be reported as actually observed.
+- Keep validation focused on the current milestone.
+
+## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
+
+### 1. Refresh before acting
+
+Always inspect the real GitHub state first:
+
+- PR state, if a PR exists.
+- Branch head SHA.
+- `main` SHA.
+- Compare ahead/behind.
+- Current changed files.
+- Relevant documentation state.
+
+Never rely only on prior-chat claims when the repository can be checked.
+
+### 2. One milestone at a time
+
+For each milestone:
+
+1. Fresh audit the verified `main`.
+2. Identify one concrete stability/correctness/resource-boundary issue.
+3. Create one focused branch.
+4. Implement the smallest safe fix.
+5. Add focused regression coverage.
+6. Update documentation.
+7. Provide one combined Pull/Fetch + Validation command.
+8. Wait for the user's validation result.
+9. Treat only explicit `PASS` / `pass` as validation acceptance.
+
+### 3. PASS workflow
+
+When the user says `PASS` / `pass`:
+
+1. Refresh PR/current head/base state.
+2. Confirm the branch is not behind `main`.
+3. If a Draft PR exists, mark it Ready for Review.
+4. Re-read the exact current head SHA.
+5. Squash-merge using that freshly verified head SHA.
+6. Record the actual merge SHA returned by GitHub.
+7. Verify `main` is identical to that merge SHA.
+8. Reconcile the handoff/documentation state against the actual merge.
+9. Fresh-audit the verified `main`.
+10. Create the next focused branch and PR draft.
+11. Give the next combined Pull/Fetch + Validation block.
+
+Never merge using a stale head SHA.
+
+### 4. Documentation rule
+
+Documentation is part of the workflow, not an afterthought.
+
+The authoritative handoff file is:
+
+`docs/CHAT_HANDOFF_PROMPT.md`
+
+Keep it synchronized with the exact current repository state.
+
+For this project, also keep:
+
+- `docs/PROJECT_CONTEXT.md`
+- `docs/CHANGELOG.md`
+
+synchronized at milestone boundaries.
+
+When replacing any large documentation file, fetch its **complete current content** first. Never reconstruct a large document from a partial response. Never overwrite a large file with truncated content.
+
+### 5. Validation honesty rule
+
+Never claim that any of these passed unless the user actually reports it from the current validation run:
+
+- `npm ci`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- `cargo test --manifest-path src-tauri/Cargo.toml`
+- E2E/manual validation
+- packaging/runtime checks
+
+A passing frontend suite does not imply passing Rust tests.
+
+### 6. Scope protection
+
+Do not modify unrelated protected work:
+
+- PR #76
+- PR #22
+- unrelated branches/worktrees
+- the unrelated `fix/m3-214-multi-segment-source-path-bytes-cap` branch
+
+Only touch them if the repository audit proves they are directly relevant and the established workflow explicitly calls for it.
+
+### 7. UI/UX gate
+
+Do **not** start the major UI/UX/frontend redesign yet.
+
+The order remains:
+
+**M3 hardening → M4 media correctness → M5 process/lifecycle → M6 persistence → M7 native runtime/packaging → M8 QA → M9 stability gate → UI/UX/frontend redesign**
+
+Do not jump ahead simply because the current UI already exists.
+
+## CONTEXT FROM THE RECENT HARDENING SERIES
+
+The recent M3 work systematically closes unbounded command-input and resource-boundary risks around native export:
+
+- M3.203 — legacy video/audio mix audio filter size cap.
+- M3.204 — legacy video/audio mix video input path length cap.
+- M3.205 — native audio graph input path length cap.
+- M3.206 — shared media path length cap.
+- M3.207 — media server path length cap.
+- M3.208 — export output path length cap.
+- M3.209 — project path length cap.
+- M3.210 — export output path pre-conversion length cap.
+- M3.211 — native audio graph filter size cap.
+- M3.212 — export job ID size cap.
+- M3.213 — unified AV aggregate audio keyframe count cap.
+- M3.214 — export protocol label size caps.
+- M3.215 — export canvas dimension caps, currently active.
+
+## IMPORTANT EXISTING CONTRACTS TO PRESERVE
+
+Current verified code already has several hardening contracts. Do not weaken or duplicate them unnecessarily.
+
+Known examples include:
+
+- shared media path length: 4096 bytes.
+- export output path length: 4096 bytes.
+- project path length: 4096 bytes.
+- native video graph input path length: 4096 bytes.
+- native audio graph input path length: 4096 bytes.
+- unified AV video/audio input paths: 4096 bytes.
+- export protocol label size: 64 bytes.
+- native video graph filter size: 256 KiB.
+- native audio graph filter size: 256 KiB.
+- unified AV video/audio filter sizes: 256 KiB.
+- legacy native video/audio mix audio filter size: 256 KiB.
+- export job ID size: 256 bytes.
+- unified AV source-audio segments: 4096.
+- per-segment audio volume keyframes: 4096.
+- aggregate unified AV source-audio keyframes: 65536.
+- media server request headers: 32 KiB.
+- project file size: 16 MiB.
+- FFmpeg/ffprobe diagnostic stderr outputs are bounded.
+- export FPS ceiling: 240.
+- audio waveform peak count and sample rate are bounded.
+
+Preserve existing exact-match protocol semantics, source identity validation, cancellation behavior, cleanup behavior, project atomic-save behavior, and rendering behavior unless a fresh audit demonstrates a concrete correctness issue.
+
+## CURRENT LARGE-FILE SAFETY RULES
+
+These files are large and must be handled carefully:
+
+- `docs/PROJECT_CONTEXT.md`
+- `docs/CHANGELOG.md`
+- `docs/CHAT_HANDOFF_PROMPT.md`
+- `src-tauri/src/audio_render.rs`
+- `src-tauri/src/lib.rs`
+
+Never use partial fetched content as a complete replacement for any of these files.
+
+## CURRENT M3.215 HANDOFF SUMMARY
+
+**Latest accepted checkpoint:** M3.214 PASS, merged to `main` at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
+
+**Current continuation point:** M3.215 implementation branch `fix/m3-215-export-canvas-dimension-caps`, head `34a8198fd0777c7854ceb4b08a84f56c9c710e91`.
+
+**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
+
+**Do not describe M3.215 as PASS yet.**
+
+## USER WORKFLOW PREFERENCE
+
+The user uses short checkpoints such as `pass`, `PASS`, and `continue`.
+
+Interpret them consistently:
+
+- `PASS` / `pass`: the user accepted the current validation result; execute the merge/documentation/audit workflow.
+- `continue`: continue implementation/workflow based on the current state, but do not invent a validation PASS.
+- When a validation failure is reported, resolve it before treating the milestone as accepted.
+
+Every milestone should leave enough precise documentation that a brand-new chat can resume without reconstructing the project from scratch.
+
+## FINAL RESPONSE FORMAT FOR MILESTONE CHECKPOINTS
+
+Keep progress updates concise.
+
+After implementation, report:
+
+- milestone and branch;
+- exact current SHA;
+- what changed;
+- validation command;
+- whether validation is pending or accepted.
+
+After PASS/merge, report:
+
+- milestone;
+- PR number;
+- exact merge SHA;
+- `main` verification;
+- next milestone;
+- next branch/PR;
+- combined Pull/Fetch + Validation block.
+
+## M3.214 — completed — 2026-09-30
+
+- Branch: `fix/m3-214-export-protocol-label-size-caps`.
+- PR #232; squash-merged at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
 - `main` was verified identical to the merge SHA.
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Fresh audit identified M3.214 as the next focused hardening milestone.
-- Protected PR #76 and unrelated PR #22 remain untouched.
+- Added shared MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64 across native video/audio export protocol fields.
+- Corrected the first Cargo-test import failure and removed a duplicated test attribute; production behavior was unchanged.
 
-## M3.214 — Export Protocol Label Size Caps
-
-Branch:
-`fix/m3-214-export-protocol-label-size-caps`
-
-Audit finding:
-- Native video/audio graph requests accept protocol-control strings such as `video`/`image` media-type labels and `[vout]`/`[aout]` output maps.
-- These fields are ultimately exact-match validated, but they had no explicit maximum byte-length contract before those checks.
-- Oversized protocol labels therefore remained an avoidable unbounded command-input string boundary in the export request validators.
-
-Implementation:
-- Added shared `MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64`.
-- Enforced the cap on native video graph input media-type labels and output map.
-- Enforced the cap on native audio graph output map.
-- Enforced the cap on native video/audio mix audio map.
-- Enforced the cap on unified AV video media-type labels, video map, and audio map.
-- Preserved exact-match protocol semantics and rendering behavior.
-- Added oversized-label regression coverage.
-- No project schema change.
-
-Validation correction:
-- First Cargo validation failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected to a crate-root test import.
-- Removed an accidentally duplicated `#[test]` attribute from the same test module.
-- Production behavior is unchanged by these corrections.
-
-Validation:
-- User validation reached `npm ci`, lint, 529/529 frontend tests, and build successfully.
-- Final Cargo validation is pending rerun.
-- Never claim final lint/test/build/cargo/manual success beyond the user-reported result.
-
-Workflow:
-- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
-- Pull/Fetch + Validation must remain one combined copy-paste command block.
-- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
-- Keep protected PR #76 and unrelated PR #22 untouched.
-
+Next milestone:
+- M3.215 — export canvas dimension caps.
 ## M3.213 — completed — 2026-09-30
 
 - Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.

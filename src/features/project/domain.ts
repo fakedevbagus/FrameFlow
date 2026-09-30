@@ -26,6 +26,7 @@ export const DEFAULT_TEXT_OVERLAY_COLOR = "#ffffff";
 export const DEFAULT_TEXT_OVERLAY_ALIGNMENT = "center" as const;
 export const MAX_TEXT_OVERLAY_LENGTH = 500;
 export const MAX_CANVAS_FRAME_RATE = 240;
+export const MAX_CANVAS_DIMENSION = 8192;
 
 export interface CanvasSettings {
   width: number;
@@ -1356,6 +1357,23 @@ function validateCanvas(value: unknown): asserts value is CanvasSettings {
 
   assertPositiveEvenInteger(value.width, "Canvas width");
   assertPositiveEvenInteger(value.height, "Canvas height");
+
+  if (value.width > MAX_CANVAS_DIMENSION) {
+    throw new ProjectValidationError(
+      "Canvas width exceeds the maximum supported dimension of " +
+        MAX_CANVAS_DIMENSION +
+        " pixels.",
+    );
+  }
+
+  if (value.height > MAX_CANVAS_DIMENSION) {
+    throw new ProjectValidationError(
+      "Canvas height exceeds the maximum supported dimension of " +
+        MAX_CANVAS_DIMENSION +
+        " pixels.",
+    );
+  }
+
   assertPositiveNumber(value.frameRate, "Canvas frameRate");
 
   if (value.frameRate > MAX_CANVAS_FRAME_RATE) {

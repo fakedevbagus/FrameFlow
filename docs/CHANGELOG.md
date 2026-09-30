@@ -1,23 +1,41 @@
-# M3.214 — Export Protocol Label Size Caps — active — 2026-09-30
+# M3.215 — Export Canvas Dimension Caps — active — 2026-09-30
+
+- Branch: `fix/m3-215-export-canvas-dimension-caps`.
+- Fresh audit from verified main found export width/height values without an explicit upper dimension boundary.
+- Added MAX_NATIVE_EXPORT_DIMENSION = 8192 in the Rust export validation layer.
+- Added MAX_CANVAS_DIMENSION = 8192 to persisted project canvas validation.
+- Reused the same ceiling in frontend export-setting normalization.
+- Added exact-limit and over-limit regression coverage for persisted canvas and export dimensions.
+- Preserved existing positive/even dimension semantics and supported export quality behavior.
+- Local validation is pending user run.
+- Do not infer lint/test/build/cargo/manual success until the user reports the result.
+- No project schema change.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.215.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+# M3.214 — Export Protocol Label Size Caps — completed — 2026-09-30
 
 - Branch: `fix/m3-214-export-protocol-label-size-caps`.
-- Fresh audit from verified `main` found exact-match protocol fields in native video/audio export requests without an explicit size boundary.
-- Added shared `MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64`.
+- PR #232.
+- Squash merge SHA: `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
+- main was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added shared MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64.
 - Enforced the cap on native video graph input media-type labels and output map.
 - Enforced the cap on native audio graph output map.
 - Enforced the cap on native video/audio mix audio map.
 - Enforced the cap on unified AV video media-type labels, video map, and audio map.
 - Preserved exact-match protocol semantics and rendering behavior.
 - Added oversized-label regression coverage.
-- Validation correction: the first Cargo run failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected this as a test-only crate-root import and removed a duplicated `#[test]` attribute.
-- Production behavior is unchanged by the correction.
-- User validation reached `npm ci`, lint, 529/529 frontend tests, and build successfully; final Cargo validation is pending rerun.
+- Corrected the first Cargo-test import failure as a test-only crate-root import and removed the duplicated #[test] attribute.
+- Production behavior was unchanged by the correction.
+- Final validation was rerun and user reported PASS.
 - No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.214.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
-
+- Fresh audit from verified main identified M3.215: export canvas dimension caps.
 # M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — completed — 2026-09-30
 
 - Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.
