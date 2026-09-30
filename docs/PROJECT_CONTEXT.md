@@ -1,41 +1,26 @@
-## M3.208 — Export Output Path Length Cap — active — 2026-09-30
+## M3.209 — Project Path Length Cap — active — 2026-09-30
 
 Branch:
-`fix/m3-208-export-output-path-length-cap`
+`fix/m3-209-project-path-length-cap`
 
 Previous milestone:
-- M3.207 — Media Server Path Length Cap
-- PR #224
-- Squash merge SHA: `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`
+- M3.208 — Export Output Path Length Cap
+- PR #225
+- Squash merge SHA: `0f34f7ffaeec9fab423a2e6d0e62d5479142a4e0`
 - `main` verified identical to that merge SHA.
 - User reported PASS after full local validation.
 
 Fresh audit finding:
-- Export request output paths are still separately validated but have no shared byte-length boundary.
-- Native single-source, native multi-segment, native video graph, native audio graph, native unified video/audio graph, and legacy video/audio mix renderers accept output path strings before existing output-path checks or FFmpeg argument construction.
-- The resource-boundary hardening already applied to media input paths does not yet have an equivalent output-path contract.
+- `project_path()` converts the command-supplied project path string into a `PathBuf` before checking emptiness, absoluteness, filename presence, or the required `.frameflow.json` suffix.
+- The project open/save boundary therefore lacks the same explicit path-length contract already applied to media input paths and export output paths.
 
 Scope:
-- Add shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096`.
-- Reject oversized output paths before output-path filesystem probing or parent-directory checks.
-- Reuse the shared validator across native export paths and audio-renderer output validation.
-- Preserve absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
+- Add shared `MAX_PROJECT_PATH_BYTES = 4096`.
+- Reject oversized project paths before project-path filesystem probing or parent-directory operations.
+- Apply the boundary through the shared `project_path()` validator used by both project open and project save.
+- Preserve absolute-path, filename, extension, project-content size, directory creation, temporary-file, atomic rename, and result behavior.
 - Add exact-limit and over-limit regression coverage.
 - No project schema change.
-
-Implementation:
-- Added `validate_export_output_path_length()` and the shared 4,096-byte limit in `src-tauri/src/lib.rs`.
-- Applied the shared boundary to `validate_export_output_path()`, covering native single-source, native multi-segment, and native video graph exports.
-- Applied the same boundary to audio renderer output validation, covering native audio graph, native unified video/audio graph, and legacy video/audio mix exports.
-- Added focused over-limit regression coverage for both renderer validation paths.
-
-Validation:
-- Implementation complete.
-- Local validation pending user run; do not infer lint/test/build/cargo/manual success.
-
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.208.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
 ## M3.207 — Media Server Path Length Cap — completed — 2026-09-30
 
