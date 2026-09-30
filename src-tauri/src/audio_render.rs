@@ -14,6 +14,7 @@ use crate::{
 
 const MAX_NATIVE_AUDIO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
+const MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS: usize = 4096;
@@ -1429,6 +1430,12 @@ fn validate_request(request: &NativeAudioGraphRenderRequest) -> Result<(), Strin
     return Err("Native audio graph render requires a filter graph.".to_string());
   }
 
+  if request.filter_complex.as_bytes().len() > MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES {
+    return Err(format!(
+      "Native audio graph filter graph exceeds the {MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES} byte limit."
+    ));
+  }
+
   if request.audio_map != "[aout]" {
     return Err("Native audio graph render requires the [aout] output map.".to_string());
   }
@@ -1563,6 +1570,7 @@ mod tests {
     ResolvedSourceAudioSegment,
     MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES,
     MAX_NATIVE_AUDIO_GRAPH_INPUTS,
+    MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_FILTER_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS,
@@ -1577,6 +1585,32 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES,
   };
   use std::path::{Path, PathBuf};
+
+  #[test]
+  fn rejects_audio_graph_filter_above_size_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec!["/media/music.mp3".to_string()],
+      output_path: "/tmp/audio.mp4".to_string(),
+      filter_complex: "a".repeat(MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES + 1),
+      audio_map: "[aout]".to_string(),
+    };
+
+    let error = validate_request(&request)
+      .expect_err("audio graph filters above the configured limit must be rejected");
+    assert!(error.contains("262144 byte limit"));
+  }
+
+  #[test]
+  fn accepts_audio_graph_filter_at_size_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec!["/media/music.mp3".to_string()],
+      output_path: "/tmp/audio.mp4".to_string(),
+      filter_complex: "a".repeat(MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES),
+      audio_map: "[aout]".to_string(),
+    };
+
+    assert!(validate_request(&request).is_ok());
+  }
 
   #[test]
   fn rejects_audio_graph_export_output_path_above_size_limit() {
