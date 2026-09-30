@@ -1,38 +1,27 @@
-## M3.218 — Persisted Transform Keyframe Count Cap — active — 2026-09-30
+## M3.219 — Persisted Project Track Count Cap — active — 2026-09-30
 
 Branch:
-`fix/m3-218-transform-keyframe-count-cap`
-
-PR:
-- #236 (Draft).
-
-Base:
-- Verified main at M3.217 merge SHA: `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
+`fix/m3-219-project-track-count-cap`
 
 Fresh audit finding:
-- Persisted clip `transformKeyframes` arrays had no count ceiling.
-- `validateTransformKeyframesPayload()` iterated the entire collection and validated each keyframe during project load.
-- Audio volume keyframes already had an aligned 4,096-entry persisted cap; transform keyframes lacked the same resource boundary.
+- Persisted project validation accepted `tracks` arrays of arbitrary length.
+- `validateTracks()` built tracking structures and iterated every track plus its clips without an explicit track-count ceiling.
+- This is an avoidable project-load/resource boundary.
 
 Scope:
-- Add `MAX_TRANSFORM_KEYFRAMES = 4096`.
-- Reject persisted transform keyframe arrays with more than 4,096 entries before per-keyframe validation.
-- Preserve existing transform keyframe ordering, timing, easing, and transform-value semantics.
+- Add `MAX_PROJECT_TRACKS = 256`.
+- Reject persisted projects with more than 256 tracks before per-track validation.
+- Preserve existing track identity, lock/mute, volume/pan, clip, topology, and schema semantics.
 - Add exact-limit and over-limit regression coverage.
 - No project schema version change.
 
 Implementation:
-- Added `MAX_TRANSFORM_KEYFRAMES = 4096`.
-- Added exact-limit acceptance and 4,097-entry rejection tests.
-- Documentation reconciled for M3.218.
-
-Validation:
-- Implementation is complete.
+- M3.219 implementation is prepared on the focused branch.
+- Documentation is reconciled for M3.219.
 - Local validation is pending user run.
-- Do not infer lint/test/build/cargo/manual success until the user reports the result.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.218.
+- Run the complete Pull/Fetch + Validation workflow for M3.219.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
 ## M3.216 — Persisted Audio Volume Keyframe Count Cap — completed — 2026-09-30
