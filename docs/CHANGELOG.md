@@ -1,20 +1,31 @@
-# M3.212 — Export Job ID Size Cap — active — 2026-09-30
+# M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — active — 2026-09-30
 
-- Branch: `fix/m3-212-export-job-id-size-cap`.
-- Fresh audit found export job IDs from command requests were copied into process/cancellation state and progress events without an explicit maximum byte-length contract.
-- Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
-- Validate job IDs before cancellation state insertion and before export process/progress execution.
-- Preserved cancellation, process registration, progress events, cleanup, and result behavior.
+- Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.
+- Fresh audit from verified `main` found that unified AV source-audio segments are capped at 4,096 per request and each segment's audio volume keyframes are capped at 4,096, but there is no aggregate keyframe count cap across all segments.
+- The independent limits therefore permit a theoretical nested request shape containing 16,777,216 audio keyframes.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
+- Enforce the aggregate cap across all source audio segments while preserving the existing per-segment cap and validation behavior.
 - Added exact-limit and over-limit regression coverage.
 - No project schema change.
-
-Validation note:
-- User validation reached frontend lint/tests/build successfully; the Rust test command failed at test compilation because the new test cases referenced `MAX_EXPORT_JOB_ID_BYTES` without importing it into the test module.
-- Applied a test-only import correction; no production behavior changed.
-- Full validation is pending rerun.
+- Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow before PASS.
+- Run the complete Pull/Fetch + Validation workflow for M3.213.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+# M3.212 — Export Job ID Size Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-212-export-job-id-size-cap`.
+- PR #229.
+- Squash merge SHA: `5798fd2eed98c3aae9ef1d647488751460fd643a`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
+- Validated cancel-request job IDs before cancellation state insertion and render job IDs before export process/progress execution.
+- Preserved cancellation, process registration, progress events, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- Corrected a test-module import discovered during validation; production behavior was unchanged.
+- No project schema change.
 
 # M3.211 — Native Audio Graph Filter Size Cap — completed — 2026-09-30
 
