@@ -27,6 +27,7 @@ export const DEFAULT_TEXT_OVERLAY_ALIGNMENT = "center" as const;
 export const MAX_TEXT_OVERLAY_LENGTH = 500;
 export const MAX_CANVAS_FRAME_RATE = 240;
 export const MAX_CANVAS_DIMENSION = 8192;
+export const MAX_AUDIO_VOLUME_KEYFRAMES = 4096;
 
 export interface CanvasSettings {
   width: number;
@@ -1170,6 +1171,15 @@ function validateOptionalAudioFields(
     if (!Array.isArray(audioVolumeKeyframes)) {
       throw new ProjectValidationError(
         fieldPrefix + " audioVolumeKeyframes must be an array.",
+      );
+    }
+
+    if (audioVolumeKeyframes.length > MAX_AUDIO_VOLUME_KEYFRAMES) {
+      throw new ProjectValidationError(
+        fieldPrefix +
+          " audioVolumeKeyframes must contain at most " +
+          MAX_AUDIO_VOLUME_KEYFRAMES +
+          " keyframes.",
       );
     }
 
