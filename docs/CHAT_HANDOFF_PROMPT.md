@@ -19,9 +19,10 @@ You are continuing development of the existing repository:
 - User explicitly reported `pass`.
 - **Current active milestone:** M3.218 — Persisted Transform Keyframe Count Cap.
 - **Current branch:** `fix/m3-218-transform-keyframe-count-cap`.
-- **M3.218 PR:** create after implementation/documentation reconciliation.
+- **M3.218 PR:** #236 (Draft).
 - **Base:** `main` at `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
 - M3.218 is **implemented but not yet validated**.
+- Current documentation checkpoint before validation: `282da90739d53d7c5abc269bd4e246aee091eade`.
 - Do not mark M3.218 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
