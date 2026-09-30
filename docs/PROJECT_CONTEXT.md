@@ -25,9 +25,17 @@ Scope:
 - Add oversized-label regression coverage.
 - No project schema change.
 
+Implementation:
+- Added the shared 64-byte validator and applied it before the existing exact-match checks.
+- Added focused oversized-label regression tests.
+- Validation correction: the first Cargo run failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected this as a test-only import from the crate root.
+- Removed an accidentally duplicated `#[test]` attribute in the same test module.
+- Production behavior is unchanged by the correction.
+
 Validation:
-- Implementation complete.
-- Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
+- User validation: `npm ci`, lint, 529/529 frontend tests, and build passed.
+- Cargo initially failed at test compilation on the incorrect test-only import; final Cargo validation is pending rerun.
+- Do not infer final Cargo success until the user reports the rerun.
 
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.214.
