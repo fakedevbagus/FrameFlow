@@ -7,7 +7,8 @@
 - Preserve existing path, extension, content-size, directory, temporary-file, and atomic-save behavior.
 - Add exact-limit and over-limit regression coverage.
 - No project schema change.
-- Implementation pending.
+- Implemented the shared 4,096-byte project path boundary before `PathBuf` construction.
+- Added exact-limit and over-limit regression coverage.
 
 Next step:
 - Implement M3.209 on branch `fix/m3-209-project-path-length-cap`.
