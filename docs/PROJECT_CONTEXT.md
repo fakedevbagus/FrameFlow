@@ -1,26 +1,26 @@
-## M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — active — 2026-09-30
+## M3.214 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-09-30
 
 Branch:
-`fix/m3-213-unified-av-total-audio-keyframe-cap`
+`fix/m3-214-multi-segment-source-path-bytes-cap`
 
 Previous milestone:
-- M3.212 — Export Job ID Size Cap
-- PR #229
-- Squash merge SHA: `5798fd2eed98c3aae9ef1d647488751460fd643a`
+- M3.213 — Unified AV Aggregate Audio Keyframe Count Cap
+- PR #230
+- Squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`
 - `main` verified identical to that merge SHA.
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
 
 Fresh audit finding:
-- `NativeVideoAudioGraphRenderRequest.source_audio_segments` is capped at 4,096 segments.
-- Each `NativeSourceAudioSegment.audio_volume_keyframes` list is capped at 4,096 keyframes.
-- There is no aggregate keyframe count cap across all source audio segments.
-- The independent limits therefore permit a theoretical nested request shape containing 16,777,216 audio keyframes, creating an avoidable aggregate allocation/validation boundary.
+- `NativeVideoSegmentsRenderRequest.segments` is capped at 4,096 segments.
+- Individual segment source paths are bounded by the shared 4,096-byte media-path contract.
+- There was no aggregate byte-size cap across all optional source-path strings in one multi-segment request.
+- The independent limits therefore permit a theoretical source-path payload of up to 16,777,216 bytes before subsequent filesystem probing.
 
 Scope:
-- Add `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
-- Enforce the aggregate cap across all source audio segments while preserving the existing 4,096 per-segment cap.
-- Preserve existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
-- Add exact-limit (65,536) and over-limit regression coverage.
+- Add `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
+- Enforce the aggregate source-path byte cap before multi-segment filesystem/media probing.
+- Preserve the existing segment count, per-path, duration, absolute-path, media-type, source identity, render, cleanup, and result behavior.
+- Add exact-limit (4 MiB) and over-limit regression coverage.
 - No project schema change.
 
 Validation:
@@ -28,8 +28,33 @@ Validation:
 - Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.213.
+- Run the complete Pull/Fetch + Validation workflow for M3.214.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+## M3.213 — Unified AV Aggregate Audio Keyframe Count Cap — completed — 2026-09-30
+
+Branch:
+`fix/m3-213-unified-av-total-audio-keyframe-cap`
+
+Merge:
+- PR #230
+- Squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`
+- `main` verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+
+Implementation:
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
+- Enforced the aggregate cap across all source audio segments while preserving the existing 4,096 per-segment cap.
+- Used a saturating accumulator for aggregate counting.
+- Preserved existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+
+Next step:
+- Fresh audit from verified `main` identified M3.214: multi-segment aggregate source-path byte cap.
 
 ## M3.212 — Export Job ID Size Cap — completed — 2026-09-30
 
@@ -44,8 +69,7 @@ Merge:
 
 Implementation:
 - Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
-- Validated cancel-request job IDs before cancellation state insertion.
-- Validated render job IDs before export process/progress execution.
+- Validated cancel-request job IDs before cancellation state insertion and render job IDs before export process/progress execution.
 - Preserved cancellation, process registration, progress events, cleanup, and result behavior.
 - Added exact-limit and over-limit regression coverage.
 - Corrected a test-module import discovered during validation; production behavior was unchanged.
@@ -55,7 +79,7 @@ Validation:
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
 
 Next step:
-- Fresh audit from verified `main` identified M3.213: cap aggregate unified AV source-audio keyframes across all source audio segments.
+- Fresh audit from verified `main` identified M3.213: aggregate unified AV source-audio keyframe count cap.
 
 ## M3.211 — Native Audio Graph Filter Size Cap — active — 2026-09-30
 

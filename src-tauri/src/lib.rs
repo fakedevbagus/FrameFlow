@@ -35,6 +35,7 @@ const FFPROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[ffprobe stderr truncated by FrameFlow]\n";
 const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
+const MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES: usize = 4 * 1024 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
@@ -668,6 +669,26 @@ fn same_path(first: &Path, second: &Path) -> bool {
   first_canonical.is_some() && first_canonical == second_canonical
 }
 
+fn validate_native_video_segments_source_path_bytes(
+  segments: &[NativeVideoSegment],
+) -> Result<(), String> {
+  let mut total_source_path_bytes = 0usize;
+
+  for segment in segments {
+    if let Some(source_path) = segment.source_path.as_deref() {
+      total_source_path_bytes = total_source_path_bytes.saturating_add(source_path.as_bytes().len());
+
+      if total_source_path_bytes > MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES {
+        return Err(format!(
+          "Native multi-segment render source paths exceed the maximum aggregate size of {MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES} bytes."
+        ));
+      }
+    }
+  }
+
+  Ok(())
+}
+
 fn validate_native_video_segments_request_metadata(
   request: &NativeVideoSegmentsRenderRequest,
 ) -> Result<(), String> {
@@ -682,6 +703,8 @@ fn validate_native_video_segments_request_metadata(
       "Native multi-segment render supports at most {MAX_NATIVE_VIDEO_SEGMENTS} segments."
     ));
   }
+
+  validate_native_video_segments_source_path_bytes(&request.segments)?;
 
   for segment in &request.segments {
     if segment.duration_ms == 0 {
@@ -2832,6 +2855,36 @@ mod tests {
     assert!(
       super::validate_native_video_graph_request_metadata(&request).is_ok()
     );
+  }
+
+  #[test]
+  fn rejects_native_video_segments_source_paths_above_aggregate_size_limit() {
+    let segments = (0..1025)
+      .map(|_| NativeVideoSegment {
+        source_path: Some("a".repeat(4096)),
+        source_start_ms: Some(0),
+        duration_ms: 1_000,
+      })
+      .collect::<Vec<_>>();
+
+    assert!(validate_native_video_segments_source_path_bytes(&segments).is_err());
+  }
+
+  #[test]
+  fn accepts_native_video_segments_source_paths_at_aggregate_size_limit() {
+    let segments = (0..1024)
+      .map(|_| NativeVideoSegment {
+        source_path: Some("a".repeat(4096)),
+        source_start_ms: Some(0),
+        duration_ms: 1_000,
+      })
+      .collect::<Vec<_>>();
+
+    assert_eq!(
+      1024 * 4096,
+      MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES
+    );
+    assert!(validate_native_video_segments_source_path_bytes(&segments).is_ok());
   }
 
   #[test]
