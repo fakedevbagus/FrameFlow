@@ -1,6 +1,7 @@
 # M3.218 — Persisted Transform Keyframe Count Cap — active — 2026-09-30
 
 - Branch: `fix/m3-218-transform-keyframe-count-cap`.
+- PR #236 (Draft).
 - Fresh audit of verified `main` found persisted clip `transformKeyframes` arrays without an explicit count ceiling.
 - Added `MAX_TRANSFORM_KEYFRAMES = 4096`.
 - Persisted transform keyframe arrays above 4,096 entries are rejected before per-keyframe validation.
