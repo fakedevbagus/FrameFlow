@@ -2,9 +2,9 @@
 
 - Branch: `fix/m3-219-project-track-count-cap`.
 - Fresh audit of verified `main` found persisted project `tracks` arrays without an explicit count ceiling.
-- Add `MAX_PROJECT_TRACKS = 256`.
+- Added `MAX_PROJECT_TRACKS = 256`.
 - Persisted projects with more than 256 tracks are rejected before per-track validation.
-- Add exact-limit acceptance and over-limit rejection regression coverage.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
 - Preserve existing track and clip/topology semantics.
 - Local validation is pending user run.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
