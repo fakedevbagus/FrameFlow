@@ -1,3 +1,5 @@
+# FrameFlow — New Chat Continuation Prompt
+
 ## READ FIRST — Current State
 
 You are continuing development of the existing repository:
@@ -10,45 +12,43 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest PASS:** M3.215 — Export Canvas Dimension Caps.
-- **M3.215 PR:** #233.
-- **M3.215 squash merge SHA:** `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
+- **Latest PASS:** M3.216 — Persisted Audio Volume Keyframe Count Cap.
+- **M3.216 PR:** #234.
+- **M3.216 squash merge SHA:** `c2fc7b4483476ed1e998616ad34a93fb643eafeb`.
 - `main` was verified identical to that merge SHA.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.216 — Persisted Audio Volume Keyframe Count Cap.
-- **Current branch:** `fix/m3-216-project-audio-keyframe-count-cap`.
-- **M3.216 PR:** #234 (Draft).
-- **Base:** `main` at `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
-- **Last implementation checkpoint:** `d864023fa1d35e9c39478a4b73b7c1ecc3afb120`.
-- Documentation updates are part of the active branch; always refresh the actual branch head before validation or PR operations.
-- M3.216 is **implemented but not yet validated**.
-- Do not mark M3.216 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
+- **Current active milestone:** M3.217 — Persisted Project Asset Count Cap.
+- **Current branch:** `fix/m3-217-project-asset-count-cap`.
+- **M3.217 PR:** not yet created; create it after implementation/documentation reconciliation.
+- **Base:** `main` at `c2fc7b4483476ed1e998616ad34a93fb643eafeb`.
+- **Implementation checkpoint before documentation updates:** `f0fcf3486f5fc5ab5bf665628ff90a4d93442cb6`.
+- M3.217 is **implemented but not yet validated**.
+- Do not mark M3.217 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 
-## M3.216 — Persisted Audio Volume Keyframe Count Cap
+## M3.217 — Persisted Project Asset Count Cap
 
 ### Fresh audit finding
 
-Verified `main` allowed persisted `audioVolumeKeyframes` arrays of arbitrary length, while the native unified AV renderer already enforces a maximum of 4,096 audio volume keyframes per source-audio segment. This leaves a cross-layer validation gap where persisted projects can load successfully but later reach a stricter native export boundary.
+Verified `main` still allowed persisted project `assets` arrays of arbitrary length. `validateAssets()` iterated the entire collection, built an ID set, and materialized validated assets without an explicit collection ceiling. This remained an avoidable project-load/resource boundary.
 
 ### Current implementation
 
 - `src/features/project/domain.ts`
-  - Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096`.
-  - Persisted `audioVolumeKeyframes` arrays above 4,096 entries are now rejected.
-  - Existing ordering, timestamp, volume, clip-duration, fade, EQ, compressor, and schema semantics remain unchanged.
+  - Added `MAX_PROJECT_ASSETS = 4096`.
+  - Persisted projects with more than 4,096 assets are rejected before per-asset validation/materialization.
+  - Existing asset ID uniqueness, name, media type, source path, and duration validation remain unchanged.
 - `src/features/project/domain.test.ts`
-  - Added exact-limit acceptance coverage at 4,096 keyframes.
-  - Added over-limit rejection coverage at 4,097 keyframes.
+  - Added exact-limit acceptance coverage at 4,096 assets.
+  - Added over-limit rejection coverage at 4,097 assets.
 - No project schema version change.
-- Transform keyframe handling remains unchanged; this milestone is limited to the persisted audio-volume/native-renderer contract.
 
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state and run the complete validation for M3.216.
+First refresh the actual repository state and run the complete validation for M3.217.
 
 Use this as one combined copy-paste block:
 
@@ -56,8 +56,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-216-project-audio-keyframe-count-cap &&
-git pull --ff-only origin fix/m3-216-project-audio-keyframe-count-cap &&
+git checkout fix/m3-217-project-asset-count-cap &&
+git pull --ff-only origin fix/m3-217-project-asset-count-cap &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -73,7 +73,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; `src-tauri/Cargo.lock` may appear modified and must be reported as actually observed.
-- Keep validation focused on M3.216.
+- Keep validation focused on M3.217.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -176,15 +176,15 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.216 SUMMARY
+## CURRENT M3.217 SUMMARY
 
-**Latest accepted checkpoint:** M3.215 PASS, merged to `main` at `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
+**Latest accepted checkpoint:** M3.216 PASS, merged to `main` at `c2fc7b4483476ed1e998616ad34a93fb643eafeb`.
 
-**Current continuation point:** M3.216 implementation branch `fix/m3-216-project-audio-keyframe-count-cap`, PR #234 Draft.
+**Current continuation point:** M3.217 implementation branch `fix/m3-217-project-asset-count-cap`.
 
-**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS mark the PR ready and follow the exact merge workflow.
+**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
 
-**Do not describe M3.216 as PASS yet.**
+**Do not describe M3.217 as PASS yet.**
 
 ## USER WORKFLOW PREFERENCE
 
