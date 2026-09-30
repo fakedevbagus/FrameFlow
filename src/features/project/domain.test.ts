@@ -13,6 +13,7 @@ import {
   getTextOverlay,
   getAudioFadeDurations,
   MAX_CANVAS_DIMENSION,
+  MAX_TRANSFORM_KEYFRAMES,
 } from "./domain";
 
 describe("project domain", () => {
@@ -2249,6 +2250,102 @@ describe("project domain", () => {
 
     expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "audioVolumeKeyframes must contain at most 4096 keyframes.",
+    );
+  });
+
+  it("accepts the maximum persisted transform keyframe count", () => {
+    const project = createProject({ id: "transform-keyframe-count-limit" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const maxKeyframes = Array.from(
+      { length: MAX_TRANSFORM_KEYFRAMES },
+      (_, index) => ({
+        timeMs: index,
+        transform: {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 0,
+          opacity: 1,
+        },
+      }),
+    );
+    const validProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "video-clip",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 5000,
+                  transformKeyframes: maxKeyframes,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects oversized persisted transform keyframe counts", () => {
+    const project = createProject({ id: "transform-keyframe-count-over-limit" });
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 5000,
+    };
+    const oversizedKeyframes = Array.from(
+      { length: MAX_TRANSFORM_KEYFRAMES + 1 },
+      (_, index) => ({
+        timeMs: index,
+        transform: {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 0,
+          opacity: 1,
+        },
+      }),
+    );
+    const invalidProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "video"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "video-clip",
+                  assetId: videoAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 5000,
+                  transformKeyframes: oversizedKeyframes,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "transformKeyframes must contain at most 4096 keyframes.",
     );
   });
 
