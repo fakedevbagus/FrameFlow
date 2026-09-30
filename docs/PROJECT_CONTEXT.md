@@ -1,4 +1,36 @@
-## M3.209 — Project Path Length Cap — active — 2026-09-30
+## M3.210 — Export Output Path Pre-Conversion Length Cap — active — 2026-09-30
+
+Branch:
+`fix/m3-210-export-output-path-preconversion-length-cap`
+
+Previous milestone:
+- M3.209 — Project Path Length Cap
+- PR #226
+- Squash merge SHA: `fff28c1d601b2b693c4fe33b0776de743a784ab6`
+- `main` verified identical to that merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+
+Fresh audit finding:
+- The shared export output path length validator already enforces the 4,096-byte contract, but the native single-source, multi-segment, and video-graph commands in `src-tauri/src/lib.rs` constructed a `PathBuf` from the command-supplied output string before invoking that validator.
+- This left a pre-conversion request boundary gap where an arbitrarily large output-path string could reach `PathBuf::from` before the configured length guard.
+
+Scope:
+- Add a request-level export output path length preflight using the existing shared 4,096-byte limit.
+- Invoke it on the borrowed request string before `PathBuf::from` in native single-source, multi-segment, and video-graph export commands.
+- Preserve existing absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
+- Keep audio-render output validation behavior unchanged because those paths are validated from borrowed `Path` values before filesystem work.
+- Add exact-limit and over-limit regression coverage for the pre-conversion request gate.
+- No project schema change.
+
+Validation:
+- Implementation complete.
+- Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.210.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+## M3.209 — Project Path Length Cap — completed — 2026-09-30
 
 Branch:
 `fix/m3-209-project-path-length-cap`
@@ -8,19 +40,26 @@ Previous milestone:
 - PR #225
 - Squash merge SHA: `0f34f7ffaeec9fab423a2e6d0e62d5479142a4e0`
 - `main` verified identical to that merge SHA.
-- User reported PASS after full local validation.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
 
 Fresh audit finding:
-- `project_path()` converts the command-supplied project path string into a `PathBuf` before checking emptiness, absoluteness, filename presence, or the required `.frameflow.json` suffix.
-- The project open/save boundary therefore lacks the same explicit path-length contract already applied to media input paths and export output paths.
+- `project_path()` converted the command-supplied project path string into a `PathBuf` before its existing validation and had no explicit byte-length boundary.
 
-Scope:
-- Add shared `MAX_PROJECT_PATH_BYTES = 4096`.
-- Reject oversized project paths before project-path filesystem probing or parent-directory operations.
-- Apply the boundary through the shared `project_path()` validator used by both project open and project save.
-- Preserve absolute-path, filename, extension, project-content size, directory creation, temporary-file, atomic rename, and result behavior.
-- Add exact-limit and over-limit regression coverage.
+Implementation:
+- Added shared `MAX_PROJECT_PATH_BYTES = 4096`.
+- Added `validate_project_path_length()`.
+- Invoked the length validator before `PathBuf::from` inside the shared `project_path()` helper used by project open and save.
+- Preserved existing absolute-path, filename, `.frameflow.json` extension, project-content size, directory creation, temporary-file, atomic rename, and result behavior.
+- Added exact-limit and over-limit regression coverage.
 - No project schema change.
+
+Validation:
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+
+Merge:
+- PR #226
+- Squash merge SHA: `fff28c1d601b2b693c4fe33b0776de743a784ab6`
+- `main` verified identical to that merge SHA.
 
 ## M3.207 — Media Server Path Length Cap — completed — 2026-09-30
 
