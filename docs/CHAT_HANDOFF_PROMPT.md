@@ -40,6 +40,44 @@ Workflow:
 - UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
 
+## Current State — M3.208 active — 2026-09-30
+
+- Repository: `fakedevbagus/FrameFlow`.
+- Latest merged milestone: M3.207.
+- M3.207 PR #224; squash merge SHA: `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`.
+- `main` was verified identical to that merge SHA.
+- User reported PASS after full local validation.
+- Fresh audit identified M3.208 as the next focused hardening milestone.
+- Protected PR #76 and unrelated PR #22 remain untouched.
+
+## M3.208 — Export Output Path Length Cap
+
+Branch:
+`fix/m3-208-export-output-path-length-cap`
+
+Audit finding:
+- Export output paths remain separately validated but lack a shared maximum byte-length boundary.
+- Native single-source, native multi-segment, native video graph, native audio graph, native unified video/audio graph, and legacy video/audio mix renderers all accept output path strings and convert them to `Path`/`PathBuf` before their existing output-path checks.
+- The output path therefore lacks a consistent resource-boundary contract before parent-directory probing or FFmpeg argument construction.
+
+Implementation target:
+- Add one shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096` boundary.
+- Reject oversized output paths before output-path filesystem probing/parent-directory checks.
+- Apply consistently across all six renderer surfaces above.
+- Preserve existing absolute-path, `.mp4` extension, parent-directory, same-path, rendering, cleanup, and result behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation pending.
+- Never claim lint/test/build/cargo/manual success until the user reports it.
+
+Workflow:
+- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- Pull/Fetch + Validation must remain one combined copy-paste command block.
+- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
+- Keep protected PR #76 and unrelated PR #22 untouched.
+
 ## M3.206 — completed — 2026-09-30
 
 - Branch: `fix/m3-206-shared-media-path-length-cap`.
