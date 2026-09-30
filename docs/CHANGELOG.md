@@ -1,18 +1,33 @@
-# M3.217 — Persisted Project Asset Count Cap — active — 2026-09-30
+# M3.218 — Persisted Transform Keyframe Count Cap — active — 2026-09-30
 
-- Branch: `fix/m3-217-project-asset-count-cap`.
-- Fresh audit of verified `main` found persisted project `assets` arrays without an explicit count ceiling.
-- Added `MAX_PROJECT_ASSETS = 4096`.
-- Persisted projects with more than 4,096 assets are rejected before per-asset validation/materialization.
+- Branch: `fix/m3-218-transform-keyframe-count-cap`.
+- Fresh audit of verified `main` found persisted clip `transformKeyframes` arrays without an explicit count ceiling.
+- Added `MAX_TRANSFORM_KEYFRAMES = 4096`.
+- Persisted transform keyframe arrays above 4,096 entries are rejected before per-keyframe validation.
 - Added exact-limit acceptance and over-limit rejection regression coverage.
-- Preserved existing asset validation and project schema compatibility.
+- Preserved existing transform keyframe timing, ordering, easing, and transform-value semantics.
 - Local validation is pending user run.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.217.
+- Run the complete Pull/Fetch + Validation workflow for M3.218.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+# M3.217 — Persisted Project Asset Count Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-217-project-asset-count-cap`.
+- PR #235.
+- Squash merge SHA: `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS.
+- Added `MAX_PROJECT_ASSETS = 4096`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved existing asset validation and project schema compatibility.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.218: Persisted Transform Keyframe Count Cap.
 
 # M3.216 — Persisted Audio Volume Keyframe Count Cap — completed — 2026-09-30
 
