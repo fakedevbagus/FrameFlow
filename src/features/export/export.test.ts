@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createProject } from "../project/domain";
+import { MAX_CANVAS_DIMENSION, createProject } from "../project/domain";
 import {
   createDefaultExportSettings,
   getExportDimensions,
