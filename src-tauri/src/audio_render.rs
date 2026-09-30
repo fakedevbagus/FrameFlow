@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
   export_process, probe_duration_ms, probe_has_audio, validate_export_output_path_length,
-  validate_native_export_settings,
+  validate_export_protocol_label_length, validate_native_export_settings,
 };
 
 const MAX_NATIVE_AUDIO_GRAPH_INPUTS: usize = 256;
@@ -472,10 +472,12 @@ fn validate_video_audio_graph_request(
     ));
   }
 
+  validate_export_protocol_label_length(&request.video_map, "Native unified AV graph video map")?;
   if request.video_map != "[vout]" {
     return Err("Native unified AV graph requires the [vout] video map.".to_string());
   }
 
+  validate_export_protocol_label_length(&request.audio_map, "Native unified AV graph audio map")?;
   if request.audio_map != "[aout]" {
     return Err("Native unified AV graph requires the [aout] audio map.".to_string());
   }
@@ -525,7 +527,11 @@ fn validate_video_audio_graph_request(
     return Err("Native unified AV graph requires a positive duration.".to_string());
   }
 
-  for media_type in &request.video_input_media_types {
+  for (index, media_type) in request.video_input_media_types.iter().enumerate() {
+    validate_export_protocol_label_length(
+      media_type,
+      &format!("Native unified AV graph video media type at index {index}"),
+    )?;
     if media_type != "video" && media_type != "image" {
       return Err(
         "Native unified AV graph video media types must be video or image.".to_string(),
@@ -1206,6 +1212,7 @@ fn validate_video_audio_mix_request(
     ));
   }
 
+  validate_export_protocol_label_length(&request.audio_map, "Native video/audio mix audio map")?;
   if request.audio_map != "[aout]" {
     return Err("Native video/audio mix requires the [aout] audio map.".to_string());
   }
@@ -1446,6 +1453,7 @@ fn validate_request(request: &NativeAudioGraphRenderRequest) -> Result<(), Strin
     ));
   }
 
+  validate_export_protocol_label_length(&request.audio_map, "Native audio graph output map")?;
   if request.audio_map != "[aout]" {
     return Err("Native audio graph render requires the [aout] output map.".to_string());
   }
@@ -1590,6 +1598,8 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS,
+    MAX_EXPORT_PROTOCOL_LABEL_BYTES,
+
     MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS,
@@ -2448,6 +2458,71 @@ mod tests {
     assert!(validate_video_audio_graph_request(&request).is_ok());
   }
 
+  #[test]
+  fn rejects_native_audio_graph_output_map_above_size_limit() {
+    let request = NativeAudioGraphRenderRequest {
+      inputs: vec!["/media/music.mp3".to_string()],
+      output_path: "/tmp/final.mp4".to_string(),
+      filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "x".repeat(MAX_EXPORT_PROTOCOL_LABEL_BYTES + 1),
+    };
+    let error = validate_request(&request)
+      .expect_err("oversized native audio graph output map must be rejected");
+    assert!(error.contains("Native audio graph output map exceeds the maximum length of 64 bytes"));
+  }
+
+  #[test]
+  fn rejects_native_video_audio_mix_audio_map_above_size_limit() {
+    let request = NativeVideoWithAudioGraphRenderRequest {
+      video_source_path: "/media/video.mp4".to_string(),
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      audio_filter_complex: "anullsrc[aout]".to_string(),
+      audio_map: "x".repeat(MAX_EXPORT_PROTOCOL_LABEL_BYTES + 1),
+      duration_ms: 5_000,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+    let error = validate_video_audio_mix_request(&request)
+      .expect_err("oversized legacy video/audio mix map must be rejected");
+    assert!(error.contains("Native video/audio mix audio map exceeds the maximum length of 64 bytes"));
+  }
+
+  #[test]
+  fn rejects_unified_video_audio_graph_protocol_labels_above_size_limit() {
+    let mut request = NativeVideoAudioGraphRenderRequest {
+      video_inputs: vec!["/media/video.mp4".to_string()],
+      video_input_media_types: vec!["video".to_string()],
+      audio_inputs: vec!["/media/music.mp3".to_string()],
+      source_audio_segments: Vec::new(),
+      video_filter_complex: "[0:v:0]null[vout]".to_string(),
+      video_map: "[vout]".to_string(),
+      audio_filter_complex: "[1:a:0]anull[aout]".to_string(),
+      audio_map: "[aout]".to_string(),
+      duration_ms: 5_000,
+      width: 1_280,
+      height: 720,
+      frame_rate: 30.0,
+      output_path: "/tmp/final.mp4".to_string(),
+    };
+
+    request.video_input_media_types[0] = "x".repeat(MAX_EXPORT_PROTOCOL_LABEL_BYTES + 1);
+    let error = validate_video_audio_graph_request(&request)
+      .expect_err("oversized unified AV media type must be rejected");
+    assert!(error.contains("Native unified AV graph video media type at index 0 exceeds the maximum length of 64 bytes"));
+
+    request.video_input_media_types[0] = "video".to_string();
+    request.video_map = "x".repeat(MAX_EXPORT_PROTOCOL_LABEL_BYTES + 1);
+    let error = validate_video_audio_graph_request(&request)
+      .expect_err("oversized unified AV video map must be rejected");
+    assert!(error.contains("Native unified AV graph video map exceeds the maximum length of 64 bytes"));
+
+    request.video_map = "[vout]".to_string();
+    request.audio_map = "x".repeat(MAX_EXPORT_PROTOCOL_LABEL_BYTES + 1);
+    let error = validate_video_audio_graph_request(&request)
+      .expect_err("oversized unified AV audio map must be rejected");
+    assert!(error.contains("Native unified AV graph audio map exceeds the maximum length of 64 bytes"));
+  }
+
+  #[test]
   #[test]
   fn rejects_unified_video_audio_graph_video_filter_above_size_limit() {
     let request = NativeVideoAudioGraphRenderRequest {
