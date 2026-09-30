@@ -1,3 +1,54 @@
+## Current State — M3.207 active — 2026-09-30
+
+- Repository: `fakedevbagus/FrameFlow`.
+- Latest merged milestone: M3.206.
+- M3.206 PR #223; squash merge SHA: `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`.
+- `main` was verified identical to that merge SHA.
+- User reported PASS after full local validation.
+- Fresh audit identified M3.207 as the next focused hardening milestone.
+- Protected PR #76 and unrelated PR #22 remain untouched.
+
+## M3.207 — Media Server Path Length Cap
+
+Branch:
+`fix/m3-207-media-server-path-length-cap`
+
+Audit finding:
+- The local HTTP media server has a separate `validate_media_path()` boundary.
+- That path was not covered by the shared 4,096-byte media path limit, leaving URL/request-driven media paths unbounded before canonicalization/filesystem probing.
+
+Implementation target:
+- Enforce the shared `MAX_MEDIA_PATH_BYTES = 4096` boundary in the media server.
+- Reject oversized decoded media paths before canonicalization.
+- Preserve capability-token, path-allowlist, media-type, identity, range, and response behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
+M3.207 validation correction:
+- Initial user validation reached 529/529 frontend tests and successful client build, but `cargo test` failed because the two new media-server boundary tests omitted `validate_media_path_length` from their local test-module imports.
+- Corrected the test import only; no production boundary or scope change.
+- Follow-up Rust validation found the over-limit regression fixture borrowed a temporary `String`; changed it to a local binding so the `Path` borrow has a valid lifetime. No production behavior or scope change.
+
+Validation:
+- Implementation complete.
+- Local validation pending user run.
+- Never claim lint/test/build/cargo/manual success until the user reports it.
+
+Workflow:
+- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused branch/PR.
+- Pull/Fetch + Validation must remain one combined copy-paste command block.
+- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
+- Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.206 — completed — 2026-09-30
+
+- Branch: `fix/m3-206-shared-media-path-length-cap`.
+- PR #223; squash-merged at `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`.
+- `main` was verified at the merge SHA.
+- User reported PASS after full local validation.
+- Added the shared native media path cap of 4,096 bytes with exact-limit and over-limit regression coverage.
+- No project schema change.
+
 ## Current State — M3.206 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
