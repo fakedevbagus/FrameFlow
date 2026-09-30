@@ -1,41 +1,60 @@
-## M3.215 — Export Canvas Dimension Caps — active — 2026-09-30
+## M3.216 — Persisted Audio Volume Keyframe Count Cap — active — 2026-09-30
+
+Branch:
+`fix/m3-216-project-audio-keyframe-count-cap`
+
+PR:
+#234 (Draft)
+
+Base:
+- Verified main at M3.215 merge SHA: `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
+
+Fresh audit finding:
+- Persisted project validation accepted `audioVolumeKeyframes` arrays of arbitrary length.
+- Native unified AV rendering already enforces a 4,096-keyframe ceiling per source-audio segment.
+- This left a cross-layer gap where persistence could accept data that native export later rejects.
+
+Scope:
+- Add `MAX_AUDIO_VOLUME_KEYFRAMES = 4096` to project-domain validation.
+- Reject persisted audio volume keyframe arrays above 4,096 entries.
+- Preserve existing ordering, timestamp, volume, clip-duration, audio-effect, and schema semantics.
+- Add exact-limit and over-limit regression coverage.
+- No project schema version change.
+- Keep transform keyframe handling unchanged.
+
+Implementation:
+- Added `MAX_AUDIO_VOLUME_KEYFRAMES = 4096`.
+- Persisted `audioVolumeKeyframes` now reject arrays above 4,096 entries.
+- Added exact-limit acceptance and 4,097-entry rejection tests.
+- Last implementation checkpoint before documentation reconciliation: `d864023fa1d35e9c39478a4b73b7c1ecc3afb120`.
+
+Validation:
+- Local validation is pending user run.
+- Do not infer lint/test/build/cargo/manual success until the user reports the complete result.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.216.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+## M3.215 — Export Canvas Dimension Caps — completed — 2026-09-30
 
 Branch:
 `fix/m3-215-export-canvas-dimension-caps`
 
-Base:
-- Verified main at M3.214 merge SHA: `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
-
-Fresh audit finding:
-- Native export settings accepted arbitrarily large positive-even width and height values, with no upper dimension contract.
-- Persisted project canvas validation also accepted arbitrarily large positive-even dimensions.
-- Frontend export normalization enforced positivity/evenness but did not cap oversized dimensions.
-- These dimensions flow into FFmpeg scale/pad construction, so an explicit upper bound closes an avoidable unbounded numeric/resource boundary.
-
-Scope:
-- Add an 8,192-pixel maximum per export dimension.
-- Enforce the cap in the native Rust export settings validator used by single-source, multi-segment, video-graph, and unified AV exports.
-- Enforce the same cap in persisted project canvas validation.
-- Clamp oversized frontend export settings to the shared project canvas ceiling.
-- Add exact-limit and over-limit regression coverage.
-- Preserve existing positive/even dimension semantics and supported export quality behavior.
-- No project schema version change.
+Merge:
+- PR #233
+- Squash merge SHA: `9ae21c176ac57fbe34f34dbc742f4de686fab862`
+- `main` verified identical to the merge SHA.
+- User reported PASS.
 
 Implementation:
-- Added MAX_NATIVE_EXPORT_DIMENSION = 8192 in the Rust export validation layer.
-- Added MAX_CANVAS_DIMENSION = 8192 to the project domain.
-- Reused the project ceiling in export-setting normalization.
-- Added regression coverage for persisted canvas dimensions and normalized export dimensions.
-- Production export flow and FFmpeg argument construction remain unchanged apart from rejecting/clamping oversized dimensions before use.
-
-Validation:
-- Local validation is pending user run.
-- Do not infer lint/test/build/cargo/manual success until the user reports the result.
-- No project schema change.
-
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.215.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- Added `MAX_NATIVE_EXPORT_DIMENSION = 8192`.
+- Added `MAX_CANVAS_DIMENSION = 8192`.
+- Reused the ceiling in frontend export-setting normalization.
+- Added exact-limit and over-limit regression coverage.
+- Preserved existing positive/even dimension semantics, export behavior, and project schema compatibility.
+- Documentation was reconciled before merge.
+- No project schema version change.
 
 ## M3.214 — Export Protocol Label Size Caps — completed — 2026-09-30
 
