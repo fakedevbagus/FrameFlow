@@ -1,4 +1,32 @@
-# M3.211 — Native Audio Graph Filter Size Cap — active — 2026-09-30
+# M3.212 — Export Job ID Size Cap — active — 2026-09-30
+
+- Branch: `fix/m3-212-export-job-id-size-cap`.
+- Fresh audit found export job IDs from command requests were copied into process/cancellation state and progress events without an explicit maximum byte-length contract.
+- Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
+- Validate job IDs before cancellation state insertion and before export process/progress execution.
+- Preserved cancellation, process registration, progress events, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow before PASS.
+
+# M3.211 — Native Audio Graph Filter Size Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-211-native-audio-graph-filter-size-cap`.
+- Fresh audit found `NativeAudioGraphRenderRequest.filter_complex` was only checked for non-empty content before being forwarded to FFmpeg.
+- Added `MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES = 256 * 1024` and rejected oversized filters before FFmpeg argument construction.
+- Preserved existing input, output, map, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- PR #228; squash-merged at `00cee51c31afc1a8fa39ecf6a03282d2eea2289d`.
+- `main` was verified identical to the merge SHA.
+
+Next step:
+- Fresh audit from verified `main` identified M3.212: export job ID size cap.
+
+
 
 - Branch: `fix/m3-211-native-audio-graph-filter-size-cap`.
 - Fresh audit found `NativeAudioGraphRenderRequest.filter_complex` was only checked for non-empty content before being forwarded to FFmpeg.
