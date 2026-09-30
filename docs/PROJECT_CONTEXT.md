@@ -16,7 +16,9 @@ Scope:
 - No project schema version change.
 
 Implementation:
-- M3.219 implementation is prepared on the focused branch.
+- Added `MAX_PROJECT_TRACKS = 256`.
+- Added early persisted track-count rejection before per-track validation.
+- Added exact-limit acceptance and 257-entry rejection tests.
 - Documentation is reconciled for M3.219.
 - Local validation is pending user run.
 
