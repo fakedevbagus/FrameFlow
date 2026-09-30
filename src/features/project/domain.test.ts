@@ -2138,6 +2138,84 @@ describe("project domain", () => {
     );
   });
 
+  it("accepts the maximum persisted audio volume keyframe count", () => {
+    const project = createProject({ id: "audio-keyframe-count-limit" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 5000,
+    };
+    const maxKeyframes = Array.from({ length: 4096 }, (_, index) => ({
+      timeMs: index,
+      volume: 0.5,
+    }));
+    const validProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 5000,
+                  audioVolumeKeyframes: maxKeyframes,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects oversized persisted audio volume keyframe counts", () => {
+    const project = createProject({ id: "audio-keyframe-count-over-limit" });
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 5000,
+    };
+    const oversizedKeyframes = Array.from({ length: 4097 }, (_, index) => ({
+      timeMs: index,
+      volume: 0.5,
+    }));
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks: project.tracks.map((track) =>
+        track.type === "audio"
+          ? {
+              ...track,
+              clips: [
+                {
+                  id: "audio-clip",
+                  assetId: audioAsset.id,
+                  timelineStartMs: 0,
+                  sourceStartMs: 0,
+                  sourceEndMs: 5000,
+                  audioVolumeKeyframes: oversizedKeyframes,
+                },
+              ],
+            }
+          : track,
+      ),
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "audioVolumeKeyframes must contain at most 4096 keyframes.",
+    );
+  });
+
   it("rejects fractional persisted audio volume keyframe times", () => {
     const project = createProject({ id: "audio-keyframe-fractional-time" });
     const audioAsset = {
