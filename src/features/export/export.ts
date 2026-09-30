@@ -1,4 +1,8 @@
-import { MAX_CANVAS_FRAME_RATE, type Project } from "../project/domain";
+import {
+  MAX_CANVAS_DIMENSION,
+  MAX_CANVAS_FRAME_RATE,
+  type Project,
+} from "../project/domain";
 
 export type ExportFormat = "mp4";
 export type ExportQuality = "source" | "1080p" | "720p";
@@ -91,7 +95,10 @@ export function sanitizeExportFileName(value: string): string {
 }
 
 function normalizeExportDimension(value: number): number {
-  const rounded = Math.max(2, Math.round(value));
+  const rounded = Math.min(
+    MAX_CANVAS_DIMENSION,
+    Math.max(2, Math.round(value)),
+  );
   return rounded % 2 === 0 ? rounded : rounded + 1;
 }
 
