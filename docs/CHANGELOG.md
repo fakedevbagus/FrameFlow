@@ -7,7 +7,8 @@
 - Reused the same ceiling in frontend export-setting normalization.
 - Added exact-limit and over-limit regression coverage for persisted canvas and export dimensions.
 - Preserved existing positive/even dimension semantics and supported export quality behavior.
-- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Local validation is pending user run.
+- Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
 Next step:
