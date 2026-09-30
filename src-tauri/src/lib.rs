@@ -38,6 +38,7 @@ const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
+const MAX_NATIVE_EXPORT_DIMENSION: u32 = 8192;
 pub(crate) const MAX_EXPORT_PROTOCOL_LABEL_BYTES: usize = 64;
 pub(crate) const MAX_MEDIA_PATH_BYTES: usize = 4096;
 pub(crate) const MAX_EXPORT_OUTPUT_PATH_BYTES: usize = 4096;
@@ -603,8 +604,20 @@ fn validate_native_export_settings(width: u32, height: u32, frame_rate: f64) -> 
     return Err("Export width must be a positive even number.".to_string());
   }
 
+  if width > MAX_NATIVE_EXPORT_DIMENSION {
+    return Err(format!(
+      "Export width exceeds the maximum supported dimension of {MAX_NATIVE_EXPORT_DIMENSION} pixels."
+    ));
+  }
+
   if height < 2 || height % 2 != 0 {
     return Err("Export height must be a positive even number.".to_string());
+  }
+
+  if height > MAX_NATIVE_EXPORT_DIMENSION {
+    return Err(format!(
+      "Export height exceeds the maximum supported dimension of {MAX_NATIVE_EXPORT_DIMENSION} pixels."
+    ));
   }
 
   if !frame_rate.is_finite() || frame_rate <= 0.0 || frame_rate > 240.0 {
@@ -2219,8 +2232,26 @@ mod tests {
   #[test]
   fn validates_native_export_settings() {
     assert!(super::validate_native_export_settings(1280, 720, 30.0).is_ok());
+    assert!(super::validate_native_export_settings(
+      super::MAX_NATIVE_EXPORT_DIMENSION,
+      4320,
+      30.0
+    )
+    .is_ok());
     assert!(super::validate_native_export_settings(1279, 720, 30.0).is_err());
     assert!(super::validate_native_export_settings(1280, 719, 30.0).is_err());
+    assert!(super::validate_native_export_settings(
+      super::MAX_NATIVE_EXPORT_DIMENSION + 2,
+      4320,
+      30.0
+    )
+    .is_err());
+    assert!(super::validate_native_export_settings(
+      4320,
+      super::MAX_NATIVE_EXPORT_DIMENSION + 2,
+      30.0
+    )
+    .is_err());
     assert!(super::validate_native_export_settings(1280, 720, 0.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 241.0).is_err());
   }
