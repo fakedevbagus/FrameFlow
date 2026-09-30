@@ -9,8 +9,10 @@
 - Enforced the cap on unified AV video media-type labels, video map, and audio map.
 - Preserved exact-match protocol semantics and rendering behavior.
 - Added oversized-label regression coverage.
+- Validation correction: the first Cargo run failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected this as a test-only crate-root import and removed a duplicated `#[test]` attribute.
+- Production behavior is unchanged by the correction.
+- User validation reached `npm ci`, lint, 529/529 frontend tests, and build successfully; final Cargo validation is pending rerun.
 - No project schema change.
-- Local validation is pending user run; do not infer lint/test/build/cargo/manual success.
 
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.214.
