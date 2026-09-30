@@ -29,7 +29,8 @@ Implementation:
 - Production export flow and FFmpeg argument construction remain unchanged apart from rejecting/clamping oversized dimensions before use.
 
 Validation:
-- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Local validation is pending user run.
+- Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
 Next step:
