@@ -1598,7 +1598,6 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS,
-    MAX_EXPORT_PROTOCOL_LABEL_BYTES,
 
     MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_FILTER_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUT_PATH_BYTES,
@@ -1606,6 +1605,7 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES,
   };
   use std::path::{Path, PathBuf};
+  use crate::MAX_EXPORT_PROTOCOL_LABEL_BYTES;
 
   #[test]
   fn rejects_audio_graph_filter_above_size_limit() {
@@ -2522,7 +2522,6 @@ mod tests {
     assert!(error.contains("Native unified AV graph audio map exceeds the maximum length of 64 bytes"));
   }
 
-  #[test]
   #[test]
   fn rejects_unified_video_audio_graph_video_filter_above_size_limit() {
     let request = NativeVideoAudioGraphRenderRequest {
