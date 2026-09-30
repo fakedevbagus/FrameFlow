@@ -1,4 +1,19 @@
-# M3.208 — Export Output Path Length Cap — active — 2026-09-30
+# M3.209 — Project Path Length Cap — active — 2026-09-30
+
+- Branch: `fix/m3-209-project-path-length-cap`.
+- Fresh audit found `project_path()` converts user-supplied project paths to `PathBuf` before existing validation, without a shared byte-length boundary.
+- Added next milestone scope for a shared 4,096-byte project path cap before project-path filesystem operations.
+- Apply through the shared validator used by project open and save.
+- Preserve existing path, extension, content-size, directory, temporary-file, and atomic-save behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+- Implementation pending.
+
+Next step:
+- Implement M3.209 on branch `fix/m3-209-project-path-length-cap`.
+- Run the complete Pull/Fetch + Validation workflow before PASS.
+
+# M3.208 — Export Output Path Length Cap — completed — 2026-09-30
 
 - Branch: `fix/m3-208-export-output-path-length-cap`.
 - Fresh audit found export output paths lacked a shared byte-length boundary across renderer surfaces.
@@ -7,11 +22,12 @@
 - Reused the same boundary in audio renderer output validation, covering native audio graph, unified video/audio graph, and legacy video/audio mix.
 - Added focused over-limit regression coverage.
 - No project schema change.
-- Implementation complete; local validation pending user run. Do not infer test/build/lint/cargo success.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- PR #225; squash-merged at `0f34f7ffaeec9fab423a2e6d0e62d5479142a4e0`.
+- `main` was verified identical to the merge SHA.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.208.
-- After user PASS, use the standard refresh → Ready for Review → squash merge → verify `main` → docs → fresh audit workflow.
+- Fresh audit from verified `main` identified M3.209: project path length cap.
 
 # M3.207 — Media Server Path Length Cap — completed — 2026-09-30
 
