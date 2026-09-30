@@ -1,49 +1,53 @@
-## Current State — M3.214 active — 2026-09-30
+## Current State — M3.215 active — 2026-09-30
 
 - Repository: `fakedevbagus/FrameFlow`.
-- Latest merged milestone: M3.213.
-- M3.213 PR #230; squash merge SHA: `1aece413b1c104efcbd2617167f71f75d3697b7b`.
+- Latest merged milestone: M3.214.
+- M3.214 PR #232; squash merge SHA: `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
 - `main` was verified identical to the merge SHA.
 - User reported PASS after the complete Pull/Fetch + Validation workflow.
-- Fresh audit identified M3.214 as the next focused hardening milestone.
+- Fresh audit identified M3.215 as the next focused hardening milestone.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 
-## M3.214 — Export Protocol Label Size Caps
+## M3.215 — Export Canvas Dimension Caps
 
 Branch:
-`fix/m3-214-export-protocol-label-size-caps`
+`fix/m3-215-export-canvas-dimension-caps`
 
 Audit finding:
-- Native video/audio graph requests accept protocol-control strings such as `video`/`image` media-type labels and `[vout]`/`[aout]` output maps.
-- These fields are ultimately exact-match validated, but they had no explicit maximum byte-length contract before those checks.
-- Oversized protocol labels therefore remained an avoidable unbounded command-input string boundary in the export request validators.
+- Native export settings accepted arbitrarily large positive-even width and height values without an explicit upper dimension contract.
+- Persisted project canvas validation also accepted arbitrarily large positive-even dimensions.
+- Frontend export normalization enforced positivity/evenness but did not cap oversized dimensions.
+- These dimensions flow into FFmpeg scale/pad construction, so an explicit upper bound closes an avoidable unbounded numeric/resource boundary.
 
 Implementation:
-- Added shared `MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64`.
-- Enforced the cap on native video graph input media-type labels and output map.
-- Enforced the cap on native audio graph output map.
-- Enforced the cap on native video/audio mix audio map.
-- Enforced the cap on unified AV video media-type labels, video map, and audio map.
-- Preserved exact-match protocol semantics and rendering behavior.
-- Added oversized-label regression coverage.
-- No project schema change.
-
-Validation correction:
-- First Cargo validation failed because the audio-render test module imported the root-level protocol-label constant through `super::`; corrected to a crate-root test import.
-- Removed an accidentally duplicated `#[test]` attribute from the same test module.
-- Production behavior is unchanged by these corrections.
+- Added MAX_NATIVE_EXPORT_DIMENSION = 8192 to the Rust export validation layer.
+- Added MAX_CANVAS_DIMENSION = 8192 to the project domain.
+- Reused the project ceiling in export-setting normalization.
+- Added exact-limit and over-limit regression coverage.
+- Existing positive/even dimension semantics and supported export quality behavior are preserved.
+- No project schema version change.
 
 Validation:
-- User validation reached `npm ci`, lint, 529/529 frontend tests, and build successfully.
-- Final Cargo validation is pending rerun.
-- Never claim final lint/test/build/cargo/manual success beyond the user-reported result.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Never claim additional lint/test/build/cargo/manual results beyond what the user reports.
 
 Workflow:
-- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- On user PASS / pass / continue, refresh PR/head/base state, ensure the branch is not behind main, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 - Pull/Fetch + Validation must remain one combined copy-paste command block.
 - UI/UX/frontend redesign remains blocked until the mandatory stability gate.
 - Keep protected PR #76 and unrelated PR #22 untouched.
 
+## M3.214 — completed — 2026-09-30
+
+- Branch: `fix/m3-214-export-protocol-label-size-caps`.
+- PR #232; squash-merged at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added shared MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64 across native video/audio export protocol fields.
+- Corrected the first Cargo-test import failure and removed a duplicated test attribute; production behavior was unchanged.
+
+Next milestone:
+- M3.215 — export canvas dimension caps.
 ## M3.213 — completed — 2026-09-30
 
 - Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.
