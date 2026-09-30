@@ -19,7 +19,8 @@ You are continuing development of the existing repository:
 - User explicitly reported `pass`.
 - **Current active milestone:** M3.215 — Export Canvas Dimension Caps.
 - **Current branch:** `fix/m3-215-export-canvas-dimension-caps`.
-- **Current branch head:** `34a8198fd0777c7854ceb4b08a84f56c9c710e91`.
+- Implementation checkpoint before the handoff-only documentation update: `34a8198fd0777c7854ceb4b08a84f56c9c710e91`.
+- The handoff update itself created a newer branch commit; always refresh the actual branch head from GitHub before taking further action.
 - **Base:** `main` at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
 - M3.215 is **implemented but not yet validated**.
 - M3.215 currently has **no PR created yet**.
