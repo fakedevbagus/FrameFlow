@@ -8,6 +8,11 @@
 - Added exact-limit and over-limit regression coverage.
 - No project schema change.
 
+Validation note:
+- User validation reached frontend lint/tests/build successfully; the Rust test command failed at test compilation because the new test cases referenced `MAX_EXPORT_JOB_ID_BYTES` without importing it into the test module.
+- Applied a test-only import correction; no production behavior changed.
+- Full validation is pending rerun.
+
 Next step:
 - Run the complete Pull/Fetch + Validation workflow before PASS.
 
