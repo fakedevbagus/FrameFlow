@@ -12,46 +12,55 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.221 — Persisted Project Total Clip Count Cap.
-- **M3.221 PR:** #239.
-- **M3.221 squash merge SHA:** `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
-- `main` was verified identical to that merge SHA before documentation reconciliation.
+- **Latest accepted milestone:** M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap.
+- **M3.222 PR:** #240.
+- **M3.222 squash merge SHA:** `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
+- `main` was verified identical to that merge SHA after the merge.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap.
-- **Current branch:** `fix/m3-222-project-total-audio-keyframe-count-cap`.
-- **M3.222 PR:** #240 (Draft).
-- M3.222 implementation is **complete but not yet validated**.
-- Initial validation reached `npm run lint` and failed with a parser error at `src/features/project/domain.test.ts:2294`.
-- The malformed aggregate-audio test block has since been corrected on the branch.
-- The next validation rerun exposed a missing `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES` runtime definition in `src/features/project/domain.ts`; the constant was restored on the branch and another full validation rerun is required.
-- The user also reported an actual working-tree modification to `src-tauri/Cargo.lock`; do not discard or overwrite it automatically.
-- The full validation suite must be rerun after the correction before M3.222 can be considered PASS.
+- **Current active milestone:** M3.223 — Persisted Project Asset Source Path Byte Cap.
+- **Current branch:** `fix/m3-223-persisted-asset-source-path-cap`.
+- **M3.223 PR:** not created yet.
+- M3.223 implementation is complete; local validation is pending.
+- M3.223 adds a 4,096-byte UTF-8 cap to persisted asset `sourcePath`, aligned with the existing native media-path boundary.
+- Focused regression coverage includes exact 4,096-byte acceptance, 4,097-byte rejection, and a multibyte UTF-8 boundary case.
+- No project schema version change.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
+## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
-## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap
+- PR #240; squash-merged at `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
+- User reported `PASS`.
+- Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
+- Persisted projects with more than 65,536 audio volume keyframes across all clips are rejected before validating the excess collection.
+- Preserved the existing 4,096 per-clip cap and audio keyframe timing/value/order semantics.
+- Added exact-limit and over-limit regression coverage.
+- During validation, a malformed test block, an unused import, and a missing runtime constant were discovered and corrected without changing the intended scope.
+- Local validation is considered accepted because the user explicitly reported `PASS`.
+- No project schema version change.
+
+## M3.223 — Persisted Project Asset Source Path Byte Cap
 
 ### Fresh audit finding
 
-Verified `main` already caps persisted audio volume keyframes at 4,096 entries per clip, but aggregate persisted count across all clips remained unbounded. Native unified AV rendering already enforces a 65,536 aggregate audio-keyframe cap.
+Verified `main` after M3.222 already enforces a 4,096-byte native media-path limit, while persisted `MediaAsset.sourcePath` only required a non-empty string. This left a boundary mismatch where a project could persist an arbitrarily long source path and defer rejection until native media processing.
 
 ### Current implementation
 
 - `src/features/project/domain.ts`
-  - Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
-  - Counts persisted audio-volume keyframes across clips and rejects the project when the aggregate exceeds 65,536 before validating the excess keyframe collection.
-  - Preserves the existing 4,096 per-clip cap and audio keyframe timing/value/order semantics.
+  - Added `MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096`.
+  - Measures `sourcePath` using UTF-8 encoded byte length.
+  - Rejects persisted asset source paths above 4,096 bytes during project validation, before later native media-path use.
+  - Preserves existing asset identity, media type, duration, and project schema semantics.
 - `src/features/project/domain.test.ts`
-  - Added exact aggregate-limit acceptance coverage at 65,536 keyframes.
-  - Added over-limit rejection coverage at 65,537 keyframes.
-  - Corrected a syntax error discovered at `npm run lint`.
+  - Added exact 4,096-byte acceptance coverage.
+  - Added 4,097-byte rejection coverage.
+  - Added multibyte UTF-8 coverage to verify the limit is byte-based rather than JavaScript character-count based.
 - No project schema version change.
-
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state and rerun the complete validation for M3.222 after the syntax correction. Preserve any user-owned local modification in `src-tauri/Cargo.lock`; do not use a destructive reset/checkout to discard it.
+First refresh the actual repository state for M3.223 and run the complete validation for the current branch.
 
 Use this as one combined copy-paste block:
 
@@ -59,8 +68,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-222-project-total-audio-keyframe-count-cap &&
-git pull --ff-only origin fix/m3-222-project-total-audio-keyframe-count-cap &&
+git checkout fix/m3-223-persisted-asset-source-path-cap &&
+git pull --ff-only origin fix/m3-223-persisted-asset-source-path-cap &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -75,9 +84,8 @@ Validation rules:
 - Only the user's actual reported output establishes validation success.
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
-- Do not infer a clean working tree; report any actual `src-tauri/Cargo.lock` modification instead of assuming.
-- The previous lint parser failure was specifically corrected; a fresh complete rerun is required.
-- Keep validation focused on M3.222.
+- Do not infer a clean working tree; report any user-local changes instead of assuming.
+- Keep validation focused on M3.223.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
