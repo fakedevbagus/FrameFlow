@@ -1,6 +1,7 @@
 # M3.226 — Persisted Project Display Name Byte Caps — active — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
+- PR #244 (Draft).
 - Fresh audit found `Project.name`, `MediaAsset.name`, and `Track.name` lacked field-level UTF-8 byte caps.
 - Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256`.
 - Enforced the cap on project, asset, and track names.
