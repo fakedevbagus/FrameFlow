@@ -24,7 +24,7 @@ Implementation:
 - Added saturating aggregate accounting before the per-segment validation loop.
 - Added exact 4 MiB acceptance and over-limit rejection tests.
 - Documentation is reconciled for M3.227.
-- Local validation is pending.
+- First validation run passed lint, frontend tests (554/554), and frontend build, but Cargo tests failed because the two new tests lacked the `NativeVideoSegment` test-module import. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`; full validation remains pending.
 
 Pre-existing PR #231:
 - Left untouched.
