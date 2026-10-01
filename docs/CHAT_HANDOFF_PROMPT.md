@@ -12,42 +12,42 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest PASS:** M3.218 — Persisted Transform Keyframe Count Cap.
-- **M3.218 PR:** #236.
-- **M3.218 squash merge SHA:** `b93ba09633c6f02194a04a264fbaed10819b71c3`.
-- `main` was verified identical to that merge SHA.
+- **Latest PASS:** M3.219 — Persisted Project Track Count Cap.
+- **M3.219 PR:** #237.
+- **M3.219 squash merge SHA:** `8ad9b5e2e8ccb98ef1174d39b0f716af939de365`.
+- `main` was verified identical to that merge SHA before documentation reconciliation.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.219 — Persisted Project Track Count Cap.
-- **Current branch:** `fix/m3-219-project-track-count-cap`.
-- **M3.219 PR:** create after implementation/documentation reconciliation.
-- **Base:** `main` after the M3.218 merge and documentation reconciliation.
-- M3.219 implementation is **complete but not yet validated**.
-- Do not mark M3.219 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
+- **Current active milestone:** M3.220 — Persisted Project Clip Count Cap.
+- **Current branch:** `fix/m3-220-project-clip-count-cap`.
+- **M3.220 PR:** create after implementation/documentation reconciliation.
+- **Base:** `main` after the M3.219 merge and documentation reconciliation.
+- M3.220 is **implemented but not yet validated**.
+- Do not mark M3.220 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 
-## M3.219 — Persisted Project Track Count Cap
+## M3.220 — Persisted Project Clip Count Cap
 
 ### Fresh audit finding
 
-Verified `main` still allowed persisted project `tracks` arrays of arbitrary length. `validateTracks()` iterated the full collection, created tracking maps/sets, validated every track, and validated each track's clip topology without an explicit track-count ceiling.
+Verified `main` still allowed each persisted track's `clips` array to contain an arbitrary number of entries. `validateTracks()` iterated every clip and then `validateTrackTopology()` materialized and sorted the full clip collection, leaving an avoidable per-track project-load/resource boundary.
 
 ### Current implementation
 
 - `src/features/project/domain.ts`
-  - Add `MAX_PROJECT_TRACKS = 256`.
-  - Reject persisted projects with more than 256 tracks before per-track validation.
-  - Preserve existing track identity, lock/mute, volume/pan, clip, and topology semantics.
+  - Added `MAX_PROJECT_CLIPS_PER_TRACK = 4096`.
+  - Reject persisted track clip arrays with more than 4,096 entries before per-clip validation and topology sorting.
+  - Preserve existing clip identity, asset linkage, timing, transition, audio, transform, and topology semantics.
 - `src/features/project/domain.test.ts`
-  - Add exact-limit acceptance coverage at 256 tracks.
-  - Add over-limit rejection coverage at 257 tracks.
+  - Added exact-limit acceptance coverage at 4,096 clips on one track.
+  - Added over-limit rejection coverage at 4,097 clips.
 - No project schema version change.
 
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state and run the complete validation for M3.219.
+First refresh the actual repository state and run the complete validation for M3.220.
 
 Use this as one combined copy-paste block:
 
@@ -55,8 +55,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-219-project-track-count-cap &&
-git pull --ff-only origin fix/m3-219-project-track-count-cap &&
+git checkout fix/m3-220-project-clip-count-cap &&
+git pull --ff-only origin fix/m3-220-project-clip-count-cap &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -72,7 +72,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; report any actual `src-tauri/Cargo.lock` modification instead of assuming.
-- Keep validation focused on M3.219.
+- Keep validation focused on M3.220.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -175,15 +175,15 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.219 SUMMARY
+## CURRENT M3.220 SUMMARY
 
-**Latest accepted checkpoint:** M3.218 PASS, merged to `main` at `b93ba09633c6f02194a04a264fbaed10819b71c3`.
+**Latest accepted checkpoint:** M3.219 PASS, merged to `main` at `8ad9b5e2e8ccb98ef1174d39b0f716af939de365`.
 
-**Current continuation point:** M3.219 implementation branch `fix/m3-219-project-track-count-cap`.
+**Current continuation point:** M3.220 implementation branch `fix/m3-220-project-clip-count-cap`.
 
 **What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
 
-**Do not describe M3.219 as PASS yet.**
+**Do not describe M3.220 as PASS yet.**
 
 ## USER WORKFLOW PREFERENCE
 
@@ -196,6 +196,17 @@ Interpret them consistently:
 - When a validation failure is reported, resolve it before treating the milestone as accepted.
 
 Every milestone should leave enough precise documentation that a brand-new chat can resume without reconstructing the project from scratch.
+
+## M3.219 — completed — 2026-10-01
+
+- Branch: `fix/m3-219-project-track-count-cap`.
+- PR #237; squash-merged at `8ad9b5e2e8ccb98ef1174d39b0f716af939de365`.
+- `main` was verified identical to the merge SHA before documentation reconciliation.
+- User reported PASS.
+- Added `MAX_PROJECT_TRACKS = 256`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved existing track identity, lock/mute, volume/pan, clip, topology, and project-schema semantics.
+- No project schema change.
 
 ## M3.218 — completed — 2026-09-30
 
