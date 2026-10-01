@@ -16,7 +16,9 @@ Scope:
 - No project schema version change.
 
 Implementation:
-- M3.222 implementation is complete.
+- Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
+- Added aggregate persisted audio-volume keyframe counting across clips before per-clip keyframe validation for an over-limit project.
+- Added exact-limit acceptance and 65,537-entry rejection tests.
 - Documentation is reconciled for M3.222.
 - Local validation is pending user run.
 
