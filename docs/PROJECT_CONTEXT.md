@@ -3,10 +3,12 @@
 Branch:
 `fix/m3-222-project-total-audio-keyframe-count-cap`
 
+PR:
+- #240 (Draft).
+
 Fresh audit finding:
 - Persisted audio volume keyframes are capped at 4,096 per clip, but aggregate project count remained unbounded.
 - Native unified AV rendering already enforces a 65,536 aggregate audio-keyframe cap.
-- Persisted validation could therefore traverse a larger nested collection before native rendering.
 
 Scope:
 - Add `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
@@ -17,14 +19,14 @@ Scope:
 
 Implementation:
 - Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
-- Added aggregate persisted audio-volume keyframe counting across clips before per-clip keyframe validation for an over-limit project.
-- Added exact-limit acceptance and 65,537-entry rejection tests.
-- Documentation is reconciled for M3.222.
-- Local validation is pending user run.
+- Added aggregate persisted audio-volume keyframe counting across clips.
+- Corrected a syntax error in the aggregate audio-keyframe test block after the initial lint failure.
+- User-reported validation also showed a local `src-tauri/Cargo.lock` modification; it must be preserved.
+- A fresh full validation rerun is required.
 
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.222.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- After successful PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
 ## M3.221 — Persisted Project Total Clip Count Cap — completed — 2026-10-01
 
