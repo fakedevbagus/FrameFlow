@@ -36,6 +36,7 @@ export const MAX_PROJECT_TOTAL_CLIPS = 65_536;
 export const MAX_PROJECT_ASSETS = 4096;
 export const MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096;
 export const MAX_PERSISTED_IDENTIFIER_BYTES = 256;
+export const MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024;
 
 export interface CanvasSettings {
   width: number;
@@ -218,10 +219,15 @@ export function createProject(options: CreateProjectOptions = {}): Project {
 export function serializeProject(project: Project): string {
   validateProject(project);
 
-  return JSON.stringify(project, null, 2);
+  const source = JSON.stringify(project, null, 2);
+  assertProjectSerializedSize(source);
+
+  return source;
 }
 
 export function parseProject(source: string): Project {
+  assertProjectSerializedSize(source);
+
   let value: unknown;
 
   try {
@@ -233,6 +239,16 @@ export function parseProject(source: string): Project {
   validateProject(value);
 
   return value;
+}
+
+function assertProjectSerializedSize(source: string): void {
+  const byteLength = new TextEncoder().encode(source).length;
+
+  if (byteLength > MAX_PROJECT_SERIALIZED_BYTES) {
+    throw new ProjectValidationError(
+      "Project file is too large; maximum supported size is 16 MiB.",
+    );
+  }
 }
 
 export function validateProject(value: unknown): asserts value is Project {
