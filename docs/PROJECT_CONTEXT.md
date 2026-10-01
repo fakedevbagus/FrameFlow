@@ -1,30 +1,46 @@
-## M3.219 — Persisted Project Track Count Cap — active — 2026-09-30
+## M3.220 — Persisted Project Clip Count Cap — active — 2026-10-01
+
+Branch:
+`fix/m3-220-project-clip-count-cap`
+
+Fresh audit finding:
+- Each persisted track's `clips` array remained unbounded.
+- `validateTracks()` iterated all clips, then `validateTrackTopology()` mapped and sorted the complete clip collection.
+- This is an avoidable per-track project-load/resource boundary.
+
+Scope:
+- Add `MAX_PROJECT_CLIPS_PER_TRACK = 4096`.
+- Reject persisted tracks with more than 4,096 clips before per-clip validation and topology sorting.
+- Preserve existing clip identity, asset linkage, timing, transition, audio, transform, and topology semantics.
+- Add exact-limit and over-limit regression coverage.
+- No project schema version change.
+
+Implementation:
+- M3.220 implementation is complete.
+- Documentation is reconciled for M3.220.
+- Local validation is pending user run.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.220.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+## M3.219 — Persisted Project Track Count Cap — completed — 2026-10-01
 
 Branch:
 `fix/m3-219-project-track-count-cap`
 
-Fresh audit finding:
-- Persisted project validation accepted `tracks` arrays of arbitrary length.
-- `validateTracks()` built tracking structures and iterated every track plus its clips without an explicit track-count ceiling.
-- This is an avoidable project-load/resource boundary.
-
-Scope:
-- Add `MAX_PROJECT_TRACKS = 256`.
-- Reject persisted projects with more than 256 tracks before per-track validation.
-- Preserve existing track identity, lock/mute, volume/pan, clip, topology, and schema semantics.
-- Add exact-limit and over-limit regression coverage.
-- No project schema version change.
+Merge:
+- PR #237
+- Squash merge SHA: `8ad9b5e2e8ccb98ef1174d39b0f716af939de365`
+- `main` verified identical to the merge SHA before documentation reconciliation.
+- User reported PASS.
 
 Implementation:
 - Added `MAX_PROJECT_TRACKS = 256`.
 - Added early persisted track-count rejection before per-track validation.
 - Added exact-limit acceptance and 257-entry rejection tests.
-- Documentation is reconciled for M3.219.
-- Local validation is pending user run.
-
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.219.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- Preserved existing track and clip/topology semantics.
+- No project schema change.
 
 ## M3.216 — Persisted Audio Volume Keyframe Count Cap — completed — 2026-09-30
 
