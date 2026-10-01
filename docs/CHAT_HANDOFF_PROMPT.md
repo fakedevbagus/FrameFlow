@@ -12,16 +12,15 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.223 — Persisted Project Asset Source Path Byte Cap.
-- **M3.223 PR:** #241.
-- **M3.223 squash merge SHA:** `21610705086360cf7d8022bb5bd111d3b0feb7f3`.
+- **Latest accepted milestone:** M3.224 — Persisted Project Identifier Byte Caps.
+- **M3.224 PR:** #242.
+- **M3.224 squash merge SHA:** `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
 - `main` was verified identical to that merge SHA after the merge.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.224 — Persisted Project Identifier Byte Caps.
-- **Current branch:** `fix/m3-224-persisted-project-identifier-byte-caps`.
-- **M3.224 PR:** #242 (Draft).
-- M3.224 scope is to bound persisted project/asset/track/clip identifier strings and clip asset references to 256 UTF-8 bytes.
-- Implementation is complete; local validation is pending.
+- **Current active milestone:** M3.225 — Persisted Project Serialization Size Cap.
+- **Current branch:** `fix/m3-225-persisted-project-serialization-size-cap`.
+- **M3.225 PR:** not created yet.
+- M3.225 adds a 16 MiB UTF-8 serialized-project size cap at the domain parse/serialize boundary so oversized JSON is rejected before parsing and oversized workspace persistence is rejected before storage.
 - No project schema version change.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
@@ -46,29 +45,34 @@ You are continuing development of the existing repository:
 - Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
 - No project schema version change.
 
-## M3.224 — Persisted Project Identifier Byte Caps
+## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
+
+- PR #242; squash-merged at `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
+- User reported `PASS`.
+- Added `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
+- Validated project id, asset id, track id, clip id, and clip `assetId` references by UTF-8 byte length.
+- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- No project schema version change.
+
+## M3.225 — Persisted Project Serialization Size Cap
 
 ### Fresh audit finding
 
-After M3.223, persisted project identifiers still only required non-empty strings. Project, asset, track, and clip identifiers are retained in maps/sets and serialized across nested project structures, so unbounded identifier strings remain an avoidable persistence/resource surface.
+Verified `main` already enforces a 16 MiB project-file limit in the Rust open/save commands, but `parseProject()` and `serializeProject()` did not enforce the same boundary before JSON parsing or local workspace storage.
 
-### Current implementation
+### Scope
 
-- `src/features/project/domain.ts`
-  - Added `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
-  - Validates project id, asset id, track id, clip id, and clip `assetId` references by UTF-8 byte length.
-  - Rejects identifiers above 256 bytes during project validation.
-  - Preserves identifier uniqueness, asset linkage, and existing project schema semantics.
-- `src/features/project/domain.test.ts`
-  - Added exact-limit acceptance coverage.
-  - Added over-limit rejection coverage for all identifier surfaces.
-  - Added a multibyte UTF-8 byte-length boundary case.
+- Add `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
+- Reject serialized project input above 16 MiB before `JSON.parse()`.
+- Reject serialized project output above 16 MiB before returning it to native save or workspace storage.
+- Preserve project validation semantics and the existing native 16 MiB limit.
+- Add exact-boundary and over-limit regression coverage without requiring a destructive or huge persisted fixture.
 - No project schema version change.
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state for M3.224 and run the complete validation for the current branch.
+First refresh the actual repository state for M3.225 and run the complete validation for the current branch.
 
 Use this as one combined copy-paste block:
 
@@ -76,8 +80,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-224-persisted-project-identifier-byte-caps &&
-git pull --ff-only origin fix/m3-224-persisted-project-identifier-byte-caps &&
+git checkout fix/m3-225-persisted-project-serialization-size-cap &&
+git pull --ff-only origin fix/m3-225-persisted-project-serialization-size-cap &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -93,7 +97,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; report any user-local changes instead of assuming.
-- Keep validation focused on M3.224.
+- Keep validation focused on M3.225.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -196,17 +200,17 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.224 SUMMARY
+## CURRENT M3.225 SUMMARY
 
-**Latest accepted checkpoint:** M3.223 PASS, squash-merged to `main` at `21610705086360cf7d8022bb5bd111d3b0feb7f3`.
+**Latest accepted checkpoint:** M3.224 PASS, squash-merged to `main` at `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
 
-**Current continuation point:** M3.224 implementation branch `fix/m3-224-persisted-project-identifier-byte-caps`.
+**Current continuation point:** M3.225 branch `fix/m3-225-persisted-project-serialization-size-cap`.
 
-**Fresh audit:** Persisted project/asset/track/clip identifiers still had no byte-length bound beyond non-empty-string validation.
+**Fresh audit:** Native project open/save already cap project files at 16 MiB, but domain parsing and serialization lacked the same early boundary.
 
-**Current state:** M3.224 implementation and documentation are complete. PR #242 is Draft and local validation is pending.
+**Current state:** M3.225 implementation is pending.
 
-**What to do next:** pull the latest M3.224 branch head and run the one-block validation command above. Only the user's explicit PASS establishes validation acceptance.
+**What to do next:** implement the focused domain serialization-size guard, add regression coverage, reconcile all three docs, create a Draft PR, and provide the combined Pull/Fetch + Validation command. Only the user's explicit PASS establishes validation acceptance.
 
 ## USER WORKFLOW PREFERENCE
 
