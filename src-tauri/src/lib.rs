@@ -2139,6 +2139,7 @@ pub fn run() {
 mod tests {
   use super::{
     audio_render, media_type, parse_duration_ms, preview_cache_key, temporary_path,
+    NativeVideoSegment,
   };
   use std::{
     collections::HashMap,
