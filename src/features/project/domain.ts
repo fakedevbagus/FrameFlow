@@ -36,6 +36,7 @@ export const MAX_PROJECT_TOTAL_CLIPS = 65_536;
 export const MAX_PROJECT_ASSETS = 4096;
 export const MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096;
 export const MAX_PERSISTED_IDENTIFIER_BYTES = 256;
+export const MAX_PERSISTED_DISPLAY_NAME_BYTES = 256;
 export const MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024;
 
 export interface CanvasSettings {
@@ -263,6 +264,7 @@ export function validateProject(value: unknown): asserts value is Project {
   assertNonEmptyString(value.id, "Project id");
   assertUtf8ByteLength(value.id, "Project id");
   assertNonEmptyString(value.name, "Project name");
+  assertPersistedDisplayNameByteLength(value.name, "Project name");
   if (value.name !== value.name.trim()) {
     throw new ProjectValidationError("Project name must be trimmed.");
   }
@@ -315,6 +317,7 @@ function validateAssets(value: unknown): MediaAsset[] {
     assetIds.add(asset.id);
 
     assertNonEmptyString(asset.name, fieldPrefix + " name");
+    assertPersistedDisplayNameByteLength(asset.name, fieldPrefix + " name");
     assertMediaType(asset.mediaType, fieldPrefix + " mediaType");
     assertNonEmptyString(asset.sourcePath, fieldPrefix + " sourcePath");
     const sourcePathBytes = new TextEncoder().encode(asset.sourcePath).length;
@@ -386,6 +389,7 @@ function validateTracks(
     trackIds.add(track.id);
 
     assertNonEmptyString(track.name, fieldPrefix + " name");
+    assertPersistedDisplayNameByteLength(track.name, fieldPrefix + " name");
 
     assertTrackType(track.type, fieldPrefix + " type");
 
@@ -1505,6 +1509,22 @@ function assertUtf8ByteLength(value: string, field: string): void {
       field +
         " must be at most " +
         MAX_PERSISTED_IDENTIFIER_BYTES +
+        " bytes.",
+    );
+  }
+}
+
+function assertPersistedDisplayNameByteLength(
+  value: string,
+  field: string,
+): void {
+  const byteLength = new TextEncoder().encode(value).length;
+
+  if (byteLength > MAX_PERSISTED_DISPLAY_NAME_BYTES) {
+    throw new ProjectValidationError(
+      field +
+        " must be at most " +
+        MAX_PERSISTED_DISPLAY_NAME_BYTES +
         " bytes.",
     );
   }
