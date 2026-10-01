@@ -21,6 +21,7 @@ You are continuing development of the existing repository:
 - **Current branch:** `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
 - **M3.227 PR:** #245 (Draft).
 - M3.227 implements a 4 MiB aggregate UTF-8 byte cap across optional multi-segment source paths, enforced before per-segment filesystem/media probing.
+- First validation run: lint PASS, frontend tests 554/554 PASS, frontend build PASS, but `cargo test` failed because the two new tests lacked the `NativeVideoSegment` test-module import; corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`. Full validation must be rerun.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -76,7 +77,7 @@ You are continuing development of the existing repository:
 - Used a saturating accumulator to keep aggregate accounting overflow-safe.
 - Added exact 4 MiB acceptance and over-limit rejection regression coverage.
 - No project schema change.
-- Local validation is pending.
+- Local validation is pending after the test-import correction.
 
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
