@@ -34,6 +34,7 @@ export const MAX_PROJECT_TRACKS = 256;
 export const MAX_PROJECT_CLIPS_PER_TRACK = 4096;
 export const MAX_PROJECT_TOTAL_CLIPS = 65_536;
 export const MAX_PROJECT_ASSETS = 4096;
+export const MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096;
 
 export interface CanvasSettings {
   width: number;
@@ -297,6 +298,15 @@ function validateAssets(value: unknown): MediaAsset[] {
     assertNonEmptyString(asset.name, fieldPrefix + " name");
     assertMediaType(asset.mediaType, fieldPrefix + " mediaType");
     assertNonEmptyString(asset.sourcePath, fieldPrefix + " sourcePath");
+    const sourcePathBytes = new TextEncoder().encode(asset.sourcePath).length;
+    if (sourcePathBytes > MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES) {
+      throw new ProjectValidationError(
+        fieldPrefix +
+          " sourcePath must be at most " +
+          MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES +
+          " bytes.",
+      );
+    }
 
     assertNullableDurationMilliseconds(
       asset.durationMs,

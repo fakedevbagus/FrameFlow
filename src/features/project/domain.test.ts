@@ -1929,6 +1929,63 @@ describe("project domain", () => {
     expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
   });
 
+  it("accepts a persisted asset source path at the byte limit", () => {
+    const project = createProject({ id: "asset-source-path-limit" });
+    const sourcePath = "x".repeat(4096);
+    const asset = {
+      id: "asset-1",
+      name: "Asset",
+      mediaType: "audio" as const,
+      sourcePath,
+      durationMs: 1000,
+    };
+    const validProject = {
+      ...project,
+      assets: [asset],
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects a persisted asset source path above the byte limit", () => {
+    const project = createProject({ id: "asset-source-path-over-limit" });
+    const asset = {
+      id: "asset-1",
+      name: "Asset",
+      mediaType: "audio" as const,
+      sourcePath: "x".repeat(4097),
+      durationMs: 1000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [asset],
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Asset 0 sourcePath must be at most 4096 bytes.",
+    );
+  });
+
+  it("rejects a persisted asset source path whose UTF-8 bytes exceed the limit", () => {
+    const project = createProject({ id: "asset-source-path-utf8-over-limit" });
+    const sourcePath = "x".repeat(4095) + "é";
+    const asset = {
+      id: "asset-1",
+      name: "Asset",
+      mediaType: "audio" as const,
+      sourcePath,
+      durationMs: 1000,
+    };
+    const invalidProject = {
+      ...project,
+      assets: [asset],
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Asset 0 sourcePath must be at most 4096 bytes.",
+    );
+  });
+
   it("rejects oversized persisted asset counts", () => {
     const project = createProject({ id: "asset-count-over-limit" });
     const assets = Array.from({ length: 4097 }, (_, index) => ({
