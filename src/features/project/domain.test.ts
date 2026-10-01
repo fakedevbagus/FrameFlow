@@ -15,6 +15,7 @@ import {
   MAX_CANVAS_DIMENSION,
   MAX_TRANSFORM_KEYFRAMES,
   MAX_PROJECT_TRACKS,
+  MAX_PROJECT_CLIPS_PER_TRACK,
 } from "./domain";
 
 describe("project domain", () => {
@@ -2251,6 +2252,76 @@ describe("project domain", () => {
 
     expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "audioVolumeKeyframes must contain at most 4096 keyframes.",
+    );
+  });
+
+  it("accepts the maximum persisted clip count per track", () => {
+    const project = createProject({ id: "project-clip-count-limit" });
+    const baseTrack = project.tracks[0];
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 6000,
+    };
+    const clips = Array.from(
+      { length: MAX_PROJECT_CLIPS_PER_TRACK },
+      (_, index) => ({
+        id: `clip-${index}`,
+        assetId: videoAsset.id,
+        timelineStartMs: index * 10000,
+        sourceStartMs: 0,
+        sourceEndMs: 1000,
+      }),
+    );
+    const validProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: [
+        {
+          ...baseTrack,
+          clips,
+        },
+      ],
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects oversized persisted clip counts per track", () => {
+    const project = createProject({ id: "project-clip-count-over-limit" });
+    const baseTrack = project.tracks[0];
+    const videoAsset = {
+      id: "video-1",
+      name: "Video",
+      mediaType: "video" as const,
+      sourcePath: "/tmp/video.mp4",
+      durationMs: 6000,
+    };
+    const clips = Array.from(
+      { length: MAX_PROJECT_CLIPS_PER_TRACK + 1 },
+      (_, index) => ({
+        id: `clip-${index}`,
+        assetId: videoAsset.id,
+        timelineStartMs: index * 10000,
+        sourceStartMs: 0,
+        sourceEndMs: 1000,
+      }),
+    );
+    const invalidProject = {
+      ...project,
+      assets: [videoAsset],
+      tracks: [
+        {
+          ...baseTrack,
+          clips,
+        },
+      ],
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Track 0 clips must contain at most 4096 clips.",
     );
   });
 

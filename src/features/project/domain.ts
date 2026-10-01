@@ -30,6 +30,7 @@ export const MAX_CANVAS_DIMENSION = 8192;
 export const MAX_AUDIO_VOLUME_KEYFRAMES = 4096;
 export const MAX_TRANSFORM_KEYFRAMES = 4096;
 export const MAX_PROJECT_TRACKS = 256;
+export const MAX_PROJECT_CLIPS_PER_TRACK = 4096;
 export const MAX_PROJECT_ASSETS = 4096;
 
 export interface CanvasSettings {
@@ -404,6 +405,15 @@ function validateTracks(
 
     if (!Array.isArray(track.clips)) {
       throw new ProjectValidationError(fieldPrefix + " clips must be an array.");
+    }
+
+    if (track.clips.length > MAX_PROJECT_CLIPS_PER_TRACK) {
+      throw new ProjectValidationError(
+        fieldPrefix +
+          " clips must contain at most " +
+          MAX_PROJECT_CLIPS_PER_TRACK +
+          " clips.",
+      );
     }
 
     for (let clipIndex = 0; clipIndex < track.clips.length; clipIndex += 1) {

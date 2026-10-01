@@ -21,7 +21,7 @@ You are continuing development of the existing repository:
 - **Current branch:** `fix/m3-220-project-clip-count-cap`.
 - **M3.220 PR:** create after implementation/documentation reconciliation.
 - **Base:** `main` after the M3.219 merge and documentation reconciliation.
-- M3.220 is **implemented but not yet validated**.
+- M3.220 implementation is **complete but not yet validated**.
 - Do not mark M3.220 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
