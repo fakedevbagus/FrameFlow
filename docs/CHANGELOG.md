@@ -1,6 +1,7 @@
 # M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
 
 - Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- PR #245 (Draft).
 - Fresh audit found multi-segment render requests are limited to 4,096 segments and each source path is individually limited to 4,096 bytes, but aggregate source-path bytes were unbounded.
 - Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
 - Enforced the aggregate source-path cap before per-segment filesystem/media probing.
@@ -10,7 +11,7 @@
 - Pre-existing PR #231 remains untouched; it is stale/diverged from current `main`.
 
 Next step:
-- Create a Draft PR for M3.227, then run the complete Pull/Fetch + Validation workflow.
+- Run the complete Pull/Fetch + Validation workflow for M3.227.
 
 # M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
