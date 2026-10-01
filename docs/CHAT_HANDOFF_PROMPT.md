@@ -17,9 +17,10 @@ You are continuing development of the existing repository:
 - **M3.225 squash merge SHA:** `c12fde998a6c27421174493550020a825d80a6d6`.
 - `main` was verified identical to that merge SHA.
 - User explicitly reported `pass`.
-- **Next milestone:** M3.226 — Persisted Project Display Name Byte Caps.
-- Fresh audit identified unbounded persisted display-name strings on `Project.name`, `MediaAsset.name`, and `Track.name`; these remain bounded only indirectly by the 16 MiB project serialization limit.
-- No project schema version change is expected for M3.226.
+- **Current active milestone:** M3.226 — Persisted Project Display Name Byte Caps.
+- **Current branch:** `fix/m3-226-persisted-display-name-byte-caps`.
+- M3.226 implementation is in progress with a shared 256-byte UTF-8 display-name cap and focused regression coverage.
+- No project schema version change.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -64,20 +65,47 @@ You are continuing development of the existing repository:
 - Preserved the existing native 16 MiB project-file boundary and project schema version.
 - No project schema version change.
 
+## M3.226 — Persisted Project Display Name Byte Caps — active — 2026-10-01
+
+- Branch: `fix/m3-226-persisted-display-name-byte-caps`.
+- Fresh audit from verified `main` found unbounded persisted display names on project, asset, and track records.
+- Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
+- Enforced the cap on `Project.name`, `MediaAsset.name`, and `Track.name`.
+- Preserved existing non-empty and project-name trimming semantics.
+- Added exact 256-byte acceptance and 257-byte rejection coverage with a multibyte UTF-8 boundary.
+- No project schema version change.
+- Local validation is pending.
+
 ## FIRST ACTION IN THE NEW CHAT
 
-Do not start implementation from memory.
+Do not start another unrelated audit immediately.
 
-First refresh the actual verified `main` state and perform a fresh audit for **M3.226 — Persisted Project Display Name Byte Caps**.
+First refresh the actual repository state for M3.226 and run the complete validation for the current branch.
 
-Before creating the branch, confirm:
-- current `main` SHA;
-- no unexpected divergence from the documented merge SHA;
-- `Project.name`, `MediaAsset.name`, and `Track.name` remain unbounded by field-level UTF-8 byte caps;
-- existing persisted identifier/path/project-size limits remain intact;
-- no stronger adjacent gap supersedes M3.226.
+Use this as one combined copy-paste block:
 
-Only after that audit should the next focused branch be created.
+```bash
+ROOT="$(git rev-parse --show-toplevel)" &&
+cd "$ROOT" &&
+git fetch origin &&
+git checkout fix/m3-226-persisted-display-name-byte-caps &&
+git pull --ff-only origin fix/m3-226-persisted-display-name-byte-caps &&
+git status --short &&
+git log -1 --oneline &&
+npm ci &&
+npm run lint &&
+npm run test &&
+npm run build &&
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
+Validation rules:
+
+- Only the user's actual reported output establishes validation success.
+- If any command fails, diagnose and correct the issue before accepting PASS.
+- Do not infer Cargo success from frontend success.
+- Do not infer a clean working tree; report any user-local changes instead of assuming.
+- Keep validation focused on M3.226.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -180,15 +208,19 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.225 SUMMARY
+## CURRENT M3.226 SUMMARY
 
 **Latest accepted checkpoint:** M3.225 PASS, squash-merged to `main` at `c12fde998a6c27421174493550020a825d80a6d6`.
 
-**Continuation point:** fresh audit for M3.226 from the verified `main`.
+**Current continuation point:** M3.226 branch `fix/m3-226-persisted-display-name-byte-caps`.
 
-**Fresh audit finding:** persisted project, asset, and track display names are non-empty strings but have no field-level UTF-8 byte limit; the 16 MiB project serialization cap still bounds total project size, but a single oversized display name can consume a disproportionate amount of the allowed payload and reach UI/domain surfaces without a dedicated name bound.
+**Fresh audit:** persisted project, asset, and track display names were only validated as non-empty strings. The 16 MiB serialized-project cap bounds aggregate payload size, but no individual display-name field had a dedicated byte boundary.
 
-**Next step:** inspect the verified `main` implementation and tests, confirm this remains the strongest focused gap, then create M3.226 with the smallest safe field-level byte cap and focused regression coverage.
+**Implementation:** `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` is enforced for `Project.name`, `MediaAsset.name`, and `Track.name`. Regression coverage accepts a multibyte UTF-8 value at exactly 256 bytes and rejects 257-byte values on all three surfaces.
+
+**Current state:** implementation and tests are complete; documentation is being reconciled. Local validation is pending.
+
+**Next step:** run the combined Pull/Fetch + Validation block above. Only the user's explicit PASS establishes validation acceptance.
 
 ## USER WORKFLOW PREFERENCE
 
