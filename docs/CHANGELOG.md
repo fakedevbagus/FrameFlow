@@ -1,3 +1,27 @@
+# M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
+
+- Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- Fresh audit found multi-segment render requests are limited to 4,096 segments and each source path is individually limited to 4,096 bytes, but aggregate source-path bytes were unbounded.
+- Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
+- Enforced the aggregate source-path cap before per-segment filesystem/media probing.
+- Added overflow-safe aggregate accounting plus exact-limit and over-limit regression coverage.
+- Local validation is pending.
+- No project schema change.
+- Pre-existing PR #231 remains untouched; it is stale/diverged from current `main`.
+
+Next step:
+- Create a Draft PR for M3.227, then run the complete Pull/Fetch + Validation workflow.
+
+# M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
+
+- Branch: `fix/m3-226-persisted-display-name-byte-caps`.
+- PR #244; squash-merged at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
+- Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
+- Enforced the cap on project, asset, and track names.
+- Added exact-limit and over-limit regression coverage using a multibyte UTF-8 boundary.
+- User reported PASS.
+- No project schema change.
+
 # M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
