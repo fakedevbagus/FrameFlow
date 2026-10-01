@@ -21,7 +21,9 @@ You are continuing development of the existing repository:
 - The validation history included a corrected Cargo-test import and a Vitest fork-worker startup timeout incident; the runner was hardened to one fork worker before acceptance.
 - **Current active milestone:** M3.228 — Unified AV Source-Audio Presence Probe Deduplication.
 - **Current branch:** `fix/m3-228-unified-av-source-audio-probe-dedup`.
+- **M3.228 PR:** #246 (Draft).
 - M3.228 scope is to avoid repeated `probe_has_audio()` subprocess probes when multiple source-audio segments reference the same resolved video input during one unified AV render request.
+- Implementation caches audio-presence results by resolved source path for one render request and adds a focused cache regression test.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -81,14 +83,18 @@ You are continuing development of the existing repository:
 ## M3.228 — Unified AV Source-Audio Presence Probe Deduplication — active — 2026-10-02
 
 - Branch: `fix/m3-228-unified-av-source-audio-probe-dedup`.
-- Fresh audit from verified `main` found that unified AV rendering may create up to 4,096 `source_audio_segments`, while `probe_has_audio(video_path)` is invoked inside the segment-resolution loop.
-- Multiple segments can reference the same video input, so the current implementation may execute the same FFprobe presence probe repeatedly for one source during a single export.
-- Scope: cache audio-presence probe results by resolved video input path within one render request, while preserving existing source-duration caching, segment validation, audio graph behavior, cancellation, cleanup, result semantics, and error propagation.
-- Add focused regression coverage proving one source path is probed once even when multiple source-audio segments reference that input.
-- No project schema change.
+- PR #246 (Draft).
+- Fresh audit from verified `main` found unified AV rendering may create up to 4,096 `source_audio_segments`, while `probe_has_audio(video_path)` is invoked inside the segment-resolution loop.
+- Multiple segments can reference the same video input, so repeated clips can execute the same FFprobe presence probe repeatedly for one source during a single export.
+- Implemented a per-render-request cache keyed by resolved source path.
+- Preserved source-duration caching, segment validation, audio graph behavior, cancellation, cleanup, result semantics, and probe error propagation.
+- Added a focused regression test proving repeated source paths execute the probe once.
+- No project schema version change.
+- Local validation is pending user run.
 
 Next step:
-- Implement M3.228 on the fresh branch from verified `main`, add focused regression coverage, reconcile documentation, and provide the standard Pull/Fetch + Validation block.
+- Run the complete Pull/Fetch + Validation workflow for M3.228.
+
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
@@ -221,9 +227,9 @@ Do not jump ahead simply because the current UI already exists.
 
 **Implementation target:** deduplicate audio-presence probing per resolved video input path within the render request, preserving existing source-duration caching and all render/error semantics.
 
-**Current state:** M3.228 audit is complete and implementation is now ready to begin on the fresh branch. No M3.228 validation has been claimed.
+**Current state:** implementation and documentation are complete for M3.228; local validation is pending the user's run.
 
-**Next step:** implement the focused fix, add regression coverage, update all three docs, and provide the combined Pull/Fetch + Validation block.
+**Next step:** run the combined Pull/Fetch + Validation block above. Only the user's explicit PASS establishes validation acceptance.
 
 ## USER WORKFLOW PREFERENCE
 

@@ -235,6 +235,7 @@ pub fn render_video_audio_graph_to_mp4(
   let source_identity_snapshot = capture_source_identity_snapshot(&source_paths_for_consistency)?;
 
   let mut source_duration_by_input_index = HashMap::new();
+  let mut source_audio_has_audio_by_path = HashMap::new();
   let source_audio_segments = request
     .source_audio_segments
     .iter()
@@ -269,7 +270,11 @@ pub fn render_video_audio_graph_to_mp4(
       };
 
       validate_source_audio_segment_bounds(segment, source_duration_ms)?;
-      let has_audio = probe_has_audio(video_path)?;
+      let has_audio = cached_probe_by_path(
+        &mut source_audio_has_audio_by_path,
+        video_path,
+        probe_has_audio,
+      )?;
 
       Ok(ResolvedSourceAudioSegment {
         input_index: segment.input_index,
@@ -374,6 +379,24 @@ fn validate_source_identity_snapshot(
   }
 
   Ok(())
+}
+
+fn cached_probe_by_path<T, F>(
+  cache: &mut HashMap<PathBuf, T>,
+  path: &Path,
+  probe: F,
+) -> Result<T, String>
+where
+  T: Copy,
+  F: FnOnce(&Path) -> Result<T, String>,
+{
+  if let Some(value) = cache.get(path) {
+    return Ok(*value);
+  }
+
+  let value = probe(path)?;
+  cache.insert(path.to_path_buf(), value);
+  Ok(value)
 }
 
 pub(crate) fn source_identity(path: &Path) -> Result<String, String> {
@@ -1579,7 +1602,7 @@ fn same_path(first: &Path, second: &Path) -> bool {
 mod tests {
   use super::{
     build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
-    build_ffmpeg_video_with_audio_graph_args, media_type,
+    build_ffmpeg_video_with_audio_graph_args, cached_probe_by_path, media_type,
     validate_request, validate_source_audio_segment_bounds,
     validate_video_audio_graph_request, validate_video_audio_mix_request,
     NativeAudioGraphRenderRequest, NativeSourceAudioCompressor, NativeSourceAudioEq,
@@ -1604,8 +1627,34 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_MIX_AUDIO_INPUTS,
     MAX_NATIVE_VIDEO_AUDIO_MIX_VIDEO_INPUT_PATH_BYTES,
   };
-  use std::path::{Path, PathBuf};
+  use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+  };
   use crate::MAX_EXPORT_PROTOCOL_LABEL_BYTES;
+
+  #[test]
+  fn caches_audio_presence_probe_results_by_source_path() {
+    let path = Path::new("/media/shared-video.mp4");
+    let mut cache = HashMap::new();
+    let mut probe_count = 0;
+
+    let first = cached_probe_by_path(&mut cache, path, |_| {
+      probe_count += 1;
+      Ok::<bool, String>(true)
+    })
+    .expect("first probe should succeed");
+
+    let second = cached_probe_by_path(&mut cache, path, |_| {
+      probe_count += 1;
+      Ok::<bool, String>(false)
+    })
+    .expect("cached probe should succeed");
+
+    assert!(first);
+    assert!(second);
+    assert_eq!(probe_count, 1);
+  }
 
   #[test]
   fn rejects_audio_graph_filter_above_size_limit() {
