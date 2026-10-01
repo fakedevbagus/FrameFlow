@@ -1377,6 +1377,7 @@ export function moveTransformKeyframe(
     remaining,
     normalizedToTimeMs,
     keyframe.transform,
+    keyframe.easing,
   );
 
   return updateClipAtLocation(
