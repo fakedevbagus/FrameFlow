@@ -1,18 +1,30 @@
-# M3.219 — Persisted Project Track Count Cap — active — 2026-09-30
+# M3.220 — Persisted Project Clip Count Cap — active — 2026-10-01
 
-- Branch: `fix/m3-219-project-track-count-cap`.
-- Fresh audit of verified `main` found persisted project `tracks` arrays without an explicit count ceiling.
-- Added `MAX_PROJECT_TRACKS = 256`.
-- Persisted projects with more than 256 tracks are rejected before per-track validation.
+- Branch: `fix/m3-220-project-clip-count-cap`.
+- Fresh audit of verified `main` found each persisted track's `clips` array without an explicit count ceiling.
+- Added `MAX_PROJECT_CLIPS_PER_TRACK = 4096`.
+- Persisted tracks with more than 4,096 clips are rejected before per-clip validation and topology sorting.
 - Added exact-limit acceptance and over-limit rejection regression coverage.
-- Preserve existing track and clip/topology semantics.
+- Preserved existing clip identity, asset linkage, timing, transition, audio, transform, and topology semantics.
 - Local validation is pending user run.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.219.
+- Run the complete Pull/Fetch + Validation workflow for M3.220.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+# M3.219 — Persisted Project Track Count Cap — completed — 2026-10-01
+
+- Branch: `fix/m3-219-project-track-count-cap`.
+- PR #237.
+- Squash merge SHA: `8ad9b5e2e8ccb98ef1174d39b0f716af939de365`.
+- `main` was verified identical to the merge SHA before documentation reconciliation.
+- User reported PASS.
+- Added `MAX_PROJECT_TRACKS = 256`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved existing track and clip/topology semantics.
+- No project schema change.
 
 # M3.218 — Persisted Transform Keyframe Count Cap — completed — 2026-09-30
 
