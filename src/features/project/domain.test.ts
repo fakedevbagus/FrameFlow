@@ -20,6 +20,7 @@ import {
   MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES,
   MAX_PROJECT_SERIALIZED_BYTES,
   MAX_PERSISTED_IDENTIFIER_BYTES,
+  MAX_PERSISTED_DISPLAY_NAME_BYTES,
 } from "./domain";
 
 describe("project domain", () => {
@@ -53,6 +54,75 @@ describe("project domain", () => {
         }),
       ),
     ).toThrow("Project name must be trimmed.");
+  });
+
+  it("accepts persisted display names at the UTF-8 byte limit", () => {
+    const nameAtLimit = "x".repeat(MAX_PERSISTED_DISPLAY_NAME_BYTES - 2) + "é";
+    const project = createProject({
+      id: "display-name-limit",
+      name: nameAtLimit,
+    });
+    const asset = {
+      id: "asset-1",
+      name: nameAtLimit,
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 1000,
+    };
+    const tracks = project.tracks.map((track, index) =>
+      index === 0 ? { ...track, name: nameAtLimit } : track,
+    );
+    const validProject = {
+      ...project,
+      assets: [asset],
+      tracks,
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects persisted display names above the UTF-8 byte limit", () => {
+    const oversizedName =
+      "x".repeat(MAX_PERSISTED_DISPLAY_NAME_BYTES - 2) + "é" + "x";
+    const project = createProject({
+      id: "display-name-over-limit",
+    });
+    const cases = [
+      {
+        build: () => ({ ...project, name: oversizedName }),
+        message: "Project name must be at most 256 bytes.",
+      },
+      {
+        build: () => ({
+          ...project,
+          assets: [
+            {
+              id: "asset-1",
+              name: oversizedName,
+              mediaType: "audio" as const,
+              sourcePath: "/tmp/audio.wav",
+              durationMs: 1000,
+            },
+          ],
+        }),
+        message: "Asset 0 name must be at most 256 bytes.",
+      },
+      {
+        build: () => ({
+          ...project,
+          tracks: project.tracks.map((track, index) =>
+            index === 0 ? { ...track, name: oversizedName } : track,
+          ),
+        }),
+        message: "Track 0 name must be at most 256 bytes.",
+      },
+    ];
+
+    for (const testCase of cases) {
+      expect(() => parseProject(JSON.stringify(testCase.build()))).toThrow(
+        testCase.message,
+      );
+    }
   });
 
   it("round-trips a valid project document", () => {
