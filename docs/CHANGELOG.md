@@ -1,3 +1,16 @@
+# M3.226 — Persisted Project Display Name Byte Caps — active — 2026-10-01
+
+- Branch: `fix/m3-226-persisted-display-name-byte-caps`.
+- Fresh audit found `Project.name`, `MediaAsset.name`, and `Track.name` lacked field-level UTF-8 byte caps.
+- Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256`.
+- Enforced the cap on project, asset, and track names.
+- Added exact-limit and over-limit regression coverage using a multibyte UTF-8 boundary.
+- Local validation is pending.
+- No project schema change.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.226.
+
 # M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
 
 - Branch: `fix/m3-225-persisted-project-serialization-size-cap`.
