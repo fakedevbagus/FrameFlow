@@ -23,6 +23,7 @@ You are continuing development of the existing repository:
 - M3.222 implementation is **complete but not yet validated**.
 - Initial validation reached `npm run lint` and failed with a parser error at `src/features/project/domain.test.ts:2294`.
 - The malformed aggregate-audio test block has since been corrected on the branch.
+- The next validation rerun exposed a missing `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES` runtime definition in `src/features/project/domain.ts`; the constant was restored on the branch and another full validation rerun is required.
 - The user also reported an actual working-tree modification to `src-tauri/Cargo.lock`; do not discard or overwrite it automatically.
 - The full validation suite must be rerun after the correction before M3.222 can be considered PASS.
 - Protected PR #76 and unrelated PR #22 remain untouched.
