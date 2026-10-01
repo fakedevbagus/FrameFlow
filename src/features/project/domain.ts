@@ -35,6 +35,7 @@ export const MAX_PROJECT_CLIPS_PER_TRACK = 4096;
 export const MAX_PROJECT_TOTAL_CLIPS = 65_536;
 export const MAX_PROJECT_ASSETS = 4096;
 export const MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096;
+export const MAX_PERSISTED_IDENTIFIER_BYTES = 256;
 
 export interface CanvasSettings {
   width: number;
@@ -244,6 +245,7 @@ export function validateProject(value: unknown): asserts value is Project {
   }
 
   assertNonEmptyString(value.id, "Project id");
+  assertUtf8ByteLength(value.id, "Project id");
   assertNonEmptyString(value.name, "Project name");
   if (value.name !== value.name.trim()) {
     throw new ProjectValidationError("Project name must be trimmed.");
@@ -288,6 +290,7 @@ function validateAssets(value: unknown): MediaAsset[] {
     }
 
     assertNonEmptyString(asset.id, fieldPrefix + " id");
+    assertUtf8ByteLength(asset.id, fieldPrefix + " id");
     if (assetIds.has(asset.id)) {
       throw new ProjectValidationError(
         "Duplicate asset id: " + asset.id + ".",
@@ -358,6 +361,7 @@ function validateTracks(
     }
 
     assertNonEmptyString(track.id, fieldPrefix + " id");
+    assertUtf8ByteLength(track.id, fieldPrefix + " id");
     if (trackIds.has(track.id)) {
       throw new ProjectValidationError(
         "Duplicate track id: " + track.id + ".",
@@ -620,6 +624,7 @@ function validateClip(
   }
 
   assertNonEmptyString(value.id, fieldPrefix + " id");
+  assertUtf8ByteLength(value.id, fieldPrefix + " id");
   if (clipIds.has(value.id)) {
     throw new ProjectValidationError(
       "Duplicate clip id: " + value.id + ".",
@@ -628,6 +633,7 @@ function validateClip(
   clipIds.add(value.id);
 
   assertNonEmptyString(value.assetId, fieldPrefix + " assetId");
+  assertUtf8ByteLength(value.assetId, fieldPrefix + " assetId");
   const asset = assetById.get(value.assetId);
   if (!asset) {
     throw new ProjectValidationError(
@@ -1472,6 +1478,19 @@ function validateCanvas(value: unknown): asserts value is CanvasSettings {
 function assertNonEmptyString(value: unknown, field: string): asserts value is string {
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new ProjectValidationError(`${field} must be a non-empty string.`);
+  }
+}
+
+function assertUtf8ByteLength(value: string, field: string): void {
+  const byteLength = new TextEncoder().encode(value).length;
+
+  if (byteLength > MAX_PERSISTED_IDENTIFIER_BYTES) {
+    throw new ProjectValidationError(
+      field +
+        " must be at most " +
+        MAX_PERSISTED_IDENTIFIER_BYTES +
+        " bytes.",
+    );
   }
 }
 
