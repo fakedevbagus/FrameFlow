@@ -1,32 +1,34 @@
-## M3.225 — Persisted Project Serialization Size Cap — active — 2026-10-01
+## M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
 
 Branch:
 `fix/m3-225-persisted-project-serialization-size-cap`
 
 PR:
-- not created yet.
+- #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
 
-Fresh audit finding:
-- Native project open/save already rejects files above 16 MiB.
-- Domain `parseProject()` and `serializeProject()` did not enforce the same size before JSON parsing or local workspace persistence.
-
-Scope:
-- Add `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
-- Reject serialized input above 16 MiB before JSON parsing.
-- Reject serialized output above 16 MiB before callers store or save it.
-- Preserve existing project semantics and the native 16 MiB boundary.
-- Add exact-boundary and over-limit regression coverage.
+- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024` at the domain parse/serialize boundary.
+- Rejected serialized input above 16 MiB before JSON parsing.
+- Rejected serialized output above 16 MiB before workspace storage or native save.
+- Added exact-boundary and over-limit regression coverage.
+- User reported PASS.
 - No project schema version change.
 
-Implementation:
-- Added the 16 MiB domain serialization-size guard for parse and serialize.
-- Added focused exact-boundary and over-limit regression coverage.
-- Documentation is reconciled for M3.225.
-- Local validation is pending.
+## M3.226 — Persisted Project Display Name Byte Caps — planned — 2026-10-01
+
+Fresh audit finding:
+- `Project.name`, `MediaAsset.name`, and `Track.name` are required to be non-empty strings, but they have no field-level UTF-8 byte limit.
+- The 16 MiB serialized project cap bounds total payload size but does not prevent one display-name field from consuming a disproportionate amount of the allowed payload.
+- Existing identifier, source-path, collection-count, and serialized-project caps remain intact.
+
+Planned scope:
+- Add one shared persisted display-name UTF-8 byte cap for project, asset, and track names.
+- Preserve existing trimming/non-empty semantics.
+- Add exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- No project schema version change.
 
 Next step:
-- Create a Draft PR for M3.225 and run the complete Pull/Fetch + Validation workflow.
-
+- Create a focused M3.226 branch from verified `main` and add the smallest safe field-level name cap.
+- Do not start UI/UX redesign.
 ## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
 Branch:
