@@ -3,6 +3,9 @@
 Branch:
 `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`
 
+PR:
+- #245 (Draft).
+
 Fresh audit finding:
 - `NativeVideoSegmentsRenderRequest.segments` is capped at 4,096 entries.
 - Each optional segment source path is capped by the shared 4,096-byte media-path contract.
@@ -28,7 +31,7 @@ Pre-existing PR #231:
 - Its base is stale/diverged from current `main`; M3.227 is implemented fresh from the verified current `main`.
 
 Next step:
-- Create a Draft PR for M3.227 and run the complete Pull/Fetch + Validation workflow.
+- Run the complete Pull/Fetch + Validation workflow for M3.227.
 
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
