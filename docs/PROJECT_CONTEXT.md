@@ -16,7 +16,9 @@ Scope:
 - No project schema version change.
 
 Implementation:
-- M3.220 implementation is complete.
+- Added `MAX_PROJECT_CLIPS_PER_TRACK = 4096`.
+- Added early persisted clip-count rejection before per-clip validation and topology sorting.
+- Added exact-limit acceptance and 4,097-entry rejection tests.
 - Documentation is reconciled for M3.220.
 - Local validation is pending user run.
 
