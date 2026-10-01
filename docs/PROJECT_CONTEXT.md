@@ -24,14 +24,16 @@ Implementation:
 - Added saturating aggregate accounting before the per-segment validation loop.
 - Added exact 4 MiB acceptance and over-limit rejection tests.
 - Documentation is reconciled for M3.227.
-- First validation run passed lint, frontend tests (554/554), and frontend build, but Cargo tests failed because the two new tests lacked the `NativeVideoSegment` test-module import. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`; full validation remains pending.
+- First validation run passed lint, frontend tests (554/554), and frontend build, but Cargo tests failed because the two new tests lacked the `NativeVideoSegment` test-module import. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`.
+- Second validation run completed 545/545 frontend tests but Vitest reported 2 unhandled fork-worker startup timeouts for `src/features/export/export-job.test.ts` and `src/features/transform/crop.test.ts`. The run is not accepted as PASS because Vitest warned unhandled errors can cause false positives.
+- Hardened `vitest.config.ts` with `maxWorkers: 1` in commit `6d4eb658443a99c316989509fe37d4808c2527c3` to avoid concurrent fork-worker startup pressure. Full validation remains pending.
 
 Pre-existing PR #231:
 - Left untouched.
 - Its base is stale/diverged from current `main`; M3.227 is implemented fresh from the verified current `main`.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.227.
+- Run the complete Pull/Fetch + Validation workflow for M3.227 after the Vitest worker-concurrency correction.
 
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
