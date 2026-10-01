@@ -1,17 +1,27 @@
-# M3.223 — Persisted Project Asset Source Path Byte Cap — active — 2026-10-01
+# M3.224 — Persisted Project Identifier Byte Caps — active — 2026-10-01
 
-- Branch: `fix/m3-223-persisted-asset-source-path-cap`.
-- Fresh audit of verified `main` found native media-path handling capped paths at 4,096 bytes while persisted asset `sourcePath` had no corresponding byte limit.
-- Added `MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096`.
-- Persisted asset source paths are measured using UTF-8 byte length and rejected above 4,096 bytes during project validation.
-- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- Branch: `fix/m3-224-persisted-project-identifier-byte-caps`.
+- Fresh audit of verified `main` found persisted project/asset/track/clip identifiers lacked byte-length bounds.
+- Planned `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
+- Project, asset, track, and clip identifiers plus clip `assetId` references will be validated by UTF-8 byte length.
+- Exact-limit, over-limit, and multibyte UTF-8 regression coverage is included.
 - Local validation is pending.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.223.
+- Run the complete Pull/Fetch + Validation workflow for M3.224.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+# M3.223 — Persisted Project Asset Source Path Byte Cap — completed — 2026-10-01
+
+- Branch: `fix/m3-223-persisted-asset-source-path-cap`.
+- PR #241; squash-merged at `21610705086360cf7d8022bb5bd111d3b0feb7f3`.
+- Added `MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096`.
+- Persisted asset source paths use UTF-8 byte-length validation.
+- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- User reported PASS.
+- No project schema change.
 
 # M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
