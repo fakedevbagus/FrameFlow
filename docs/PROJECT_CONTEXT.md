@@ -40,19 +40,24 @@ Next step:
 Branch:
 `fix/m3-228-unified-av-source-audio-probe-dedup`
 
+PR:
+- #246 (Draft).
+
 Fresh audit finding:
 - Unified AV render requests allow up to 4,096 source-audio segments.
-- During resolution, each source-audio segment calls `probe_has_audio(video_path)`, even when several segments reference the same resolved video input.
-- A project containing repeated clips from one video source can therefore trigger the same FFprobe presence probe repeatedly within one export request.
+- Audio-presence probing occurs inside source-audio segment resolution, so multiple segments referencing the same resolved video source can repeat the same FFprobe probe.
 
-Scope:
-- Cache audio-presence probe results by resolved video input path for the duration of one unified AV render request.
-- Preserve source-duration caching, segment validation, audio graph construction, cancellation, cleanup, result semantics, and error propagation.
-- Add focused regression coverage proving repeated source-audio segments for the same input reuse one audio-presence probe.
-- No project schema change.
+Implementation:
+- Added a per-render-request cache keyed by resolved source path.
+- Reused cached audio-presence results for repeated segments.
+- Preserved source-duration caching and all render/error/cancellation/cleanup/result semantics.
+- Added focused regression coverage proving one probe for repeated source paths.
+
+No project schema change.
+Local validation is pending user run.
 
 Next step:
-- Implement the focused M3.228 fix and regression coverage on the fresh branch.
+- Run the complete Pull/Fetch + Validation workflow for M3.228.
 
 # M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — completed — 2026-10-01
 
