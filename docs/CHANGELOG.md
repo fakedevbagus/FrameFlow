@@ -6,7 +6,7 @@
 - Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
 - Enforced the aggregate source-path cap before per-segment filesystem/media probing.
 - Added overflow-safe aggregate accounting plus exact-limit and over-limit regression coverage.
-- Local validation is pending.
+- First validation run: lint PASS, frontend tests 554/554 PASS, and frontend build PASS; Cargo test failed due to a missing `NativeVideoSegment` import in the two new tests. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`; full validation is pending.
 - No project schema change.
 - Pre-existing PR #231 remains untouched; it is stale/diverged from current `main`.
 
