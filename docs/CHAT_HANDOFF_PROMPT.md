@@ -12,16 +12,14 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.224 — Persisted Project Identifier Byte Caps.
-- **M3.224 PR:** #242.
-- **M3.224 squash merge SHA:** `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
-- `main` was verified identical to that merge SHA after the merge.
+- **Latest accepted milestone:** M3.225 — Persisted Project Serialization Size Cap.
+- **M3.225 PR:** #243.
+- **M3.225 squash merge SHA:** `c12fde998a6c27421174493550020a825d80a6d6`.
+- `main` was verified identical to that merge SHA.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.225 — Persisted Project Serialization Size Cap.
-- **Current branch:** `fix/m3-225-persisted-project-serialization-size-cap`.
-- **M3.225 PR:** not created yet.
-- M3.225 adds a 16 MiB UTF-8 serialized-project size cap at the domain parse/serialize boundary.
-- No project schema version change.
+- **Next milestone:** M3.226 — Persisted Project Display Name Byte Caps.
+- Fresh audit identified unbounded persisted display-name strings on `Project.name`, `MediaAsset.name`, and `Track.name`; these remain bounded only indirectly by the 16 MiB project serialization limit.
+- No project schema version change is expected for M3.226.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -54,52 +52,32 @@ You are continuing development of the existing repository:
 - Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
 - No project schema version change.
 
-## M3.225 — Persisted Project Serialization Size Cap
+## M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
 
-### Fresh audit finding
-
-Verified `main` already enforces a 16 MiB project-file limit in Rust, but `parseProject()` and `serializeProject()` did not enforce the same boundary before JSON parsing or local workspace storage.
-
-### Current implementation
-
-- `src/features/project/domain.ts`
-  - Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
-  - Rejects serialized project input above 16 MiB before `JSON.parse()`.
-  - Rejects serialized project output above 16 MiB before returning it to native save or workspace storage.
-- `src/features/project/domain.test.ts`
-  - Added exact 16 MiB serialized-output acceptance and 16 MiB+1 rejection coverage.
-  - Added oversized-input rejection coverage proving the guard runs before JSON parsing.
+- Branch: `fix/m3-225-persisted-project-serialization-size-cap`.
+- PR #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
+- User reported PASS.
+- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024` at the domain persistence boundary.
+- `parseProject()` rejects serialized input above 16 MiB before JSON parsing.
+- `serializeProject()` rejects serialized output above 16 MiB before callers store/save it.
+- Added exact-boundary acceptance and over-limit regression coverage.
+- Preserved the existing native 16 MiB project-file boundary and project schema version.
 - No project schema version change.
+
 ## FIRST ACTION IN THE NEW CHAT
 
-Do not start another unrelated audit immediately.
+Do not start implementation from memory.
 
-First refresh the actual repository state for M3.225 and run the complete validation for the current branch.
+First refresh the actual verified `main` state and perform a fresh audit for **M3.226 — Persisted Project Display Name Byte Caps**.
 
-Use this as one combined copy-paste block:
+Before creating the branch, confirm:
+- current `main` SHA;
+- no unexpected divergence from the documented merge SHA;
+- `Project.name`, `MediaAsset.name`, and `Track.name` remain unbounded by field-level UTF-8 byte caps;
+- existing persisted identifier/path/project-size limits remain intact;
+- no stronger adjacent gap supersedes M3.226.
 
-```bash
-ROOT="$(git rev-parse --show-toplevel)" &&
-cd "$ROOT" &&
-git fetch origin &&
-git checkout fix/m3-225-persisted-project-serialization-size-cap &&
-git pull --ff-only origin fix/m3-225-persisted-project-serialization-size-cap &&
-git status --short &&
-git log -1 --oneline &&
-npm ci &&
-npm run lint &&
-npm run test &&
-npm run build &&
-cargo test --manifest-path src-tauri/Cargo.toml
-```
-
-Validation rules:
-
-- Only the user's actual reported output establishes validation success.
-- If any command fails, diagnose and correct the issue before accepting PASS.
-- Do not infer Cargo success from frontend success.
-- Do not infer a clean working tree; report any user-local changes instead of assuming.
-- Keep validation focused on M3.225.
+Only after that audit should the next focused branch be created.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -204,15 +182,13 @@ Do not jump ahead simply because the current UI already exists.
 
 ## CURRENT M3.225 SUMMARY
 
-**Latest accepted checkpoint:** M3.224 PASS, squash-merged to `main` at `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
+**Latest accepted checkpoint:** M3.225 PASS, squash-merged to `main` at `c12fde998a6c27421174493550020a825d80a6d6`.
 
-**Current continuation point:** M3.225 branch `fix/m3-225-persisted-project-serialization-size-cap`.
+**Continuation point:** fresh audit for M3.226 from the verified `main`.
 
-**Fresh audit:** Native project open/save already cap project files at 16 MiB, but domain parsing and serialization lacked the same early boundary for JSON parsing and workspace storage.
+**Fresh audit finding:** persisted project, asset, and track display names are non-empty strings but have no field-level UTF-8 byte limit; the 16 MiB project serialization cap still bounds total project size, but a single oversized display name can consume a disproportionate amount of the allowed payload and reach UI/domain surfaces without a dedicated name bound.
 
-**Current state:** M3.225 implementation is complete and documentation is reconciled. Local validation is pending.
-
-**What to do next:** pull the latest M3.225 branch head and run the one-block validation command above. Only the user's explicit PASS establishes validation acceptance.
+**Next step:** inspect the verified `main` implementation and tests, confirm this remains the strongest focused gap, then create M3.226 with the smallest safe field-level byte cap and focused regression coverage.
 
 ## USER WORKFLOW PREFERENCE
 
