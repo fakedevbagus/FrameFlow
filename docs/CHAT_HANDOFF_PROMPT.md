@@ -12,17 +12,16 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.226 — Persisted Project Display Name Byte Caps.
-- **M3.226 PR:** #244.
-- **M3.226 squash merge SHA:** `687964d8331311d42913f09f9d7e5acc5c88f88c`.
+- **Latest accepted milestone:** M3.227 — Multi-Segment Aggregate Source Path Bytes Cap.
+- **M3.227 PR:** #245.
+- **M3.227 squash merge SHA:** `7658d53bd58c407d07c363ba0cc8bf918f57dc63`.
 - `main` was verified identical to that merge SHA before documentation reconciliation.
-- User explicitly reported `pass`.
-- **Current active milestone:** M3.227 — Multi-Segment Aggregate Source Path Bytes Cap.
-- **Current branch:** `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
-- **M3.227 PR:** #245 (Draft).
-- M3.227 implements a 4 MiB aggregate UTF-8 byte cap across optional multi-segment source paths, enforced before per-segment filesystem/media probing.
-- First validation run: lint PASS, frontend tests 554/554 PASS, frontend build PASS, but `cargo test` failed because the two new tests lacked the `NativeVideoSegment` test-module import; corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`.
-- Second validation run: frontend assertions all passed (545/545) but Vitest reported 2 unhandled fork-worker startup timeouts for `src/features/export/export-job.test.ts` and `src/features/transform/crop.test.ts`; this is a validation failure because Vitest warned the unhandled errors can cause false positives. Hardened the runner in commit `6d4eb658443a99c316989509fe37d4808c2527c3` by reducing the Vitest fork pool to one worker. Full validation must be rerun.
+- User explicitly reported `pass` and the milestone was accepted through the established workflow.
+- M3.227 added a 4 MiB aggregate UTF-8 byte cap across optional multi-segment source paths, enforced before per-segment filesystem/media probing.
+- The validation history included a corrected Cargo-test import and a Vitest fork-worker startup timeout incident; the runner was hardened to one fork worker before acceptance.
+- **Current active milestone:** M3.228 — Unified AV Source-Audio Presence Probe Deduplication.
+- **Current branch:** `fix/m3-228-unified-av-source-audio-probe-dedup`.
+- M3.228 scope is to avoid repeated `probe_has_audio()` subprocess probes when multiple source-audio segments reference the same resolved video input during one unified AV render request.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -67,19 +66,29 @@ You are continuing development of the existing repository:
 - Preserved the existing native 16 MiB project-file boundary and project schema version.
 - No project schema version change.
 
-## M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
+## M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — completed — 2026-10-01
 
 - Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
-- PR #245 (Draft).
-- Fresh audit from verified `main` found `NativeVideoSegmentsRenderRequest.segments` capped at 4,096 entries and each source path capped at 4,096 bytes, but no aggregate cap existed across all optional source paths.
-- Independent limits permitted a theoretical 16 MiB source-path string payload before filesystem/media probing.
+- PR #245; squash-merged at `7658d53bd58c407d07c363ba0cc8bf918f57dc63`.
+- User reported `PASS` after the corrected validation workflow.
 - Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
-- Enforced an aggregate source-path byte guard before iterating into per-segment media/path validation.
-- Used a saturating accumulator to keep aggregate accounting overflow-safe.
-- Added exact 4 MiB acceptance and over-limit rejection regression coverage.
-- No project schema change.
-- Local validation is still pending. The latest run reached 545/545 frontend tests but Vitest reported 2 unhandled fork-worker startup timeouts; the runner now uses a single fork worker via commit `6d4eb658443a99c316989509fe37d4808c2527c3` to remove concurrent worker-start pressure.
+- Enforced the aggregate source-path cap before per-segment filesystem/media probing.
+- Used saturating aggregate accounting.
+- Added exact-limit and over-limit regression coverage.
+- Corrected the test-module import discovered in validation and hardened Vitest to one fork worker after worker-start timeout errors.
+- No project schema version change.
 
+## M3.228 — Unified AV Source-Audio Presence Probe Deduplication — active — 2026-10-02
+
+- Branch: `fix/m3-228-unified-av-source-audio-probe-dedup`.
+- Fresh audit from verified `main` found that unified AV rendering may create up to 4,096 `source_audio_segments`, while `probe_has_audio(video_path)` is invoked inside the segment-resolution loop.
+- Multiple segments can reference the same video input, so the current implementation may execute the same FFprobe presence probe repeatedly for one source during a single export.
+- Scope: cache audio-presence probe results by resolved video input path within one render request, while preserving existing source-duration caching, segment validation, audio graph behavior, cancellation, cleanup, result semantics, and error propagation.
+- Add focused regression coverage proving one source path is probed once even when multiple source-audio segments reference that input.
+- No project schema change.
+
+Next step:
+- Implement M3.228 on the fresh branch from verified `main`, add focused regression coverage, reconcile documentation, and provide the standard Pull/Fetch + Validation block.
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
@@ -95,32 +104,12 @@ You are continuing development of the existing repository:
 
 Do not start implementation from memory.
 
-First refresh the actual repository state for M3.227 and run the complete validation for the current branch. The latest validation attempt was blocked by Vitest fork-worker startup timeouts; the runner is now constrained to one worker.
+First refresh the actual repository state for M3.228 and continue from the verified `main` / active branch state.
 
-Use this as one combined copy-paste block:
+For the active milestone, use the repository workflow below: refresh PR/head/base, validate the branch, and only accept `PASS` from the user's actual current validation result.
 
-```bash
-ROOT="$(git rev-parse --show-toplevel)" &&
-cd "$ROOT" &&
-git fetch origin &&
-git checkout fix/m3-227-multi-segment-aggregate-source-path-bytes-cap &&
-git pull --ff-only origin fix/m3-227-multi-segment-aggregate-source-path-bytes-cap &&
-git status --short &&
-git log -1 --oneline &&
-npm ci &&
-npm run lint &&
-npm run test &&
-npm run build &&
-cargo test --manifest-path src-tauri/Cargo.toml
-```
+The current user-local workflow preserves any pre-existing `src-tauri/Cargo.lock` modification; never reset or discard it automatically.
 
-Validation rules:
-
-- Only the user's actual reported output establishes validation success.
-- If any command fails, diagnose and correct the issue before accepting PASS.
-- Do not infer Cargo success from frontend success.
-- Do not infer a clean working tree; report any user-local changes instead of assuming.
-- Keep validation focused on M3.227.
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
 ### 1. Refresh before acting
@@ -222,19 +211,19 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.227 SUMMARY
+## CURRENT M3.228 SUMMARY
 
-**Latest accepted checkpoint:** M3.226 PASS, squash-merged to `main` at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
+**Latest accepted checkpoint:** M3.227 PASS, squash-merged to `main` at `7658d53bd58c407d07c363ba0cc8bf918f57dc63` and verified identical on `main`.
 
-**Current continuation point:** M3.227 branch `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+**Current continuation point:** M3.228 branch `fix/m3-228-unified-av-source-audio-probe-dedup`.
 
-**Fresh audit:** multi-segment render requests allow up to 4,096 segments and each optional source path is individually capped at 4,096 bytes, but aggregate source-path bytes were not bounded. This permitted a theoretical 16 MiB source-path payload before per-segment filesystem/media validation.
+**Fresh audit:** unified AV render requests permit up to 4,096 source-audio segments. During resolution, every segment calls `probe_has_audio()` for its referenced video input, so repeated clips/segments targeting the same source can trigger repeated FFprobe subprocesses in one export.
 
-**Implementation:** `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024` is enforced before per-segment `media_path()` probing, with saturating aggregation. Exact-limit and over-limit regression coverage is present.
+**Implementation target:** deduplicate audio-presence probing per resolved video input path within the render request, preserving existing source-duration caching and all render/error semantics.
 
-**Current state:** implementation is complete and the validation environment has been hardened after a second-run Vitest worker-start timeout incident. Local validation is still pending.
+**Current state:** M3.228 audit is complete and implementation is now ready to begin on the fresh branch. No M3.228 validation has been claimed.
 
-**Next step:** run the combined Pull/Fetch + Validation block above. Only the user's explicit PASS establishes validation acceptance.
+**Next step:** implement the focused fix, add regression coverage, update all three docs, and provide the combined Pull/Fetch + Validation block.
 
 ## USER WORKFLOW PREFERENCE
 
