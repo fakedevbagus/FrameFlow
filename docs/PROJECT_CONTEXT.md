@@ -1,26 +1,42 @@
-## M3.224 — Persisted Project Identifier Byte Caps — active — 2026-10-01
+## M3.225 — Persisted Project Serialization Size Cap — active — 2026-10-01
+
+Branch:
+`fix/m3-225-persisted-project-serialization-size-cap`
+
+PR:
+- not created yet.
+
+Fresh audit finding:
+- Native project open/save already rejects files above 16 MiB.
+- Domain `parseProject()` and `serializeProject()` did not enforce the same size before JSON parsing or local workspace persistence.
+
+Scope:
+- Add `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
+- Reject serialized input above 16 MiB before JSON parsing.
+- Reject serialized output above 16 MiB before callers store or save it.
+- Preserve existing project semantics and the native 16 MiB boundary.
+- Add exact-boundary and over-limit regression coverage.
+- No project schema version change.
+
+Implementation:
+- Pending implementation.
+
+Next step:
+- Implement the focused domain serialization-size guard, add regression coverage, reconcile documentation, create a Draft PR, and run the combined Pull/Fetch + Validation workflow.
+
+## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
 Branch:
 `fix/m3-224-persisted-project-identifier-byte-caps`
 
 PR:
-- #242 (Draft).
+- #242; squash-merged at `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
 
-Fresh audit finding:
-- Persisted project, asset, track, and clip identifiers only required non-empty strings.
-- These identifiers are stored in maps/sets and serialized throughout nested project structures, leaving an unbounded string resource surface.
-
-Scope:
-- Add `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
-- Validate project id, asset id, track id, clip id, and clip `assetId` references by UTF-8 byte length.
-- Reject identifiers above 256 bytes during project validation.
-- Preserve uniqueness, asset linkage, and project schema semantics.
-- Add exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- Added `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
+- Validated project, asset, track, clip, and clip `assetId` identifiers by UTF-8 byte length.
+- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- User reported PASS.
 - No project schema version change.
-
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.224.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
 ## M3.223 — Persisted Project Asset Source Path Byte Cap — completed — 2026-10-01
 
