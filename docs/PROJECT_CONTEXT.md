@@ -35,7 +35,35 @@ Pre-existing PR #231:
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.227 after the Vitest worker-concurrency correction.
 
-## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
+## M3.228 — Unified AV Source-Audio Presence Probe Deduplication — active — 2026-10-02
+
+Branch:
+`fix/m3-228-unified-av-source-audio-probe-dedup`
+
+Fresh audit finding:
+- Unified AV render requests allow up to 4,096 source-audio segments.
+- During resolution, each source-audio segment calls `probe_has_audio(video_path)`, even when several segments reference the same resolved video input.
+- A project containing repeated clips from one video source can therefore trigger the same FFprobe presence probe repeatedly within one export request.
+
+Scope:
+- Cache audio-presence probe results by resolved video input path for the duration of one unified AV render request.
+- Preserve source-duration caching, segment validation, audio graph construction, cancellation, cleanup, result semantics, and error propagation.
+- Add focused regression coverage proving repeated source-audio segments for the same input reuse one audio-presence probe.
+- No project schema change.
+
+Next step:
+- Implement the focused M3.228 fix and regression coverage on the fresh branch.
+
+# M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — completed — 2026-10-01
+
+- PR #245; squash-merged at `7658d53bd58c407d07c363ba0cc8bf918f57dc63`.
+- User reported PASS.
+- Added a 4 MiB aggregate UTF-8 source-path cap before multi-segment filesystem/media probing.
+- Used saturating aggregate accounting and exact-limit/over-limit regression coverage.
+- Validation incidents were corrected before acceptance.
+- No project schema change.
+
+# M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 Branch:
 `fix/m3-226-persisted-display-name-byte-caps`
