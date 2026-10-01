@@ -21,7 +21,8 @@ You are continuing development of the existing repository:
 - **Current branch:** `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
 - **M3.227 PR:** #245 (Draft).
 - M3.227 implements a 4 MiB aggregate UTF-8 byte cap across optional multi-segment source paths, enforced before per-segment filesystem/media probing.
-- First validation run: lint PASS, frontend tests 554/554 PASS, frontend build PASS, but `cargo test` failed because the two new tests lacked the `NativeVideoSegment` test-module import; corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`. Full validation must be rerun.
+- First validation run: lint PASS, frontend tests 554/554 PASS, frontend build PASS, but `cargo test` failed because the two new tests lacked the `NativeVideoSegment` test-module import; corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`.
+- Second validation run: frontend assertions all passed (545/545) but Vitest reported 2 unhandled fork-worker startup timeouts for `src/features/export/export-job.test.ts` and `src/features/transform/crop.test.ts`; this is a validation failure because Vitest warned the unhandled errors can cause false positives. Hardened the runner in commit `6d4eb658443a99c316989509fe37d4808c2527c3` by reducing the Vitest fork pool to one worker. Full validation must be rerun.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -77,7 +78,7 @@ You are continuing development of the existing repository:
 - Used a saturating accumulator to keep aggregate accounting overflow-safe.
 - Added exact 4 MiB acceptance and over-limit rejection regression coverage.
 - No project schema change.
-- Local validation is pending after the test-import correction.
+- Local validation is still pending. The latest run reached 545/545 frontend tests but Vitest reported 2 unhandled fork-worker startup timeouts; the runner now uses a single fork worker via commit `6d4eb658443a99c316989509fe37d4808c2527c3` to remove concurrent worker-start pressure.
 
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
@@ -94,7 +95,7 @@ You are continuing development of the existing repository:
 
 Do not start implementation from memory.
 
-First refresh the actual repository state for M3.227 and run the complete validation for the current branch.
+First refresh the actual repository state for M3.227 and run the complete validation for the current branch. The latest validation attempt was blocked by Vitest fork-worker startup timeouts; the runner is now constrained to one worker.
 
 Use this as one combined copy-paste block:
 
@@ -231,7 +232,7 @@ Do not jump ahead simply because the current UI already exists.
 
 **Implementation:** `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024` is enforced before per-segment `media_path()` probing, with saturating aggregation. Exact-limit and over-limit regression coverage is present.
 
-**Current state:** implementation and documentation are complete for the milestone; local validation is pending.
+**Current state:** implementation is complete and the validation environment has been hardened after a second-run Vitest worker-start timeout incident. Local validation is still pending.
 
 **Next step:** run the combined Pull/Fetch + Validation block above. Only the user's explicit PASS establishes validation acceptance.
 
