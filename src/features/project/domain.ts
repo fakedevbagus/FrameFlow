@@ -31,6 +31,7 @@ export const MAX_AUDIO_VOLUME_KEYFRAMES = 4096;
 export const MAX_TRANSFORM_KEYFRAMES = 4096;
 export const MAX_PROJECT_TRACKS = 256;
 export const MAX_PROJECT_CLIPS_PER_TRACK = 4096;
+export const MAX_PROJECT_TOTAL_CLIPS = 65_536;
 export const MAX_PROJECT_ASSETS = 4096;
 
 export interface CanvasSettings {
@@ -334,6 +335,7 @@ function validateTracks(
   const assetById = new Map(assets.map((asset) => [asset.id, asset]));
   const trackIds = new Set<string>();
   const clipIds = new Set<string>();
+  let totalClipCount = 0;
 
   for (let trackIndex = 0; trackIndex < value.length; trackIndex += 1) {
     const track = value[trackIndex];
@@ -413,6 +415,15 @@ function validateTracks(
           " clips must contain at most " +
           MAX_PROJECT_CLIPS_PER_TRACK +
           " clips.",
+      );
+    }
+
+    totalClipCount += track.clips.length;
+    if (totalClipCount > MAX_PROJECT_TOTAL_CLIPS) {
+      throw new ProjectValidationError(
+        "Project clips must contain at most " +
+          MAX_PROJECT_TOTAL_CLIPS +
+          " clips across all tracks.",
       );
     }
 
