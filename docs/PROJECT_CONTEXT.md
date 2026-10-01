@@ -16,7 +16,9 @@ Scope:
 - No project schema version change.
 
 Implementation:
-- M3.221 implementation is complete.
+- Added `MAX_PROJECT_TOTAL_CLIPS = 65_536`.
+- Added aggregate persisted clip counting across all tracks before per-clip validation for an over-limit project.
+- Added exact-limit acceptance and 65,537-entry rejection tests.
 - Documentation is reconciled for M3.221.
 - Local validation is pending user run.
 
