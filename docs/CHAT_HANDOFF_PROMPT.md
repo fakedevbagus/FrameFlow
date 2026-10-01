@@ -19,9 +19,9 @@ You are continuing development of the existing repository:
 - User explicitly reported `pass`.
 - **Current active milestone:** M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap.
 - **Current branch:** `fix/m3-222-project-total-audio-keyframe-count-cap`.
-- **M3.222 PR:** create after implementation/documentation reconciliation.
+- **M3.222 PR:** #240 (Draft).
 - **Base:** `main` after the M3.221 merge and documentation reconciliation.
-- M3.222 is **implemented but not yet validated**.
+- M3.222 implementation is **complete but not yet validated**.
 - Do not mark M3.222 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
@@ -36,6 +36,7 @@ Verified `main` already caps persisted audio volume keyframes at 4,096 entries p
 
 - `src/features/project/domain.ts`
   - Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
+  - Counts persisted audio-volume keyframes across clips before per-clip keyframe validation.
   - Counts persisted audio-volume keyframes across all clips and rejects the project when the aggregate exceeds 65,536 before validating the excess keyframe collection.
   - Preserves the existing 4,096 per-clip cap and audio keyframe timing/value/order semantics.
 - `src/features/project/domain.test.ts`
@@ -181,7 +182,7 @@ Do not jump ahead simply because the current UI already exists.
 
 **Current continuation point:** M3.222 implementation branch `fix/m3-222-project-total-audio-keyframe-count-cap`.
 
-**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
+**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS follow the exact merge workflow.
 
 **Do not describe M3.222 as PASS yet.**
 
