@@ -1,3 +1,50 @@
+## M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
+
+Branch:
+`fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`
+
+Fresh audit finding:
+- `NativeVideoSegmentsRenderRequest.segments` is capped at 4,096 entries.
+- Each optional segment source path is capped by the shared 4,096-byte media-path contract.
+- No aggregate source-path byte cap existed across a multi-segment request, allowing a theoretical 16 MiB source-path payload before filesystem/media probing.
+
+Scope:
+- Add `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
+- Enforce the aggregate source-path byte cap before per-segment filesystem/media probing.
+- Preserve segment count, per-path, duration, absolute-path, media-type, source identity, render, cleanup, and result semantics.
+- Use overflow-safe aggregate accounting.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Implementation:
+- Added the 4 MiB aggregate source-path byte cap.
+- Added saturating aggregate accounting before the per-segment validation loop.
+- Added exact 4 MiB acceptance and over-limit rejection tests.
+- Documentation is reconciled for M3.227.
+- Local validation is pending.
+
+Pre-existing PR #231:
+- Left untouched.
+- Its base is stale/diverged from current `main`; M3.227 is implemented fresh from the verified current `main`.
+
+Next step:
+- Create a Draft PR for M3.227 and run the complete Pull/Fetch + Validation workflow.
+
+## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
+
+Branch:
+`fix/m3-226-persisted-display-name-byte-caps`
+
+PR:
+- #244; squash-merged at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
+
+- Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
+- Enforced the cap on `Project.name`, `MediaAsset.name`, and `Track.name`.
+- Preserved existing non-empty and project-name trimming semantics.
+- Added exact 256-byte acceptance and 257-byte rejection coverage using a multibyte UTF-8 boundary.
+- User reported PASS.
+- No project schema version change.
+
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 Branch:
