@@ -1,29 +1,29 @@
-# M3.220 — Persisted Project Clip Count Cap — active — 2026-10-01
+# M3.221 — Persisted Project Total Clip Count Cap — active — 2026-10-01
 
-- Branch: `fix/m3-220-project-clip-count-cap`.
-- Fresh audit of verified `main` found each persisted track's `clips` array without an explicit count ceiling.
-- Added `MAX_PROJECT_CLIPS_PER_TRACK = 4096`.
-- Persisted tracks with more than 4,096 clips are rejected before per-clip validation and topology sorting.
-- Added exact-limit acceptance and over-limit rejection regression coverage.
-- Preserved existing clip identity, asset linkage, timing, transition, audio, transform, and topology semantics.
+- Branch: `fix/m3-221-project-total-clip-count-cap`.
+- Fresh audit of verified `main` found the aggregate persisted clip count remained unbounded after the per-track clip cap was added.
+- Added `MAX_PROJECT_TOTAL_CLIPS = 65_536`.
+- Persisted projects with more than 65,536 clips across all tracks are rejected before validating the excess clip collection.
+- Preserved the existing 4,096 per-track cap and clip/topology semantics.
+- Added exact-limit and over-limit regression coverage.
 - Local validation is pending user run.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.220.
+- Run the complete Pull/Fetch + Validation workflow for M3.221.
 - After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
 
-# M3.219 — Persisted Project Track Count Cap — completed — 2026-10-01
+# M3.220 — Persisted Project Clip Count Cap — completed — 2026-10-01
 
-- Branch: `fix/m3-219-project-track-count-cap`.
-- PR #237.
-- Squash merge SHA: `8ad9b5e2e8ccb98ef1174d39b0f716af939de365`.
+- Branch: `fix/m3-220-project-clip-count-cap`.
+- PR #238.
+- Squash merge SHA: `a957053d17f56322bae5fd71dacabd471b2670af`.
 - `main` was verified identical to the merge SHA before documentation reconciliation.
 - User reported PASS.
-- Added `MAX_PROJECT_TRACKS = 256`.
+- Added `MAX_PROJECT_CLIPS_PER_TRACK = 4096`.
 - Added exact-limit acceptance and over-limit rejection regression coverage.
-- Preserved existing track and clip/topology semantics.
+- Preserved existing clip identity, asset linkage, timing, transition, audio, transform, and topology semantics.
 - No project schema change.
 
 # M3.218 — Persisted Transform Keyframe Count Cap — completed — 2026-09-30
