@@ -21,6 +21,7 @@ Implementation:
 - Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
 - Added aggregate persisted audio-volume keyframe counting across clips.
 - Corrected a syntax error in the aggregate audio-keyframe test block after the initial lint failure.
+- The next validation rerun exposed a missing `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES` runtime definition in `src/features/project/domain.ts`; the constant was restored. A fresh full validation rerun is required.
 - User-reported validation also showed a local `src-tauri/Cargo.lock` modification; it must be preserved.
 - A fresh full validation rerun is required.
 
