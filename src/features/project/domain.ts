@@ -336,6 +336,7 @@ function validateTracks(
   const trackIds = new Set<string>();
   const clipIds = new Set<string>();
   let totalClipCount = 0;
+  let totalAudioVolumeKeyframeCount = 0;
 
   for (let trackIndex = 0; trackIndex < value.length; trackIndex += 1) {
     const track = value[trackIndex];
@@ -428,8 +429,23 @@ function validateTracks(
     }
 
     for (let clipIndex = 0; clipIndex < track.clips.length; clipIndex += 1) {
+      const clip = track.clips[clipIndex];
+      if (isRecord(clip) && Array.isArray(clip.audioVolumeKeyframes)) {
+        totalAudioVolumeKeyframeCount += clip.audioVolumeKeyframes.length;
+        if (
+          totalAudioVolumeKeyframeCount >
+          MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES
+        ) {
+          throw new ProjectValidationError(
+            "Project audioVolumeKeyframes must contain at most " +
+              MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES +
+              " keyframes across all clips.",
+          );
+        }
+      }
+
       validateClip(
-        track.clips[clipIndex],
+        clip,
         track,
         trackIndex,
         clipIndex,
