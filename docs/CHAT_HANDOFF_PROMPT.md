@@ -17,10 +17,11 @@ You are continuing development of the existing repository:
 - **M3.226 squash merge SHA:** `687964d8331311d42913f09f9d7e5acc5c88f88c`.
 - `main` was verified identical to that merge SHA before documentation reconciliation.
 - User explicitly reported `pass`.
-- **Next milestone:** M3.227 — Persisted Project Display-Name Length/Byte Boundary Follow-up Audit.
-- Fresh audit after M3.226 is required before choosing the next concrete hardening issue; do not assume the next gap from memory.
+- **Current active milestone:** M3.227 — Multi-Segment Aggregate Source Path Bytes Cap.
+- **Current branch:** `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- M3.227 implements a 4 MiB aggregate UTF-8 byte cap across optional multi-segment source paths, enforced before per-segment filesystem/media probing.
+- **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
-- Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
 - PR #240; squash-merged at `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
@@ -63,6 +64,18 @@ You are continuing development of the existing repository:
 - Preserved the existing native 16 MiB project-file boundary and project schema version.
 - No project schema version change.
 
+## M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
+
+- Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- Fresh audit from verified `main` found `NativeVideoSegmentsRenderRequest.segments` capped at 4,096 entries and each source path capped at 4,096 bytes, but no aggregate cap existed across all optional source paths.
+- Independent limits permitted a theoretical 16 MiB source-path string payload before filesystem/media probing.
+- Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
+- Enforced an aggregate source-path byte guard before iterating into per-segment media/path validation.
+- Used a saturating accumulator to keep aggregate accounting overflow-safe.
+- Added exact 4 MiB acceptance and over-limit rejection regression coverage.
+- No project schema change.
+- Local validation is pending.
+
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
@@ -78,17 +91,32 @@ You are continuing development of the existing repository:
 
 Do not start implementation from memory.
 
-First refresh the verified `main` state and perform a fresh audit for **M3.227**. The next milestone must be selected from the actual repository state after M3.226.
+First refresh the actual repository state for M3.227 and run the complete validation for the current branch.
 
-Before creating the next branch, confirm:
-- current `main` SHA and equality with the recorded M3.226 merge;
-- M3.226's persisted display-name byte cap is present and covered;
-- all existing persisted identifier/path/count/serialization boundaries remain intact;
-- remaining persisted fields and native/domain boundaries for concrete unbounded or mismatched resource inputs;
-- no stronger adjacent stability/correctness gap supersedes the proposed M3.227 scope.
+Use this as one combined copy-paste block:
 
-After the audit, create only one focused branch for the strongest concrete gap.
+```bash
+ROOT="$(git rev-parse --show-toplevel)" &&
+cd "$ROOT" &&
+git fetch origin &&
+git checkout fix/m3-227-multi-segment-aggregate-source-path-bytes-cap &&
+git pull --ff-only origin fix/m3-227-multi-segment-aggregate-source-path-bytes-cap &&
+git status --short &&
+git log -1 --oneline &&
+npm ci &&
+npm run lint &&
+npm run test &&
+npm run build &&
+cargo test --manifest-path src-tauri/Cargo.toml
+```
 
+Validation rules:
+
+- Only the user's actual reported output establishes validation success.
+- If any command fails, diagnose and correct the issue before accepting PASS.
+- Do not infer Cargo success from frontend success.
+- Do not infer a clean working tree; report any user-local changes instead of assuming.
+- Keep validation focused on M3.227.
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
 ### 1. Refresh before acting
@@ -190,17 +218,17 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.226 SUMMARY
+## CURRENT M3.227 SUMMARY
 
-**Latest accepted checkpoint:** M3.225 PASS, squash-merged to `main` at `c12fde998a6c27421174493550020a825d80a6d6`.
+**Latest accepted checkpoint:** M3.226 PASS, squash-merged to `main` at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
 
-**Current continuation point:** M3.226 branch `fix/m3-226-persisted-display-name-byte-caps`.
+**Current continuation point:** M3.227 branch `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
 
-**Fresh audit:** persisted project, asset, and track display names were only validated as non-empty strings. The 16 MiB serialized-project cap bounds aggregate payload size, but no individual display-name field had a dedicated byte boundary.
+**Fresh audit:** multi-segment render requests allow up to 4,096 segments and each optional source path is individually capped at 4,096 bytes, but aggregate source-path bytes were not bounded. This permitted a theoretical 16 MiB source-path payload before per-segment filesystem/media validation.
 
-**Implementation:** `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` is enforced for `Project.name`, `MediaAsset.name`, and `Track.name`. Regression coverage accepts a multibyte UTF-8 value at exactly 256 bytes and rejects 257-byte values on all three surfaces.
+**Implementation:** `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024` is enforced before per-segment `media_path()` probing, with saturating aggregation. Exact-limit and over-limit regression coverage is present.
 
-**Current state:** implementation and tests are complete; documentation is being reconciled. Local validation is pending.
+**Current state:** implementation and documentation are complete for the milestone; local validation is pending.
 
 **Next step:** run the combined Pull/Fetch + Validation block above. Only the user's explicit PASS establishes validation acceptance.
 
