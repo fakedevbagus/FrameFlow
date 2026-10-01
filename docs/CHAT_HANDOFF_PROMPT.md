@@ -12,17 +12,16 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap.
-- **M3.222 PR:** #240.
-- **M3.222 squash merge SHA:** `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
+- **Latest accepted milestone:** M3.223 — Persisted Project Asset Source Path Byte Cap.
+- **M3.223 PR:** #241.
+- **M3.223 squash merge SHA:** `21610705086360cf7d8022bb5bd111d3b0feb7f3`.
 - `main` was verified identical to that merge SHA after the merge.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.223 — Persisted Project Asset Source Path Byte Cap.
-- **Current branch:** `fix/m3-223-persisted-asset-source-path-cap`.
-- **M3.223 PR:** not created yet.
-- M3.223 implementation is complete; local validation is pending.
-- M3.223 adds a 4,096-byte UTF-8 cap to persisted asset `sourcePath`, aligned with the existing native media-path boundary.
-- Focused regression coverage includes exact 4,096-byte acceptance, 4,097-byte rejection, and a multibyte UTF-8 boundary case.
+- **Current active milestone:** M3.224 — Persisted Project Identifier Byte Caps.
+- **Current branch:** `fix/m3-224-persisted-project-identifier-byte-caps`.
+- **M3.224 PR:** not created yet.
+- M3.224 scope is to bound persisted project/asset/track/clip identifier strings and clip asset references to 256 UTF-8 bytes.
+- Implementation is pending local validation.
 - No project schema version change.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
@@ -38,29 +37,38 @@ You are continuing development of the existing repository:
 - Local validation is considered accepted because the user explicitly reported `PASS`.
 - No project schema version change.
 
-## M3.223 — Persisted Project Asset Source Path Byte Cap
+## M3.223 — Persisted Project Asset Source Path Byte Cap — completed — 2026-10-01
+
+- PR #241; squash-merged at `21610705086360cf7d8022bb5bd111d3b0feb7f3`.
+- User reported `PASS`.
+- Added `MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096`.
+- Persisted asset `sourcePath` is measured by UTF-8 byte length and rejected above 4,096 bytes during project validation.
+- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- No project schema version change.
+
+## M3.224 — Persisted Project Identifier Byte Caps
 
 ### Fresh audit finding
 
-Verified `main` after M3.222 already enforces a 4,096-byte native media-path limit, while persisted `MediaAsset.sourcePath` only required a non-empty string. This left a boundary mismatch where a project could persist an arbitrarily long source path and defer rejection until native media processing.
+After M3.223, persisted project identifiers still only required non-empty strings. Project, asset, track, and clip identifiers are retained in maps/sets and serialized across nested project structures, so unbounded identifier strings remain an avoidable persistence/resource surface.
 
 ### Current implementation
 
 - `src/features/project/domain.ts`
-  - Added `MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096`.
-  - Measures `sourcePath` using UTF-8 encoded byte length.
-  - Rejects persisted asset source paths above 4,096 bytes during project validation, before later native media-path use.
-  - Preserves existing asset identity, media type, duration, and project schema semantics.
+  - Adds `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
+  - Validates project id, asset id, track id, clip id, and clip `assetId` references by UTF-8 byte length.
+  - Rejects identifiers above 256 bytes during project validation.
+  - Preserves identifier uniqueness, asset linkage, and existing project schema semantics.
 - `src/features/project/domain.test.ts`
-  - Added exact 4,096-byte acceptance coverage.
-  - Added 4,097-byte rejection coverage.
-  - Added multibyte UTF-8 coverage to verify the limit is byte-based rather than JavaScript character-count based.
+  - Adds exact-limit acceptance coverage.
+  - Adds over-limit rejection coverage.
+  - Adds a multibyte UTF-8 byte-length boundary case.
 - No project schema version change.
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state for M3.223 and run the complete validation for the current branch.
+First refresh the actual repository state for M3.224 and run the complete validation for the current branch.
 
 Use this as one combined copy-paste block:
 
@@ -68,8 +76,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-223-persisted-asset-source-path-cap &&
-git pull --ff-only origin fix/m3-223-persisted-asset-source-path-cap &&
+git checkout fix/m3-224-persisted-project-identifier-byte-caps &&
+git pull --ff-only origin fix/m3-224-persisted-project-identifier-byte-caps &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -85,7 +93,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; report any user-local changes instead of assuming.
-- Keep validation focused on M3.223.
+- Keep validation focused on M3.224.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -188,21 +196,17 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.222 SUMMARY
+## CURRENT M3.224 SUMMARY
 
-**Latest accepted checkpoint:** M3.221 PASS, merged to `main` at `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
+**Latest accepted checkpoint:** M3.223 PASS, squash-merged to `main` at `21610705086360cf7d8022bb5bd111d3b0feb7f3`.
 
-**Current continuation point:** M3.222 branch `fix/m3-222-project-total-audio-keyframe-count-cap`, PR #240 Draft.
+**Current continuation point:** M3.224 implementation branch `fix/m3-224-persisted-project-identifier-byte-caps`.
 
-**Validation incident:** The initial validation failed during `npm run lint` with a parser error at `src/features/project/domain.test.ts:2294`. The test syntax was corrected afterward.
+**Fresh audit:** Persisted project/asset/track/clip identifiers still had no byte-length bound beyond non-empty-string validation.
 
-**Working tree note:** The user-reported validation showed `M src-tauri/Cargo.lock`. Preserve that local modification; do not discard it as part of branch synchronization.
+**Current state:** M3.224 implementation is prepared and documentation is reconciled. Local validation is pending.
 
-**Current state:** Code and focused tests are corrected, but the full validation rerun has not yet been reported.
-
-**What to do next:** pull the latest branch head and rerun the complete validation command above. Only a clean rerun establishes PASS.
-
-**Do not describe M3.222 as PASS yet.**
+**What to do next:** pull the latest M3.224 branch head and run the one-block validation command above. Only the user's explicit PASS establishes validation acceptance.
 
 ## USER WORKFLOW PREFERENCE
 
