@@ -15,6 +15,24 @@
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.227 after the Vitest worker-concurrency correction.
 
+# M3.228 — Unified AV Source-Audio Presence Probe Deduplication — active — 2026-10-02
+
+- Branch: `fix/m3-228-unified-av-source-audio-probe-dedup`.
+- Fresh audit found that unified AV rendering can resolve up to 4,096 source-audio segments and calls `probe_has_audio()` inside that resolution loop.
+- Multiple segments may reference the same video input, causing repeated FFprobe presence probes for one source during a single export.
+- Scope is to cache audio-presence results by resolved video input path within one render request, with focused regression coverage.
+- Preserve source-duration caching and existing render/error/cancellation/cleanup/result semantics.
+- No project schema change.
+
+# M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — completed — 2026-10-01
+
+- PR #245; squash-merged at `7658d53bd58c407d07c363ba0cc8bf918f57dc63`.
+- User reported PASS.
+- Added a 4 MiB aggregate UTF-8 source-path cap before multi-segment filesystem/media probing.
+- Used saturating aggregate accounting and exact-limit/over-limit regression coverage.
+- Validation corrections were completed before acceptance.
+- No project schema change.
+
 # M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
