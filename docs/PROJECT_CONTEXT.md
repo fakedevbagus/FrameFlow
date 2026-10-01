@@ -1,44 +1,24 @@
-## M3.226 — Persisted Project Display Name Byte Caps — active — 2026-10-01
+## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 Branch:
 `fix/m3-226-persisted-display-name-byte-caps`
 
 PR:
-- #244 (Draft).
+- #244; squash-merged at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
 
-Fresh audit finding:
-- `Project.name`, `MediaAsset.name`, and `Track.name` are required to be non-empty strings but had no field-level UTF-8 byte limit.
-- The 16 MiB serialized-project cap bounds aggregate size, not any individual display-name field.
-
-Scope:
-- Add `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256`.
-- Enforce it on project, asset, and track display names while preserving existing trimming/non-empty semantics.
-- Add exact-limit, over-limit, and multibyte UTF-8 regression coverage.
-- No project schema version change.
-
-Implementation:
-- Added the shared 256-byte UTF-8 display-name cap to project, asset, and track validation.
-- Added regression coverage for exact 256-byte multibyte acceptance and 257-byte rejection on all three name surfaces.
-- Documentation is reconciled for M3.226.
-- Local validation is pending.
-
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.226.
-
-## M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
-
-Branch:
-`fix/m3-225-persisted-project-serialization-size-cap`
-
-PR:
-- #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
-
-- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024` at the domain parse/serialize boundary.
-- Rejected serialized input above 16 MiB before JSON parsing.
-- Rejected serialized output above 16 MiB before workspace storage or native save.
-- Added exact-boundary and over-limit regression coverage.
+- Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
+- Enforced the cap on `Project.name`, `MediaAsset.name`, and `Track.name`.
+- Preserved existing non-empty and project-name trimming semantics.
+- Added exact 256-byte acceptance and 257-byte rejection coverage using a multibyte UTF-8 boundary.
 - User reported PASS.
 - No project schema version change.
+
+## M3.227 — next fresh audit
+
+- Start from the verified `main` after M3.226.
+- Identify one concrete remaining stability/correctness/resource-boundary issue from repository evidence.
+- Do not pre-commit to a specific fix until the audit is complete.
+- No UI/UX redesign before the mandatory stability gate.
 
 ## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
