@@ -45,27 +45,20 @@ PR:
 - User reported PASS.
 - No project schema version change.
 
-## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
+## M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
 
 Branch:
-`fix/m3-226-persisted-display-name-byte-caps`
+`fix/m3-225-persisted-project-serialization-size-cap`
 
 PR:
-- #244; squash-merged at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
+- #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
 
-- Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
-- Enforced the cap on `Project.name`, `MediaAsset.name`, and `Track.name`.
-- Preserved existing non-empty and project-name trimming semantics.
-- Added exact 256-byte acceptance and 257-byte rejection coverage using a multibyte UTF-8 boundary.
+- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024` at the domain parse/serialize boundary.
+- Rejected serialized input above 16 MiB before JSON parsing.
+- Rejected serialized output above 16 MiB before workspace storage or native save.
+- Added exact-boundary and over-limit regression coverage.
 - User reported PASS.
 - No project schema version change.
-
-## M3.227 — next fresh audit
-
-- Start from the verified `main` after M3.226.
-- Identify one concrete remaining stability/correctness/resource-boundary issue from repository evidence.
-- Do not pre-commit to a specific fix until the audit is complete.
-- No UI/UX redesign before the mandatory stability gate.
 
 ## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
