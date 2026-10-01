@@ -12,17 +12,20 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest PASS:** M3.221 — Persisted Project Total Clip Count Cap.
+- **Latest accepted milestone:** M3.221 — Persisted Project Total Clip Count Cap.
 - **M3.221 PR:** #239.
 - **M3.221 squash merge SHA:** `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
 - `main` was verified identical to that merge SHA before documentation reconciliation.
 - User explicitly reported `pass`.
 - **Current active milestone:** M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap.
 - **Current branch:** `fix/m3-222-project-total-audio-keyframe-count-cap`.
-- **M3.222 PR:** create after implementation/documentation reconciliation.
-- **Base:** `main` after the M3.221 merge and documentation reconciliation.
-- M3.222 is **implemented but not yet validated**.
-- Do not mark M3.222 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
+- **M3.222 PR:** #240 (Draft).
+- M3.222 implementation is **complete but not yet validated**.
+- Initial validation reached `npm run lint` and failed with a parser error at `src/features/project/domain.test.ts:2294`.
+- The malformed aggregate-audio test block has since been corrected on the branch.
+- The next validation rerun exposed a missing `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES` runtime definition in `src/features/project/domain.ts`; the constant was restored on the branch and another full validation rerun is required.
+- The user also reported an actual working-tree modification to `src-tauri/Cargo.lock`; do not discard or overwrite it automatically.
+- The full validation suite must be rerun after the correction before M3.222 can be considered PASS.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 
@@ -30,24 +33,25 @@ You are continuing development of the existing repository:
 
 ### Fresh audit finding
 
-Verified `main` already caps persisted audio volume keyframes at 4,096 entries per clip, but the aggregate persisted count across all clips remains unbounded. The native unified AV renderer already enforces a 65,536 aggregate audio-keyframe cap, while persisted project validation can still traverse a larger nested collection before native rendering.
+Verified `main` already caps persisted audio volume keyframes at 4,096 entries per clip, but aggregate persisted count across all clips remained unbounded. Native unified AV rendering already enforces a 65,536 aggregate audio-keyframe cap.
 
 ### Current implementation
 
 - `src/features/project/domain.ts`
   - Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
-  - Counts persisted audio-volume keyframes across all clips and rejects the project when the aggregate exceeds 65,536 before validating the excess keyframe collection.
+  - Counts persisted audio-volume keyframes across clips and rejects the project when the aggregate exceeds 65,536 before validating the excess keyframe collection.
   - Preserves the existing 4,096 per-clip cap and audio keyframe timing/value/order semantics.
 - `src/features/project/domain.test.ts`
   - Added exact aggregate-limit acceptance coverage at 65,536 keyframes.
   - Added over-limit rejection coverage at 65,537 keyframes.
+  - Corrected a syntax error discovered at `npm run lint`.
 - No project schema version change.
 
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state and run the complete validation for M3.222.
+First refresh the actual repository state and rerun the complete validation for M3.222 after the syntax correction. Preserve any user-owned local modification in `src-tauri/Cargo.lock`; do not use a destructive reset/checkout to discard it.
 
 Use this as one combined copy-paste block:
 
@@ -72,6 +76,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; report any actual `src-tauri/Cargo.lock` modification instead of assuming.
+- The previous lint parser failure was specifically corrected; a fresh complete rerun is required.
 - Keep validation focused on M3.222.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
@@ -179,9 +184,15 @@ Do not jump ahead simply because the current UI already exists.
 
 **Latest accepted checkpoint:** M3.221 PASS, merged to `main` at `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
 
-**Current continuation point:** M3.222 implementation branch `fix/m3-222-project-total-audio-keyframe-count-cap`.
+**Current continuation point:** M3.222 branch `fix/m3-222-project-total-audio-keyframe-count-cap`, PR #240 Draft.
 
-**What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
+**Validation incident:** The initial validation failed during `npm run lint` with a parser error at `src/features/project/domain.test.ts:2294`. The test syntax was corrected afterward.
+
+**Working tree note:** The user-reported validation showed `M src-tauri/Cargo.lock`. Preserve that local modification; do not discard it as part of branch synchronization.
+
+**Current state:** Code and focused tests are corrected, but the full validation rerun has not yet been reported.
+
+**What to do next:** pull the latest branch head and rerun the complete validation command above. Only a clean rerun establishes PASS.
 
 **Do not describe M3.222 as PASS yet.**
 

@@ -6,7 +6,7 @@
 - Persisted projects with more than 65,536 audio volume keyframes across all clips are rejected before validating the excess collection.
 - Preserved the existing 4,096 per-clip cap and audio keyframe semantics.
 - Added exact-limit and over-limit regression coverage.
-- Local validation is pending user run.
+- Initial validation failed at `npm run lint` with a parser error in `src/features/project/domain.test.ts:2294`. The test block was corrected. A subsequent test run exposed a missing `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES` runtime definition; the constant was restored. Full validation rerun is pending. The user-reported working tree also contains a local `src-tauri/Cargo.lock` modification that must be preserved.
 - Do not infer lint/test/build/cargo/manual success until the user reports the result.
 - No project schema change.
 
