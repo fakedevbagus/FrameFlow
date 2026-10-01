@@ -3,6 +3,9 @@
 Branch:
 `fix/m3-226-persisted-display-name-byte-caps`
 
+PR:
+- #244 (Draft).
+
 Fresh audit finding:
 - `Project.name`, `MediaAsset.name`, and `Track.name` are required to be non-empty strings but had no field-level UTF-8 byte limit.
 - The 16 MiB serialized-project cap bounds aggregate size, not any individual display-name field.
