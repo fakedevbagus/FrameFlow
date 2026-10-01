@@ -6,12 +6,14 @@
 - Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
 - Enforced the aggregate source-path cap before per-segment filesystem/media probing.
 - Added overflow-safe aggregate accounting plus exact-limit and over-limit regression coverage.
-- First validation run: lint PASS, frontend tests 554/554 PASS, and frontend build PASS; Cargo test failed due to a missing `NativeVideoSegment` import in the two new tests. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`; full validation is pending.
+- First validation run: lint PASS, frontend tests 554/554 PASS, and frontend build PASS; Cargo test failed due to a missing `NativeVideoSegment` import in the two new tests. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`.
+- Second validation run completed 545/545 frontend tests but Vitest reported 2 unhandled fork-worker startup timeouts (`export-job.test.ts` and `crop.test.ts`). This run is not accepted as PASS because unhandled errors can cause false positives.
+- Hardened `vitest.config.ts` with `maxWorkers: 1` in commit `6d4eb658443a99c316989509fe37d4808c2527c3` to avoid concurrent fork-worker startup pressure. Full validation remains pending.
 - No project schema change.
 - Pre-existing PR #231 remains untouched; it is stale/diverged from current `main`.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.227.
+- Run the complete Pull/Fetch + Validation workflow for M3.227 after the Vitest worker-concurrency correction.
 
 # M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
