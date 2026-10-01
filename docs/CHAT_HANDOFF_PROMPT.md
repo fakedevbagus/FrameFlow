@@ -20,7 +20,7 @@ You are continuing development of the existing repository:
 - **Current active milestone:** M3.225 — Persisted Project Serialization Size Cap.
 - **Current branch:** `fix/m3-225-persisted-project-serialization-size-cap`.
 - **M3.225 PR:** not created yet.
-- M3.225 adds a 16 MiB UTF-8 serialized-project size cap at the domain parse/serialize boundary so oversized JSON is rejected before parsing and oversized workspace persistence is rejected before storage.
+- M3.225 adds a 16 MiB UTF-8 serialized-project size cap at the domain parse/serialize boundary.
 - No project schema version change.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
@@ -50,7 +50,7 @@ You are continuing development of the existing repository:
 - PR #242; squash-merged at `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
 - User reported `PASS`.
 - Added `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
-- Validated project id, asset id, track id, clip id, and clip `assetId` references by UTF-8 byte length.
+- Validated project, asset, track, clip, and clip `assetId` identifiers by UTF-8 byte length.
 - Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
 - No project schema version change.
 
@@ -58,15 +58,17 @@ You are continuing development of the existing repository:
 
 ### Fresh audit finding
 
-Verified `main` already enforces a 16 MiB project-file limit in the Rust open/save commands, but `parseProject()` and `serializeProject()` did not enforce the same boundary before JSON parsing or local workspace storage.
+Verified `main` already enforces a 16 MiB project-file limit in Rust, but `parseProject()` and `serializeProject()` did not enforce the same boundary before JSON parsing or local workspace storage.
 
-### Scope
+### Current implementation
 
-- Add `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
-- Reject serialized project input above 16 MiB before `JSON.parse()`.
-- Reject serialized project output above 16 MiB before returning it to native save or workspace storage.
-- Preserve project validation semantics and the existing native 16 MiB limit.
-- Add exact-boundary and over-limit regression coverage without requiring a destructive or huge persisted fixture.
+- `src/features/project/domain.ts`
+  - Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
+  - Rejects serialized project input above 16 MiB before `JSON.parse()`.
+  - Rejects serialized project output above 16 MiB before returning it to native save or workspace storage.
+- `src/features/project/domain.test.ts`
+  - Added exact 16 MiB serialized-output acceptance and 16 MiB+1 rejection coverage.
+  - Added oversized-input rejection coverage proving the guard runs before JSON parsing.
 - No project schema version change.
 ## FIRST ACTION IN THE NEW CHAT
 
@@ -206,11 +208,11 @@ Do not jump ahead simply because the current UI already exists.
 
 **Current continuation point:** M3.225 branch `fix/m3-225-persisted-project-serialization-size-cap`.
 
-**Fresh audit:** Native project open/save already cap project files at 16 MiB, but domain parsing and serialization lacked the same early boundary.
+**Fresh audit:** Native project open/save already cap project files at 16 MiB, but domain parsing and serialization lacked the same early boundary for JSON parsing and workspace storage.
 
-**Current state:** M3.225 implementation is pending.
+**Current state:** M3.225 implementation is complete and documentation is reconciled. Local validation is pending.
 
-**What to do next:** implement the focused domain serialization-size guard, add regression coverage, reconcile all three docs, create a Draft PR, and provide the combined Pull/Fetch + Validation command. Only the user's explicit PASS establishes validation acceptance.
+**What to do next:** pull the latest M3.225 branch head and run the one-block validation command above. Only the user's explicit PASS establishes validation acceptance.
 
 ## USER WORKFLOW PREFERENCE
 

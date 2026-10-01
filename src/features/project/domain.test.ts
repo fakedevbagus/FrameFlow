@@ -18,6 +18,7 @@ import {
   MAX_PROJECT_CLIPS_PER_TRACK,
   MAX_PROJECT_TOTAL_CLIPS,
   MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES,
+  MAX_PROJECT_SERIALIZED_BYTES,
   MAX_PERSISTED_IDENTIFIER_BYTES,
 } from "./domain";
 
@@ -510,6 +511,51 @@ describe("project domain", () => {
 
     expect(parseProject(serializeProject(projectWithMedia))).toEqual(
       projectWithMedia,
+    );
+  });
+
+  it("enforces the persisted project serialized byte limit", () => {
+    const baseProject = createProject({ id: "serialized-size-limit" });
+    const emptyPaddingProject = {
+      ...baseProject,
+      padding: "",
+    };
+    const emptyPaddingBytes = new TextEncoder().encode(
+      JSON.stringify(emptyPaddingProject, null, 2),
+    ).length;
+    const paddingLength =
+      MAX_PROJECT_SERIALIZED_BYTES - emptyPaddingBytes;
+
+    expect(paddingLength).toBeGreaterThan(0);
+
+    const project = {
+      ...baseProject,
+      padding: "x".repeat(paddingLength),
+    } as typeof baseProject & { padding: string };
+
+    const serialized = serializeProject(project);
+    expect(new TextEncoder().encode(serialized).length).toBe(
+      MAX_PROJECT_SERIALIZED_BYTES,
+    );
+
+    project.padding += "x";
+    expect(() => serializeProject(project)).toThrow(
+      "Project file is too large; maximum supported size is 16 MiB.",
+    );
+  });
+
+  it("rejects persisted project input above the serialized byte limit before JSON parsing", () => {
+    const source =
+      "{\"padding\":\"" +
+      "x".repeat(MAX_PROJECT_SERIALIZED_BYTES) +
+      "\"}";
+
+    expect(new TextEncoder().encode(source).length).toBeGreaterThan(
+      MAX_PROJECT_SERIALIZED_BYTES,
+    );
+
+    expect(() => parseProject(source)).toThrow(
+      "Project file is too large; maximum supported size is 16 MiB.",
     );
   });
 
