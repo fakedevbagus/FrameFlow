@@ -2260,7 +2260,6 @@ describe("project domain", () => {
 
   it("accepts the maximum persisted total audio volume keyframe count", () => {
     const project = createProject({ id: "audio-keyframe-total-limit" });
-    const baseTrack = project.tracks.find((track) => track.type === "audio")!;
     const audioAsset = {
       id: "audio-1",
       name: "Audio",
@@ -2268,30 +2267,30 @@ describe("project domain", () => {
       sourcePath: "/tmp/audio.wav",
       durationMs: 5000,
     };
-    const tracks = Array.from(
-      { length: MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES / MAX_AUDIO_VOLUME_KEYFRAMES },
-      (_, trackIndex) => ({
-        ...baseTrack,
-        id: `audio-track-${trackIndex}`,
-        name: `Audio Track ${trackIndex}`,
-        clips: [
-          {
-            id: `audio-clip-${trackIndex}`,
-            assetId: audioAsset.id,
-            timelineStartMs: 0,
-            sourceStartMs: 0,
-            sourceEndMs: 5000,
-            audioVolumeKeyframes: Array.from(
-              { length: MAX_AUDIO_VOLUME_KEYFRAMES },
-              (_, index) => ({
-                timeMs: index,
-                volume: 0.5,
-              }),
-            ),
-          },
-        ],
-      })),
-    );
+    const keyframesPerClip = 1024;
+    const clipCount =
+      MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES / keyframesPerClip;
+    const tracks = Array.from({ length: clipCount }, (_, trackIndex) => ({
+      ...project.tracks.find((track) => track.type === "audio")!,
+      id: `audio-track-${trackIndex}`,
+      name: `Audio Track ${trackIndex}`,
+      clips: [
+        {
+          id: `audio-clip-${trackIndex}`,
+          assetId: audioAsset.id,
+          timelineStartMs: 0,
+          sourceStartMs: 0,
+          sourceEndMs: 5000,
+          audioVolumeKeyframes: Array.from(
+            { length: keyframesPerClip },
+            (_, index) => ({
+              timeMs: index,
+              volume: 0.5,
+            }),
+          ),
+        },
+      ],
+    }));
     const validProject = {
       ...project,
       assets: [audioAsset],
@@ -2303,7 +2302,6 @@ describe("project domain", () => {
 
   it("rejects oversized persisted total audio volume keyframe counts", () => {
     const project = createProject({ id: "audio-keyframe-total-over-limit" });
-    const baseTrack = project.tracks.find((track) => track.type === "audio")!;
     const audioAsset = {
       id: "audio-1",
       name: "Audio",
@@ -2311,32 +2309,32 @@ describe("project domain", () => {
       sourcePath: "/tmp/audio.wav",
       durationMs: 5000,
     };
-    const tracks = Array.from(
-      { length: MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES / MAX_AUDIO_VOLUME_KEYFRAMES },
-      (_, trackIndex) => ({
-        ...baseTrack,
-        id: `audio-track-${trackIndex}`,
-        name: `Audio Track ${trackIndex}`,
-        clips: [
-          {
-            id: `audio-clip-${trackIndex}`,
-            assetId: audioAsset.id,
-            timelineStartMs: 0,
-            sourceStartMs: 0,
-            sourceEndMs: 5000,
-            audioVolumeKeyframes: Array.from(
-              { length: MAX_AUDIO_VOLUME_KEYFRAMES },
-              (_, index) => ({
-                timeMs: index,
-                volume: 0.5,
-              }),
-            ),
-          },
-        ],
-      })),
-    );
+    const keyframesPerClip = 1024;
+    const clipCount =
+      MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES / keyframesPerClip;
+    const tracks = Array.from({ length: clipCount }, (_, trackIndex) => ({
+      ...project.tracks.find((track) => track.type === "audio")!,
+      id: `audio-track-${trackIndex}`,
+      name: `Audio Track ${trackIndex}`,
+      clips: [
+        {
+          id: `audio-clip-${trackIndex}`,
+          assetId: audioAsset.id,
+          timelineStartMs: 0,
+          sourceStartMs: 0,
+          sourceEndMs: 5000,
+          audioVolumeKeyframes: Array.from(
+            { length: keyframesPerClip },
+            (_, index) => ({
+              timeMs: index,
+              volume: 0.5,
+            }),
+          ),
+        },
+      ],
+    }));
     tracks.push({
-      ...baseTrack,
+      ...project.tracks.find((track) => track.type === "audio")!,
       id: "audio-track-over-limit",
       name: "Audio Track Over Limit",
       clips: [
@@ -2346,9 +2344,7 @@ describe("project domain", () => {
           timelineStartMs: 0,
           sourceStartMs: 0,
           sourceEndMs: 5000,
-          audioVolumeKeyframes: [
-            { timeMs: 0, volume: 0.5 },
-          ],
+          audioVolumeKeyframes: [{ timeMs: 0, volume: 0.5 }],
         },
       ],
     });
