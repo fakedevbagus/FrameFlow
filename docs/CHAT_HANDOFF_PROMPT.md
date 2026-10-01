@@ -19,6 +19,7 @@ You are continuing development of the existing repository:
 - User explicitly reported `pass`.
 - **Current active milestone:** M3.226 — Persisted Project Display Name Byte Caps.
 - **Current branch:** `fix/m3-226-persisted-display-name-byte-caps`.
+- **M3.226 PR:** #244 (Draft).
 - M3.226 implementation is in progress with a shared 256-byte UTF-8 display-name cap and focused regression coverage.
 - No project schema version change.
 - Protected PR #76 and unrelated PR #22 remain untouched.
@@ -68,6 +69,7 @@ You are continuing development of the existing repository:
 ## M3.226 — Persisted Project Display Name Byte Caps — active — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
+- PR #244 (Draft).
 - Fresh audit from verified `main` found unbounded persisted display names on project, asset, and track records.
 - Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
 - Enforced the cap on `Project.name`, `MediaAsset.name`, and `Track.name`.
