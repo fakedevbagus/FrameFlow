@@ -19,6 +19,7 @@ You are continuing development of the existing repository:
 - User explicitly reported `pass`.
 - **Current active milestone:** M3.227 — Multi-Segment Aggregate Source Path Bytes Cap.
 - **Current branch:** `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- **M3.227 PR:** #245 (Draft).
 - M3.227 implements a 4 MiB aggregate UTF-8 byte cap across optional multi-segment source paths, enforced before per-segment filesystem/media probing.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
@@ -67,6 +68,7 @@ You are continuing development of the existing repository:
 ## M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
 
 - Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- PR #245 (Draft).
 - Fresh audit from verified `main` found `NativeVideoSegmentsRenderRequest.segments` capped at 4,096 entries and each source path capped at 4,096 bytes, but no aggregate cap existed across all optional source paths.
 - Independent limits permitted a theoretical 16 MiB source-path string payload before filesystem/media probing.
 - Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
