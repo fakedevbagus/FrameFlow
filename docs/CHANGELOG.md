@@ -2,13 +2,14 @@
 
 - Branch: `fix/m3-225-persisted-project-serialization-size-cap`.
 - Fresh audit of verified `main` found the Rust project open/save boundary already capped project files at 16 MiB, while domain parsing/serialization did not enforce the same boundary before JSON parsing or workspace storage.
-- Planned `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
-- Input above 16 MiB will be rejected before JSON parsing; serialized output above 16 MiB will be rejected before storage/save.
-- Local validation is pending implementation.
+- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
+- Input above 16 MiB is rejected before JSON parsing; serialized output above 16 MiB is rejected before storage/save.
+- Added exact-boundary and over-limit regression coverage.
+- Local validation is pending.
 - No project schema change.
 
 Next step:
-- Implement M3.225, create a Draft PR, then run the complete Pull/Fetch + Validation workflow.
+- Create a Draft PR for M3.225, then run the complete Pull/Fetch + Validation workflow.
 
 # M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
