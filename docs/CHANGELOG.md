@@ -1,18 +1,23 @@
-# M3.224 — Persisted Project Identifier Byte Caps — active — 2026-10-01
+# M3.225 — Persisted Project Serialization Size Cap — active — 2026-10-01
 
-- Branch: `fix/m3-224-persisted-project-identifier-byte-caps`.
-- PR #242 (Draft).
-- Fresh audit of verified `main` found persisted project/asset/track/clip identifiers lacked byte-length bounds.
-- Planned `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
-- Project, asset, track, and clip identifiers plus clip `assetId` references will be validated by UTF-8 byte length.
-- Exact-limit, over-limit, and multibyte UTF-8 regression coverage is included.
-- Local validation is pending.
-- Do not infer lint/test/build/cargo/manual success until the user reports the result.
+- Branch: `fix/m3-225-persisted-project-serialization-size-cap`.
+- Fresh audit of verified `main` found the Rust project open/save boundary already capped project files at 16 MiB, while domain parsing/serialization did not enforce the same boundary before JSON parsing or workspace storage.
+- Planned `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
+- Input above 16 MiB will be rejected before JSON parsing; serialized output above 16 MiB will be rejected before storage/save.
+- Local validation is pending implementation.
 - No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.224.
-- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- Implement M3.225, create a Draft PR, then run the complete Pull/Fetch + Validation workflow.
+
+# M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
+
+- Branch: `fix/m3-224-persisted-project-identifier-byte-caps`.
+- PR #242; squash-merged at `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
+- Added `MAX_PERSISTED_IDENTIFIER_BYTES = 256` for project, asset, track, clip, and clip `assetId` identifiers using UTF-8 byte length.
+- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- User reported PASS.
+- No project schema change.
 
 # M3.223 — Persisted Project Asset Source Path Byte Cap — completed — 2026-10-01
 
