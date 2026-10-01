@@ -1,15 +1,23 @@
-# M3.225 — Persisted Project Serialization Size Cap — active — 2026-10-01
+# M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
 
 - Branch: `fix/m3-225-persisted-project-serialization-size-cap`.
-- Fresh audit of verified `main` found the Rust project open/save boundary already capped project files at 16 MiB, while domain parsing/serialization did not enforce the same boundary before JSON parsing or workspace storage.
+- PR #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
 - Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
-- Input above 16 MiB is rejected before JSON parsing; serialized output above 16 MiB is rejected before storage/save.
+- `parseProject()` rejects serialized input above 16 MiB before JSON parsing.
+- `serializeProject()` rejects serialized output above 16 MiB before callers store or save it.
 - Added exact-boundary and over-limit regression coverage.
-- Local validation is pending.
+- User reported PASS.
+- No project schema change.
+
+# M3.226 — Persisted Project Display Name Byte Caps — planned — 2026-10-01
+
+- Fresh audit found `Project.name`, `MediaAsset.name`, and `Track.name` lack field-level UTF-8 byte caps.
+- The 16 MiB project serialization cap remains the aggregate safety boundary, but does not bound any one display-name field.
+- Planned: add one shared persisted display-name byte cap, preserve existing name semantics, and add exact-limit/over-limit/multibyte regression coverage.
 - No project schema change.
 
 Next step:
-- Create a Draft PR for M3.225, then run the complete Pull/Fetch + Validation workflow.
+- Create the focused M3.226 branch and PR draft after confirming the fresh audit against verified `main`.
 
 # M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
