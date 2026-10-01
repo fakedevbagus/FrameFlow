@@ -12,42 +12,42 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest PASS:** M3.220 — Persisted Project Clip Count Cap.
-- **M3.220 PR:** #238.
-- **M3.220 squash merge SHA:** `a957053d17f56322bae5fd71dacabd471b2670af`.
+- **Latest PASS:** M3.221 — Persisted Project Total Clip Count Cap.
+- **M3.221 PR:** #239.
+- **M3.221 squash merge SHA:** `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
 - `main` was verified identical to that merge SHA before documentation reconciliation.
 - User explicitly reported `pass`.
-- **Current active milestone:** M3.221 — Persisted Project Total Clip Count Cap.
-- **Current branch:** `fix/m3-221-project-total-clip-count-cap`.
-- **M3.221 PR:** create after implementation/documentation reconciliation.
-- **Base:** `main` after the M3.220 merge and documentation reconciliation.
-- M3.221 implementation is **complete but not yet validated**.
-- Do not mark M3.221 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
+- **Current active milestone:** M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap.
+- **Current branch:** `fix/m3-222-project-total-audio-keyframe-count-cap`.
+- **M3.222 PR:** create after implementation/documentation reconciliation.
+- **Base:** `main` after the M3.221 merge and documentation reconciliation.
+- M3.222 is **implemented but not yet validated**.
+- Do not mark M3.222 PASS, do not merge it, and do not claim lint/test/build/Cargo/manual validation success until the user reports the complete validation result.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
 
-## M3.221 — Persisted Project Total Clip Count Cap
+## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap
 
 ### Fresh audit finding
 
-Verified `main` now caps each persisted track at 4,096 clips, but the project-wide aggregate remains unbounded. With the existing 256-track cap, a persisted project could still contain up to 1,048,576 clip entries. `validateTracks()` also maintains a project-wide `clipIds` set while every track is validated, so a project-wide aggregate boundary is required in addition to the per-track cap.
+Verified `main` already caps persisted audio volume keyframes at 4,096 entries per clip, but the aggregate persisted count across all clips remains unbounded. The native unified AV renderer already enforces a 65,536 aggregate audio-keyframe cap, while persisted project validation can still traverse a larger nested collection before native rendering.
 
 ### Current implementation
 
 - `src/features/project/domain.ts`
-  - Added `MAX_PROJECT_TOTAL_CLIPS = 65_536`.
-  - Count persisted clips across all tracks and reject the project once the aggregate exceeds 65,536 before per-clip validation for the excess collection.
-  - Preserve the existing 4,096 per-track clip cap and all clip/topology semantics.
+  - Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
+  - Counts persisted audio-volume keyframes across all clips and rejects the project when the aggregate exceeds 65,536 before validating the excess keyframe collection.
+  - Preserves the existing 4,096 per-clip cap and audio keyframe timing/value/order semantics.
 - `src/features/project/domain.test.ts`
-  - Added exact aggregate-limit acceptance coverage at 65,536 clips.
-  - Added over-limit rejection coverage at 65,537 clips.
+  - Added exact aggregate-limit acceptance coverage at 65,536 keyframes.
+  - Added over-limit rejection coverage at 65,537 keyframes.
 - No project schema version change.
 
 ## FIRST ACTION IN THE NEW CHAT
 
 Do not start another unrelated audit immediately.
 
-First refresh the actual repository state and run the complete validation for M3.221.
+First refresh the actual repository state and run the complete validation for M3.222.
 
 Use this as one combined copy-paste block:
 
@@ -55,8 +55,8 @@ Use this as one combined copy-paste block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-221-project-total-clip-count-cap &&
-git pull --ff-only origin fix/m3-221-project-total-clip-count-cap &&
+git checkout fix/m3-222-project-total-audio-keyframe-count-cap &&
+git pull --ff-only origin fix/m3-222-project-total-audio-keyframe-count-cap &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -72,7 +72,7 @@ Validation rules:
 - If any command fails, diagnose and correct the issue before accepting PASS.
 - Do not infer Cargo success from frontend success.
 - Do not infer a clean working tree; report any actual `src-tauri/Cargo.lock` modification instead of assuming.
-- Keep validation focused on M3.221.
+- Keep validation focused on M3.222.
 
 ## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
 
@@ -175,15 +175,15 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.221 SUMMARY
+## CURRENT M3.222 SUMMARY
 
-**Latest accepted checkpoint:** M3.220 PASS, merged to `main` at `a957053d17f56322bae5fd71dacabd471b2670af`.
+**Latest accepted checkpoint:** M3.221 PASS, merged to `main` at `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
 
-**Current continuation point:** M3.221 implementation branch `fix/m3-221-project-total-clip-count-cap`.
+**Current continuation point:** M3.222 implementation branch `fix/m3-222-project-total-audio-keyframe-count-cap`.
 
 **What to do next:** refresh the repository, run the one-block validation command above, inspect the real result, fix any failure, then only after explicit PASS create/refresh the PR and follow the exact merge workflow.
 
-**Do not describe M3.221 as PASS yet.**
+**Do not describe M3.222 as PASS yet.**
 
 ## USER WORKFLOW PREFERENCE
 
@@ -196,6 +196,17 @@ Interpret them consistently:
 - When a validation failure is reported, resolve it before treating the milestone as accepted.
 
 Every milestone should leave enough precise documentation that a brand-new chat can resume without reconstructing the project from scratch.
+
+## M3.221 — completed — 2026-10-01
+
+- Branch: `fix/m3-221-project-total-clip-count-cap`.
+- PR #239; squash-merged at `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
+- `main` was verified identical to the merge SHA before documentation reconciliation.
+- User reported PASS.
+- Added `MAX_PROJECT_TOTAL_CLIPS = 65_536`.
+- Preserved the existing 4,096 per-track clip cap and clip/topology semantics.
+- Added exact-limit and over-limit aggregate regression coverage.
+- No project schema change.
 
 ## M3.220 — completed — 2026-10-01
 
