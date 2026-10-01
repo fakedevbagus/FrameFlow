@@ -29,6 +29,7 @@ export const MAX_CANVAS_FRAME_RATE = 240;
 export const MAX_CANVAS_DIMENSION = 8192;
 export const MAX_AUDIO_VOLUME_KEYFRAMES = 4096;
 export const MAX_TRANSFORM_KEYFRAMES = 4096;
+export const MAX_PROJECT_TRACKS = 256;
 export const MAX_PROJECT_ASSETS = 4096;
 
 export interface CanvasSettings {
@@ -319,6 +320,14 @@ function validateTracks(
 ): void {
   if (!Array.isArray(value)) {
     throw new ProjectValidationError("Project tracks must be an array.");
+  }
+
+  if (value.length > MAX_PROJECT_TRACKS) {
+    throw new ProjectValidationError(
+      "Project tracks must contain at most " +
+        MAX_PROJECT_TRACKS +
+        " tracks.",
+    );
   }
 
   const assetById = new Map(assets.map((asset) => [asset.id, asset]));
