@@ -1,19 +1,40 @@
+# M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
+
+- Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- PR #245 (Draft).
+- Fresh audit found multi-segment render requests are limited to 4,096 segments and each source path is individually limited to 4,096 bytes, but aggregate source-path bytes were unbounded.
+- Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
+- Enforced the aggregate source-path cap before per-segment filesystem/media probing.
+- Added overflow-safe aggregate accounting plus exact-limit and over-limit regression coverage.
+- First validation run: lint PASS, frontend tests 554/554 PASS, and frontend build PASS; Cargo test failed due to a missing `NativeVideoSegment` import in the two new tests. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`.
+- Second validation run completed 545/545 frontend tests but Vitest reported 2 unhandled fork-worker startup timeouts (`export-job.test.ts` and `crop.test.ts`). This run is not accepted as PASS because unhandled errors can cause false positives.
+- Hardened `vitest.config.ts` with `maxWorkers: 1` in commit `6d4eb658443a99c316989509fe37d4808c2527c3` to avoid concurrent fork-worker startup pressure. Full validation remains pending.
+- No project schema change.
+- Pre-existing PR #231 remains untouched; it is stale/diverged from current `main`.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.227 after the Vitest worker-concurrency correction.
+
 # M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
 - PR #244; squash-merged at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
 - Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
 - Enforced the cap on project, asset, and track names.
-- Preserved existing non-empty and project-name trimming semantics.
 - Added exact-limit and over-limit regression coverage using a multibyte UTF-8 boundary.
 - User reported PASS.
 - No project schema change.
 
-# M3.227 — fresh audit next
+# M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
 
-- Audit verified `main` after M3.226 for the next single concrete stability/correctness/resource-boundary issue.
-- Do not choose the next implementation scope from memory or from an assumed roadmap item.
-- UI/UX/frontend redesign remains blocked until the stability gate.
+- Branch: `fix/m3-225-persisted-project-serialization-size-cap`.
+- PR #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
+- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024`.
+- `parseProject()` rejects serialized input above 16 MiB before JSON parsing.
+- `serializeProject()` rejects serialized output above 16 MiB before callers store or save it.
+- Added exact-boundary and over-limit regression coverage.
+- User reported PASS.
+- No project schema change.
 
 # M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 

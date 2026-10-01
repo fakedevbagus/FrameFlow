@@ -35,6 +35,7 @@ const FFPROBE_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[ffprobe stderr truncated by FrameFlow]\n";
 const MAX_PROJECT_FILE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_NATIVE_VIDEO_SEGMENTS: usize = 4096;
+const MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES: usize = 4 * 1024 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
@@ -695,6 +696,27 @@ fn same_path(first: &Path, second: &Path) -> bool {
   first_canonical.is_some() && first_canonical == second_canonical
 }
 
+fn validate_native_video_segments_source_path_bytes(
+  segments: &[NativeVideoSegment],
+) -> Result<(), String> {
+  let mut total_source_path_bytes = 0usize;
+
+  for segment in segments {
+    if let Some(source_path) = segment.source_path.as_deref() {
+      total_source_path_bytes =
+        total_source_path_bytes.saturating_add(source_path.as_bytes().len());
+
+      if total_source_path_bytes > MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES {
+        return Err(format!(
+          "Native multi-segment render source paths exceed the maximum aggregate size of {MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES} bytes."
+        ));
+      }
+    }
+  }
+
+  Ok(())
+}
+
 fn validate_native_video_segments_request_metadata(
   request: &NativeVideoSegmentsRenderRequest,
 ) -> Result<(), String> {
@@ -709,6 +731,8 @@ fn validate_native_video_segments_request_metadata(
       "Native multi-segment render supports at most {MAX_NATIVE_VIDEO_SEGMENTS} segments."
     ));
   }
+
+  validate_native_video_segments_source_path_bytes(&request.segments)?;
 
   for segment in &request.segments {
     if segment.duration_ms == 0 {
@@ -2115,6 +2139,7 @@ pub fn run() {
 mod tests {
   use super::{
     audio_render, media_type, parse_duration_ms, preview_cache_key, temporary_path,
+    NativeVideoSegment,
   };
   use std::{
     collections::HashMap,
@@ -2754,6 +2779,41 @@ mod tests {
     assert!(error.contains(path.to_string_lossy().as_ref()));
 
     fs::remove_file(path).unwrap();
+  }
+
+  #[test]
+  fn rejects_native_video_segments_source_paths_above_aggregate_size_limit() {
+    let segments = (0..1025)
+      .map(|_| NativeVideoSegment {
+        source_path: Some("a".repeat(4096)),
+        source_start_ms: Some(0),
+        duration_ms: 1_000,
+      })
+      .collect::<Vec<_>>();
+
+    let error = super::validate_native_video_segments_source_path_bytes(&segments)
+      .expect_err("aggregate source-path bytes above the configured limit must be rejected");
+
+    assert!(error.contains("4194304 bytes"));
+  }
+
+  #[test]
+  fn accepts_native_video_segments_source_paths_at_aggregate_size_limit() {
+    let segments = (0..1024)
+      .map(|_| NativeVideoSegment {
+        source_path: Some("a".repeat(4096)),
+        source_start_ms: Some(0),
+        duration_ms: 1_000,
+      })
+      .collect::<Vec<_>>();
+
+    assert_eq!(
+      1024 * 4096,
+      super::MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES
+    );
+    assert!(
+      super::validate_native_video_segments_source_path_bytes(&segments).is_ok()
+    );
   }
 
   #[test]

@@ -9,6 +9,6 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     pool: "forks",
     minWorkers: 1,
-    maxWorkers: 2,
+    maxWorkers: 1,
   },
 });

@@ -1,3 +1,40 @@
+## M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
+
+Branch:
+`fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`
+
+PR:
+- #245 (Draft).
+
+Fresh audit finding:
+- `NativeVideoSegmentsRenderRequest.segments` is capped at 4,096 entries.
+- Each optional segment source path is capped by the shared 4,096-byte media-path contract.
+- No aggregate source-path byte cap existed across a multi-segment request, allowing a theoretical 16 MiB source-path payload before filesystem/media probing.
+
+Scope:
+- Add `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
+- Enforce the aggregate source-path byte cap before per-segment filesystem/media probing.
+- Preserve segment count, per-path, duration, absolute-path, media-type, source identity, render, cleanup, and result semantics.
+- Use overflow-safe aggregate accounting.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Implementation:
+- Added the 4 MiB aggregate source-path byte cap.
+- Added saturating aggregate accounting before the per-segment validation loop.
+- Added exact 4 MiB acceptance and over-limit rejection tests.
+- Documentation is reconciled for M3.227.
+- First validation run passed lint, frontend tests (554/554), and frontend build, but Cargo tests failed because the two new tests lacked the `NativeVideoSegment` test-module import. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`.
+- Second validation run completed 545/545 frontend tests but Vitest reported 2 unhandled fork-worker startup timeouts for `src/features/export/export-job.test.ts` and `src/features/transform/crop.test.ts`. The run is not accepted as PASS because Vitest warned unhandled errors can cause false positives.
+- Hardened `vitest.config.ts` with `maxWorkers: 1` in commit `6d4eb658443a99c316989509fe37d4808c2527c3` to avoid concurrent fork-worker startup pressure. Full validation remains pending.
+
+Pre-existing PR #231:
+- Left untouched.
+- Its base is stale/diverged from current `main`; M3.227 is implemented fresh from the verified current `main`.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.227 after the Vitest worker-concurrency correction.
+
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 Branch:
@@ -13,12 +50,20 @@ PR:
 - User reported PASS.
 - No project schema version change.
 
-## M3.227 — next fresh audit
+## M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
 
-- Start from the verified `main` after M3.226.
-- Identify one concrete remaining stability/correctness/resource-boundary issue from repository evidence.
-- Do not pre-commit to a specific fix until the audit is complete.
-- No UI/UX redesign before the mandatory stability gate.
+Branch:
+`fix/m3-225-persisted-project-serialization-size-cap`
+
+PR:
+- #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
+
+- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024` at the domain parse/serialize boundary.
+- Rejected serialized input above 16 MiB before JSON parsing.
+- Rejected serialized output above 16 MiB before workspace storage or native save.
+- Added exact-boundary and over-limit regression coverage.
+- User reported PASS.
+- No project schema version change.
 
 ## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
