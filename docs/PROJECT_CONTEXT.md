@@ -1,33 +1,45 @@
-## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — active — 2026-10-01
+## M3.223 — Persisted Project Asset Source Path Byte Cap — active — 2026-10-01
 
 Branch:
-`fix/m3-222-project-total-audio-keyframe-count-cap`
+`fix/m3-223-persisted-asset-source-path-cap`
 
 PR:
-- #240 (Draft).
+- not created yet.
 
 Fresh audit finding:
-- Persisted audio volume keyframes are capped at 4,096 per clip, but aggregate project count remained unbounded.
-- Native unified AV rendering already enforces a 65,536 aggregate audio-keyframe cap.
+- Native media-path handling already enforces a 4,096-byte path limit.
+- Persisted `MediaAsset.sourcePath` only required a non-empty string, so oversized source paths could survive project parsing and reach later native boundaries.
 
 Scope:
-- Add `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
-- Reject projects whose aggregate persisted audio volume keyframe count exceeds 65,536 before validating the excess collection.
-- Preserve the existing 4,096 per-clip cap and audio keyframe semantics.
-- Add exact-limit and over-limit regression coverage.
+- Add `MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096`.
+- Validate persisted asset `sourcePath` by UTF-8 byte length.
+- Reject values above 4,096 bytes during project parsing.
+- Preserve existing asset semantics and project schema.
+- Add exact-limit, over-limit, and multibyte UTF-8 regression coverage.
 - No project schema version change.
 
 Implementation:
-- Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
-- Added aggregate persisted audio-volume keyframe counting across clips.
-- Corrected a syntax error in the aggregate audio-keyframe test block after the initial lint failure.
-- The next validation rerun exposed a missing `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES` runtime definition in `src/features/project/domain.ts`; the constant was restored. A fresh full validation rerun is required.
-- User-reported validation also showed a local `src-tauri/Cargo.lock` modification; it must be preserved.
-- A fresh full validation rerun is required.
+- Added the 4,096-byte persisted asset source-path cap.
+- Added focused regression coverage for the byte boundary.
+- Documentation is being reconciled for M3.223.
+- Local validation is pending.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.222.
-- After successful PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+- Run the complete Pull/Fetch + Validation workflow for M3.223.
+- After user PASS, refresh PR/head/base state, mark Ready for Review, squash-merge using the freshly verified head SHA, verify main, reconcile all three docs, perform a fresh audit, and create the next focused milestone.
+
+## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
+
+PR:
+- #240; squash-merged at `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
+
+- Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
+- Added aggregate persisted audio-volume keyframe counting across clips.
+- Preserved the existing 4,096 per-clip cap and audio keyframe semantics.
+- Added exact-limit and over-limit regression coverage.
+- User reported PASS.
+- Validation incidents found and corrected before the accepted PASS: malformed test syntax, unused import, and missing runtime constant.
+- No project schema version change.
 
 ## M3.221 — Persisted Project Total Clip Count Cap — completed — 2026-10-01
 
