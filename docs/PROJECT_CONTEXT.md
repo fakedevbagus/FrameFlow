@@ -19,10 +19,13 @@ Scope:
 - No project schema version change.
 
 Implementation:
-- Pending implementation.
+- Added the 16 MiB domain serialization-size guard for parse and serialize.
+- Added focused exact-boundary and over-limit regression coverage.
+- Documentation is reconciled for M3.225.
+- Local validation is pending.
 
 Next step:
-- Implement the focused domain serialization-size guard, add regression coverage, reconcile documentation, create a Draft PR, and run the combined Pull/Fetch + Validation workflow.
+- Create a Draft PR for M3.225 and run the complete Pull/Fetch + Validation workflow.
 
 ## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
 
