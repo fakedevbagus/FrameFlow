@@ -17,6 +17,7 @@ import {
   MAX_PROJECT_TRACKS,
   MAX_PROJECT_CLIPS_PER_TRACK,
   MAX_PROJECT_TOTAL_CLIPS,
+  MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES,
 } from "./domain";
 
 describe("project domain", () => {
@@ -2253,6 +2254,111 @@ describe("project domain", () => {
 
     expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "audioVolumeKeyframes must contain at most 4096 keyframes.",
+    );
+  });
+
+  it("accepts the maximum persisted total audio volume keyframe count", () => {
+    const project = createProject({ id: "audio-keyframe-total-limit" });
+    const baseTrack = project.tracks.find((track) => track.type === "audio")!;
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 5000,
+    };
+    const tracks = Array.from(
+      { length: MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES / MAX_AUDIO_VOLUME_KEYFRAMES },
+      (_, trackIndex) => ({
+        ...baseTrack,
+        id: `audio-track-${trackIndex}`,
+        name: `Audio Track ${trackIndex}`,
+        clips: [
+          {
+            id: `audio-clip-${trackIndex}`,
+            assetId: audioAsset.id,
+            timelineStartMs: 0,
+            sourceStartMs: 0,
+            sourceEndMs: 5000,
+            audioVolumeKeyframes: Array.from(
+              { length: MAX_AUDIO_VOLUME_KEYFRAMES },
+              (_, index) => ({
+                timeMs: index,
+                volume: 0.5,
+              }),
+            ),
+          },
+        ],
+      })),
+    );
+    const validProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks,
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects oversized persisted total audio volume keyframe counts", () => {
+    const project = createProject({ id: "audio-keyframe-total-over-limit" });
+    const baseTrack = project.tracks.find((track) => track.type === "audio")!;
+    const audioAsset = {
+      id: "audio-1",
+      name: "Audio",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 5000,
+    };
+    const tracks = Array.from(
+      { length: MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES / MAX_AUDIO_VOLUME_KEYFRAMES },
+      (_, trackIndex) => ({
+        ...baseTrack,
+        id: `audio-track-${trackIndex}`,
+        name: `Audio Track ${trackIndex}`,
+        clips: [
+          {
+            id: `audio-clip-${trackIndex}`,
+            assetId: audioAsset.id,
+            timelineStartMs: 0,
+            sourceStartMs: 0,
+            sourceEndMs: 5000,
+            audioVolumeKeyframes: Array.from(
+              { length: MAX_AUDIO_VOLUME_KEYFRAMES },
+              (_, index) => ({
+                timeMs: index,
+                volume: 0.5,
+              }),
+            ),
+          },
+        ],
+      })),
+    );
+    tracks.push({
+      ...baseTrack,
+      id: "audio-track-over-limit",
+      name: "Audio Track Over Limit",
+      clips: [
+        {
+          id: "audio-clip-over-limit",
+          assetId: audioAsset.id,
+          timelineStartMs: 0,
+          sourceStartMs: 0,
+          sourceEndMs: 5000,
+          audioVolumeKeyframes: [
+            { timeMs: 0, volume: 0.5 },
+          ],
+        },
+      ],
+    });
+    const invalidProject = {
+      ...project,
+      assets: [audioAsset],
+      tracks,
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Project audioVolumeKeyframes must contain at most 65536 keyframes across all clips.",
     );
   });
 
