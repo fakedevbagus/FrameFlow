@@ -1,6 +1,7 @@
 # M3.224 — Persisted Project Identifier Byte Caps — active — 2026-10-01
 
 - Branch: `fix/m3-224-persisted-project-identifier-byte-caps`.
+- PR #242 (Draft).
 - Fresh audit of verified `main` found persisted project/asset/track/clip identifiers lacked byte-length bounds.
 - Planned `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
 - Project, asset, track, and clip identifiers plus clip `assetId` references will be validated by UTF-8 byte length.

@@ -19,9 +19,9 @@ You are continuing development of the existing repository:
 - User explicitly reported `pass`.
 - **Current active milestone:** M3.224 — Persisted Project Identifier Byte Caps.
 - **Current branch:** `fix/m3-224-persisted-project-identifier-byte-caps`.
-- **M3.224 PR:** not created yet.
+- **M3.224 PR:** #242 (Draft).
 - M3.224 scope is to bound persisted project/asset/track/clip identifier strings and clip asset references to 256 UTF-8 bytes.
-- Implementation is pending local validation.
+- Implementation is complete; local validation is pending.
 - No project schema version change.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Do not touch unrelated branch `fix/m3-214-multi-segment-source-path-bytes-cap` unless a fresh audit explicitly requires it.
@@ -55,14 +55,14 @@ After M3.223, persisted project identifiers still only required non-empty string
 ### Current implementation
 
 - `src/features/project/domain.ts`
-  - Adds `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
+  - Added `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
   - Validates project id, asset id, track id, clip id, and clip `assetId` references by UTF-8 byte length.
   - Rejects identifiers above 256 bytes during project validation.
   - Preserves identifier uniqueness, asset linkage, and existing project schema semantics.
 - `src/features/project/domain.test.ts`
-  - Adds exact-limit acceptance coverage.
-  - Adds over-limit rejection coverage.
-  - Adds a multibyte UTF-8 byte-length boundary case.
+  - Added exact-limit acceptance coverage.
+  - Added over-limit rejection coverage for all identifier surfaces.
+  - Added a multibyte UTF-8 byte-length boundary case.
 - No project schema version change.
 ## FIRST ACTION IN THE NEW CHAT
 
@@ -204,7 +204,7 @@ Do not jump ahead simply because the current UI already exists.
 
 **Fresh audit:** Persisted project/asset/track/clip identifiers still had no byte-length bound beyond non-empty-string validation.
 
-**Current state:** M3.224 implementation is prepared and documentation is reconciled. Local validation is pending.
+**Current state:** M3.224 implementation and documentation are complete. PR #242 is Draft and local validation is pending.
 
 **What to do next:** pull the latest M3.224 branch head and run the one-block validation command above. Only the user's explicit PASS establishes validation acceptance.
 

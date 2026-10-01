@@ -4,7 +4,7 @@ Branch:
 `fix/m3-224-persisted-project-identifier-byte-caps`
 
 PR:
-- not created yet.
+- #242 (Draft).
 
 Fresh audit finding:
 - Persisted project, asset, track, and clip identifiers only required non-empty strings.

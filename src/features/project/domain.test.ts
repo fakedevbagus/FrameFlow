@@ -18,6 +18,7 @@ import {
   MAX_PROJECT_CLIPS_PER_TRACK,
   MAX_PROJECT_TOTAL_CLIPS,
   MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES,
+  MAX_PERSISTED_IDENTIFIER_BYTES,
 } from "./domain";
 
 describe("project domain", () => {
@@ -1983,6 +1984,175 @@ describe("project domain", () => {
 
     expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
       "Asset 0 sourcePath must be at most 4096 bytes.",
+    );
+  });
+
+  it("accepts persisted identifiers at the byte limit", () => {
+    const projectId = "p".repeat(MAX_PERSISTED_IDENTIFIER_BYTES);
+    const assetId = "a".repeat(MAX_PERSISTED_IDENTIFIER_BYTES);
+    const trackId = "t".repeat(MAX_PERSISTED_IDENTIFIER_BYTES);
+    const clipId = "c".repeat(MAX_PERSISTED_IDENTIFIER_BYTES);
+    const project = createProject({ id: projectId });
+    const asset = {
+      id: assetId,
+      name: "Asset",
+      mediaType: "audio" as const,
+      sourcePath: "/tmp/audio.wav",
+      durationMs: 1000,
+    };
+    const tracks = project.tracks.map((track) =>
+      track.type === "audio"
+        ? {
+            ...track,
+            id: trackId,
+            clips: [
+              {
+                id: clipId,
+                assetId,
+                timelineStartMs: 0,
+                sourceStartMs: 0,
+                sourceEndMs: 1000,
+              },
+            ],
+          }
+        : track,
+    );
+    const validProject = {
+      ...project,
+      assets: [asset],
+      tracks,
+    };
+
+    expect(parseProject(JSON.stringify(validProject))).toEqual(validProject);
+  });
+
+  it("rejects persisted identifiers above the byte limit", () => {
+    const oversizedId = "x".repeat(MAX_PERSISTED_IDENTIFIER_BYTES + 1);
+    const cases = [
+      {
+        label: "project id",
+        build: () => ({
+          ...createProject({ id: "valid-project" }),
+          id: oversizedId,
+        }),
+        message: "Project id must be at most 256 bytes.",
+      },
+      {
+        label: "asset id",
+        build: () => {
+          const project = createProject({ id: "valid-project" });
+          const asset = {
+            id: oversizedId,
+            name: "Asset",
+            mediaType: "audio" as const,
+            sourcePath: "/tmp/audio.wav",
+            durationMs: 1000,
+          };
+          return { ...project, assets: [asset] };
+        },
+        message: "Asset 0 id must be at most 256 bytes.",
+      },
+      {
+        label: "track id",
+        build: () => {
+          const project = createProject({ id: "valid-project" });
+          return {
+            ...project,
+            tracks: project.tracks.map((track, index) =>
+              index === 0 ? { ...track, id: oversizedId } : track,
+            ),
+          };
+        },
+        message: "Track 0 id must be at most 256 bytes.",
+      },
+      {
+        label: "clip id",
+        build: () => {
+          const project = createProject({ id: "valid-project" });
+          const asset = {
+            id: "asset-1",
+            name: "Asset",
+            mediaType: "audio" as const,
+            sourcePath: "/tmp/audio.wav",
+            durationMs: 1000,
+          };
+          return {
+            ...project,
+            assets: [asset],
+            tracks: project.tracks.map((track) =>
+              track.type === "audio"
+                ? {
+                    ...track,
+                    clips: [
+                      {
+                        id: oversizedId,
+                        assetId: asset.id,
+                        timelineStartMs: 0,
+                        sourceStartMs: 0,
+                        sourceEndMs: 1000,
+                      },
+                    ],
+                  }
+                : track,
+            ),
+          };
+        },
+        message: "Clip 1.0 id must be at most 256 bytes.",
+      },
+      {
+        label: "clip assetId",
+        build: () => {
+          const project = createProject({ id: "valid-project" });
+          const asset = {
+            id: "asset-1",
+            name: "Asset",
+            mediaType: "audio" as const,
+            sourcePath: "/tmp/audio.wav",
+            durationMs: 1000,
+          };
+          return {
+            ...project,
+            assets: [asset],
+            tracks: project.tracks.map((track) =>
+              track.type === "audio"
+                ? {
+                    ...track,
+                    clips: [
+                      {
+                        id: "clip-1",
+                        assetId: oversizedId,
+                        timelineStartMs: 0,
+                        sourceStartMs: 0,
+                        sourceEndMs: 1000,
+                      },
+                    ],
+                  }
+                : track,
+            ),
+          };
+        },
+        message: "Clip 1.0 assetId must be at most 256 bytes.",
+      },
+    ];
+
+    for (const testCase of cases) {
+      expect(
+        () => parseProject(JSON.stringify(testCase.build())),
+        testCase.label,
+      ).toThrow(testCase.message);
+    }
+  });
+
+  it("rejects persisted identifiers whose UTF-8 bytes exceed the limit", () => {
+    const project = createProject({ id: "valid-project" });
+    const oversizedId = "x".repeat(MAX_PERSISTED_IDENTIFIER_BYTES - 1) + "é";
+    const invalidProject = {
+      ...project,
+      id: oversizedId,
+    };
+
+    expect(() => parseProject(JSON.stringify(invalidProject))).toThrow(
+      "Project id must be at most 256 bytes.",
     );
   });
 
