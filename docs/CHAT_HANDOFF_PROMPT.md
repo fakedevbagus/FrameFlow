@@ -48,6 +48,16 @@ You are continuing development of the existing repository:
 - Validation must cover lint, frontend tests, frontend build, and Cargo tests through the established workflow.
 - Do not mark M3.231 PASS or merge until the complete validation workflow succeeds.
 
+## M3.231 — Validation Checkpoint — 2026-10-06
+
+The first M3.231 validation attempt did not reach PASS:
+- Lint: passed.
+- Vitest: 33 test files / 554 tests passed.
+- Frontend production build: passed.
+- Cargo: failed because `src-tauri/src/lib.rs` had an unclosed delimiter in the test module around `detects_preview_source_changes_before_cache_finalization()`.
+- Correction commit: `30e7a4cb075102bff8c7fa41316f8abae961ac01`.
+- **Do not mark M3.231 PASS or merge PR #249 until the complete validation workflow passes after this correction.**
+
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
 - PR #240; squash-merged at `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
