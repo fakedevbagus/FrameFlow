@@ -12,39 +12,43 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.228 — Unified AV Source-Audio Presence Probe Deduplication.
-- **M3.228 PR:** #246.
-- **M3.228 squash merge SHA:** `6711c54379ed4807f330a946411e30b4120cbfb2`.
-- `main` was verified identical to that merge SHA before documentation reconciliation.
-- User explicitly reported `pass` and the milestone was accepted through the established workflow.
-- M3.228 caches audio-presence probe results by resolved source path within one unified AV render request, preventing repeated FFprobe presence probes for repeated source-audio segments.
-- **Current active milestone:** M3.229 — Unified AV Aggregate Input Source Path Bytes Cap.
-- **Current branch:** `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
-- **M3.229 PR:** #247 (Draft).
-- M3.229 fresh-audit scope is to bound the aggregate UTF-8 bytes of unified AV video and audio input path strings before filesystem/media probing.
-- Implementation adds a 1 MiB aggregate cap across unified AV video and audio input paths, using saturating accounting before per-input validation.
-- **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
+- **Latest accepted milestone:** M3.229 — Unified AV Aggregate Input Source Path Bytes Cap.
+- **M3.229 PR:** #247.
+- **M3.229 squash merge SHA:** `87e8b969c23160091433e0a34438c793b5762119`.
+- GitHub verified `main` is identical to this merge SHA before continuing.
+- User explicitly reported `pass`; M3.229 was accepted through the established workflow.
+- M3.229 added a 1 MiB aggregate UTF-8 cap across unified AV video and audio input paths before filesystem/media probing, with exact-limit and over-limit regression coverage.
+- **Current active milestone:** M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication.
+- **Current branch:** `fix/m3-230-multi-segment-source-audio-probe-dedup`.
+- **M3.230 PR:** Draft, pending creation from this branch.
+- Fresh audit found repeated `probe_has_audio()` work in multi-segment rendering for repeated source paths.
+- The request supports up to 4,096 segments, making repeated audio-presence probes a concrete unnecessary resource cost.
+- M3.230 caches the audio-presence result per source path for one multi-segment render request.
 - Protected PR #76 and unrelated PR #22 remain untouched.
-## M3.229 — Validation Checkpoint — 2026-10-06
+- Stale PR #231 remains untouched.
 
-The first local validation attempt for M3.229 was not accepted:
-- `npm run lint`: passed.
-- `npm run test`: passed, 33 test files / 554 tests.
-- Frontend production build: passed.
-- Rust/Cargo build: failed because the new aggregate input-path constant was not imported into the test module.
-- The over-limit regression fixture was also corrected to actually exceed the 1 MiB boundary.
-- Correction commit: `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
-- **Do not mark M3.229 PASS or merge PR #247 until the complete validation workflow passes after this correction.**
+## Current workflow
 
-## M3.229 — Validation Checkpoint Update — 2026-10-06
+1. Refresh real GitHub state first.
+2. Work one focused milestone at a time from verified `main`.
+3. Implement the smallest safe correction and add focused regression coverage.
+4. Update `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` every milestone.
+5. Create the milestone as a Draft PR.
+6. Provide one combined Pull/Fetch + Validation command.
+7. Do not claim validation passed unless the user's output supports it.
+8. On user `pass`: refresh PR/head/base, ensure branch is not behind, mark Ready for Review, re-read exact head SHA, squash-merge with that exact SHA, record the actual merge SHA, verify `main` is identical to the merge SHA, reconcile documentation, perform a fresh audit, create the next focused branch/Draft PR, and provide the next validation command.
+9. Never reset or discard a user-local modification such as `src-tauri/Cargo.lock` automatically.
+10. Keep UI/UX/frontend redesign blocked until the stability gate is reached.
 
-The next validation rerun still did not reach an accepted PASS:
-- Lint: passed.
-- Vitest: 33 test files / 554 tests passed.
-- Frontend production build: passed.
-- Cargo: failed because the exact-limit regression fixture assigned to `audio_inputs[0]` while `audio_inputs` was immutable.
-- Correction commit: `83bc29e973006a4ffacecad864dd32eb82944e46`.
-- **Do not mark M3.229 PASS or merge PR #247 until the complete validation workflow passes after this correction.**
+## M3.230 — Scope
+
+- Target only multi-segment source-audio presence probing.
+- Do not broaden into unrelated AV/resource changes without a fresh audit.
+- Preserve Linux-native-only constraints.
+- Validation must cover lint, frontend tests, frontend build, and Cargo tests through the established workflow.
+- Do not mark M3.230 PASS or merge until the complete validation workflow succeeds.
+- Runtime behavior must remain unchanged except that repeated identical source paths reuse the existing audio-presence result.
+- Cancellation, cleanup, progress, source-identity validation, segment ordering, and output semantics must remain intact.
 
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
