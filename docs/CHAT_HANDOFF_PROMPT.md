@@ -20,7 +20,9 @@ You are continuing development of the existing repository:
 - M3.228 caches audio-presence probe results by resolved source path within one unified AV render request, preventing repeated FFprobe presence probes for repeated source-audio segments.
 - **Current active milestone:** M3.229 — Unified AV Aggregate Input Source Path Bytes Cap.
 - **Current branch:** `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
+- **M3.229 PR:** #247 (Draft).
 - M3.229 fresh-audit scope is to bound the aggregate UTF-8 bytes of unified AV video and audio input path strings before filesystem/media probing.
+- Implementation adds a 1 MiB aggregate cap across unified AV video and audio input paths, using saturating accounting before per-input validation.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -91,15 +93,20 @@ You are continuing development of the existing repository:
 ## M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — active — 2026-10-06
 
 - Branch: `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
-- Fresh audit from verified `main` found unified AV requests allow up to 256 video inputs and 256 audio inputs, with each input path capped at 4,096 bytes, but no aggregate path-byte cap exists across both input arrays.
+- PR #247 (Draft).
+- Fresh audit from verified `main` found unified AV requests allow up to 256 video inputs and 256 audio inputs, with each input path individually capped at 4,096 bytes but no aggregate cap across both arrays.
 - The independent limits permit up to 2 MiB of input-path string payload before filesystem/media probing.
-- Scope: add one aggregate UTF-8 byte cap across `video_inputs` and `audio_inputs`, enforced before per-input path/file/media validation.
-- Preserve per-input limits, media-type semantics, source-audio segment validation, graph construction, rendering, cleanup, and result behavior.
-- Add exact-limit and over-limit regression coverage.
-- No project schema change.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES = 1024 * 1024`.
+- Enforced the aggregate UTF-8 byte cap across video and audio input paths before per-input `PathBuf`/filesystem/media validation.
+- Used saturating aggregate accounting.
+- Added exact 1 MiB acceptance and over-limit rejection regression coverage.
+- Preserved existing input-count, per-path, media-type, source-audio segment, graph, rendering, cleanup, and result behavior.
+- No project schema version change.
+- Local validation is pending user run.
 
 Next step:
-- Implement M3.229, update the three docs, create the Draft PR, and provide the standard Pull/Fetch + Validation block.
+- Run the complete Pull/Fetch + Validation workflow for M3.229.
+
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
@@ -220,19 +227,19 @@ The order remains:
 
 Do not jump ahead simply because the current UI already exists.
 
-## CURRENT M3.228 SUMMARY
+## CURRENT M3.229 SUMMARY
 
-**Latest accepted checkpoint:** M3.227 PASS, squash-merged to `main` at `7658d53bd58c407d07c363ba0cc8bf918f57dc63` and verified identical on `main`.
+**Latest accepted checkpoint:** M3.228 PASS, squash-merged to `main` at `6711c54379ed4807f330a946411e30b4120cbfb2` and verified identical before documentation reconciliation.
 
-**Current continuation point:** M3.228 branch `fix/m3-228-unified-av-source-audio-probe-dedup`.
+**Current continuation point:** M3.229 PR #247 (Draft), branch `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
 
-**Fresh audit:** unified AV render requests permit up to 4,096 source-audio segments. During resolution, every segment calls `probe_has_audio()` for its referenced video input, so repeated clips/segments targeting the same source can trigger repeated FFprobe subprocesses in one export.
+**Fresh audit:** unified AV requests allow up to 256 video inputs and 256 audio inputs, each individually capped at 4,096 bytes, creating a theoretical 2 MiB path-string payload before filesystem/media probing when no aggregate budget is enforced.
 
-**Implementation target:** deduplicate audio-presence probing per resolved video input path within the render request, preserving existing source-duration caching and all render/error semantics.
+**Implementation:** a 1 MiB aggregate UTF-8 input-path cap is enforced before per-input validation/probing, with saturating accounting and exact-limit/over-limit regression coverage.
 
-**Current state:** implementation and documentation are complete for M3.228; local validation is pending the user's run.
+**Current state:** implementation and documentation are complete for M3.229; local validation is pending the user's run.
 
-**Next step:** run the combined Pull/Fetch + Validation block above. Only the user's explicit PASS establishes validation acceptance.
+**Next step:** run the combined Pull/Fetch + Validation block. Only the user's explicit PASS establishes validation acceptance.
 
 ## USER WORKFLOW PREFERENCE
 
