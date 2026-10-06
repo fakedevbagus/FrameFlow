@@ -1,13 +1,20 @@
 # M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — active — 2026-10-06
 
 - Branch: `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
-- Fresh audit found unified AV requests permit 256 video inputs plus 256 audio inputs, each individually capped at 4,096 bytes, but aggregate input-path bytes were not bounded.
-- The independent limits permit up to 2 MiB of input-path strings before filesystem/media probing.
-- Scope: add an aggregate UTF-8 byte cap across video and audio input paths before per-input validation/probing.
-- Preserve existing input-count, per-path, media-type, source-audio, graph, render, cleanup, and result semantics.
-- Add exact-limit and over-limit regression coverage.
+- PR #247 (Draft).
+- Fresh audit found unified AV requests permit 256 video inputs plus 256 audio inputs, each capped at 4,096 bytes, but aggregate input-path bytes were unbounded.
+- Added a 1 MiB aggregate UTF-8 cap across video and audio input paths.
+- Enforced the cap before per-input `PathBuf`/filesystem/media validation using saturating accounting.
+- Added exact-limit and over-limit regression coverage.
+- Preserved existing request, graph, render, cleanup, and result semantics.
 - No project schema change.
-- Local validation is pending implementation and user run.
+- Validation attempt on 2026-10-06 reached lint, all 554 Vitest tests, and the frontend production build, but the Rust build failed because the M3.229 aggregate-cap constant was not imported into the test module.
+- Corrected the test-module import and fixed the over-limit fixture so it exceeds 1 MiB by one byte in commit `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
+- Validation rerun on 2026-10-06 reached the Rust test build but failed because the exact-limit regression fixture mutated an immutable `audio_inputs` binding.
+- Corrected the fixture in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
+- Full validation remains pending rerun after this correction.
+- A subsequent Cargo validation run reached compilation but failed because the exact-limit regression fixture assigned to `audio_inputs[0]` while `audio_inputs` was immutable.
+- Corrected the exact-limit fixture in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
 
 # M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 

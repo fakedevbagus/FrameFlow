@@ -16,6 +16,7 @@ const MAX_NATIVE_AUDIO_GRAPH_INPUTS: usize = 256;
 const MAX_NATIVE_AUDIO_GRAPH_INPUT_PATH_BYTES: usize = 4096;
 const MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES: usize = 256 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS: usize = 256;
+const MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES: usize = 1024 * 1024;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS: usize = 256;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS: usize = 4096;
 const MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_KEYFRAMES: usize = 4096;
@@ -441,6 +442,8 @@ fn validate_video_audio_graph_request(
     );
   }
 
+  validate_unified_av_input_path_bytes(&request.video_inputs, &request.audio_inputs)?;
+
   for (index, path) in request.video_inputs.iter().enumerate() {
     if path.len() > MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES {
       return Err(format!(
@@ -569,6 +572,26 @@ fn validate_video_audio_graph_request(
   )?;
 
   validate_mp4_output_path(Path::new(&request.output_path))
+}
+
+fn validate_unified_av_input_path_bytes(
+  video_inputs: &[String],
+  audio_inputs: &[String],
+) -> Result<(), String> {
+  let mut total_input_path_bytes = 0usize;
+
+  for path in video_inputs.iter().chain(audio_inputs.iter()) {
+    total_input_path_bytes =
+      total_input_path_bytes.saturating_add(path.as_bytes().len());
+
+    if total_input_path_bytes > MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES {
+      return Err(format!(
+        "Native unified AV graph input paths exceed the maximum aggregate size of {MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES} bytes."
+      ));
+    }
+  }
+
+  Ok(())
 }
 
 fn validate_source_audio_segment_bounds(
@@ -1604,8 +1627,8 @@ mod tests {
     build_ffmpeg_audio_graph_args, build_ffmpeg_video_audio_graph_args,
     build_ffmpeg_video_with_audio_graph_args, cached_probe_by_path, media_type,
     validate_request, validate_source_audio_segment_bounds,
-    validate_video_audio_graph_request, validate_video_audio_mix_request,
-    NativeAudioGraphRenderRequest, NativeSourceAudioCompressor, NativeSourceAudioEq,
+    validate_unified_av_input_path_bytes, validate_video_audio_graph_request,
+    validate_video_audio_mix_request, NativeAudioGraphRenderRequest, NativeSourceAudioCompressor, NativeSourceAudioEq,
     NativeSourceAudioSegment, NativeSourceAudioVolumeKeyframe,
     NativeVideoAudioGraphRenderRequest, NativeVideoWithAudioGraphRenderRequest,
     ResolvedSourceAudioSegment,
@@ -1619,6 +1642,7 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS,
 
@@ -1654,6 +1678,44 @@ mod tests {
     assert!(first);
     assert!(second);
     assert_eq!(probe_count, 1);
+  }
+
+  #[test]
+  fn accepts_unified_av_aggregate_input_path_bytes_at_size_limit() {
+    let video_inputs = vec![String::new(); MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS];
+    let mut audio_inputs = vec![String::new(); MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS];
+
+    let mut video_inputs = video_inputs;
+    video_inputs.iter_mut().enumerate().for_each(|(index, path)| {
+      path.push_str(&"v".repeat(2048));
+      if index == 255 {
+        path.push('v');
+      }
+    });
+
+    audio_inputs[0] = "a".repeat(512 * 1024 - 1);
+
+    let result = validate_unified_av_input_path_bytes(&video_inputs, &audio_inputs);
+
+    assert!(result.is_ok());
+    assert_eq!(
+      video_inputs.iter().map(|path| path.len()).sum::<usize>()
+        + audio_inputs.iter().map(|path| path.len()).sum::<usize>(),
+      MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES
+    );
+  }
+
+  #[test]
+  fn rejects_unified_av_aggregate_input_path_bytes_above_size_limit() {
+    let video_inputs = vec!["v".repeat(2048); MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS];
+    let mut audio_inputs =
+      vec!["a".repeat(2048); MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS];
+    audio_inputs[MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS - 1].push('a');
+
+    let error = validate_unified_av_input_path_bytes(&video_inputs, &audio_inputs)
+      .expect_err("aggregate unified AV input paths above the configured limit must be rejected");
+
+    assert!(error.contains("1048576 bytes"));
   }
 
   #[test]
