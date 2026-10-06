@@ -20,7 +20,7 @@ You are continuing development of the existing repository:
 - M3.230 caches audio-presence probe results per source path for one multi-segment render request.
 - **Current active milestone:** M3.231 — Preview Generation Single-Flight.
 - **Current branch:** `fix/m3-231-preview-generation-single-flight`.
-- **M3.231 PR:** Draft, pending creation from this branch.
+- **M3.231 PR:** #249 (Draft).
 - Fresh audit found concurrent preview requests for the same source could share the deterministic `.partial.mp4` temporary path.
 - M3.231 serializes preview generation per canonical source path and re-checks source metadata after acquiring the lock.
 - Protected PR #76 and unrelated PR #22 remain untouched.
