@@ -13,6 +13,8 @@
 - Validation rerun on 2026-10-06 reached the Rust test build but failed because the exact-limit regression fixture mutated an immutable `audio_inputs` binding.
 - Corrected the fixture in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
 - Full validation remains pending rerun after this correction.
+- A subsequent Cargo validation run reached compilation but failed because the exact-limit regression fixture assigned to `audio_inputs[0]` while `audio_inputs` was immutable.
+- Corrected the exact-limit fixture in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
 
 # M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
