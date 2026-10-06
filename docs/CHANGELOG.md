@@ -1,14 +1,35 @@
-# M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — active — 2026-10-06
+# M3.231 — Preview Generation Single-Flight — active — 2026-10-06
 
-- Branch: `fix/m3-230-multi-segment-source-audio-probe-dedup`.
-- PR #248 (Draft).
-- Fresh audit found `render_video_segments_to_output()` calls `probe_has_audio()` once per source-backed segment when audio is enabled.
-- The request permits up to 4,096 segments, so repeated use of the same source path can trigger repeated FFprobe audio-presence probes.
-- Added a per-render cache keyed by source path so repeated multi-segment references reuse one audio-presence result.
+- Branch: `fix/m3-231-preview-generation-single-flight`.
+- Draft PR pending creation from the implementation/documentation commits.
+- Fresh audit found `prepare_media_preview()` used a deterministic `.partial.mp4` path per preview cache key without serialization between concurrent requests for the same source.
+- Concurrent preview requests for the same media could therefore run FFmpeg against the same temporary file and race during finalization.
+- Added a process-local single-flight lock keyed by canonical source path.
+- The first request generates the preview; concurrent requests for the same source wait and then reuse the finalized cache result.
+- Added focused regression coverage proving concurrent generation for the same source waits for the first lock holder.
+- Re-check source metadata after acquiring the lock so cache keys are based on the current source state.
+- Preserved preview encoding, source-identity validation, cache layout, output semantics, and cancellation behavior.
+- No project schema change.
+- Local validation is pending user run.
+
+# M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
+
+- PR #248; squash-merged at `8e829c42e5b288048da951335de60fdfc6e2c000`.
+- User reported PASS.
+- Added a per-render cache keyed by source path so repeated multi-segment references reuse one audio-presence probe.
 - Added focused regression coverage proving repeated source paths invoke the probe once.
 - Preserved segment ordering, duration validation, render arguments, cancellation, cleanup, source identity validation, and result semantics.
 - No project schema change.
-- Local validation is pending user run.
+
+# M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
+
+- PR #247; squash-merged at `87e8b969c23160091433e0a34438c793b5762119`.
+- User reported PASS after the corrected validation workflow.
+- Added a 1 MiB aggregate UTF-8 input-path cap across unified AV video and audio inputs.
+- Enforced the cap before per-input filesystem/media validation using saturating accounting.
+- Added exact-limit and over-limit regression coverage.
+- Validation corrections discovered during the milestone were fixed before acceptance.
+- No project schema change.
 
 # M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
 
