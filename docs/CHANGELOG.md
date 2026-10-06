@@ -1,26 +1,30 @@
-# M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — active — 2026-10-06
+# M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — active — 2026-10-06
 
-- Branch: `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
-- PR #247 (Draft).
-- Fresh audit found unified AV requests permit 256 video inputs plus 256 audio inputs, each capped at 4,096 bytes, but aggregate input-path bytes were unbounded.
-- Added a 1 MiB aggregate UTF-8 cap across video and audio input paths.
-- Enforced the cap before per-input `PathBuf`/filesystem/media validation using saturating accounting.
-- Added exact-limit and over-limit regression coverage.
-- Preserved existing request, graph, render, cleanup, and result semantics.
+- Branch: `fix/m3-230-multi-segment-source-audio-probe-dedup`.
+- PR #248 (Draft).
+- Fresh audit found `render_video_segments_to_output()` calls `probe_has_audio()` once per source-backed segment when audio is enabled.
+- The request permits up to 4,096 segments, so repeated use of the same source path can trigger repeated FFprobe audio-presence probes.
+- Added a per-render cache keyed by source path so repeated multi-segment references reuse one audio-presence result.
+- Added focused regression coverage proving repeated source paths invoke the probe once.
+- Preserved segment ordering, duration validation, render arguments, cancellation, cleanup, source identity validation, and result semantics.
 - No project schema change.
-- Validation attempt on 2026-10-06 reached lint, all 554 Vitest tests, and the frontend production build, but the Rust build failed because the M3.229 aggregate-cap constant was not imported into the test module.
-- Corrected the test-module import and fixed the over-limit fixture so it exceeds 1 MiB by one byte in commit `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
-- Validation rerun on 2026-10-06 reached the Rust test build but failed because the exact-limit regression fixture mutated an immutable `audio_inputs` binding.
-- Corrected the fixture in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
-- Full validation remains pending rerun after this correction.
-- A subsequent Cargo validation run reached compilation but failed because the exact-limit regression fixture assigned to `audio_inputs[0]` while `audio_inputs` was immutable.
-- Corrected the exact-limit fixture in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
+- Local validation is pending user run.
+
+# M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
+
+- PR #247; squash-merged at `87e8b969c23160091433e0a34438c793b5762119`.
+- User reported PASS after the corrected validation workflow.
+- Added a 1 MiB aggregate UTF-8 input-path cap across unified AV video and audio inputs.
+- Enforced the cap before per-input filesystem/media validation using saturating accounting.
+- Added exact-limit and over-limit regression coverage.
+- Validation corrections discovered during the milestone were fixed before acceptance.
+- No project schema change.
 
 # M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
 - PR #246; squash-merged at `6711c54379ed4807f330a946411e30b4120cbfb2`.
 - User reported PASS.
-- Added per-render-request source-path caching for audio-presence probes.
+- Added per-render-request source-path caching for unified AV source-audio presence probes.
 - Added focused regression coverage proving repeated source paths invoke the probe once.
 - Preserved existing render/error/cancellation/cleanup/result semantics.
 - No project schema change.

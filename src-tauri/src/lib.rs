@@ -395,6 +395,24 @@ fn capture_video_segments_source_identity_snapshot(
     .collect()
 }
 
+fn cached_probe_by_path<T, F>(
+  cache: &mut HashMap<PathBuf, T>,
+  path: &Path,
+  probe: F,
+) -> Result<T, String>
+where
+  T: Copy,
+  F: FnOnce(&Path) -> Result<T, String>,
+{
+  if let Some(value) = cache.get(path) {
+    return Ok(*value);
+  }
+
+  let value = probe(path)?;
+  cache.insert(path.to_path_buf(), value);
+  Ok(value)
+}
+
 fn validate_video_segments_source_identity_snapshot(
   snapshot: &[(PathBuf, String)],
 ) -> Result<(), String> {
@@ -828,6 +846,7 @@ fn render_video_segments_to_output(
     .iter()
     .fold(0u64, |total, segment| total.saturating_add(segment.duration_ms));
   let mut completed_duration_ms = 0u64;
+  let mut source_has_audio_by_path = HashMap::new();
 
   for (index, segment) in request.segments.iter().enumerate() {
     let segment_path = temp_root.join(format!("segment-{index:04}.mp4"));
@@ -835,7 +854,11 @@ fn render_video_segments_to_output(
       Some(source_path) => {
         if request.include_audio {
           let source_path = Path::new(source_path);
-          let has_audio = probe_has_audio(source_path)?;
+          let has_audio = cached_probe_by_path(
+            &mut source_has_audio_by_path,
+            source_path,
+            probe_has_audio,
+          )?;
           build_ffmpeg_av_segment_args(
             source_path,
             &segment_path,
@@ -2746,6 +2769,29 @@ mod tests {
     assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "0:v:0".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-map".to_string(), "1:a:0".to_string()]));
     assert!(values.windows(2).any(|pair| pair == ["-c:a".to_string(), "aac".to_string()]));
+  }
+
+  #[test]
+  fn caches_multi_segment_audio_presence_probe_results_by_source_path() {
+    let path = Path::new("/media/shared-video.mp4");
+    let mut cache = HashMap::new();
+    let mut probe_count = 0;
+
+    let first = super::cached_probe_by_path(&mut cache, path, |_| {
+      probe_count += 1;
+      Ok::<bool, String>(true)
+    })
+    .expect("first audio presence probe should succeed");
+
+    let second = super::cached_probe_by_path(&mut cache, path, |_| {
+      probe_count += 1;
+      Ok::<bool, String>(false)
+    })
+    .expect("cached audio presence probe should succeed");
+
+    assert!(first);
+    assert!(second);
+    assert_eq!(probe_count, 1);
   }
 
   #[test]
