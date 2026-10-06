@@ -12,18 +12,17 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.229 — Unified AV Aggregate Input Source Path Bytes Cap.
-- **M3.229 PR:** #247.
-- **M3.229 squash merge SHA:** `87e8b969c23160091433e0a34438c793b5762119`.
+- **Latest accepted milestone:** M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication.
+- **M3.230 PR:** #248.
+- **M3.230 squash merge SHA:** `8e829c42e5b288048da951335de60fdfc6e2c000`.
 - GitHub verified `main` is identical to this merge SHA before continuing.
-- User explicitly reported `pass`; M3.229 was accepted through the established workflow.
-- M3.229 added a 1 MiB aggregate UTF-8 cap across unified AV video and audio input paths before filesystem/media probing, with exact-limit and over-limit regression coverage.
-- **Current active milestone:** M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication.
-- **Current branch:** `fix/m3-230-multi-segment-source-audio-probe-dedup`.
-- **M3.230 PR:** #248 (Draft).
-- Fresh audit found repeated `probe_has_audio()` work in multi-segment rendering for repeated source paths.
-- The request supports up to 4,096 segments, making repeated audio-presence probes a concrete unnecessary resource cost.
-- M3.230 caches the audio-presence result per source path for one multi-segment render request.
+- User explicitly reported `pass`; M3.230 was accepted through the established workflow.
+- M3.230 caches audio-presence probe results per source path for one multi-segment render request.
+- **Current active milestone:** M3.231 — Preview Generation Single-Flight.
+- **Current branch:** `fix/m3-231-preview-generation-single-flight`.
+- **M3.231 PR:** Draft, pending creation from this branch.
+- Fresh audit found concurrent preview requests for the same source could share the deterministic `.partial.mp4` temporary path.
+- M3.231 serializes preview generation per canonical source path and re-checks source metadata after acquiring the lock.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 - Stale PR #231 remains untouched.
 
@@ -40,15 +39,14 @@ You are continuing development of the existing repository:
 9. Never reset or discard a user-local modification such as `src-tauri/Cargo.lock` automatically.
 10. Keep UI/UX/frontend redesign blocked until the stability gate is reached.
 
-## M3.230 — Scope
+## M3.231 — Scope
 
-- Target only multi-segment source-audio presence probing.
-- Do not broaden into unrelated AV/resource changes without a fresh audit.
-- Preserve Linux-native-only constraints.
+- Target only the concurrent preview-generation race for the same source.
+- Use a process-local single-flight mechanism keyed by canonical source path.
+- Do not introduce a cross-process lock or unrelated cache redesign.
+- Preserve preview encoding, source identity validation, cache layout, output semantics, and cancellation behavior.
 - Validation must cover lint, frontend tests, frontend build, and Cargo tests through the established workflow.
-- Do not mark M3.230 PASS or merge until the complete validation workflow succeeds.
-- Runtime behavior must remain unchanged except that repeated identical source paths reuse the existing audio-presence result.
-- Cancellation, cleanup, progress, source-identity validation, segment ordering, and output semantics must remain intact.
+- Do not mark M3.231 PASS or merge until the complete validation workflow succeeds.
 
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
