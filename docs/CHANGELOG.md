@@ -5,7 +5,8 @@
 - Fresh audit found unknown export cancellation job IDs could accumulate without a count bound.
 - Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` for unknown/pending cancellation requests.
 - Duplicate pending cancellation IDs remain idempotent.
-- Active-child cancellation behavior is preserved.
+- Active-child cancellation behavior is preserved, including when pending capacity is already full.
+- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
 - Added focused regression coverage.
 - No project schema change.
 - Local validation is pending user run.
