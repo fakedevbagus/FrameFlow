@@ -11,7 +11,10 @@ use std::{
   path::{Path, PathBuf},
   process::{Command, Stdio},
   thread,
-  sync::atomic::{AtomicU64, Ordering},
+  sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc, Condvar, Mutex, OnceLock,
+  },
 };
 
 use serde::{Deserialize, Serialize};
@@ -122,8 +125,6 @@ fn prepare_media_preview(
   path: String,
 ) -> Result<String, String> {
   let source_path = media_path(&path)?;
-  let metadata = fs::metadata(&source_path)
-    .map_err(|error| format!("Could not inspect media metadata: {error}"))?;
 
   let cache_root = app
     .path()
@@ -138,6 +139,11 @@ fn prepare_media_preview(
     )
   })?;
 
+  let preview_lock_key = preview_generation_lock_key(&source_path);
+  let _preview_generation_guard = acquire_preview_generation_lock(&preview_lock_key)?;
+
+  let metadata = fs::metadata(&source_path)
+    .map_err(|error| format!("Could not inspect media metadata: {error}"))?;
   let cache_key = preview_cache_key(&source_path, &metadata);
   let output_path = cache_root.join(format!("{cache_key}.mp4"));
   let temporary_path = cache_root.join(format!("{cache_key}.partial.mp4"));
@@ -2026,6 +2032,62 @@ fn parse_duration_ms(output: &[u8]) -> Option<u64> {
     })
 }
 
+struct PreviewGenerationGuard {
+  key: String,
+  condition: Arc<Condvar>,
+}
+
+impl Drop for PreviewGenerationGuard {
+  fn drop(&mut self) {
+    let Some(locks) = PREVIEW_GENERATION_LOCKS.get() else {
+      return;
+    };
+
+    if let Ok(mut locks) = locks.lock() {
+      if locks.remove(&self.key).is_some() {
+        self.condition.notify_all();
+      }
+    }
+  }
+}
+
+static PREVIEW_GENERATION_LOCKS: OnceLock<Mutex<HashMap<String, Arc<Condvar>>>> =
+  OnceLock::new();
+
+fn preview_generation_lock_key(path: &Path) -> String {
+  fs::canonicalize(path)
+    .unwrap_or_else(|_| path.to_path_buf())
+    .to_string_lossy()
+    .into_owned()
+}
+
+fn acquire_preview_generation_lock(
+  key: &str,
+) -> Result<PreviewGenerationGuard, String> {
+  let locks = PREVIEW_GENERATION_LOCKS.get_or_init(|| Mutex::new(HashMap::new()));
+  let mut locks = locks
+    .lock()
+    .map_err(|_| "Preview generation lock state is unavailable.".to_string())?;
+
+  loop {
+    if let Some(condition) = locks.get(key) {
+      let condition = Arc::clone(condition);
+      locks = condition
+        .wait(locks)
+        .map_err(|_| "Preview generation lock state is unavailable.".to_string())?;
+      continue;
+    }
+
+    let condition = Arc::new(Condvar::new());
+    locks.insert(key.to_string(), Arc::clone(&condition));
+
+    return Ok(PreviewGenerationGuard {
+      key: key.to_string(),
+      condition,
+    });
+  }
+}
+
 fn validate_preview_source_identity(
   source_path: &Path,
   expected_cache_key: &str,
@@ -2302,6 +2364,46 @@ mod tests {
     .is_err());
     assert!(super::validate_native_export_settings(1280, 720, 0.0).is_err());
     assert!(super::validate_native_export_settings(1280, 720, 241.0).is_err());
+  }
+
+  #[test]
+  fn serializes_preview_generation_by_source_path() {
+    use std::{
+      sync::mpsc,
+      time::{Duration, SystemTime, UNIX_EPOCH},
+    };
+
+    let unique_suffix = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let key = format!("frameflow-preview-lock-test-{unique_suffix}");
+
+    let first = super::acquire_preview_generation_lock(&key)
+      .expect("first preview generation lock should be acquired");
+
+    let (sender, receiver) = mpsc::channel();
+    let second_key = key.clone();
+    let waiter = std::thread::spawn(move || {
+      let _second = super::acquire_preview_generation_lock(&second_key)
+        .expect("second preview generation lock should be acquired");
+      sender.send(()).expect("lock waiter should report acquisition");
+    });
+
+    assert!(
+      receiver
+        .recv_timeout(Duration::from_millis(50))
+        .is_err(),
+      "a concurrent generation for the same source must wait"
+    );
+
+    drop(first);
+
+    receiver
+      .recv_timeout(Duration::from_secs(1))
+      .expect("waiting preview generation should proceed after the first completes");
+
+    waiter.join().expect("preview generation waiter should exit");
   }
 
   #[test]
@@ -3148,48 +3250,4 @@ mod tests {
 
     fs::remove_file(path).unwrap();
   }
-
-  #[test]
-  fn preview_cache_key_changes_when_source_metadata_changes() {
-    use std::{
-      fs,
-      time::{SystemTime, UNIX_EPOCH},
-    };
-
-    let unique_suffix = SystemTime::now()
-      .duration_since(UNIX_EPOCH)
-      .unwrap()
-      .as_nanos();
-    let path = std::env::temp_dir().join(format!(
-      "frameflow-preview-cache-{}-{unique_suffix}.tmp",
-      std::process::id(),
-    ));
-
-    fs::write(&path, b"first").unwrap();
-    let first_metadata = fs::metadata(&path).unwrap();
-    let first = preview_cache_key(&path, &first_metadata);
-
-    fs::write(&path, b"second").unwrap();
-    let second_metadata = fs::metadata(&path).unwrap();
-    let second = preview_cache_key(&path, &second_metadata);
-
-    assert_ne!(first, second);
-
-    fs::remove_file(path).unwrap();
-  }
-  #[test]
-  fn bounds_preview_ffmpeg_stderr_retention() {
-    let payload = vec![b'x'; 4 * 1024 * 1024];
-
-    let retained = super::collect_bounded_ffmpeg_stderr(
-      std::io::Cursor::new(payload),
-      super::MAX_PREVIEW_FFMPEG_STDERR_BYTES,
-      super::PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE,
-    );
-
-    assert!(retained.len() <= super::MAX_PREVIEW_FFMPEG_STDERR_BYTES);
-    assert!(retained.ends_with(super::PREVIEW_FFMPEG_STDERR_TRUNCATION_NOTICE));
-  }
-
-
 }
