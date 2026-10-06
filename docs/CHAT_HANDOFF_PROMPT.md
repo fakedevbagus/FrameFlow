@@ -10,67 +10,81 @@ You are continuing development of the existing repository:
 - Platform constraint: Linux-native only. Do not introduce Wine or a Windows compatibility layer.
 - Repository is the source of truth. Do not invent project state from memory when GitHub can be checked.
 
-### Milestone status at the exact handoff point
+### Exact handoff state
 
 - **Latest accepted milestone:** M3.231 — Preview Generation Single-Flight.
 - **M3.231 PR:** #249.
 - **M3.231 squash merge SHA:** `6dd5d464faaf59d1bd93659629a0ae267ee293be`.
-- GitHub verified `main` is identical to that merge SHA before continuing.
-- User explicitly reported `pass`; M3.231 was accepted through the established workflow.
-- M3.231 serializes preview generation for the same canonical source path and prevents concurrent requests from writing the same deterministic temporary preview file.
+- GitHub verified `main` is identical to this merge SHA before continuing.
+- User explicitly reported `pass`; under our established workflow this is the milestone acceptance signal.
 - **Current active milestone:** M3.232 — Bound Pending Export Cancellation Job IDs.
 - **Current branch:** `fix/m3-232-bound-export-cancel-pending-job-ids`.
-- **M3.232 PR:** Draft, pending creation from this branch.
-- Fresh audit found the export cancellation state could grow without bound from cancellation requests for unknown job IDs.
-- Each job ID is capped at 256 bytes, but the count of retained pending cancellation IDs had no limit.
-- M3.232 adds a 1024-entry bound for pending unknown cancellation IDs while preserving active-job cancellation semantics.
-- Protected PR #76 and unrelated PR #22 remain untouched.
-- Stale PR #231 remains untouched.
+- **Current PR:** #250 (Draft).
+- Fresh audit found `ExportProcessState.cancel()` could retain arbitrary unknown cancellation job IDs indefinitely in the `cancelled` set.
+- M3.232 adds `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` and bounds insertion of unknown/pending cancellation IDs.
+- Duplicate pending cancellation IDs remain idempotent.
+- Active child cancellation behavior is preserved.
+- No project schema change.
+- PR #250 is not merged. Local validation is pending the user's validation run.
 
-## Established workflow — MUST FOLLOW
+### Important validation-context rule
 
-1. Refresh real GitHub state first.
-2. Work one focused milestone at a time from verified `main`.
-3. Implement the smallest safe correction and add focused regression coverage.
-4. Update `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` every milestone.
-5. Create the milestone as a Draft PR.
-6. Provide exactly one combined Pull/Fetch + Validation command for the user.
-7. Do not claim lint, tests, build, Cargo, or runtime validation passed unless the user's output supports it. Treat an explicit user `pass` as the workflow acceptance signal.
-8. On user `pass`: refresh PR/head/base, ensure branch is not behind, mark Ready for Review, re-read exact head SHA, squash-merge with that exact SHA, record the actual merge SHA, verify `main` is identical to the merge SHA, reconcile documentation, perform a fresh audit, create the next focused branch/Draft PR, and provide the next validation command.
-9. Never reset, discard, or overwrite a user-local modification such as `src-tauri/Cargo.lock` automatically.
-10. Keep the UI/UX/frontend redesign blocked until the stability gate is reached.
-11. Do not modify protected PR #76 or unrelated PR #22. Leave stale PR #231 untouched unless a fresh audit specifically requires a new comparison.
-12. Linux-native only. No Wine or Windows compatibility layer.
+A local validation log associated with M3.231 showed a Cargo delimiter error, while the user subsequently explicitly reported `pass`. Do not rewrite history as “all validation passed”; record the explicit PASS as the acceptance signal and preserve the factual validation note when discussing that milestone.
 
-## Stability roadmap
+## ESTABLISHED WORKFLOW — MUST FOLLOW
 
-- M3 hardening: resource bounds, lifecycle correctness, repeated-probe elimination, input validation.
-- M4 media correctness.
-- M5 process/lifecycle hardening.
-- M6 persistence hardening.
-- M7 native runtime/packaging.
-- M8 QA.
-- M9 stability gate.
-- Only after M9/UI gate: major UI/UX/frontend redesign.
+1. Refresh real GitHub state before acting.
+2. Verify PR state, branch head SHA, base SHA, and ahead/behind against `main`.
+3. Work one focused milestone at a time.
+4. Perform a fresh audit before choosing the next milestone.
+5. Make the smallest safe change that addresses the concrete audit finding.
+6. Add focused regression coverage for the exact failure/resource boundary.
+7. Update `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` every milestone.
+8. Create a Draft PR for the milestone.
+9. Provide exactly one combined Pull/Fetch + Validation command.
+10. Never claim lint/test/build/Cargo/runtime success unless supported by the user's reported output. An explicit user `pass` is the workflow acceptance signal.
+11. On `pass`: refresh PR/head/base; confirm not behind; mark Ready for Review; re-read the exact current head SHA; squash-merge using that exact SHA; record the actual merge SHA; verify `main` is identical to the merge SHA; reconcile all milestone docs; fresh-audit verified `main`; create the next focused branch and Draft PR; provide the next validation command.
+12. Never reset, discard, or overwrite user-local changes such as `src-tauri/Cargo.lock`.
+13. Keep protected PR #76, unrelated PR #22, and stale PR #231 untouched unless a fresh audit explicitly requires comparison.
+14. Keep the major UI/UX/frontend redesign blocked until the stability gate is reached.
+15. Linux-native only. No Wine or Windows compatibility layer.
 
-## M3.232 — Scope
+## ROADMAP / GATES
+
+Current order remains:
+
+- M3 — stability/resource hardening.
+- M4 — media correctness.
+- M5 — process/lifecycle hardening.
+- M6 — persistence hardening.
+- M7 — native runtime and packaging.
+- M8 — QA.
+- M9 — stability gate.
+- Only after the stability gate: major UI/UX/frontend redesign.
+
+Do not skip ahead to UI polish because the frontend already has substantial functionality. The priority is correctness, bounded resource usage, lifecycle safety, media correctness, persistence integrity, native packaging, and QA.
+
+## M3.232 — CURRENT SCOPE
 
 Target only the unbounded pending export-cancellation state.
 
-Current implementation:
-- `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` in `src-tauri/src/export_process.rs`.
-- Unknown job IDs consume bounded pending-cancellation capacity.
-- Duplicate pending IDs are idempotent.
-- Active child cancellation still marks the job cancelled and attempts to terminate FFmpeg.
-- Lock ordering is kept consistent with registration/finish paths.
-- Focused regression test verifies the exact capacity boundary and overflow rejection.
+Implementation currently on branch:
+- `src-tauri/src/export_process.rs`
+- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024`.
+- When an unknown job ID is cancelled, insertion is allowed only while the pending set has capacity.
+- Duplicate pending IDs do not consume additional capacity.
+- Active-child cancellation still records the job as cancelled and attempts to kill the process.
+- Lock acquisition order was made consistent with registration/finish paths.
+- Added regression test for exact capacity, duplicate idempotency, overflow rejection, and bounded set size.
 - No project schema change.
 
-Do not broaden the milestone into unrelated export, UI, media, or architectural changes without a fresh audit.
+Do not broaden M3.232 into unrelated export/UI/media changes without a new audit.
 
-## M3.232 — Validation
+## M3.232 — VALIDATION
 
-Validation is pending. Use this exact workflow:
+Validation is pending.
+
+Use exactly this command block:
 
 ```bash
 ROOT="$(git rev-parse --show-toplevel)" &&
@@ -89,13 +103,1888 @@ cargo test --manifest-path src-tauri/Cargo.toml
 
 Do not reset `src-tauri/Cargo.lock`.
 
-## Immediate first action in a new chat
+## FIRST ACTION IN THE NEW CHAT
 
-1. Refresh PR #250/current branch state from GitHub.
-2. Verify the branch is still based directly on current `main` and not behind.
-3. Inspect the M3.232 diff and focused regression test.
-4. Check docs are synchronized with the branch.
-5. Continue only within M3.232 until validation is explicitly accepted.
-6. After PASS, execute the established merge/audit/next-branch workflow exactly.
+Do not start coding from memory.
 
-.
+First:
+1. Refresh PR #250 and the current branch from GitHub.
+2. Read the current head SHA and compare `main...fix/m3-232-bound-export-cancel-pending-job-ids`.
+3. Confirm the branch is not behind `main`.
+4. Read the current M3.232 diff in `src-tauri/src/export_process.rs`.
+5. Check `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` are synchronized.
+6. Continue the M3.232 validation checkpoint; do not create another milestone until this one is accepted or its concrete failure is corrected.
+
+## MERGE CHECKPOINT AFTER PASS
+
+When the user reports `pass`:
+- Re-fetch PR #250 metadata.
+- Confirm it is still open, mergeable, and not behind `main`.
+- Mark PR #250 Ready for Review.
+- Re-read PR #250 and capture the exact current head SHA.
+- Squash-merge with `expected_head_sha` equal to that exact SHA.
+- Record the returned merge SHA.
+- Compare `main` against the merge SHA in both directions; both must report `identical`.
+- Reconcile docs on the post-merge state.
+- Fresh-audit verified `main`.
+- Create the next focused branch and Draft PR only after the audit.
+- Provide the next one-block Pull/Fetch + Validation command.
+
+## DOCUMENTATION RULE
+
+Every accepted milestone must leave these files synchronized:
+- `docs/CHAT_HANDOFF_PROMPT.md`
+- `docs/PROJECT_CONTEXT.md`
+- `docs/CHANGELOG.md`
+
+The handoff document is the canonical cross-chat continuity file. Always update its exact “latest accepted” and “current active” sections, current branch, PR number, latest merge SHA, fresh-audit finding, validation status, and next action.
+
+## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
+
+- PR #240; squash-merged at `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
+- User reported `PASS`.
+- Added `MAX_PROJECT_TOTAL_AUDIO_VOLUME_KEYFRAMES = 65_536`.
+- Persisted projects with more than 65,536 audio volume keyframes across all clips are rejected before validating the excess collection.
+- Preserved the existing 4,096 per-clip cap and audio keyframe timing/value/order semantics.
+- Added exact-limit and over-limit regression coverage.
+- During validation, a malformed test block, an unused import, and a missing runtime constant were discovered and corrected without changing the intended scope.
+- Local validation is considered accepted because the user explicitly reported `PASS`.
+- No project schema version change.
+
+## M3.223 — Persisted Project Asset Source Path Byte Cap — completed — 2026-10-01
+
+- PR #241; squash-merged at `21610705086360cf7d8022bb5bd111d3b0feb7f3`.
+- User reported `PASS`.
+- Added `MAX_PERSISTED_ASSET_SOURCE_PATH_BYTES = 4096`.
+- Persisted asset `sourcePath` is measured by UTF-8 byte length and rejected above 4,096 bytes during project validation.
+- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- No project schema version change.
+
+## M3.224 — Persisted Project Identifier Byte Caps — completed — 2026-10-01
+
+- PR #242; squash-merged at `42f0655b6ed56abfb0b22dbb9d9b75138bbdbef4`.
+- User reported `PASS`.
+- Added `MAX_PERSISTED_IDENTIFIER_BYTES = 256`.
+- Validated project, asset, track, clip, and clip `assetId` identifiers by UTF-8 byte length.
+- Added exact-limit, over-limit, and multibyte UTF-8 regression coverage.
+- No project schema version change.
+
+## M3.225 — Persisted Project Serialization Size Cap — completed — 2026-10-01
+
+- Branch: `fix/m3-225-persisted-project-serialization-size-cap`.
+- PR #243; squash-merged at `c12fde998a6c27421174493550020a825d80a6d6`.
+- User reported PASS.
+- Added `MAX_PROJECT_SERIALIZED_BYTES = 16 * 1024 * 1024` at the domain persistence boundary.
+- `parseProject()` rejects serialized input above 16 MiB before JSON parsing.
+- `serializeProject()` rejects serialized output above 16 MiB before callers store/save it.
+- Added exact-boundary acceptance and over-limit regression coverage.
+- Preserved the existing native 16 MiB project-file boundary and project schema version.
+- No project schema version change.
+
+## M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — completed — 2026-10-01
+
+- Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
+- PR #245; squash-merged at `7658d53bd58c407d07c363ba0cc8bf918f57dc63`.
+- User reported `PASS` after the corrected validation workflow.
+- Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
+- Enforced the aggregate source-path cap before per-segment filesystem/media probing.
+- Used saturating aggregate accounting.
+- Added exact-limit and over-limit regression coverage.
+- Corrected the test-module import discovered in validation and hardened Vitest to one fork worker after worker-start timeout errors.
+- No project schema version change.
+
+## M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
+
+- Branch: `fix/m3-228-unified-av-source-audio-probe-dedup`.
+- PR #246; squash-merged at `6711c54379ed4807f330a946411e30b4120cbfb2`.
+- User reported `PASS` after the established validation workflow.
+- Fresh audit found repeated `probe_has_audio()` calls when multiple unified-AV source-audio segments referenced the same resolved video input.
+- Added a per-render-request cache keyed by resolved source path.
+- Added focused regression coverage proving repeated source paths invoke the probe once.
+- Preserved source-duration caching, segment validation, audio graph behavior, cancellation, cleanup, result semantics, and probe error propagation.
+- No project schema version change.
+
+## M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — active — 2026-10-06
+
+- Branch: `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
+- PR #247 (Draft).
+- Fresh audit from verified `main` found unified AV requests allow up to 256 video inputs and 256 audio inputs, with each input path individually capped at 4,096 bytes but no aggregate cap across both arrays.
+- The independent limits permit up to 2 MiB of input-path string payload before filesystem/media probing.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES = 1024 * 1024`.
+- Enforced the aggregate UTF-8 byte cap across video and audio input paths before per-input `PathBuf`/filesystem/media validation.
+- Used saturating aggregate accounting.
+- Added exact 1 MiB acceptance and over-limit rejection regression coverage.
+- Preserved existing input-count, per-path, media-type, source-audio segment, graph, rendering, cleanup, and result behavior.
+- No project schema version change.
+- Local validation is pending user run.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.229.
+
+## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
+
+- Branch: `fix/m3-226-persisted-display-name-byte-caps`.
+- PR #244; squash-merged at `687964d8331311d42913f09f9d7e5acc5c88f88c`.
+- User reported PASS.
+- Added `MAX_PERSISTED_DISPLAY_NAME_BYTES = 256` using UTF-8 byte length.
+- Enforced the cap on `Project.name`, `MediaAsset.name`, and `Track.name`.
+- Preserved existing non-empty and project-name trimming semantics.
+- Added exact 256-byte acceptance and 257-byte rejection coverage with a multibyte UTF-8 boundary.
+- No project schema version change.
+
+## FIRST ACTION IN THE NEW CHAT
+
+Do not start implementation from memory.
+
+First refresh the actual repository state for M3.229 and continue from verified `main` / active branch state.
+
+The current user-local workflow preserves any pre-existing `src-tauri/Cargo.lock` modification; never reset or discard it automatically.
+
+## REQUIRED WORKFLOW — MUST BE FOLLOWED IN EVERY NEW CHAT
+
+### 1. Refresh before acting
+
+Always inspect the real GitHub state first:
+
+- PR state, if a PR exists.
+- Branch head SHA.
+- `main` SHA.
+- Compare ahead/behind.
+- Current changed files.
+- Relevant documentation state.
+
+Never rely only on prior-chat claims when the repository can be checked.
+
+### 2. One milestone at a time
+
+For each milestone:
+
+1. Fresh audit the verified `main`.
+2. Identify one concrete stability/correctness/resource-boundary issue.
+3. Create one focused branch.
+4. Implement the smallest safe fix.
+5. Add focused regression coverage.
+6. Update documentation.
+7. Provide one combined Pull/Fetch + Validation command.
+8. Wait for the user's validation result.
+9. Treat only explicit `PASS` / `pass` as validation acceptance.
+
+### 3. PASS workflow
+
+When the user says `PASS` / `pass`:
+
+1. Refresh PR/current head/base state.
+2. Confirm the branch is not behind `main`.
+3. If a Draft PR exists, mark it Ready for Review.
+4. Re-read the exact current head SHA.
+5. Squash-merge using that freshly verified head SHA.
+6. Record the actual merge SHA returned by GitHub.
+7. Verify `main` is identical to that merge SHA.
+8. Reconcile the handoff/documentation state against the actual merge.
+9. Fresh-audit the verified `main`.
+10. Create the next focused branch and PR draft.
+11. Give the next combined Pull/Fetch + Validation block.
+
+Never merge using a stale head SHA.
+
+### 4. Documentation rule
+
+Documentation is part of the workflow, not an afterthought.
+
+The authoritative handoff file is:
+
+`docs/CHAT_HANDOFF_PROMPT.md`
+
+Keep it synchronized with the exact current repository state.
+
+For this project, also keep:
+
+- `docs/PROJECT_CONTEXT.md`
+- `docs/CHANGELOG.md`
+
+synchronized at milestone boundaries.
+
+When replacing any large documentation file, fetch its **complete current content** first. Never reconstruct a large document from a partial response. Never overwrite a large document with truncated content.
+
+### 5. Validation honesty rule
+
+Never claim that any of these passed unless the user actually reports it from the current validation run:
+
+- `npm ci`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- `cargo test --manifest-path src-tauri/Cargo.toml`
+- E2E/manual validation
+- packaging/runtime checks
+
+A passing frontend suite does not imply passing Rust tests.
+
+### 6. Scope protection
+
+Do not modify unrelated protected work:
+
+- PR #76
+- PR #22
+- unrelated branches/worktrees
+- the unrelated `fix/m3-214-multi-segment-source-path-bytes-cap` branch
+
+Only touch them if the repository audit proves they are directly relevant and the established workflow explicitly calls for it.
+
+### 7. UI/UX gate
+
+Do **not** start the major UI/UX/frontend redesign yet.
+
+The order remains:
+
+**M3 hardening → M4 media correctness → M5 process/lifecycle → M6 persistence → M7 native runtime/packaging → M8 QA → M9 stability gate → UI/UX/frontend redesign**
+
+Do not jump ahead simply because the current UI already exists.
+
+## CURRENT M3.229 SUMMARY
+
+**Latest accepted checkpoint:** M3.228 PASS, squash-merged to `main` at `6711c54379ed4807f330a946411e30b4120cbfb2` and verified identical before documentation reconciliation.
+
+**Current continuation point:** M3.229 PR #247 (Draft), branch `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
+
+**Fresh audit:** unified AV requests allow up to 256 video inputs and 256 audio inputs, each individually capped at 4,096 bytes, creating a theoretical 2 MiB path-string payload before filesystem/media probing when no aggregate budget is enforced.
+
+**Implementation:** a 1 MiB aggregate UTF-8 input-path cap is enforced before per-input validation/probing, with saturating accounting and exact-limit/over-limit regression coverage.
+
+**Current state:** implementation and documentation are complete for M3.229; local validation is pending the user's run.
+
+**Next step:** run the combined Pull/Fetch + Validation block. Only the user's explicit PASS establishes validation acceptance.
+
+## USER WORKFLOW PREFERENCE
+
+The user uses short checkpoints such as `pass`, `PASS`, and `continue`.
+
+Interpret them consistently:
+
+- `PASS` / `pass`: the user accepted the current validation result; execute the merge/documentation/audit workflow.
+- `continue`: continue implementation/workflow based on the current state, but do not invent a validation PASS.
+- When a validation failure is reported, resolve it before treating the milestone as accepted.
+
+Every milestone should leave enough precise documentation that a brand-new chat can resume without reconstructing the project from scratch.
+
+## M3.221 — completed — 2026-10-01
+
+- Branch: `fix/m3-221-project-total-clip-count-cap`.
+- PR #239; squash-merged at `e042106b849484c5ee0b21837d72580f3bc9d6f1`.
+- `main` was verified identical to the merge SHA before documentation reconciliation.
+- User reported PASS.
+- Added `MAX_PROJECT_TOTAL_CLIPS = 65_536`.
+- Preserved the existing 4,096 per-track clip cap and clip/topology semantics.
+- Added exact-limit and over-limit aggregate regression coverage.
+- No project schema change.
+
+## M3.220 — completed — 2026-10-01
+
+- Branch: `fix/m3-220-project-clip-count-cap`.
+- PR #238; squash-merged at `a957053d17f56322bae5fd71dacabd471b2670af`.
+- `main` was verified identical to the merge SHA before documentation reconciliation.
+- User reported PASS.
+- Added `MAX_PROJECT_CLIPS_PER_TRACK = 4096`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved existing clip identity, asset linkage, timing, transition, audio, transform, and topology semantics.
+- No project schema change.
+
+## M3.219 — completed — 2026-10-01
+
+- Branch: `fix/m3-219-project-track-count-cap`.
+- PR #237; squash-merged at `8ad9b5e2e8ccb98ef1174d39b0f716af939de365`.
+- `main` was verified identical to the merge SHA before documentation reconciliation.
+- User reported PASS.
+- Added `MAX_PROJECT_TRACKS = 256`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved existing track identity, lock/mute, volume/pan, clip, topology, and project-schema semantics.
+- No project schema change.
+
+## M3.218 — completed — 2026-09-30
+
+- Branch: `fix/m3-218-transform-keyframe-count-cap`.
+- PR #236; squash-merged at `b93ba09633c6f02194a04a264fbaed10819b71c3`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS.
+- Added `MAX_TRANSFORM_KEYFRAMES = 4096`.
+- Added exact-limit acceptance and over-limit rejection regression coverage.
+- Preserved transform keyframe timing, ordering, easing, and transform-value semantics.
+- No project schema change.
+
+## M3.217 — completed — 2026-09-30
+
+- Branch: `fix/m3-217-project-asset-count-cap`.
+- PR #235; squash-merged at `3ab6e95a2d175fde3ce0042cfd7d7a5d69140a73`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS.
+- Added `MAX_PROJECT_ASSETS = 4096`.
+- Added exact-limit and over-limit regression coverage.
+- Preserved existing asset identity/validation and project-schema semantics.
+- No project schema change.
+
+## M3.215 — completed — 2026-09-30
+
+- PR #233; squash-merged at `9ae21c176ac57fbe34f34dbc742f4de686fab862`.
+- `main` was verified identical to that merge SHA.
+- User reported PASS.
+- Added export/native and persisted project canvas dimension ceilings at 8,192 pixels.
+- Preserved existing export/render behavior.
+
+## M3.214 — completed — 2026-09-30
+
+- Branch: `fix/m3-214-export-protocol-label-size-caps`.
+- PR #232; squash-merged at `f807fbd73611d1e3155cbc2dbea73dc854f7c825`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added shared MAX_EXPORT_PROTOCOL_LABEL_BYTES = 64 across native video/audio export protocol fields.
+- Corrected the first Cargo-test import failure and removed a duplicated test attribute; production behavior was unchanged.
+
+Next milestone:
+- M3.215 — export canvas dimension caps.
+## M3.213 — completed — 2026-09-30
+
+- Branch: `fix/m3-213-unified-av-total-audio-keyframe-cap`.
+- PR #230; squash-merged at `1aece413b1c104efcbd2617167f71f75d3697b7b`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES = 65_536`.
+- Enforced the aggregate cap across unified AV source audio segments while preserving the existing 4,096 per-segment cap.
+- Used a saturating accumulator for aggregate counting.
+- Preserved existing duration, keyframe ordering/value, EQ/compressor, graph, rendering, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+Next milestone:
+- M3.214 — export protocol label size caps.
+
+## M3.212 — completed — 2026-09-30
+
+- Branch: `fix/m3-212-export-job-id-size-cap`.
+- PR #229; squash-merged at `5798fd2eed98c3aae9ef1d647488751460fd643a`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_EXPORT_JOB_ID_BYTES = 256`.
+- Validated cancel-request job IDs before cancellation state insertion and render job IDs before export process/progress execution.
+- Preserved cancellation, process registration, progress events, cleanup, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+- Corrected the test-module import discovered during validation; production behavior was unchanged.
+- No project schema change.
+
+## M3.211 — completed — 2026-09-30
+
+- Branch: `fix/m3-211-native-audio-graph-filter-size-cap`.
+- PR #228; squash-merged at `00cee51c31afc1a8fa39ecf6a03282d2eea2289`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added `MAX_NATIVE_AUDIO_GRAPH_FILTER_BYTES = 256 * 1024`.
+- Rejected oversized native audio graph filter graphs before FFmpeg argument construction.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
+
+## M3.209 — completed — 2026-09-30
+
+- Branch: `fix/m3-209-project-path-length-cap`.
+- PR #226; squash-merged at `fff28c1d601b2b693c4fe33b0776de743a784ab6`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after the complete Pull/Fetch + Validation workflow.
+- Added shared `MAX_PROJECT_PATH_BYTES = 4096` and `validate_project_path_length()`.
+- Invoked the validator before `PathBuf::from` inside the shared project-path helper used by project open and save.
+- Preserved existing path, extension, project-content, directory, temporary-file, atomic-save, and result behavior.
+- Added exact-limit and over-limit regression coverage.
+
+## M3.208 — completed — 2026-09-30
+
+- Branch: `fix/m3-208-export-output-path-length-cap`.
+- PR #225; squash-merged at `0f34f7ffaeec9fab423a2e6d0e62d5479142a4e0`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation.
+- Added shared `MAX_EXPORT_OUTPUT_PATH_BYTES = 4096` and reused it across all six export renderer surfaces.
+- Added focused over-limit regression coverage.
+- No project schema change.
+
+## M3.207 — Media Server Path Length Cap — completed — 2026-09-30
+
+- Branch: `fix/m3-207-media-server-path-length-cap`.
+- PR #224; squash-merged at `02b61ba711f9b101d1fc84838d9e3bafbcc692e7`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation.
+- Enforced the shared 4,096-byte media path limit in the local media server before canonicalization/filesystem probing.
+- Added exact-limit and over-limit regression coverage.
+- Test-only validation corrections fixed the missing import and temporary-`String` lifetime fixture without changing production behavior.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` identified M3.208: export output path length cap.
+- Scope: apply one shared 4,096-byte maximum to every export output path before output-path filesystem probing/parent-directory checks.
+
+## M3.206 — completed — 2026-09-30
+
+- Branch: `fix/m3-206-shared-media-path-length-cap`.
+- PR #223; squash-merged at `a1ca15bcb9468f5cc40c9a9b6ee75803ef215781`.
+- `main` was verified at the merge SHA.
+- User reported PASS after full local validation.
+- Added the shared native media path cap of 4,096 bytes with exact-limit and over-limit regression coverage.
+- No project schema change.
+
+## Current State — M3.206 active — 2026-09-30
+
+- Repository: `fakedevbagus/FrameFlow`.
+- Latest merged milestone: M3.205.
+- M3.205 PR #222; squash merge SHA: `44a3e7926cfdaada243a7bc9b64200a1d8759d03`.
+- `main` was verified identical to that merge SHA.
+- User reported PASS after full local validation: 529/529 frontend tests, lint PASS, frontend build PASS, and 137/137 Rust tests.
+- Fresh audit identified M3.206 as the next focused hardening milestone.
+- Protected PR #76 and unrelated PR #22 remain untouched.
+
+## M3.206 — Shared Media Path Length Cap
+
+Branch:
+`fix/m3-206-shared-media-path-length-cap`
+
+Audit finding:
+- Shared `media_path()` accepted arbitrarily long media path strings before filesystem probing.
+- The helper is used by media inspection, preview preparation, waveform generation, single-source export, multi-segment render, and native video-graph input flows.
+
+Implementation target:
+- Add a centralized 4,096-byte maximum to shared media path validation.
+- Reject oversized values before filesystem probing.
+- Preserve existing behavior and add exact-limit/over-limit regression coverage.
+- No project schema change.
+
+Validation:
+- Implementation complete.
+- Local validation pending user run.
+- Never claim lint/test/build/cargo/manual success until the user reports it.
+
+Workflow:
+- On user `PASS` / `pass` / `lanjutkan`, refresh PR/head/base state, ensure the branch is not behind `main`, mark the Draft PR Ready for Review, squash-merge with the freshly verified head SHA, record the actual merge SHA, verify `main`, reconcile all three docs, perform a fresh audit, and create the next focused branch/PR.
+- Pull/Fetch + Validation must remain one combined copy-paste command block.
+- UI/UX/frontend redesign remains blocked until the mandatory stability gate.
+- Keep protected PR #76 and unrelated PR #22 untouched.
+
+## M3.205 — completed — 2026-09-30
+
+- Branch: `fix/m3-205-native-audio-graph-input-path-cap`.
+- PR #222; squash-merged at `44a3e7926cfdaada243a7bc9b64200a1d8759d03`.
+- `main` was verified at the merge SHA.
+- User reported PASS after full local validation.
+- Added the native audio graph per-input path cap of 4,096 bytes with exact-limit and over-limit regression coverage.
+- No project schema change.
+
+## M3.204 — completed — 2026-09-30
+
+- Branch: `fix/m3-204-video-audio-mix-video-input-path-cap`.
+- PR #221; squash-merged at `a23e35fe3a3b0fb9a78dbcc46e1fe5228287b0c1`.
+- `main` was verified identical to the merge SHA.
+- User reported PASS after full local validation.
+- Added a 4,096-byte legacy video/audio mix video source path cap before filesystem/media probing.
+- Added exact-limit and over-limit regression coverage.
+- Corrected the exact-limit fixture to include `.mp4` while retaining the intended 4,096-byte boundary.
+- Validation: 529/529 frontend tests passed, lint/build succeeded, and 135/135 Rust tests passed.
+- No project schema change.
+
+## M3.202 — completed — 2026-09-29
+
+- Branch: `fix/m3-202-video-audio-mix-audio-input-path-cap`.
+- Scope: cap individual legacy video/audio mix audio input path strings.
+- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_inputs` paths had no maximum length after the input count was bounded.
+- Reject audio input paths above 4,096 bytes before filesystem probing.
+- Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.201 — completed — 2026-09-29
+
+- Branch: `fix/m3-201-video-audio-mix-audio-input-count-cap`.
+- Scope: cap the number of legacy video/audio mix audio inputs.
+- Fresh audit found `NativeVideoWithAudioGraphRenderRequest.audio_inputs` had no maximum count.
+- Reject requests above 256 audio inputs before filesystem probing.
+- Preserve existing validation, source identity, rendering, cleanup, and audio-graph behavior.
+- Added focused regression coverage for exactly 256 and 257 inputs.
+- User reported PASS.
+- PR #218; squash-merged at `8e37ba4efe8b4fea52763cc3946ce30851d3ada6`.
+- `main` was verified at the merge SHA.
+
+## M3.200 — completed — 2026-09-29
+
+- Branch: `fix/m3-200-unified-av-video-input-path-cap`.
+- PR #215; squash-merged at `de501ffed1c464e5c5075c2f55d43a9506d33295`.
+- User reported PASS.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 bytes per unified AV video input path and rejected oversized values before filesystem probing.
+- Preserved existing unified AV video validation/render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
+
+## M3.199 — completed — 2026-09-29
+
+- Branch: `fix/m3-199-unified-av-audio-input-path-cap`.
+- PR #214; squash-merged at `80e03ee8a211d343c478c44d2b7a3e4b9599ba26`.
+- User reported PASS.
+- PR head `58c2c720e0335ae8f9813ae79aed15f34c658d5c` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 unified AV audio input path bytes and rejected oversized values before filesystem probing.
+- Preserved existing unified AV audio validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
+
+- Branch: `fix/m3-199-unified-av-audio-input-path-cap`.
+- Scope: cap individual unified AV audio input path strings.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.audio_inputs` paths had no maximum length.
+- Reject audio input paths above 4,096 bytes before filesystem probing.
+- Preserve existing unified AV audio validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.198 — completed — 2026-09-29
+
+- Branch: `fix/m3-198-unified-av-audio-filter-size-cap`.
+- PR #213; squash-merged at `0c480d388683b1999febbb86e5f608e8ebf85666`.
+- User reported PASS.
+- PR head `725756d5be147d84d91b4b201a10ca1a24c4e37a` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 KiB unified AV audio `filter_complex` size and rejected oversized graphs before filesystem/source probing.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
+
+- Branch: `fix/m3-198-unified-av-audio-filter-size-cap`.
+- Scope: cap the user-supplied unified AV audio `filter_complex` size.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.audio_filter_complex` had no maximum size.
+- Reject audio filter graphs above 256 KiB before filesystem/source probing.
+- Preserve existing unified AV graph validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.197 — completed — 2026-09-29
+
+- Branch: `fix/m3-197-unified-av-video-filter-size-cap`.
+- PR #212; squash-merged at `e3f2f2b762f575ef84f2209282a0396bb05d7f14`.
+- User reported PASS.
+- PR head `fd8ac0764e55c2c050e6c7225325dac16b7fc41a` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 KiB unified AV video `filter_complex` size and rejected oversized graphs before filesystem/source probing.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
+
+- Branch: `fix/m3-197-unified-av-video-filter-size-cap`.
+- Scope: cap the user-supplied unified AV video `filter_complex` size.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.video_filter_complex` had no maximum size.
+- Reject video filter graphs above 256 KiB before filesystem/source probing.
+- Preserve existing unified AV graph validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.196 — completed — 2026-09-29
+
+- Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
+- PR #211; squash-merged at `bae49044a25350380715771e9422050b7b664653`.
+- User reported PASS.
+- PR head `f615fa7a034143452f8c991ee8dd3cf247003715` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 unified AV source-audio volume keyframes per segment and rejected oversized lists before source probing/filter generation.
+- Preserved existing keyframe validation and render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
+
+- Branch: `fix/m3-196-unified-av-audio-keyframe-count-cap`.
+- Scope: cap per-segment unified AV source-audio volume keyframes.
+- Fresh audit found `NativeSourceAudioSegment.audio_volume_keyframes` had no maximum count.
+- Reject segments above 4,096 keyframes before source probing or filter generation.
+- Preserve existing unified AV graph validation/render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.195 — completed — 2026-09-29
+
+- Branch: `fix/m3-195-unified-av-source-audio-segment-count-cap`.
+- PR #210; squash-merged at `785942ed938454ebe1d9d960fcecda28cde7b8d7`.
+- User reported PASS.
+- PR head `b1702f1aea3a90dcb412c606c9c72a2759084851` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 unified AV graph source audio segments and rejected oversized requests before source probing/segment resolution.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
+
+ active — 2026-09-29
+
+- Branch: `fix/m3-195-unified-av-source-audio-segment-count-cap`.
+- Scope: cap the number of unified AV source audio segments in one request.
+- Fresh audit found `NativeVideoAudioGraphRenderRequest.source_audio_segments` had no maximum count.
+- Reject requests above 4,096 source audio segments before source probing, segment resolution, or generated filter growth.
+- Preserve existing unified AV graph validation/render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- Implementation is complete.
+- Draft PR not created yet.
+- Local validation is pending.
+
+## M3.194 — completed — 2026-09-29
+
+- Branch: `fix/m3-194-unified-av-audio-input-count-cap`.
+- PR #209; squash-merged at `47d452116ce3e24c98bd4794025859888d0c98f4`.
+- User reported PASS.
+- PR head `9802b2ab53888d5efc1fc56858e8eb489b50c499` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 unified AV graph audio inputs and rejected oversized requests before filesystem probing.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
+
+## M3.193 — completed — 2026-09-29
+
+- Branch: `fix/m3-193-unified-av-video-input-count-cap`.
+- PR #208; squash-merged at `9fe64afb4e9169800d734ce755b198a3c7ade10c`.
+- User reported PASS.
+- PR head `a2f37774d0fbb41a36b87244b9ddc8fa0d44210a` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 unified AV graph video inputs and rejected oversized requests before filesystem probing.
+- Preserved existing unified AV graph validation and render behavior.
+- Added focused regression coverage at the exact limit and one above it.
+- No project schema version change.
+
+## M3.192 — completed — 2026-09-29
+
+- Branch: `fix/m3-192-audio-graph-input-count-cap`.
+- PR #207; squash-merged at `ba93ba2a90c7281aed835a3323d2f1fec6118598`.
+- User reported PASS.
+- PR head `fdba5a6582c88d2e3b6b9c6588efbed50b3bb110` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 native audio graph inputs and rejected oversized requests before filesystem probing.
+- Preserved existing audio graph validation and render behavior.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
+
+## M3.191 — completed — 2026-09-29
+
+- Branch: `fix/m3-191-video-graph-input-path-cap`.
+- PR #206; squash-merged at `2f257b961ee2e9d4232643674536c20e62a1c798`.
+- User reported PASS.
+- PR head `e7a614079b213d96615240ff8b19aeb4016630b2` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 bytes per native video graph input path and rejected oversized paths before media probing.
+- Preserved existing graph validation/render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+## M3.190 — completed — 2026-09-29
+
+- Branch: `fix/m3-190-video-graph-filter-length-cap`.
+- PR #205; squash-merged at `a11d548d5518a56ace3af440c5346e2a73974793`.
+- User reported PASS.
+- PR head `373038b7f986bc51bee690dbdf1d99aa7bf7f9d3` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a 256 KiB native video graph `filter_complex` size cap and rejected oversized filters during metadata validation.
+- Preserved existing graph validation and render behavior.
+- Added focused regression coverage at the exact byte limit and one above it.
+- No project schema version change.
+
+## M3.189 — completed — 2026-09-29
+
+- Branch: `fix/m3-189-video-graph-input-count-cap`.
+- PR #204; squash-merged at `7f59b969621ae385cad4667081b935d2e9998c5b`.
+- User reported PASS.
+- PR head `4435055711e2270b59d919e80e69c5484f0a52a1` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 256 native video graph inputs and rejected oversized requests before media-path probing/source snapshot work.
+- Preserved existing graph validation and render behavior.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
+
+## M3.188 — completed — 2026-09-29
+
+- Branch: `fix/m3-188-multi-segment-count-cap`.
+- PR #203; squash-merged at `d4ff7b13e23a13ab540aa9a4444be4a618dc4bb4`.
+- User reported PASS.
+- PR head `c380b209ef79acf53c9afd39686fbe3cedd50609` was verified before merge.
+- `main` was verified at the merge SHA.
+- Added a maximum of 4,096 native multi-segment render inputs and reject oversized requests before probing/temp-directory creation.
+- Preserved existing segment validation, rendering order, audio, concat, and cleanup behavior.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
+
+## M3.187 — completed — 2026-09-29
+
+- Branch: `fix/m3-187-project-save-size-cap`.
+- PR #202; squash-merged at `aaf7cd24cb8448b1a738b9e860342f3a10a49586`.
+- User reported PASS.
+- PR head `b599b79cfc2b1aea6ff72163ff92e2d5f99ef86f` was verified before merge.
+- `main` was verified at the merge SHA.
+- Enforced the same 16 MiB project-file limit before save writes.
+- Preserved atomic temp-file + rename behavior, project path validation, and UTF-8 handling.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.193 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.186 — completed — 2026-09-29
+
+- Branch: `fix/m3-186-project-load-size-cap`.
+- PR #201; squash-merged at `5a4527ee14eae03308d4464337aea3714fe9c847`.
+- User reported PASS.
+- PR head `5e1c2b3751b8d9fc96ff919a15b50acce0142601` was verified before merge.
+- `main` was verified at the merge SHA.
+- Bounded project-file loading to 16 MiB and rejected larger files.
+- Preserved UTF-8 decoding and project path validation.
+- Added focused regression coverage at and above the limit.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.187 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.185 — completed — 2026-09-29
+
+- Branch: `fix/m3-185-ffprobe-stderr-memory-cap`.
+- PR #200; squash-merged at `fbbf008b383152825f3261942eb4ae1e7707d5f1`.
+- User reported PASS.
+- PR head `be3933ff79ffae9d474a7717df9d9a7be1ea6d6b` was verified before merge.
+- `main` was verified at the merge SHA.
+- Spawned ffprobe explicitly, drained stderr concurrently, and bounded retained diagnostics to 64 KiB.
+- Preserved structured stdout behavior, status handling, diagnostic formatting, and duration fallback order.
+- Added focused regression coverage for large stderr.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.186 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.184 — completed — 2026-09-29
+
+- Branch: `fix/m3-184-waveform-stderr-memory-cap`.
+- PR #199; squash-merged at `d8bd8724f7acd019be18e3c7fbeafa8a81a935b5`.
+- User reported PASS.
+- PR head `2a26f4920fa0386f621b533ae73a6a61b14c137e` was verified before merge.
+- `main` was verified at the merge SHA.
+- Bounded retained waveform FFmpeg stderr to 64 KiB while continuing to drain stderr.
+- Added explicit truncation marking and preserved waveform processing behavior.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.185 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.183 — completed — 2026-09-29
+
+- Branch: `fix/m3-183-ffmpeg-duration-probe-stream`.
+- PR #198; squash-merged at `3803e4d13d1ea6a220cd7b5d6cde6c35c707e270`.
+- User reported PASS.
+- PR head `d1e563df0c140f5041d955d97fb3d685b91e396e` was verified before merge.
+- `main` was verified at the merge SHA.
+- Streamed FFmpeg duration-probe progress stdout incrementally and retained only the latest progress timestamp.
+- Drained stderr concurrently with a bounded 64 KiB retained diagnostic buffer.
+- Preserved duration parsing preference, progress fallback, FFmpeg arguments, and fallback order.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.184 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.182 — completed — 2026-09-29
+
+- Branch: `fix/m3-182-preview-ffmpeg-stderr-memory-cap`.
+- PR #197; squash-merged at `05b7cbaf4acb2acba19274d875b73152651da2b4`.
+- User reported PASS.
+- PR head `d5902cd163e911f5a38ae19e524ae34f0e97e469` was verified before merge.
+- Preview FFmpeg stdout is discarded, stderr is drained concurrently, and retained diagnostics are capped at 64 KiB with an explicit truncation notice.
+- Preserved preview behavior and source identity/cache finalization flow.
+- Added focused regression coverage for multi-megabyte stderr.
+- No project schema version change.
+- `main` was verified at the merge SHA.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.183 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.181 — completed — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- PR #196; squash-merged at `407c2cd9675f446348bd51454140ab1c0a1f4e55`.
+- User reported PASS.
+- PR head `4d64917be64b5249cef5ccc085d64a0abf9b46de` was verified before merge.
+- `main` was verified at the merge SHA.
+- Streamed ffprobe audio packet stdout incrementally and drained stderr concurrently with fixed memory.
+- Preserved packet duration parsing semantics and fallback order.
+- Added focused regression coverage using large packet-like stdout.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.182 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.180 — active — 2026-09-29
+
+- Branch: `fix/m3-180-export-stderr-memory-cap`.
+- Draft PR #195 created; validation is pending.
+- Scope: prevent unbounded FFmpeg stderr retention in the export process while continuing to drain stderr concurrently.
+- Fresh audit found `export_process::run_ffmpeg_with_progress()` draining stderr on a dedicated thread but retaining the entire stream in an unbounded `Vec<u8>`.
+- Added a 64 KiB maximum retained stderr size.
+- Continue draining the full stderr stream to EOF so FFmpeg cannot deadlock on stderr backpressure.
+- Retain only the bounded diagnostic excerpt and append an explicit truncation notice when excess output was discarded.
+- Preserve current FFmpeg progress, cancellation, failure-detail, and export behavior.
+- Added focused regression coverage that emits multi-megabyte stderr, verifies child termination, verifies retained output stays within 64 KiB, and verifies truncation is marked.
+- Implementation is complete.
+- Draft PR #195 is open.
+- Local validation is pending.
+
+
+## M3.181 — active — 2026-09-29
+
+- Branch: `fix/m3-181-ffprobe-packet-stream`.
+- PR #196 created as Draft; validation is pending.
+- Scope: prevent unbounded ffprobe packet stdout retention during audio duration probing.
+- Fresh audit found `probe_duration_from_audio_packets()` using `Command::output()`, which buffered complete packet stdout before parsing.
+- Stream ffprobe stdout through a reusable line buffer and keep only the latest packet end timestamp.
+- Drain ffprobe stderr concurrently with fixed memory.
+- Preserve the existing packet parsing semantics and fallback order.
+- Added focused regression coverage using large packet-like stdout with a later timestamp.
+- Implementation is complete; local validation is pending. Do not assume lint/test/build/cargo/manual validation has passed.
+- No project schema version change.
+
+## M3.180 — completed — 2026-09-29
+
+- Branch: `fix/m3-180-export-stderr-memory-cap`.
+- PR #195; squash-merged at `84b016979eb4e3f375496f29a2aadf3f971954f8`.
+- User reported PASS.
+- Bounded retained FFmpeg stderr to 64 KiB while continuing to drain the complete stream to EOF.
+- Added explicit truncation marking and focused regression coverage.
+- No project schema version change.
+- PR head `110e4d9164129254e4e29188bbb171b525c65236` was verified before merge.
+- `main` was verified at `84b016979eb4e3f375496f29a2aadf3f971954f8`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## M3.179 — completed — 2026-09-29
+
+- Branch: `fix/m3-179-media-file-open-toctou`.
+- PR #194; squash-merged at `709c57fbf081d165dcf00474d685a50f2bf128d3`.
+- User reported `continue`, treated as PASS under the established workflow.
+- Closed the validation-to-open pathname race using device/inode identity verification and one verified file handle for full/Range streaming.
+- Added focused regression coverage for replacement by symlink before open.
+- No project schema version change.
+- PR head `c88e39f402a2cae0a08d5e499551b644aa6592db` was verified before merge.
+- `main` was verified at `709c57fbf081d165dcf00474d685a50f2bf128d3`.
+
+
+## M3.178 — completed — 2026-09-28
+
+- Branch: `fix/m3-178-waveform-ffmpeg-pipe-deadlock`.
+- PR #193; squash-merged at `55433db6e844238516c89b2ea65a34fc585687be`.
+- User reported PASS.
+- Drained FFmpeg stderr concurrently, preserved failure detail, and added child cleanup handling for waveform output-pipe/read failures.
+- Added focused regression coverage for more than 64 KiB of stderr.
+- Preserved waveform reduction, normalization, source validation, and FFmpeg arguments.
+- No project schema version change.
+- PR head `403a93dbe08cf62f870b1d314990bbf8408607ae` was verified before merge.
+- `main` was verified at `55433db6e844238516c89b2ea65a34fc585687be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+
+## M3.177 — completed — 2026-09-28
+
+- Branch: `fix/m3-177-media-server-connection-cap`.
+- PR #192; squash-merged at `f319afae3289e18308165d535ad810c1cc96e663`.
+- User reported PASS.
+- Added a fixed 32-connection active-handler ceiling with an atomic slot counter and RAII release guard.
+- Excess accepted connections are closed without spawning another handler thread.
+- Existing request/response timeouts and media HTTP behavior remain preserved.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `66cba3991383c379f8c8a5c4dcaf1c6257fcebfa` was verified before merge.
+- `main` was verified at `f319afae3289e18308165d535ad810c1cc96e663`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## M3.176 — completed — 2026-09-28
+
+- Branch: `fix/m3-176-media-response-write-timeout`.
+- PR #191; squash-merged at `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
+- User reported PASS.
+- Added a fixed 15-second `TcpStream` write timeout so stalled response writes cannot block a media-server connection thread indefinitely.
+- Existing request-read timeout and media response behavior remain preserved.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `bf8db3dd6bfca6f46cfc7c6730e706cb913a02e2` was verified before merge.
+- `main` was verified at `0e0ddc759ac558cdecf935edada02ddee6cedf56`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## M3.175 — completed — 2026-09-28
+
+- Branch: `fix/m3-175-media-request-header-syntax`.
+- PR #190; squash-merged at `13caea6cd5149ca2ab2d50ed3aa681215895d585`.
+- User reported PASS.
+- Added generic request-header field-name validation; malformed header lines now return HTTP 400.
+- Existing valid headers, Range parsing, and HEAD behavior remain preserved.
+- No project schema version change.
+
+## M3.174 — completed — 2026-09-28
+
+- Branch: `fix/m3-174-media-server-request-read-timeout`.
+- PR #189; squash-merged at `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
+- User reported PASS.
+- Added a fixed 15-second request-header read timeout.
+- Existing response streaming behavior remains preserved.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.179 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.174 — completed — 2026-09-28
+
+- Branch: `fix/m3-174-media-request-read-timeout`.
+- PR #189; squash-merged at `a626aef0311d236119b42e3ce5d294a498a7e8a7`.
+- User reported PASS.
+- Added a fixed 15-second request-header read timeout.
+- Existing response streaming behavior remains preserved.
+- No project schema version change.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.177 is the active milestone.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.171 — completed — 2026-09-27
+
+- Branch: `fix/m3-171-media-server-capability-token`.
+- PR #186; squash-merged at `24153fc569eea56673b016a581c69839968f4f50`.
+- User reported PASS.
+- Added per-server Linux `/dev/urandom` capability tokens, query enforcement, constant-time comparison, and focused regression coverage.
+- No project schema change.
+- `main` was verified at `24153fc569eea56673b016a581c69839968f4f50`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.171 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.170 — completed — 2026-09-27
+
+- Branch: `fix/m3-170-media-head-framing-errors`.
+- PR #185; squash-merged at `3fb60428a79877de9cb89ad73043718a130c19b6`.
+- User reported PASS.
+- Added HEAD-aware framing-error suppression and focused TCP tests for oversized, invalid-UTF-8, and incomplete HEAD requests.
+- No project schema change.
+- `main` was verified at `3fb60428a79877de9cb89ad73043718a130c19b6`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.170 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.169 — completed — 2026-09-27
+
+- Branch: `fix/m3-169-media-range-header-syntax`.
+- PR #184; squash-merged at `c095091e40309e21a218e49bd0fe11a2cefa3dc3`.
+- User reported PASS.
+- Added malformed `Range` header detection, HTTP 400 mapping, and a focused regression test.
+- No project schema change.
+- `main` was verified at `c095091e40309e21a218e49bd0fe11a2cefa3dc3`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.169 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.168 — completed — 2026-09-27
+
+- Branch: `fix/m3-168-media-range-header-uniqueness`.
+- PR #183; squash-merged at `e79f09e7cf370f40a29b779adecbd5529e8d14b4`.
+- User reported PASS.
+- Added duplicate `Range:` header detection, HTTP 400 mapping, and focused regression coverage.
+- Multiple ranges in one header remain HTTP 416.
+- No project schema change.
+- `main` was verified at `e79f09e7cf370f40a29b779adecbd5529e8d14b4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.168 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.167 — completed — 2026-09-27
+
+- Branch: `fix/m3-167-media-request-header-termination`.
+- PR #182; squash-merged at `f2177cd942f40a0f47333593c3f488c28106c188`.
+- User reported PASS.
+- Added incomplete-header detection, HTTP 400 mapping, and a focused TCP regression test.
+- No project schema change.
+- `main` was verified at `f2177cd942f40a0f47333593c3f488c28106c188`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.167 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.166 — completed — 2026-09-27
+
+- Branch: `fix/m3-166-media-request-framing-errors`.
+- PR #181; squash-merged at `e717ad8244b71146ea719997c37b1efe6ec510b3`.
+- User reported PASS.
+- Added typed request-read errors, early request-header size enforcement, HTTP 431/400 mapping, and focused TCP regression tests.
+- No project schema change.
+- `main` was verified at `e717ad8244b71146ea719997c37b1efe6ec510b3`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.166 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.165 — Media Server HTTP Version Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-165-media-http-version-contract`
+
+- PR: #180
+
+- Merge SHA: `04302fd1584eeab89fd591541168f580b456d112`
+
+User validation:
+- User reported PASS for M3.165.
+- PR #180 was refreshed, marked Ready for Review, and squash-merged using head `0a9d393982bcabd66a24ac30feb5d0d601e8c6a1`.
+- `main` was verified at merge commit `04302fd1584eeab89fd591541168f580b456d112`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+Scope:
+- Enforce the media server's HTTP request-line version contract.
+
+Implementation:
+- Parse request lines into exactly method, target, and version tokens.
+- Reject malformed request lines with HTTP 400.
+- Reject versions other than HTTP/1.1 with HTTP 505.
+- Preserve method-aware HEAD response body suppression.
+- Added focused TCP-level regression coverage for unsupported HTTP versions.
+- No project schema change.
+
+Next step:
+- Fresh audit from verified `main` for the next focused media-server protocol/correctness gap.
+
+## M3.164 — Media Query Duplicate Path Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-164-media-query-duplicate-path`
+
+- PR: #179
+
+- Merge SHA: `7286b3a82eaa4eefe3246098f97cf400e2246f86`
+
+User validation:
+- User reported PASS for M3.164.
+- PR #179 was refreshed, marked Ready for Review, and squash-merged using the freshly verified head.
+- `main` was verified at merge commit `7286b3a82eaa4eefe3246098f97cf400e2246f86`.
+
+Implementation:
+- Require exactly one `path=` media query parameter.
+- Reject duplicate path parameters with HTTP 400.
+- Reject a missing path parameter with HTTP 400.
+- Preserve existing percent-decoding, canonicalization, allowlist, media-type, range, and HEAD contracts.
+- Added focused regression coverage.
+- No project schema change.
+
+Next step:
+- M3.165 — Media Server HTTP Version Contract.
+
+## M3.163 — Media Server HEAD Response Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-163-media-server-head-response-contract`
+
+- PR: #178
+
+- Merge SHA: `94b1083773336f4339407c8bc82920d66dee4ea7`
+
+User validation:
+- User reported PASS for M3.163.
+- PR #178 was refreshed, marked Ready for Review, and squash-merged using the freshly verified head.
+- `main` was verified at merge commit `94b1083773336f4339407c8bc82920d66dee4ea7`.
+
+Implementation:
+- Make error responses honor HEAD body semantics instead of writing response bodies.
+- Preserve Content-Length and response headers for HEAD errors.
+- Added focused TCP regression coverage for HEAD 404 responses.
+- No project schema change.
+
+Next step:
+- M3.164 — Media Query Duplicate Path Contract.
+
+## M3.162 — Media Server Request Error Mapping — completed — 2026-09-27
+
+- Branch: `fix/m3-162-media-server-request-errors`
+
+- PR: #177
+
+- Merge SHA: `f4455f08360565dfc65c6b15b36f210c8624a76a`
+
+User validation:
+- User reported PASS for M3.162.
+- PR #177 was reconciled against current `main`, refreshed, marked Ready for Review, and squash-merged.
+- `main` was verified at merge commit `f4455f08360565dfc65c6b15b36f210c8624a76a`.
+
+Implementation:
+- Added typed media-path errors mapped to explicit HTTP statuses.
+- Malformed percent encoding maps to HTTP 400.
+- Relative paths map to HTTP 400.
+- Paths outside allowed media directories map to HTTP 403.
+- Unresolved media files map to HTTP 404.
+- Unsupported media types map to HTTP 415.
+- Preserved canonical-path and URL-generation behavior.
+- Added focused Rust/TCP regression coverage.
+- No project schema change.
+
+Next step:
+- M3.163 — Media Server HEAD Response Contract.
+
+## M3.161 — Media Server Canonical Path Enforcement — completed — 2026-09-27
+
+- Branch: `fix/m3-161-media-server-canonical-path`
+
+- PR: #176
+
+- Merge SHA: `8caa4232bf03843972968c944cfdc69235e6c549`
+
+User validation:
+- User reported PASS for M3.161.
+- PR #176 was refreshed and squash-merged.
+- `main` was verified at merge commit `8caa4232bf03843972968c944cfdc69235e6c549`.
+
+Implementation:
+- `validate_media_path()` now returns the canonical resolved `PathBuf`.
+- URL generation and HTTP serving use the canonical path returned by validation.
+- Preserved media-type detection and local media allowlist enforcement.
+- Added focused regression coverage.
+- No project schema change.
+
+Next step:
+- M3.162 — Media Server Request Error Mapping.
+
+## M3.160 — Media-Type Boundary Contract — completed — 2026-09-27
+
+- Branch: `fix/m3-160-media-type-boundary`
+
+- PR: #175
+
+- Merge SHA: `14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`
+
+User validation:
+- User reported PASS for M3.160.
+- PR #175 was refreshed and squash-merged.
+- `main` was verified at merge commit `14bdaf2153c3a7481787ac1f969572c1a0ac4e4d`.
+
+Implementation:
+- Harden the media-server media-type validation boundary while preserving the existing supported media contract.
+- Added focused regression coverage around the media-type boundary.
+- No project schema change.
+
+Next step:
+- M3.161 — Media Server Canonical Path Enforcement.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.165 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.159 — completed — 2026-09-27
+
+- Branch: `fix/m3-159-single-source-consistency`.
+- PR #174; squash-merged at `0dfd00f97245d8c59546598a6fcc2be1dfe2420f`.
+- User reported PASS.
+- Captured and re-checked Linux source identity around the single-source FFmpeg render window.
+- Source mutation/removal now prevents finalization and cleans the generated output.
+- Added focused Rust regression coverage for mutation and removal.
+- No project schema version change.
+- PR head `79249168e35113c563d696e2f473d59fefbc5904` was verified before merge.
+- `main` was verified at merge commit `0dfd00f97245d8c59546598a6fcc2be1dfe2420f`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, active branch state, and open PRs before acting.
+- M3.159 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.156 — completed — 2026-09-27
+
+- Branch: `fix/m3-156-audio-graph-source-consistency`.
+- PR #171; squash-merged at `3301123d13c254dc850b35ed8d1d1bdbe838d6ac`.
+- User reported PASS.
+- Captured and re-checked Linux source identity for all resolved audio graph inputs around FFmpeg rendering.
+- Source mutation/removal now prevents finalization and cleans the generated output.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- PR head `38af9e3ab9e6f20ac3bb833b896bf515f33378f9` was verified before merge.
+- `main` was verified after merge at `3301123d13c254dc850b35ed8d1d1bdbe838d6ac`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, active branch state, and open PRs before acting.
+- M3.156 is completed and merged; the next step is a fresh audit from verified `main`.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the active PR state/head, verify it is based on the latest `main`, mark the Draft PR ready, squash-merge using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.155 — Legacy Video/Audio Source Consistency Contract — completed — 2026-09-27
+
+- Branch:
+`fix/m3-155-video-audio-mix-source-consistency`
+
+- PR:
+#170
+
+- Merge SHA:
+`fc655f82cc37284ab58d3bb3ad527d283313fd25`
+
+- User validation:
+- User reported PASS for M3.155.
+- PR #170 was refreshed at head `78b70cfb50542146e70d84d2f8d56f761e23b1ec`, verified ahead of `main`, marked Ready for Review, and squash-merged.
+- `main` was verified after merge at `fc655f82cc37284ab58d3bb3ad527d283313fd25`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+- Implementation:
+- Reused the native Linux source identity contract established by M3.154.
+- Snapshotted the legacy video source and all resolved independent audio inputs before rendering.
+- Re-checked all sources after successful FFmpeg generation.
+- Removed temporary output and returned a retryable error when a source changed or became unavailable.
+- Added focused Rust regression coverage.
+- No project schema version change.
+
+- Next step:
+- Fresh audit from verified `main` for M3.156.
+
+## M3.151 — completed — 2026-09-27
+
+- Branch: `fix/m3-151-preview-cache-source-identity`.
+- PR #166; squash-merged at `4f451f9f17d3273ef1622ce008fb5deeaaa8e859`.
+- User reported PASS.
+- Extended preview cache identity with ctime, ctime nanoseconds, device ID, and inode while retaining path, size, and mtime.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- PR head `0885ffdca058a03b1a8ef320cd573bff417f8a55` was verified before merge.
+- `main` was verified after merge at `4f451f9f17d3273ef1622ce008fb5deeaaa8e859`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+
+## M3.150 — completed — 2026-09-27
+
+- Branch: `fix/m3-150-linux-waveform-source-fingerprint`.
+- PR #165; squash-merged at `704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`.
+- User reported PASS.
+- Extended the Linux waveform source fingerprint with ctime, ctime nanoseconds, device ID, and inode while retaining size and mtime.
+- Added focused Rust regression coverage.
+- No project schema version change.
+- PR head `fa150b444935e7de7f66fe0062ca942f2b57d8ff` was verified before merge.
+- `main` was verified after merge at `704849885b7ddbbad6fe1ecee1c4be9fd8f1110c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+
+## M3.149 — completed — 2026-09-27
+
+- Branch: `fix/m3-149-waveform-generation-fingerprint-consistency`.
+- PR #164; squash-merged at `9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`.
+- User reported PASS.
+- Required the generated waveform fingerprint to match the pre-generation fingerprint exactly.
+- Mismatched generation results are rejected and not persisted.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `8692e79935650142962635300c5638625a410dc1` was verified before merge.
+- `main` was verified after merge at `9b8b9ac297d9912fdb8f12ce0d293235cba98ea5`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+
+## M3.148 — completed — 2026-09-27
+
+- Branch: `fix/m3-148-waveform-request-fingerprint-key`.
+- PR #163; squash-merged at `39073936f701476dd8bd31690199b2236f7d083a`.
+- User reported PASS.
+- Resolved source fingerprint before checking in-memory waveform request deduplication and included fingerprint in the key.
+- Added focused regression coverage for changed fingerprints during in-flight generation.
+- No project schema version change.
+- PR head `36ceee7913ba11fd7e6944385c530950f905e82d` was verified before merge.
+- `main` was verified after merge at `39073936f701476dd8bd31690199b2236f7d083a`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+
+## M3.147 — completed — 2026-09-27
+
+- Branch: `fix/m3-147-waveform-render-peak-contract`.
+- PR #162; squash-merged at `8778e7787535ec6b473c78a782ef596819b4d1b4`.
+- User reported PASS.
+- Reused the shared peak validator at the exported waveform SVG render boundary.
+- Added regressions for sparse, over-limit, and non-number render arrays.
+- Existing valid rendering and numeric `NaN`/`Infinity` normalization remain unchanged.
+- No project schema version change.
+- PR head `1949355fe2b03a58fb7928a6d391e69274bd8016` was verified before merge.
+- `main` was verified after merge at `8778e7787535ec6b473c78a782ef596819b4d1b4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+
+## M3.145 — completed — 2026-09-27
+
+- Branch: `fix/m3-145-strict-source-range-peak-input-contract`.
+- PR #160; squash-merged at `6f1ae4e2ec7c90a1581a2c34119459717b93ab12`.
+- User reported PASS.
+- Reused the shared peak-array validator at the source-range resampling boundary.
+- Added focused regression coverage for over-limit source-range input.
+- No project schema version change.
+- PR head `535f858f76788dca7882ed22e259694f0a4a6cf3` was verified before merge.
+- `main` was verified after merge at `6f1ae4e2ec7c90a1581a2c34119459717b93ab12`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+## M3.144 — completed — 2026-09-27
+
+- Branch: `fix/m3-144-strict-waveform-peak-element-contract`.
+- PR #159; squash-merged at `626bd84dfc4a739f0728c864463b15951d901a4e`.
+- User reported PASS.
+- Added strict numeric peak-element validation across native and persisted waveform boundaries.
+- Preserved numeric `NaN`/`Infinity` normalization and rejected non-number values.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `da44df46fd2ca2ffef1fdd3ac76b061aa95b00af` was verified before merge.
+- `main` was verified after merge at `626bd84dfc4a739f0728c864463b15951d901a4e`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+## M3.143 — completed — 2026-09-27
+
+- Branch: `fix/m3-143-persistent-waveform-key-consistency`.
+- PR #158; squash-merged at `be3f872637a26414fd37e8f62fa4ae8a538de58e`.
+- User reported PASS.
+- Added persisted cache-key/payload fingerprint consistency validation.
+- Mismatched key/payload entries now become cache misses.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `07faea424ace642c0270c23291562fe93c6e897b` was verified before merge.
+- `main` was verified after merge at `be3f872637a26414fd37e8f62fa4ae8a538de58e`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+## M3.141 — completed — 2026-09-27
+
+- Branch: `fix/m3-141-strict-persistent-waveform-entry-contract`.
+- PR #156; squash-merged at `60cf018e960ad3bf928f416c35c7fd9737d600aa`.
+- User reported PASS.
+- Added strict persisted waveform entry validation before lookup/sorting/mutation.
+- Required non-empty `cacheKey`, valid waveform metadata, and non-negative safe-integer `lastUsedAt`.
+- Added focused regression coverage for malformed timestamps and invalid cache keys.
+- No project schema version change.
+- PR head `741a60c306ed6465414dd7d438317ce05f65d31e` was verified before merge.
+- `main` was verified after merge at `60cf018e960ad3bf928f416c35c7fd9737d600aa`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+## M3.139 — completed — 2026-09-27
+
+- Branch: `fix/m3-139-strict-waveform-peak-array-contract`.
+- PR #154; squash-merged at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- User reported PASS.
+- Tightened native and persisted waveform metadata validation to enforce the 2048 peak-array maximum.
+- Added focused regression coverage for maximum-valid and over-limit peak arrays.
+- No project schema version change.
+- PR head `eda1a4201a6c86f6a4e6ac10a53d7fd054f472de` was verified before merge.
+- `main` was verified after merge at `288b4e08f9aaaa0c24df8cb6249d969d8c6d2932`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.138 — completed — 2026-09-27
+
+- Branch: `fix/m3-138-strict-waveform-source-range-metadata`.
+- PR #153; squash-merged at `4cc633946bf49ec4dd9efcc017d342075fccf015`.
+- User reported PASS.
+- Tightened source-range timing metadata validation to JavaScript safe integers while preserving safe-integer negative out-of-range clamping.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `d0314b1925593ecbf7a5c43fc7fefc3e32358d36` was verified before merge.
+- `main` was verified after merge at `4cc633946bf49ec4dd9efcc017d342075fccf015`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.137 — completed — 2026-09-27
+
+- Branch: `fix/m3-137-strict-persistent-waveform-metadata`.
+- PR #152; squash-merged at `816d970ac31c9b080c937b89803d3f52ebde0936`.
+- User reported PASS.
+- Tightened persisted waveform `durationMs` and `sampleRate` validation to positive JavaScript safe integers.
+- Added focused regression coverage for unsafe/fractional persisted metadata.
+- Valid persisted waveform reuse remains unchanged.
+- No project schema version change.
+- PR head `23dead40898b5a540138b943c564893c6abf9c5b` was verified before merge.
+- `main` was verified after merge at `816d970ac31c9b080c937b89803d3f52ebde0936`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.136 — completed — 2026-09-26
+
+- Branch: `fix/m3-136-waveform-local-time-contract`.
+- PR #151; squash-merged at `d7faebcc829810b88d59e027f0b30163fa1f69be`.
+- User reported PASS.
+- Tightened waveform local-time duration validation to positive JavaScript safe integers.
+- Added focused regression coverage for unsafe/fractional duration input.
+- No project schema version change.
+- PR head `73a911583ce8ed7f5bef94e9054ad91014253f87` was verified before merge.
+- `main` was verified after merge at `d7faebcc829810b88d59e027f0b30163fa1f69be`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.135 — completed — 2026-09-26
+
+
+- Branch: `fix/m3-135-waveform-source-range-contract`.
+- PR #150; squash-merged at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
+- User reported PASS.
+- Added strict 2048 output-peak and safe-integer validation before waveform source-range allocation.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `56dcc66dccbf14bad2a3f5c5716f00b746c7ecdf` was verified before merge.
+- `main` was verified after merge at `8352e82a9d5ec32b7c0bc3cb33cdb5b7b92ad615`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.134 — completed — 2026-09-26
+
+- Branch: `fix/m3-134-strict-waveform-response-contract`.
+- PR #149; squash-merged at `077d8d7b78ca92d466a960110d9fca8ad5e58be6`.
+- User reported PASS.
+- Tightened native waveform response metadata to positive safe integers and removed silent rounding.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `1b35e57f3673541e1bf8db1e8024083d7944c6e6` was verified before merge.
+- `main` was verified after merge at `077d8d7b78ca92d466a960110d9fca8ad5e58be6`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.133 — completed — 2026-09-26
+
+- Branch: `fix/m3-133-waveform-peak-count-contract`.
+- PR #148; squash-merged at `ce35441e801d7f2a240a2a2535cc39b9d1bc6139`.
+- User reported PASS.
+- Hardened waveform peak-count normalization against non-finite request input.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `5f3cdf6dd4274e9438bce7ef4cd77bbd2f2feae9` was verified before merge.
+- `main` was verified after merge at `ce35441e801d7f2a240a2a2535cc39b9d1bc6139`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.132 — completed — 2026-09-26
+
+- Branch: `fix/m3-132-safe-source-split-endpoint`.
+- PR #147; squash-merged at `9b2a8edc278ed7894779b0314aa571247a433e5c`.
+- User reported PASS.
+- Hardened `splitClipAtTime()` source split arithmetic with checked safe-integer addition.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `0fbb5481dbd6691b9b97534a46235a8b32df1fb4` was verified before merge.
+- `main` was verified after merge at `9b2a8edc278ed7894779b0314aa571247a433e5c`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.131 — completed — 2026-09-26
+
+- Branch: `fix/m3-131-transform-keyframe-time-normalizer`.
+- PR #146; squash-merged at `5a8f98309dfd4a190828d85efdc38432b1b7b909`.
+- User reported PASS.
+- Hardened the Transform Keyframe time normalizer against non-finite input and unsafe rounded timestamps.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `45f0405f5a217f0811244bf61efa24fd1fff2335` was verified before merge.
+- `main` was verified after merge at `5a8f98309dfd4a190828d85efdc38432b1b7b909`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.130 — completed — 2026-09-26
+
+- Branch: `fix/m3-130-transform-keyframe-safe-times`.
+- PR #145; squash-merged at `d4e1693480e15f0cc59acc4c18be76c820b00ec1`.
+- User reported PASS.
+- Added safe-integer normalization and upsert validation for runtime Transform Keyframe timestamps.
+- Added focused regression coverage.
+- No project schema version change.
+- PR head `693a874e3f3aec76f81857531ee2639ded893667` was verified before merge.
+- `main` was verified after merge at `d4e1693480e15f0cc59acc4c18be76c820b00ec1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.129 — completed — 2026-09-26
+
+- Branch: `fix/m3-129-audio-keyframe-safe-times`.
+- PR #144; squash-merged at `e5b9d9aa4728ab112493e3e6fce70729673cda27`.
+- User reported PASS.
+- Added safe-integer normalization and upsert validation for runtime audio volume keyframe timestamps.
+- Added focused regression coverage for the safe boundary and unsafe runtime timestamps.
+- No project schema version change.
+- PR head `da89d08fedeed31c7a8bc463560a35defba46a9f` was verified before merge.
+- `main` was verified after merge at `e5b9d9aa4728ab112493e3e6fce70729673cda27`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.128 — completed — 2026-09-26
+
+- Branch: `fix/m3-128-audio-fade-aggregate-safety`.
+- PR #143; squash-merged at `3489e416ffb97bffe1ee64cd69dd004b6ae811cf`.
+- Fresh audit found individually safe fade durations whose aggregate could overflow the safe integer range, plus a timeline fade command that did not require safe-integer inputs.
+- Added checked safe-integer aggregate arithmetic in project validation and timeline fade updates.
+- Added focused regression coverage.
+- No project schema version change.
+- User reported PASS.
+- PR head `349b600dc3f3e4d988f15b851061a9847fe8154a` was verified before merge.
+- `main` was verified after merge at `3489e416ffb97bffe1ee64cd69dd004b6ae811cf`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.127 — completed — 2026-09-26
+
+- Branch: `fix/m3-127-project-topology-endpoint-safety`.
+- Scope: reject unsafe derived timeline endpoints during persisted project topology validation.
+- PR #142; squash-merged at `14300606826040eb69ef32f51f1e3cc98ef278a1`.
+- Fresh audit found `validateTrackTopology()` performing unchecked endpoint arithmetic for overlap and transition adjacency checks.
+- Added one checked safe-integer timeline addition helper in the project domain and applied it to both topology paths.
+- Added regression coverage for the maximum safe endpoint and unsafe derived endpoints in overlap and transition validation.
+- No project schema version change.
+- User reported PASS.
+- PR head `86de5096f236e8dfbf5ce256224eb499ce896ad8` was verified before merge.
+- `main` was verified after merge at `14300606826040eb69ef32f51f1e3cc98ef278a1`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.126 — completed — 2026-09-26
+
+- Branch: `fix/m3-126-transition-endpoint-safety`.
+- Scope: reject unsafe derived clip endpoints inside transition helpers.
+- PR #141; squash-merged at `ff8868198d76009ae998fc6e6ffeda26f8e2f837`.
+- Fresh audit found `getClipEndMs()` performing unchecked `timelineStartMs + durationMs`; transition adjacency and visual-state code depend on this helper.
+- Added one checked safe-integer endpoint helper inside the transition module.
+- Added regression coverage for the maximum safe endpoint and the first unsafe endpoint.
+- No project schema version change.
+- User reported PASS.
+- PR head `f8f4861916cf65bab95fe2b3926d4e9c1d209b9d` was verified before merge.
+- `main` was verified after merge at `ff8868198d76009ae998fc6e6ffeda26f8e2f837`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.125 — completed — 2026-09-26
+
+- Branch: `fix/m3-125-timeline-command-endpoint-safety`.
+- Scope: reject unsafe derived timeline endpoints at timeline-edit command boundaries.
+- PR #140; squash-merged at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
+- Fresh audit found unchecked timeline endpoint arithmetic in add, move, trim-start, trim-end, split, overlap checking, and transition adjacency validation.
+- Added one checked safe-integer timeline addition helper and applied it to the affected command-level endpoint calculations.
+- Added focused regression coverage across add, move, trim-start, trim-end, split, and overlap paths.
+- No project schema version change.
+- User reported PASS.
+- PR head `ab89f60ebb6eea3448c73f23ee6a765bf3762081` was verified before merge.
+- `main` was verified after merge at `b0dea9912be36a961d61c9f3e57b44e6a27d6888`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.124 — completed — 2026-09-26
+
+- Branch: `fix/m3-124-render-plan-safe-endpoints`.
+- Scope: reject unsafe derived `timelineEndMs` values in the central export render plan.
+- PR #139; squash-merged at `4a1254dc80d3e9241c657a767d78eb60078424d4`.
+- Fresh audit found that `timelineStartMs + clipDurationMs` could exceed JavaScript's safe-integer range even when both operands were individually safe.
+- Added checked safe-integer arithmetic for render-plan source and timeline endpoints.
+- Exact `Number.MAX_SAFE_INTEGER` endpoints remain valid; unsafe derived endpoints are rejected.
+- Added focused regression coverage.
+- No project schema version change.
+- User reported PASS.
+- PR head `4fd7f0d7800948010eebeaae9e0d328fdaf4da20` was verified before merge.
+- `main` was verified after merge at `4a1254dc80d3e9241c657a767d78eb60078424d4`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from verified `main`.
+
+## M3.123 — completed — 2026-09-26
+
+- Branch: `fix/m3-123-safe-integer-milliseconds`.
+- Scope: require persisted project millisecond timing to be JavaScript safe integers.
+- PR #138; squash-merged at `86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`.
+- Applied `Number.isSafeInteger` to the persisted millisecond validator and affected timing fields.
+- Added focused regression coverage.
+- No project schema version change.
+- User reported PASS.
+- `main` was verified after merge at `86eae9a70a5222948ac3d10d9bf5aedcb6a7506d`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main`.
+
+## M3.122 — completed — 2026-09-26
+
+- Branch: `fix/m3-122-strict-single-source-duration-semantics`.
+- Scope: reject explicitly supplied zero native single-source durations.
+- PR #137; squash-merged at `c429f3a74bd012693170e29d3e3b3a81b495ddb7`.
+- Added positive supplied-duration validation while preserving omitted-duration semantics and source-media bounds.
+- Added focused native regression coverage.
+- No project schema version change.
+- User reported PASS.
+- `main` was verified after merge at `c429f3a74bd012693170e29d3e3b3a81b495ddb7`.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: implement M3.123 on a fresh branch from verified `main`.
+
+## M3.121 — completed — 2026-09-26
+
+- Branch: `fix/m3-121-strict-legacy-source-bounds`.
+- Scope: align direct single-source and multi-segment native video export paths with actual source media duration.
+- PR #136; squash-merged at `86ec5c5e4943a9b282aa97e9631b73fa0d9fb094`.
+- Added shared checked source-range validation, actual media-duration probing, repeated-path duration caching, and regression coverage.
+- Exact source-end boundaries remain valid; invalid starts, overruns, and arithmetic overflow are rejected before FFmpeg.
+- Black gap segments remain unchanged.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: implement M3.122 on a fresh branch from verified `main`.
+
+## M3.120 — completed — 2026-09-26
+
+- Branch: `fix/m3-120-source-audio-duration-bounds`.
+- PR #135; squash-merged at `c0b1ee692156a2b7f11cf130ba79f65efad81dd0`.
+- Added checked source-audio source-range validation against actual video duration with cached duration probing.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+
+## M3.119 — completed — 2026-09-26
+
+- Branch: `fix/m3-119-strict-unified-av-audio-segments`.
+- Scope: align native unified AV source-audio segment processing metadata with the project-domain numeric/range/ordering contract.
+- Audit finding: native validation previously checked only duration, input index, and video-input type; FFmpeg helpers could silently clamp or normalize invalid audio metadata.
+- Added strict validation for track volume/pan, fades, audio volume keyframes, EQ gains, and compressor parameters.
+- Added focused native regression coverage.
+- No project schema version change.
+- PR #134; squash-merged at `91179b94d6b986e9c687ef768a23277088abfc28`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
+
+## M3.118 — completed — 2026-09-26
+
+- Branch: `fix/m3-118-strict-video-graph-media-types`.
+- Scope: align the native video-graph request boundary with the declared and detected visual input media types.
+- Audit finding: `render_video_graph_to_mp4` only count-checked `input_media_types`, while FFmpeg argument construction uses those values to decide image looping.
+- Added allowed-value validation for supplied media types and actual-file type matching before graph rendering.
+- Preserved the current empty-list compatibility behavior.
+- Added focused native regression coverage.
+- No project schema version change.
+- PR #133; squash-merged at `6ef44fd0af0c000cd3a122bbcf99b32627514ba7`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
+
+## M3.117 — completed — 2026-09-26
+
+- Branch: `fix/m3-117-export-settings-native-contract`.
+- Scope: align `normalizeExportSettings()` with native export requirements for positive even dimensions and frame rates up to 240 FPS.
+- Audit finding: export normalization could preserve odd positive dimensions and frame rates above the native limit.
+- Added even-dimension/minimum normalization and a shared 240 FPS ceiling.
+- Added focused export-setting regression coverage.
+- No project schema version change.
+- PR #132; squash-merged at `51cc63f8a922cb0189c90d87027f845f3a722d35`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
+
+## M3.116 — completed — 2026-09-26
+
+## M3.116 — completed — 2026-09-26
+
+- Branch: `fix/m3-116-project-canvas-dimensions`.
+- Scope: align persisted/runtime project canvas width/height with the native export requirement that dimensions be positive even numbers.
+- Audit finding: project validation and `updateCanvasDimensions()` previously accepted odd positive integers, but native export rejects them.
+- Added strict positive-even integer validation for persisted canvas dimensions and command-level updates.
+- Added parser and command regression coverage for the boundary and odd dimensions.
+- No project schema version change.
+- PR #131; squash-merged at `95f5268708f0250e3305d318410ccdbe47d54309`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
+
+## M3.115 — completed — 2026-09-26
+
+- Branch: `fix/m3-115-project-framerate-range`.
+- Scope: align persisted `canvas.frameRate` with the native export upper bound of 240 FPS while preserving supported fractional rates.
+- Audit finding: project validation previously accepted any positive finite frame rate, but native export rejects values above 240 FPS; the project frame rate is also the default export frame rate.
+- Added `MAX_CANVAS_FRAME_RATE = 240` and strict persisted upper-bound validation.
+- Added parser regression coverage for the 240 FPS boundary and over-limit values.
+- No project schema version change.
+- PR #130; squash-merged at `05a474a2525d51bf51099e4f335081728652b2e8`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh repository audit from verified `main` for the next concrete engineering gap.
+
+## M3.114 — completed — 2026-09-26
+
+- Branch: `fix/m3-114-canonical-clip-command-times`.
+- Scope: canonicalize valid non-negative clip timeline/source timing inputs at reusable command boundaries.
+- M3.101 already enforced integer clip timing at persistence; M3.114 closed the pre-persistence command gap for add/move/trim/split.
+- Split timing is normalized before deriving resulting clip boundaries and related keyframe/audio automation timing.
+- Added regression and serialization coverage.
+- PR #129; squash-merged at `be77ca4e2966f1ac65268b3886f64a9ade40c2e7`.
+- User reported PASS.
+- `main` was verified after merge.
+- No additional lint/test/build/cargo/manual validation claims are inferred beyond the user's PASS.
+- Next step: fresh audit from current `main` for the next concrete engineering gap.
+
+## M3.113 — completed — 2026-09-25
+
+- Branch: `fix/m3-113-canonical-transform-keyframe-times`.
+- Scope: canonicalize Transform Keyframe timestamps to integer milliseconds while preserving fractional playback interpolation.
+- PR #128; squash-merged at `7672e1d9d603ab573178f3c908bd0807d0bfa4f1`.
+- Implemented canonical timestamp normalization/lookup, command-level time canonicalization, strict persisted integer validation, and focused regression coverage.
+- User reported PASS.
+- No project schema change.
+- Local validation is considered passed only because the user reported PASS; do not infer additional checks beyond the user's report.
+- Next step: fresh audit from updated `main` for the next focused persisted/runtime invariant.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- M3.121 is completed and merged; M3.122 is the active milestone and must remain tightly scoped to the audited native single-source duration semantic gap.
+- On user `PASS` / `pass` / `lanjutkan`: refresh the PR state, use the freshly verified head SHA, mark the Draft PR ready, squash-merge it, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.112 — completed — 2026-09-25
+
+- Branch: `fix/m3-112-canonical-text-overlay-position-precision`.
+- PR #127; squash-merged at `fc5ce918cf5f73dce0bb0d6e57f0ea43329cf98f`.
+- Implemented two-decimal Text Overlay X/Y normalization and strict persisted-value validation.
+- User reported PASS.
+- No project schema change.
+
+## M3.111 — completed — 2026-09-25
+
+- Branch: `fix/m3-111-strict-transform-rotation-range`.
+- PR #126; squash-merged at `eb7ab0fe11c0c279e7daf70c2e31317bf972394f`.
+- Implemented strict persisted Rotation `-180..180` validation and focused parser regressions.
+- User reported PASS.
+- No project schema change.
+
+## M3.110 — completed — 2026-09-25
+
+- Branch: `fix/m3-110-canonical-transform-opacity-precision`.
+- Scope: align Transform Opacity persistence and runtime normalization with the Inspector's integer-percent input contract.
+- PR #125; squash-merged at `40c0fd1df662754e814e7e658f9a56e0ce615b78`.
+- Transform Opacity is now normalized to two decimal places after range clamping.
+- Persisted Transform Opacity values with more than two decimal places are rejected, including transform keyframe transforms.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- User reported PASS.
+- No project schema change.
+- Local validation is considered passed only because the user reported PASS; do not infer additional checks beyond the user's report.
+
+## Workflow for this chat
+
+- Inspect actual `main` SHA, branch state, and open PRs before acting.
+- The latest completed milestone is M3.110; the next step is a fresh audit from updated `main`.
+- On user `PASS` / `pass` / `lanjutkan`: mark the active Draft PR ready, squash-merge it using the freshly verified head SHA, record the actual merge SHA, reconcile all three docs, verify `main`, audit again, and start the next focused milestone.
+- Never claim lint/test/build/cargo/manual validation passed unless the user explicitly confirms it.
+- Keep parked PR #76 and unrelated PR #22 untouched.
+
+## M3.109 — completed — 2026-09-25
+
+- Branch: `fix/m3-109-canonical-transform-scale-precision`.
+- PR #124; squash-merged at `d7c31e4dcd9c0da664fd76c3de673bbd6d2fedcc`.
+- Transform Scale now uses two-decimal canonical normalization after range clamping.
+- Persisted Transform Scale values with more than two decimal places are rejected, including transform keyframe transforms.
+- Existing Scale range `0.05..10` remains unchanged.
+- Added regression coverage for runtime normalization, command behavior, and persisted-value rejection.
+- User reported PASS.
+- No project schema change and no change to X/Y, Rotation, Opacity, Crop, Preview, or Export contracts.
+
+Next milestone:
+- M3.110 — audit remaining persisted visual-transform precision and control normalization.
+
+## M3.108 — completed — 2026-09-25
+
+- Branch: `fix/m3-108-canonical-track-audio-precision`.
+- PR #123; squash-merged at `317f09aa66f6f7e1196fdd6d8ce86e07fdd07cd8`.
+- Track Volume/Pan now use shared two-decimal canonical normalization in getters and update commands.
+- Persisted Track Volume/Pan values with more than two decimal places are rejected.
+- Added regression coverage for getter normalization, command normalization, and persisted-value rejection.
+- User reported PASS.
+- No project schema change and no change to preview/export/media behavior beyond canonicalizing existing track controls.
+
+Next milestone:
+- M3.109 — Canonical Transform Scale Precision.
