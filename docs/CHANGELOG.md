@@ -1,13 +1,14 @@
 # M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — active — 2026-10-06
 
 - Branch: `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
-- Fresh audit found unified AV requests permit 256 video inputs plus 256 audio inputs, each individually capped at 4,096 bytes, but aggregate input-path bytes were not bounded.
-- The independent limits permit up to 2 MiB of input-path strings before filesystem/media probing.
-- Scope: add an aggregate UTF-8 byte cap across video and audio input paths before per-input validation/probing.
-- Preserve existing input-count, per-path, media-type, source-audio, graph, render, cleanup, and result semantics.
-- Add exact-limit and over-limit regression coverage.
+- PR #247 (Draft).
+- Fresh audit found unified AV requests permit 256 video inputs plus 256 audio inputs, each capped at 4,096 bytes, but aggregate input-path bytes were unbounded.
+- Added a 1 MiB aggregate UTF-8 cap across video and audio input paths.
+- Enforced the cap before per-input `PathBuf`/filesystem/media validation using saturating accounting.
+- Added exact-limit and over-limit regression coverage.
+- Preserved existing request, graph, render, cleanup, and result semantics.
 - No project schema change.
-- Local validation is pending implementation and user run.
+- Local validation is pending user run.
 
 # M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
