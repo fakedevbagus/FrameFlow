@@ -4,7 +4,7 @@ Branch:
 `fix/m3-230-multi-segment-source-audio-probe-dedup`
 
 PR:
-- Draft; pending creation after the M3.230 implementation/documentation commit.
+- #248 (Draft).
 
 Fresh audit finding:
 - `render_video_segments_to_output()` probes source audio presence once for every source-backed segment when audio is enabled.
