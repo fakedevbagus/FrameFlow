@@ -23,7 +23,8 @@ You are continuing development of the existing repository:
 - Fresh audit found `ExportProcessState.cancel()` could retain arbitrary unknown cancellation job IDs indefinitely in the `cancelled` set.
 - M3.232 adds `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` and bounds insertion of unknown/pending cancellation IDs.
 - Duplicate pending cancellation IDs remain idempotent.
-- Active child cancellation behavior is preserved.
+- Active child cancellation behavior is preserved, including when pending capacity is already full.
+- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
 - No project schema change.
 - PR #250 is not merged. Local validation is pending the user's validation run.
 
@@ -1036,7 +1037,7 @@ Workflow:
 - Added a fixed 32-connection active-handler ceiling with an atomic slot counter and RAII release guard.
 - Excess accepted connections are closed without spawning another handler thread.
 - Existing request/response timeouts and media HTTP behavior remain preserved.
-- Added focused regression coverage.
+- Added focused regression coverage for capacity, duplicate idempotency, overflow rejection, and active cancellation when pending capacity is full.
 - No project schema version change.
 - PR head `66cba3991383c379f8c8a5c4dcaf1c6257fcebfa` was verified before merge.
 - `main` was verified at `f319afae3289e18308165d535ad810c1cc96e663`.
