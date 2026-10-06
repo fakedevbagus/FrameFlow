@@ -19,7 +19,13 @@ Implementation:
 - Preserved existing render/request semantics.
 
 No project schema change.
-Local validation is pending user run.
+
+Validation checkpoint:
+- The 2026-10-06 validation run passed lint, all 554 Vitest tests, and the frontend production build.
+- The Rust build then failed because `MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES` was referenced by the test module without being imported.
+- The over-limit regression fixture was also corrected so the generated inputs are 1 MiB + 1 byte rather than exactly 1 MiB.
+- Fix commit: `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
+- Validation remains pending rerun.
 
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.229.
