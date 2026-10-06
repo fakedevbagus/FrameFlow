@@ -12,18 +12,15 @@ You are continuing development of the existing repository:
 
 ### Milestone status at the exact handoff point
 
-- **Latest accepted milestone:** M3.227 — Multi-Segment Aggregate Source Path Bytes Cap.
-- **M3.227 PR:** #245.
-- **M3.227 squash merge SHA:** `7658d53bd58c407d07c363ba0cc8bf918f57dc63`.
+- **Latest accepted milestone:** M3.228 — Unified AV Source-Audio Presence Probe Deduplication.
+- **M3.228 PR:** #246.
+- **M3.228 squash merge SHA:** `6711c54379ed4807f330a946411e30b4120cbfb2`.
 - `main` was verified identical to that merge SHA before documentation reconciliation.
 - User explicitly reported `pass` and the milestone was accepted through the established workflow.
-- M3.227 added a 4 MiB aggregate UTF-8 byte cap across optional multi-segment source paths, enforced before per-segment filesystem/media probing.
-- The validation history included a corrected Cargo-test import and a Vitest fork-worker startup timeout incident; the runner was hardened to one fork worker before acceptance.
-- **Current active milestone:** M3.228 — Unified AV Source-Audio Presence Probe Deduplication.
-- **Current branch:** `fix/m3-228-unified-av-source-audio-probe-dedup`.
-- **M3.228 PR:** #246 (Draft).
-- M3.228 scope is to avoid repeated `probe_has_audio()` subprocess probes when multiple source-audio segments reference the same resolved video input during one unified AV render request.
-- Implementation caches audio-presence results by resolved source path for one render request and adds a focused cache regression test.
+- M3.228 caches audio-presence probe results by resolved source path within one unified AV render request, preventing repeated FFprobe presence probes for repeated source-audio segments.
+- **Current active milestone:** M3.229 — Unified AV Aggregate Input Source Path Bytes Cap.
+- **Current branch:** `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
+- M3.229 fresh-audit scope is to bound the aggregate UTF-8 bytes of unified AV video and audio input path strings before filesystem/media probing.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
@@ -80,21 +77,29 @@ You are continuing development of the existing repository:
 - Corrected the test-module import discovered in validation and hardened Vitest to one fork worker after worker-start timeout errors.
 - No project schema version change.
 
-## M3.228 — Unified AV Source-Audio Presence Probe Deduplication — active — 2026-10-02
+## M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
 - Branch: `fix/m3-228-unified-av-source-audio-probe-dedup`.
-- PR #246 (Draft).
-- Fresh audit from verified `main` found unified AV rendering may create up to 4,096 `source_audio_segments`, while `probe_has_audio(video_path)` is invoked inside the segment-resolution loop.
-- Multiple segments can reference the same video input, so repeated clips can execute the same FFprobe presence probe repeatedly for one source during a single export.
-- Implemented a per-render-request cache keyed by resolved source path.
+- PR #246; squash-merged at `6711c54379ed4807f330a946411e30b4120cbfb2`.
+- User reported `PASS` after the established validation workflow.
+- Fresh audit found repeated `probe_has_audio()` calls when multiple unified-AV source-audio segments referenced the same resolved video input.
+- Added a per-render-request cache keyed by resolved source path.
+- Added focused regression coverage proving repeated source paths invoke the probe once.
 - Preserved source-duration caching, segment validation, audio graph behavior, cancellation, cleanup, result semantics, and probe error propagation.
-- Added a focused regression test proving repeated source paths execute the probe once.
 - No project schema version change.
-- Local validation is pending user run.
+
+## M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — active — 2026-10-06
+
+- Branch: `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
+- Fresh audit from verified `main` found unified AV requests allow up to 256 video inputs and 256 audio inputs, with each input path capped at 4,096 bytes, but no aggregate path-byte cap exists across both input arrays.
+- The independent limits permit up to 2 MiB of input-path string payload before filesystem/media probing.
+- Scope: add one aggregate UTF-8 byte cap across `video_inputs` and `audio_inputs`, enforced before per-input path/file/media validation.
+- Preserve per-input limits, media-type semantics, source-audio segment validation, graph construction, rendering, cleanup, and result behavior.
+- Add exact-limit and over-limit regression coverage.
+- No project schema change.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.228.
-
+- Implement M3.229, update the three docs, create the Draft PR, and provide the standard Pull/Fetch + Validation block.
 ## M3.226 — Persisted Project Display Name Byte Caps — completed — 2026-10-01
 
 - Branch: `fix/m3-226-persisted-display-name-byte-caps`.
@@ -110,9 +115,7 @@ Next step:
 
 Do not start implementation from memory.
 
-First refresh the actual repository state for M3.228 and continue from the verified `main` / active branch state.
-
-For the active milestone, use the repository workflow below: refresh PR/head/base, validate the branch, and only accept `PASS` from the user's actual current validation result.
+First refresh the actual repository state for M3.229 and continue from verified `main` / active branch state.
 
 The current user-local workflow preserves any pre-existing `src-tauri/Cargo.lock` modification; never reset or discard it automatically.
 
