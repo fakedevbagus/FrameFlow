@@ -1,69 +1,41 @@
-# M3.231 — Preview Generation Single-Flight — active — 2026-10-06
+# M3.232 — Bound Pending Export Cancellation Job IDs — active — 2026-10-06
 
 Branch:
-`fix/m3-231-preview-generation-single-flight`
+`fix/m3-232-bound-export-cancel-pending-job-ids`
 
 PR:
-- #249 (Draft).
+- Draft; pending creation after the implementation/documentation commit.
 
 Fresh audit finding:
-- `prepare_media_preview()` generated a deterministic temporary path `<cache-key>.partial.mp4`.
-- Concurrent requests for the same source could enter FFmpeg generation simultaneously and share that temporary path.
-- This creates a concrete race on the temporary preview file and can duplicate expensive FFmpeg work.
+- `ExportProcessState.cancel()` previously inserted every unknown cancellation job ID into the `cancelled` set and retained it until that ID was later registered or the process exited.
+- Job IDs were individually limited to 256 bytes, but the pending cancellation set itself had no capacity bound.
+- Repeated cancellation requests for arbitrary IDs could therefore grow backend memory without a corresponding export process.
 
 Implementation:
-- Added a process-local single-flight lock keyed by canonical source path.
-- Requests for the same source wait for the active generator to finish before checking the cache again.
-- Re-read source metadata after lock acquisition before computing the cache key.
-- Added focused concurrency regression coverage for the per-source lock.
-- Preserved preview encoding, source identity validation, cache layout, output semantics, and cancellation behavior.
+- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024`.
+- Unknown cancellation IDs are accepted only while the bounded pending set has capacity.
+- Duplicate pending IDs remain idempotent.
+- Existing active-child cancellation behavior is preserved.
+- The lock acquisition order now remains consistent with registration/finish paths.
 
 No project schema change.
 Local validation is pending user run.
 
 Next step:
-- Validation checkpoint: lint, 554 frontend tests, and frontend production build passed; Cargo failed on an unclosed delimiter in the `#[cfg(test)]` module. Corrected in commit `30e7a4cb075102bff8c7fa41316f8abae961ac01`.
-- Validation remains pending rerun.
+- Create the Draft PR and run the complete Pull/Fetch + Validation workflow for M3.232.
 
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.231.
+# M3.231 — Preview Generation Single-Flight — completed — 2026-10-06
+
+- PR #249; squash-merged at `6dd5d464faaf59d1bd93659629a0ae267ee293be`.
+- User explicitly reported PASS.
+- Added process-local preview-generation single-flight keyed by canonical source path.
+- No project schema change.
 
 # M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
 - PR #248; squash-merged at `8e829c42e5b288048da951335de60fdfc6e2c000`.
 - User reported PASS.
-- Added a per-render cache keyed by source path for repeated multi-segment source-audio presence probes.
-- Added focused regression coverage.
-- No project schema change.
-
-# M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
-
-- PR #247; squash-merged at `87e8b969c23160091433e0a34438c793b5762119`.
-- User reported PASS.
-- Added the 1 MiB aggregate UTF-8 input-path cap before unified AV filesystem/media validation.
-- Added exact-limit and over-limit regression coverage.
-- No project schema change.
-
-# M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
-
-Branch:
-`fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`
-
-PR:
-- #247; squash-merged at `87e8b969c23160091433e0a34438c793b5762119`.
-- User reported PASS after the corrected validation workflow.
-
-- Added a 1 MiB aggregate UTF-8 byte cap across unified AV video and audio input paths.
-- Enforced the cap before per-input path/file/media validation using saturating accounting.
-- Added exact-limit and over-limit regression coverage.
-- Corrected validation-discovered test import and boundary fixture issues before acceptance.
-- No project schema change.
-
-# M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
-
-- PR #246; squash-merged at `6711c54379ed4807f330a946411e30b4120cbfb2`.
-- User reported PASS.
-- Added per-render-request source-path caching for audio-presence probes.
+- Added per-render source-path caching for repeated audio-presence probes.
 - No project schema change.
 
 
