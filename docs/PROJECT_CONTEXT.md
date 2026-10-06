@@ -4,7 +4,7 @@ Branch:
 `fix/m3-231-preview-generation-single-flight`
 
 PR:
-- Draft; pending creation from this branch after the implementation/documentation commits.
+- #249 (Draft).
 
 Fresh audit finding:
 - `prepare_media_preview()` generated a deterministic temporary path `<cache-key>.partial.mp4`.
