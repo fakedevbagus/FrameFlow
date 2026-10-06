@@ -22,7 +22,11 @@ No project schema change.
 Local validation is pending user run.
 
 Next step:
-- Create the Draft PR and run the complete Pull/Fetch + Validation workflow for M3.231.
+- Validation checkpoint: lint, 554 frontend tests, and frontend production build passed; Cargo failed on an unclosed delimiter in the `#[cfg(test)]` module. Corrected in commit `30e7a4cb075102bff8c7fa41316f8abae961ac01`.
+- Validation remains pending rerun.
+
+Next step:
+- Run the complete Pull/Fetch + Validation workflow for M3.231.
 
 # M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
