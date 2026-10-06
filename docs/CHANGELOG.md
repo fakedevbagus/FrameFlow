@@ -1,7 +1,7 @@
 # M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — active — 2026-10-06
 
 - Branch: `fix/m3-230-multi-segment-source-audio-probe-dedup`.
-- PR: Draft (created from verified `main` after the M3.229 merge).
+- PR #248 (Draft).
 - Fresh audit found `render_video_segments_to_output()` calls `probe_has_audio()` once per source-backed segment when audio is enabled.
 - The request permits up to 4,096 segments, so repeated use of the same source path can trigger repeated FFprobe audio-presence probes.
 - Added a per-render cache keyed by source path so repeated multi-segment references reuse one audio-presence result.
