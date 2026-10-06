@@ -1,12 +1,12 @@
 # M3.232 — Bound Pending Export Cancellation Job IDs — active — 2026-10-06
 
 - Branch: `fix/m3-232-bound-export-cancel-pending-job-ids`.
-- Draft PR pending creation.
-- Fresh audit after M3.231 found `ExportProcessState.cancelled` could retain arbitrary unknown job IDs indefinitely when `cancel_export_job` was called for IDs with no registered child process.
-- Each job ID is limited to 256 bytes, but the number of pending cancellation IDs had no bound.
-- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` for absent-child cancellation requests.
-- Duplicate pending cancellation requests remain idempotent.
-- Active export cancellation behavior remains intact.
+- PR #250 (Draft).
+- Fresh audit found unknown export cancellation job IDs could accumulate without a count bound.
+- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` for unknown/pending cancellation requests.
+- Duplicate pending cancellation IDs remain idempotent.
+- Active-child cancellation behavior is preserved.
+- Added focused regression coverage.
 - No project schema change.
 - Local validation is pending user run.
 
@@ -15,8 +15,6 @@
 - PR #249; squash-merged at `6dd5d464faaf59d1bd93659629a0ae267ee293be`.
 - User explicitly reported PASS and the milestone was accepted through the established workflow.
 - Added process-local single-flight preview generation keyed by canonical source path.
-- Concurrent requests for the same source wait for the existing generation rather than sharing the same temporary file.
-- Preserved preview encoding, source-identity validation, cache layout, output semantics, and cancellation behavior.
 - No project schema change.
 
 # M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
@@ -24,7 +22,6 @@
 - PR #248; squash-merged at `8e829c42e5b288048da951335de60fdfc6e2c000`.
 - User reported PASS.
 - Added per-render-request source-path caching for multi-segment audio-presence probes.
-- Added focused regression coverage proving repeated source paths invoke the probe once.
 - No project schema change.
 
 # M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
