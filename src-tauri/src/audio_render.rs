@@ -1642,6 +1642,7 @@ mod tests {
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_AUDIO_KEYFRAMES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_SOURCE_AUDIO_SEGMENTS,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_FILTER_BYTES,
+    MAX_NATIVE_VIDEO_AUDIO_GRAPH_TOTAL_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUT_PATH_BYTES,
     MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS,
 
@@ -1707,8 +1708,9 @@ mod tests {
   #[test]
   fn rejects_unified_av_aggregate_input_path_bytes_above_size_limit() {
     let video_inputs = vec!["v".repeat(2048); MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS];
-    let audio_inputs =
+    let mut audio_inputs =
       vec!["a".repeat(2048); MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS];
+    audio_inputs[MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS - 1].push('a');
 
     let error = validate_unified_av_input_path_bytes(&video_inputs, &audio_inputs)
       .expect_err("aggregate unified AV input paths above the configured limit must be rejected");
