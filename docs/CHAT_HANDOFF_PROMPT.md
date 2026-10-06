@@ -36,6 +36,16 @@ The first local validation attempt for M3.229 was not accepted:
 - Correction commit: `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
 - **Do not mark M3.229 PASS or merge PR #247 until the complete validation workflow passes after this correction.**
 
+## M3.229 — Validation Checkpoint Update — 2026-10-06
+
+The next validation rerun still did not reach an accepted PASS:
+- Lint: passed.
+- Vitest: 33 test files / 554 tests passed.
+- Frontend production build: passed.
+- Cargo: failed because the exact-limit regression fixture assigned to `audio_inputs[0]` while `audio_inputs` was immutable.
+- Correction commit: `83bc29e973006a4ffacecad864dd32eb82944e46`.
+- **Do not mark M3.229 PASS or merge PR #247 until the complete validation workflow passes after this correction.**
+
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
 - PR #240; squash-merged at `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
