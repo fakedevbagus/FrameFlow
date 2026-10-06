@@ -10,7 +10,9 @@
 - Re-check source metadata after acquiring the lock so cache keys are based on the current source state.
 - Preserved preview encoding, source-identity validation, cache layout, output semantics, and cancellation behavior.
 - No project schema change.
-- Local validation is pending user run.
+- Validation attempt on 2026-10-06 passed lint, all 554 frontend tests, and the frontend production build, but Cargo failed on an unclosed delimiter in the `#[cfg(test)]` module of `src-tauri/src/lib.rs`.
+- Closed the affected preview-source regression test and test module in commit `30e7a4cb075102bff8c7fa41316f8abae961ac01`.
+- Full validation remains pending rerun after this correction.
 
 # M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
