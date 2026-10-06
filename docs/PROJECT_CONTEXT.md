@@ -15,9 +15,10 @@ Implementation:
 - Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024`.
 - Unknown/pending cancellation IDs are bounded before insertion.
 - Duplicate pending IDs remain idempotent.
-- Active child cancellation behavior is preserved.
+- Active child cancellation behavior is preserved, including when pending capacity is already full.
+- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
 - Lock acquisition order remains consistent with registration and finish paths.
-- Added focused regression coverage for capacity, duplicate idempotency, and overflow rejection.
+- Added focused regression coverage for capacity, duplicate idempotency, overflow rejection, and active cancellation when pending capacity is full.
 
 No project schema change.
 Local validation is pending user run.
