@@ -20,7 +20,7 @@ You are continuing development of the existing repository:
 - M3.229 added a 1 MiB aggregate UTF-8 cap across unified AV video and audio input paths before filesystem/media probing, with exact-limit and over-limit regression coverage.
 - **Current active milestone:** M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication.
 - **Current branch:** `fix/m3-230-multi-segment-source-audio-probe-dedup`.
-- **M3.230 PR:** Draft, pending creation from this branch.
+- **M3.230 PR:** #248 (Draft).
 - Fresh audit found repeated `probe_has_audio()` work in multi-segment rendering for repeated source paths.
 - The request supports up to 4,096 segments, making repeated audio-presence probes a concrete unnecessary resource cost.
 - M3.230 caches the audio-presence result per source path for one multi-segment render request.
