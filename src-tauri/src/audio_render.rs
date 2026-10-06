@@ -1683,7 +1683,7 @@ mod tests {
   #[test]
   fn accepts_unified_av_aggregate_input_path_bytes_at_size_limit() {
     let video_inputs = vec![String::new(); MAX_NATIVE_VIDEO_AUDIO_GRAPH_VIDEO_INPUTS];
-    let audio_inputs = vec![String::new(); MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS];
+    let mut audio_inputs = vec![String::new(); MAX_NATIVE_VIDEO_AUDIO_GRAPH_AUDIO_INPUTS];
 
     let mut video_inputs = video_inputs;
     video_inputs.iter_mut().enumerate().for_each(|(index, path)| {
