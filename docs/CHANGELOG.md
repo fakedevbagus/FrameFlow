@@ -1,30 +1,22 @@
-# M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — active — 2026-10-01
+# M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — active — 2026-10-06
 
-- Branch: `fix/m3-227-multi-segment-aggregate-source-path-bytes-cap`.
-- PR #245 (Draft).
-- Fresh audit found multi-segment render requests are limited to 4,096 segments and each source path is individually limited to 4,096 bytes, but aggregate source-path bytes were unbounded.
-- Added `MAX_NATIVE_VIDEO_SEGMENTS_TOTAL_SOURCE_PATH_BYTES = 4 * 1024 * 1024`.
-- Enforced the aggregate source-path cap before per-segment filesystem/media probing.
-- Added overflow-safe aggregate accounting plus exact-limit and over-limit regression coverage.
-- First validation run: lint PASS, frontend tests 554/554 PASS, and frontend build PASS; Cargo test failed due to a missing `NativeVideoSegment` import in the two new tests. Corrected in commit `4e12008bac5707ab2afecba066ea36282345bfb9`.
-- Second validation run completed 545/545 frontend tests but Vitest reported 2 unhandled fork-worker startup timeouts (`export-job.test.ts` and `crop.test.ts`). This run is not accepted as PASS because unhandled errors can cause false positives.
-- Hardened `vitest.config.ts` with `maxWorkers: 1` in commit `6d4eb658443a99c316989509fe37d4808c2527c3` to avoid concurrent fork-worker startup pressure. Full validation remains pending.
+- Branch: `fix/m3-229-unified-av-aggregate-input-source-path-bytes-cap`.
+- Fresh audit found unified AV requests permit 256 video inputs plus 256 audio inputs, each individually capped at 4,096 bytes, but aggregate input-path bytes were not bounded.
+- The independent limits permit up to 2 MiB of input-path strings before filesystem/media probing.
+- Scope: add an aggregate UTF-8 byte cap across video and audio input paths before per-input validation/probing.
+- Preserve existing input-count, per-path, media-type, source-audio, graph, render, cleanup, and result semantics.
+- Add exact-limit and over-limit regression coverage.
 - No project schema change.
-- Pre-existing PR #231 remains untouched; it is stale/diverged from current `main`.
+- Local validation is pending implementation and user run.
 
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.227 after the Vitest worker-concurrency correction.
+# M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
-# M3.228 — Unified AV Source-Audio Presence Probe Deduplication — active — 2026-10-02
-
-- Branch: `fix/m3-228-unified-av-source-audio-probe-dedup`.
-- PR #246 (Draft).
-- Fresh audit found repeated `probe_has_audio()` subprocess calls when multiple unified-AV source-audio segments reference the same resolved video source.
-- Implemented a per-render-request source-path cache for audio-presence results.
-- Added focused regression coverage for repeated source-path reuse.
-- Preserved existing render, validation, cancellation, cleanup, and error semantics.
+- PR #246; squash-merged at `6711c54379ed4807f330a946411e30b4120cbfb2`.
+- User reported PASS.
+- Added per-render-request source-path caching for audio-presence probes.
+- Added focused regression coverage proving repeated source paths invoke the probe once.
+- Preserved existing render/error/cancellation/cleanup/result semantics.
 - No project schema change.
-- Local validation is pending user run.
 
 # M3.227 — Multi-Segment Aggregate Source Path Bytes Cap — completed — 2026-10-01
 
