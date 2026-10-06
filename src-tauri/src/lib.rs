@@ -125,8 +125,6 @@ fn prepare_media_preview(
   path: String,
 ) -> Result<String, String> {
   let source_path = media_path(&path)?;
-  let metadata = fs::metadata(&source_path)
-    .map_err(|error| format!("Could not inspect media metadata: {error}"))?;
 
   let cache_root = app
     .path()
