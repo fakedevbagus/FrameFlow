@@ -1,27 +1,44 @@
-# M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — active — 2026-10-06
+# M3.231 — Preview Generation Single-Flight — active — 2026-10-06
 
 Branch:
-`fix/m3-230-multi-segment-source-audio-probe-dedup`
+`fix/m3-231-preview-generation-single-flight`
 
 PR:
-- #248 (Draft).
+- Draft; pending creation from this branch after the implementation/documentation commits.
 
 Fresh audit finding:
-- `render_video_segments_to_output()` probes source audio presence once for every source-backed segment when audio is enabled.
-- Multi-segment requests support up to 4,096 segments.
-- Repeated references to the same source can therefore repeat FFprobe audio-presence work unnecessarily.
+- `prepare_media_preview()` generated a deterministic temporary path `<cache-key>.partial.mp4`.
+- Concurrent requests for the same source could enter FFmpeg generation simultaneously and share that temporary path.
+- This creates a concrete race on the temporary preview file and can duplicate expensive FFmpeg work.
 
 Implementation:
-- Added a per-render cache keyed by source `Path`.
-- Reused the cached boolean for repeated source paths.
-- Added focused regression coverage for one probe per repeated path.
-- Preserved existing render arguments, ordering, duration checks, cancellation, cleanup, source identity validation, and result behavior.
+- Added a process-local single-flight lock keyed by canonical source path.
+- Requests for the same source wait for the active generator to finish before checking the cache again.
+- Re-read source metadata after lock acquisition before computing the cache key.
+- Added focused concurrency regression coverage for the per-source lock.
+- Preserved preview encoding, source identity validation, cache layout, output semantics, and cancellation behavior.
 
 No project schema change.
 Local validation is pending user run.
 
 Next step:
-- Create the Draft PR and run the complete Pull/Fetch + Validation workflow for M3.230.
+- Create the Draft PR and run the complete Pull/Fetch + Validation workflow for M3.231.
+
+# M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
+
+- PR #248; squash-merged at `8e829c42e5b288048da951335de60fdfc6e2c000`.
+- User reported PASS.
+- Added a per-render cache keyed by source path for repeated multi-segment source-audio presence probes.
+- Added focused regression coverage.
+- No project schema change.
+
+# M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
+
+- PR #247; squash-merged at `87e8b969c23160091433e0a34438c793b5762119`.
+- User reported PASS.
+- Added the 1 MiB aggregate UTF-8 input-path cap before unified AV filesystem/media validation.
+- Added exact-limit and over-limit regression coverage.
+- No project schema change.
 
 # M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
 
