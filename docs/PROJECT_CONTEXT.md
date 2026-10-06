@@ -27,6 +27,11 @@ Validation checkpoint:
 - Fix commit: `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
 - Validation remains pending rerun.
 
+Additional validation correction:
+- Cargo compilation then failed because the exact-limit regression fixture mutated an immutable `audio_inputs` binding.
+- Corrected in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
+- Validation remains pending rerun after this correction.
+
 Next step:
 - Run the complete Pull/Fetch + Validation workflow for M3.229.
 
