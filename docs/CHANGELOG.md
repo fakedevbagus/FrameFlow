@@ -1,7 +1,7 @@
 # M3.231 — Preview Generation Single-Flight — active — 2026-10-06
 
 - Branch: `fix/m3-231-preview-generation-single-flight`.
-- Draft PR pending creation from the implementation/documentation commits.
+- PR #249 (Draft).
 - Fresh audit found `prepare_media_preview()` used a deterministic `.partial.mp4` path per preview cache key without serialization between concurrent requests for the same source.
 - Concurrent preview requests for the same media could therefore run FFmpeg against the same temporary file and race during finalization.
 - Added a process-local single-flight lock keyed by canonical source path.
