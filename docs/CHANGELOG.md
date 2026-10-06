@@ -10,7 +10,9 @@
 - No project schema change.
 - Validation attempt on 2026-10-06 reached lint, all 554 Vitest tests, and the frontend production build, but the Rust build failed because the M3.229 aggregate-cap constant was not imported into the test module.
 - Corrected the test-module import and fixed the over-limit fixture so it exceeds 1 MiB by one byte in commit `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
-- Local validation is pending rerun after the correction.
+- Validation rerun on 2026-10-06 reached the Rust test build but failed because the exact-limit regression fixture mutated an immutable `audio_inputs` binding.
+- Corrected the fixture in commit `83bc29e973006a4ffacecad864dd32eb82944e46`.
+- Full validation remains pending rerun after this correction.
 
 # M3.228 — Unified AV Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
