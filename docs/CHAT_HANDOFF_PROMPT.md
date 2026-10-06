@@ -25,6 +25,17 @@ You are continuing development of the existing repository:
 - Implementation adds a 1 MiB aggregate cap across unified AV video and audio input paths, using saturating accounting before per-input validation.
 - **Pre-existing PR #231 was not modified**; it is stale/diverged and remains untouched.
 - Protected PR #76 and unrelated PR #22 remain untouched.
+## M3.229 — Validation Checkpoint — 2026-10-06
+
+The first local validation attempt for M3.229 was not accepted:
+- `npm run lint`: passed.
+- `npm run test`: passed, 33 test files / 554 tests.
+- Frontend production build: passed.
+- Rust/Cargo build: failed because the new aggregate input-path constant was not imported into the test module.
+- The over-limit regression fixture was also corrected to actually exceed the 1 MiB boundary.
+- Correction commit: `bb01d54bcd56f3b352b3fa8ff290f22ab6667715`.
+- **Do not mark M3.229 PASS or merge PR #247 until the complete validation workflow passes after this correction.**
+
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
 - PR #240; squash-merged at `980f7357669593f6d4ec137359cd7aa30bd6a55b`.
