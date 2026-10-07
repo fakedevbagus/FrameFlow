@@ -40,10 +40,6 @@ impl ExportProcessState {
     if let Ok(mut children) = self.children.lock() {
       children.insert(job_id.to_string(), child);
     }
-
-    if let Ok(mut cancelled) = self.cancelled.lock() {
-      cancelled.remove(job_id);
-    }
   }
 
   fn cancel(&self, job_id: &str) -> Result<(), String> {
@@ -175,6 +171,11 @@ pub fn run_ffmpeg_with_progress(
 
   if let Some(job_id) = job_id {
     state.register(job_id, shared_child.clone());
+
+    if state.is_cancelled(job_id) {
+      let _ = state.cancel(job_id);
+    }
+
     emit_progress(app, job_id, stage, 0.0);
   }
 
@@ -523,6 +524,35 @@ mod tests {
       retained.ends_with(super::FFMPEG_STDERR_TRUNCATION_NOTICE),
       "large stderr output must be explicitly marked as truncated"
     );
+  }
+
+  #[test]
+  fn register_preserves_cancellation_requested_before_child_registration() {
+    use std::process::Command;
+
+    let state = ExportProcessState::default();
+    state
+      .cancel("job-1")
+      .expect("pending cancellation request should be accepted");
+
+    let child = Command::new("sh")
+      .arg("-c")
+      .arg("sleep 5")
+      .spawn()
+      .expect("test export process should spawn");
+
+    state.register(
+      "job-1",
+      std::sync::Arc::new(std::sync::Mutex::new(child)),
+    );
+
+    assert!(
+      state.is_cancelled("job-1"),
+      "register must not clear a cancellation marker created before registration"
+    );
+
+    state.cancel("job-1").expect("active cancellation should succeed");
+    state.finish("job-1");
   }
 
   #[test]
