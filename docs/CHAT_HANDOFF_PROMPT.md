@@ -19,7 +19,7 @@ You are continuing development of the existing repository:
 - User explicitly reported `pass`; under our established workflow this is the milestone acceptance signal.
 - **Current active milestone:** M3.233 — Close Export Cancel/Registration Race.
 - **Current branch:** `fix/m3-233-close-export-cancel-registration-race`.
-- **Current PR:** pending creation after documentation reconciliation.
+- **Current PR:** #251 (Draft).
 - Fresh audit found a cancellation/registration race in `run_ffmpeg_with_progress()`: a cancel request can arrive after FFmpeg spawn but before `register()`, leaving a pending cancellation marker that the registration path previously cleared.
 - M3.233 preserves the cancellation marker during registration and immediately re-checks cancellation after the child is registered.
 - This closes the spawn/register cancellation gap without changing FFmpeg execution, export progress, project schema, or frontend behavior.
