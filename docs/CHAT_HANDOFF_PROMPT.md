@@ -28,7 +28,6 @@ You are continuing development of the existing repository:
 
 ### Important validation-context rule
 
-### Important validation-context rule
 
 A local validation log associated with M3.231 showed a Cargo delimiter error, while the user subsequently explicitly reported `pass`. Do not rewrite history as “all validation passed”; record the explicit PASS as the acceptance signal and preserve the factual validation note when discussing that milestone.
 
@@ -65,25 +64,24 @@ Current order remains:
 
 Do not skip ahead to UI polish because the frontend already has substantial functionality. The priority is correctness, bounded resource usage, lifecycle safety, media correctness, persistence integrity, native packaging, and QA.
 
-## M3.232 — CURRENT SCOPE
+## M3.233 — CURRENT SCOPE
 
-Target only the unbounded pending export-cancellation state.
+Target only the cancellation race between FFmpeg spawn and export child registration.
 
 Implementation currently on branch:
 - `src-tauri/src/export_process.rs`
-- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024`.
-- When an unknown job ID is cancelled, insertion is allowed only while the pending set has capacity.
-- Duplicate pending IDs do not consume additional capacity.
-- Active-child cancellation still records the job as cancelled and attempts to kill the process.
-- Lock acquisition order was made consistent with registration/finish paths.
-- Added regression test for exact capacity, duplicate idempotency, overflow rejection, and bounded set size.
+- `register()` no longer clears an existing cancellation marker.
+- `run_ffmpeg_with_progress()` immediately re-checks cancellation after registering the active child.
+- If cancellation was requested during the spawn/register window, the existing `cancel()` path terminates the active child.
+- Existing M3.232 bounded pending cancellation behavior is preserved.
+- Added focused regression coverage proving registration preserves a pre-registration cancellation marker.
 - No project schema change.
 
-Do not broaden M3.232 into unrelated export/UI/media changes without a new audit.
+Do not broaden M3.233 into unrelated export/UI/media changes without a new audit.
 
-## M3.232 — VALIDATION
+## M3.233 — VALIDATION
 
-Validation is pending.
+Validation is pending user run.
 
 Use exactly this command block:
 
@@ -91,8 +89,8 @@ Use exactly this command block:
 ROOT="$(git rev-parse --show-toplevel)" &&
 cd "$ROOT" &&
 git fetch origin &&
-git checkout fix/m3-232-bound-export-cancel-pending-job-ids &&
-git pull --ff-only origin fix/m3-232-bound-export-cancel-pending-job-ids &&
+git checkout fix/m3-233-close-export-cancel-registration-race &&
+git pull --ff-only origin fix/m3-233-close-export-cancel-registration-race &&
 git status --short &&
 git log -1 --oneline &&
 npm ci &&
@@ -106,23 +104,23 @@ Do not reset `src-tauri/Cargo.lock`.
 
 ## FIRST ACTION IN THE NEW CHAT
 
-Do not start coding from memory.
+Do not start implementation from memory.
 
 First:
-1. Refresh PR #250 and the current branch from GitHub.
-2. Read the current head SHA and compare `main...fix/m3-232-bound-export-cancel-pending-job-ids`.
+1. Refresh PR #251 and the current branch from GitHub.
+2. Read the current head SHA and compare `main...fix/m3-233-close-export-cancel-registration-race`.
 3. Confirm the branch is not behind `main`.
-4. Read the current M3.232 diff in `src-tauri/src/export_process.rs`.
+4. Read the current M3.233 diff in `src-tauri/src/export_process.rs`.
 5. Check `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` are synchronized.
-6. Continue the M3.232 validation checkpoint; do not create another milestone until this one is accepted or its concrete failure is corrected.
+6. Continue the M3.233 validation checkpoint; do not create another milestone until this one is accepted or its concrete failure is corrected.
 
 ## MERGE CHECKPOINT AFTER PASS
 
 When the user reports `pass`:
-- Re-fetch PR #250 metadata.
+- Re-fetch PR #251 metadata.
 - Confirm it is still open, mergeable, and not behind `main`.
-- Mark PR #250 Ready for Review.
-- Re-read PR #250 and capture the exact current head SHA.
+- Mark PR #251 Ready for Review.
+- Re-read PR #251 and capture the exact current head SHA.
 - Squash-merge with `expected_head_sha` equal to that exact SHA.
 - Record the returned merge SHA.
 - Compare `main` against the merge SHA in both directions; both must report `identical`.
