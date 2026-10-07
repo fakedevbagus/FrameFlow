@@ -15,6 +15,7 @@ pub const EXPORT_PROGRESS_EVENT: &str = "export-progress";
 
 const MAX_FFMPEG_STDERR_BYTES: usize = 64 * 1024;
 const MAX_EXPORT_JOB_ID_BYTES: usize = 256;
+const MAX_PENDING_CANCELLED_EXPORT_JOB_IDS: usize = 1024;
 const FFMPEG_STDERR_TRUNCATION_NOTICE: &[u8] =
   b"\n[FFmpeg stderr truncated by FrameFlow]\n";
 
@@ -46,9 +47,21 @@ impl ExportProcessState {
   }
 
   fn cancel(&self, job_id: &str) -> Result<(), String> {
-    if let Ok(mut cancelled) = self.cancelled.lock() {
-      cancelled.insert(job_id.to_string());
-    }
+    let pending_capacity_available = {
+      let mut cancelled = self
+        .cancelled
+        .lock()
+        .map_err(|_| "Export process state is unavailable.".to_string())?;
+
+      if cancelled.contains(job_id) {
+        true
+      } else if cancelled.len() < MAX_PENDING_CANCELLED_EXPORT_JOB_IDS {
+        cancelled.insert(job_id.to_string());
+        true
+      } else {
+        false
+      }
+    };
 
     let child = self
       .children
@@ -58,8 +71,22 @@ impl ExportProcessState {
       .cloned();
 
     let Some(child) = child else {
-      return Ok(());
+      if pending_capacity_available {
+        return Ok(());
+      }
+
+      return Err(format!(
+        "Too many pending export cancellation requests; maximum is {MAX_PENDING_CANCELLED_EXPORT_JOB_IDS}."
+      ));
     };
+
+    {
+      let mut cancelled = self
+        .cancelled
+        .lock()
+        .map_err(|_| "Export process state is unavailable.".to_string())?;
+      cancelled.insert(job_id.to_string());
+    }
 
     let mut child = child
       .lock()
@@ -340,8 +367,68 @@ mod tests {
     ExportProgressEvent,
     EXPORT_PROGRESS_EVENT,
     MAX_EXPORT_JOB_ID_BYTES,
+    MAX_PENDING_CANCELLED_EXPORT_JOB_IDS,
 
   };
+
+  #[test]
+  fn bounds_pending_export_cancellation_requests() {
+    let state = ExportProcessState::default();
+
+    for index in 0..MAX_PENDING_CANCELLED_EXPORT_JOB_IDS {
+      state
+        .cancel(&format!("pending-export-{index}"))
+        .expect("pending cancellation request should be accepted within the limit");
+    }
+
+    assert_eq!(
+      state.cancelled.lock().unwrap().len(),
+      MAX_PENDING_CANCELLED_EXPORT_JOB_IDS
+    );
+
+    state
+      .cancel("pending-export-0")
+      .expect("duplicate pending cancellation request should remain idempotent");
+
+    let error = state
+      .cancel("pending-export-overflow")
+      .expect_err("pending cancellation requests above the configured limit must be rejected");
+
+    assert!(error.contains("maximum is 1024"));
+    assert_eq!(
+      state.cancelled.lock().unwrap().len(),
+      MAX_PENDING_CANCELLED_EXPORT_JOB_IDS
+    );
+  }
+
+  #[test]
+  fn active_export_cancellation_remains_supported_when_pending_capacity_is_full() {
+    use std::process::{Command, Stdio};
+
+    let state = ExportProcessState::default();
+
+    for index in 0..MAX_PENDING_CANCELLED_EXPORT_JOB_IDS {
+      state
+        .cancel(&format!("pending-export-{index}"))
+        .expect("pending cancellation request should be accepted within the limit");
+    }
+
+    let child = Command::new("sh")
+      .args(["-c", "sleep 5"])
+      .stdout(Stdio::null())
+      .stderr(Stdio::null())
+      .spawn()
+      .expect("test export process should spawn");
+
+    let shared_child = std::sync::Arc::new(std::sync::Mutex::new(child));
+    state.register("active-export", shared_child);
+
+    state
+      .cancel("active-export")
+      .expect("active export cancellation must remain available when pending capacity is full");
+
+    state.finish("active-export");
+  }
 
   #[test]
   fn rejects_export_job_ids_above_size_limit() {

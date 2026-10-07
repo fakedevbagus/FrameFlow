@@ -10,53 +10,135 @@ You are continuing development of the existing repository:
 - Platform constraint: Linux-native only. Do not introduce Wine or a Windows compatibility layer.
 - Repository is the source of truth. Do not invent project state from memory when GitHub can be checked.
 
-### Milestone status at the exact handoff point
+### Exact handoff state
 
-- **Latest accepted milestone:** M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication.
-- **M3.230 PR:** #248.
-- **M3.230 squash merge SHA:** `8e829c42e5b288048da951335de60fdfc6e2c000`.
+- **Latest accepted milestone:** M3.231 — Preview Generation Single-Flight.
+- **M3.231 PR:** #249.
+- **M3.231 squash merge SHA:** `6dd5d464faaf59d1bd93659629a0ae267ee293be`.
 - GitHub verified `main` is identical to this merge SHA before continuing.
-- User explicitly reported `pass`; M3.230 was accepted through the established workflow.
-- M3.230 caches audio-presence probe results per source path for one multi-segment render request.
-- **Current active milestone:** M3.231 — Preview Generation Single-Flight.
-- **Current branch:** `fix/m3-231-preview-generation-single-flight`.
-- **M3.231 PR:** #249 (Draft).
-- Fresh audit found concurrent preview requests for the same source could share the deterministic `.partial.mp4` temporary path.
-- M3.231 serializes preview generation per canonical source path and re-checks source metadata after acquiring the lock.
-- Protected PR #76 and unrelated PR #22 remain untouched.
-- Stale PR #231 remains untouched.
+- User explicitly reported `pass`; under our established workflow this is the milestone acceptance signal.
+- **Current active milestone:** M3.232 — Bound Pending Export Cancellation Job IDs.
+- **Current branch:** `fix/m3-232-bound-export-cancel-pending-job-ids`.
+- **Current PR:** #250 (Draft).
+- Fresh audit found `ExportProcessState.cancel()` could retain arbitrary unknown cancellation job IDs indefinitely in the `cancelled` set.
+- M3.232 adds `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` and bounds insertion of unknown/pending cancellation IDs.
+- Duplicate pending cancellation IDs remain idempotent.
+- Active child cancellation behavior is preserved, including when pending capacity is already full.
+- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
+- No project schema change.
+- PR #250 is not merged. Local validation is pending the user's validation run.
 
-## Current workflow
+### Important validation-context rule
 
-1. Refresh real GitHub state first.
-2. Work one focused milestone at a time from verified `main`.
-3. Implement the smallest safe correction and add focused regression coverage.
-4. Update `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` every milestone.
-5. Create the milestone as a Draft PR.
-6. Provide one combined Pull/Fetch + Validation command.
-7. Do not claim validation passed unless the user's output supports it.
-8. On user `pass`: refresh PR/head/base, ensure branch is not behind, mark Ready for Review, re-read exact head SHA, squash-merge with that exact SHA, record the actual merge SHA, verify `main` is identical to the merge SHA, reconcile documentation, perform a fresh audit, create the next focused branch/Draft PR, and provide the next validation command.
-9. Never reset or discard a user-local modification such as `src-tauri/Cargo.lock` automatically.
-10. Keep UI/UX/frontend redesign blocked until the stability gate is reached.
+A local validation log associated with M3.231 showed a Cargo delimiter error, while the user subsequently explicitly reported `pass`. Do not rewrite history as “all validation passed”; record the explicit PASS as the acceptance signal and preserve the factual validation note when discussing that milestone.
 
-## M3.231 — Scope
+## ESTABLISHED WORKFLOW — MUST FOLLOW
 
-- Target only the concurrent preview-generation race for the same source.
-- Use a process-local single-flight mechanism keyed by canonical source path.
-- Do not introduce a cross-process lock or unrelated cache redesign.
-- Preserve preview encoding, source identity validation, cache layout, output semantics, and cancellation behavior.
-- Validation must cover lint, frontend tests, frontend build, and Cargo tests through the established workflow.
-- Do not mark M3.231 PASS or merge until the complete validation workflow succeeds.
+1. Refresh real GitHub state before acting.
+2. Verify PR state, branch head SHA, base SHA, and ahead/behind against `main`.
+3. Work one focused milestone at a time.
+4. Perform a fresh audit before choosing the next milestone.
+5. Make the smallest safe change that addresses the concrete audit finding.
+6. Add focused regression coverage for the exact failure/resource boundary.
+7. Update `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` every milestone.
+8. Create a Draft PR for the milestone.
+9. Provide exactly one combined Pull/Fetch + Validation command.
+10. Never claim lint/test/build/Cargo/runtime success unless supported by the user's reported output. An explicit user `pass` is the workflow acceptance signal.
+11. On `pass`: refresh PR/head/base; confirm not behind; mark Ready for Review; re-read the exact current head SHA; squash-merge using that exact SHA; record the actual merge SHA; verify `main` is identical to the merge SHA; reconcile all milestone docs; fresh-audit verified `main`; create the next focused branch and Draft PR; provide the next validation command.
+12. Never reset, discard, or overwrite user-local changes such as `src-tauri/Cargo.lock`.
+13. Keep protected PR #76, unrelated PR #22, and stale PR #231 untouched unless a fresh audit explicitly requires comparison.
+14. Keep the major UI/UX/frontend redesign blocked until the stability gate is reached.
+15. Linux-native only. No Wine or Windows compatibility layer.
 
-## M3.231 — Validation Checkpoint — 2026-10-06
+## ROADMAP / GATES
 
-The first M3.231 validation attempt did not reach PASS:
-- Lint: passed.
-- Vitest: 33 test files / 554 tests passed.
-- Frontend production build: passed.
-- Cargo: failed because `src-tauri/src/lib.rs` had an unclosed delimiter in the test module around `detects_preview_source_changes_before_cache_finalization()`.
-- Correction commit: `30e7a4cb075102bff8c7fa41316f8abae961ac01`.
-- **Do not mark M3.231 PASS or merge PR #249 until the complete validation workflow passes after this correction.**
+Current order remains:
+
+- M3 — stability/resource hardening.
+- M4 — media correctness.
+- M5 — process/lifecycle hardening.
+- M6 — persistence hardening.
+- M7 — native runtime and packaging.
+- M8 — QA.
+- M9 — stability gate.
+- Only after the stability gate: major UI/UX/frontend redesign.
+
+Do not skip ahead to UI polish because the frontend already has substantial functionality. The priority is correctness, bounded resource usage, lifecycle safety, media correctness, persistence integrity, native packaging, and QA.
+
+## M3.232 — CURRENT SCOPE
+
+Target only the unbounded pending export-cancellation state.
+
+Implementation currently on branch:
+- `src-tauri/src/export_process.rs`
+- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024`.
+- When an unknown job ID is cancelled, insertion is allowed only while the pending set has capacity.
+- Duplicate pending IDs do not consume additional capacity.
+- Active-child cancellation still records the job as cancelled and attempts to kill the process.
+- Lock acquisition order was made consistent with registration/finish paths.
+- Added regression test for exact capacity, duplicate idempotency, overflow rejection, and bounded set size.
+- No project schema change.
+
+Do not broaden M3.232 into unrelated export/UI/media changes without a new audit.
+
+## M3.232 — VALIDATION
+
+Validation is pending.
+
+Use exactly this command block:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" &&
+cd "$ROOT" &&
+git fetch origin &&
+git checkout fix/m3-232-bound-export-cancel-pending-job-ids &&
+git pull --ff-only origin fix/m3-232-bound-export-cancel-pending-job-ids &&
+git status --short &&
+git log -1 --oneline &&
+npm ci &&
+npm run lint &&
+npm run test &&
+npm run build &&
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
+Do not reset `src-tauri/Cargo.lock`.
+
+## FIRST ACTION IN THE NEW CHAT
+
+Do not start coding from memory.
+
+First:
+1. Refresh PR #250 and the current branch from GitHub.
+2. Read the current head SHA and compare `main...fix/m3-232-bound-export-cancel-pending-job-ids`.
+3. Confirm the branch is not behind `main`.
+4. Read the current M3.232 diff in `src-tauri/src/export_process.rs`.
+5. Check `docs/CHAT_HANDOFF_PROMPT.md`, `docs/PROJECT_CONTEXT.md`, and `docs/CHANGELOG.md` are synchronized.
+6. Continue the M3.232 validation checkpoint; do not create another milestone until this one is accepted or its concrete failure is corrected.
+
+## MERGE CHECKPOINT AFTER PASS
+
+When the user reports `pass`:
+- Re-fetch PR #250 metadata.
+- Confirm it is still open, mergeable, and not behind `main`.
+- Mark PR #250 Ready for Review.
+- Re-read PR #250 and capture the exact current head SHA.
+- Squash-merge with `expected_head_sha` equal to that exact SHA.
+- Record the returned merge SHA.
+- Compare `main` against the merge SHA in both directions; both must report `identical`.
+- Reconcile docs on the post-merge state.
+- Fresh-audit verified `main`.
+- Create the next focused branch and Draft PR only after the audit.
+- Provide the next one-block Pull/Fetch + Validation command.
+
+## DOCUMENTATION RULE
+
+Every accepted milestone must leave these files synchronized:
+- `docs/CHAT_HANDOFF_PROMPT.md`
+- `docs/PROJECT_CONTEXT.md`
+- `docs/CHANGELOG.md`
+
+The handoff document is the canonical cross-chat continuity file. Always update its exact “latest accepted” and “current active” sections, current branch, PR number, latest merge SHA, fresh-audit finding, validation status, and next action.
 
 ## M3.222 — Persisted Project Total Audio Volume Keyframe Count Cap — completed — 2026-10-01
 
@@ -955,7 +1037,7 @@ Workflow:
 - Added a fixed 32-connection active-handler ceiling with an atomic slot counter and RAII release guard.
 - Excess accepted connections are closed without spawning another handler thread.
 - Existing request/response timeouts and media HTTP behavior remain preserved.
-- Added focused regression coverage.
+- Added focused regression coverage for capacity, duplicate idempotency, overflow rejection, and active cancellation when pending capacity is full.
 - No project schema version change.
 - PR head `66cba3991383c379f8c8a5c4dcaf1c6257fcebfa` was verified before merge.
 - `main` was verified at `f319afae3289e18308165d535ad810c1cc96e663`.

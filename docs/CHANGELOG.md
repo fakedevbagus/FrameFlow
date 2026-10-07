@@ -1,26 +1,28 @@
-# M3.231 — Preview Generation Single-Flight — active — 2026-10-06
+# M3.232 — Bound Pending Export Cancellation Job IDs — active — 2026-10-06
 
-- Branch: `fix/m3-231-preview-generation-single-flight`.
-- PR #249 (Draft).
-- Fresh audit found `prepare_media_preview()` used a deterministic `.partial.mp4` path per preview cache key without serialization between concurrent requests for the same source.
-- Concurrent preview requests for the same media could therefore run FFmpeg against the same temporary file and race during finalization.
-- Added a process-local single-flight lock keyed by canonical source path.
-- The first request generates the preview; concurrent requests for the same source wait and then reuse the finalized cache result.
-- Added focused regression coverage proving concurrent generation for the same source waits for the first lock holder.
-- Re-check source metadata after acquiring the lock so cache keys are based on the current source state.
-- Preserved preview encoding, source-identity validation, cache layout, output semantics, and cancellation behavior.
+- Branch: `fix/m3-232-bound-export-cancel-pending-job-ids`.
+- PR #250 (Draft).
+- Fresh audit found unknown export cancellation job IDs could accumulate without a count bound.
+- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` for unknown/pending cancellation requests.
+- Duplicate pending cancellation IDs remain idempotent.
+- Active-child cancellation behavior is preserved, including when pending capacity is already full.
+- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
+- Added focused regression coverage.
 - No project schema change.
-- Validation attempt on 2026-10-06 passed lint, all 554 frontend tests, and the frontend production build, but Cargo failed on an unclosed delimiter in the `#[cfg(test)]` module of `src-tauri/src/lib.rs`.
-- Closed the affected preview-source regression test and test module in commit `30e7a4cb075102bff8c7fa41316f8abae961ac01`.
-- Full validation remains pending rerun after this correction.
+- Local validation is pending user run.
+
+# M3.231 — Preview Generation Single-Flight — completed — 2026-10-06
+
+- PR #249; squash-merged at `6dd5d464faaf59d1bd93659629a0ae267ee293be`.
+- User explicitly reported PASS and the milestone was accepted through the established workflow.
+- Added process-local single-flight preview generation keyed by canonical source path.
+- No project schema change.
 
 # M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
 - PR #248; squash-merged at `8e829c42e5b288048da951335de60fdfc6e2c000`.
 - User reported PASS.
-- Added a per-render cache keyed by source path so repeated multi-segment references reuse one audio-presence probe.
-- Added focused regression coverage proving repeated source paths invoke the probe once.
-- Preserved segment ordering, duration validation, render arguments, cancellation, cleanup, source identity validation, and result semantics.
+- Added per-render-request source-path caching for multi-segment audio-presence probes.
 - No project schema change.
 
 # M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06

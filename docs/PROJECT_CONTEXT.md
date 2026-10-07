@@ -1,39 +1,43 @@
-# M3.231 — Preview Generation Single-Flight — active — 2026-10-06
+# M3.232 — Bound Pending Export Cancellation Job IDs — active — 2026-10-06
 
 Branch:
-`fix/m3-231-preview-generation-single-flight`
+`fix/m3-232-bound-export-cancel-pending-job-ids`
 
 PR:
-- #249 (Draft).
+- #250 (Draft).
 
 Fresh audit finding:
-- `prepare_media_preview()` generated a deterministic temporary path `<cache-key>.partial.mp4`.
-- Concurrent requests for the same source could enter FFmpeg generation simultaneously and share that temporary path.
-- This creates a concrete race on the temporary preview file and can duplicate expensive FFmpeg work.
+- `ExportProcessState.cancel()` could retain arbitrary unknown cancellation job IDs indefinitely in the `cancelled` set.
+- Job IDs are individually capped at 256 bytes, but the count of pending unknown cancellation IDs had no bound.
+- Repeated cancellation requests for arbitrary IDs could therefore grow backend memory without a corresponding export process.
 
 Implementation:
-- Added a process-local single-flight lock keyed by canonical source path.
-- Requests for the same source wait for the active generator to finish before checking the cache again.
-- Re-read source metadata after lock acquisition before computing the cache key.
-- Added focused concurrency regression coverage for the per-source lock.
-- Preserved preview encoding, source identity validation, cache layout, output semantics, and cancellation behavior.
+- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024`.
+- Unknown/pending cancellation IDs are bounded before insertion.
+- Duplicate pending IDs remain idempotent.
+- Active child cancellation behavior is preserved, including when pending capacity is already full.
+- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
+- Lock acquisition order remains consistent with registration and finish paths.
+- Added focused regression coverage for capacity, duplicate idempotency, overflow rejection, and active cancellation when pending capacity is full.
 
 No project schema change.
 Local validation is pending user run.
 
 Next step:
-- Validation checkpoint: lint, 554 frontend tests, and frontend production build passed; Cargo failed on an unclosed delimiter in the `#[cfg(test)]` module. Corrected in commit `30e7a4cb075102bff8c7fa41316f8abae961ac01`.
-- Validation remains pending rerun.
+- Run the complete Pull/Fetch + Validation workflow for M3.232.
 
-Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.231.
+# M3.231 — Preview Generation Single-Flight — completed — 2026-10-06
+
+- PR #249; squash-merged at `6dd5d464faaf59d1bd93659629a0ae267ee293be`.
+- User explicitly reported PASS and the milestone was accepted through the established workflow.
+- Added process-local single-flight preview generation keyed by canonical source path.
+- No project schema change.
 
 # M3.230 — Multi-Segment Source-Audio Presence Probe Deduplication — completed — 2026-10-06
 
 - PR #248; squash-merged at `8e829c42e5b288048da951335de60fdfc6e2c000`.
 - User reported PASS.
-- Added a per-render cache keyed by source path for repeated multi-segment source-audio presence probes.
-- Added focused regression coverage.
+- Added per-render source-path caching for audio-presence probes.
 - No project schema change.
 
 # M3.229 — Unified AV Aggregate Input Source Path Bytes Cap — completed — 2026-10-06
