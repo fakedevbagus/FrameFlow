@@ -4,7 +4,7 @@ Branch:
 `fix/m3-233-close-export-cancel-registration-race`
 
 PR:
-- Pending creation after documentation reconciliation.
+- #251 (Draft).
 
 Fresh audit finding:
 - `run_ffmpeg_with_progress()` can spawn FFmpeg before the child is registered in `ExportProcessState`.
