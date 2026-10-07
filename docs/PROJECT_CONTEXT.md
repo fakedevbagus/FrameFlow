@@ -1,30 +1,29 @@
-# M3.232 — Bound Pending Export Cancellation Job IDs — active — 2026-10-06
+# M3.233 — Close Export Cancel/Registration Race — active — 2026-10-07
 
 Branch:
-`fix/m3-232-bound-export-cancel-pending-job-ids`
+`fix/m3-233-close-export-cancel-registration-race`
 
 PR:
-- #250 (Draft).
+- #251 (Draft).
 
 Fresh audit finding:
-- `ExportProcessState.cancel()` could retain arbitrary unknown cancellation job IDs indefinitely in the `cancelled` set.
-- Job IDs are individually capped at 256 bytes, but the count of pending unknown cancellation IDs had no bound.
-- Repeated cancellation requests for arbitrary IDs could therefore grow backend memory without a corresponding export process.
+- `run_ffmpeg_with_progress()` can spawn FFmpeg before the child is registered in `ExportProcessState`.
+- A concurrent `cancel_export_job` request during that window can create a pending cancellation marker.
+- The previous `register()` implementation removed that marker immediately, so the cancellation request could be lost and the newly spawned export could continue.
 
 Implementation:
-- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024`.
-- Unknown/pending cancellation IDs are bounded before insertion.
-- Duplicate pending IDs remain idempotent.
-- Active child cancellation behavior is preserved, including when pending capacity is already full.
-- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
-- Lock acquisition order remains consistent with registration and finish paths.
-- Added focused regression coverage for capacity, duplicate idempotency, overflow rejection, and active cancellation when pending capacity is full.
+- `register()` no longer clears the cancellation marker.
+- After registering an export child, `run_ffmpeg_with_progress()` immediately re-checks cancellation and invokes the existing cancellation path when required.
+- This preserves cancellation across the spawn/register ordering boundary.
+- Existing bounded pending cancellation behavior from M3.232 is preserved.
+- Added focused regression coverage proving registration does not clear a pending cancellation marker created before child registration and that active cancellation remains supported.
 
 No project schema change.
+
 Local validation is pending user run.
 
 Next step:
-- Run the complete Pull/Fetch + Validation workflow for M3.232.
+- Run the complete Pull/Fetch + Validation workflow for M3.233.
 
 # M3.231 — Preview Generation Single-Flight — completed — 2026-10-06
 

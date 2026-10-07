@@ -1,15 +1,25 @@
-# M3.232 — Bound Pending Export Cancellation Job IDs — active — 2026-10-06
+# M3.233 — Close Export Cancel/Registration Race — active — 2026-10-07
 
-- Branch: `fix/m3-232-bound-export-cancel-pending-job-ids`.
-- PR #250 (Draft).
-- Fresh audit found unknown export cancellation job IDs could accumulate without a count bound.
-- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` for unknown/pending cancellation requests.
-- Duplicate pending cancellation IDs remain idempotent.
-- Active-child cancellation behavior is preserved, including when pending capacity is already full.
-- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
-- Added focused regression coverage.
+- Branch: `fix/m3-233-close-export-cancel-registration-race`.
+- PR #251 (Draft).
+- Fresh audit found a cancellation race between FFmpeg spawn and child registration.
+- `register()` previously removed a cancellation marker that could have been created during that window.
+- Registration now preserves the cancellation marker, and the runner re-checks cancellation immediately after child registration.
+- Added focused regression coverage for the pre-registration cancellation ordering.
+- Preserved the M3.232 bounded pending cancellation state.
 - No project schema change.
 - Local validation is pending user run.
+
+# M3.232 — Bound Pending Export Cancellation Job IDs — completed — 2026-10-06
+
+- PR #250; squash-merged at `61cdd26c99600e041e212556f72436853da35c09`.
+- User explicitly reported PASS and the milestone was accepted through the established workflow.
+- Added `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` for unknown/pending cancellation requests.
+- Duplicate pending cancellation IDs remain idempotent.
+- Active-child cancellation behavior is preserved.
+- Added focused regression coverage for capacity, duplicate idempotency, overflow rejection, and active cancellation when pending capacity is full.
+- Preserved cancellation marker ordering across the existing registration/finish paths.
+- No project schema change.
 
 # M3.231 — Preview Generation Single-Flight — completed — 2026-10-06
 
