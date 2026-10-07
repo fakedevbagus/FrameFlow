@@ -1,7 +1,7 @@
 # M3.233 — Close Export Cancel/Registration Race — active — 2026-10-07
 
 - Branch: `fix/m3-233-close-export-cancel-registration-race`.
-- PR pending creation after documentation reconciliation.
+- PR #251 (Draft).
 - Fresh audit found a cancellation race between FFmpeg spawn and child registration.
 - `register()` previously removed a cancellation marker that could have been created during that window.
 - Registration now preserves the cancellation marker, and the runner re-checks cancellation immediately after child registration.
