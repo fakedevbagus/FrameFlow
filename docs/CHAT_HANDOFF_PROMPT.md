@@ -12,21 +12,21 @@ You are continuing development of the existing repository:
 
 ### Exact handoff state
 
-- **Latest accepted milestone:** M3.231 — Preview Generation Single-Flight.
-- **M3.231 PR:** #249.
-- **M3.231 squash merge SHA:** `6dd5d464faaf59d1bd93659629a0ae267ee293be`.
-- GitHub verified `main` is identical to this merge SHA before continuing.
+- **Latest accepted milestone:** M3.232 — Bound Pending Export Cancellation Job IDs.
+- **M3.232 PR:** #250.
+- **M3.232 squash merge SHA:** `61cdd26c99600e041e212556f72436853da35c09`.
+- GitHub verified `main` is identical to this merge SHA in both compare directions.
 - User explicitly reported `pass`; under our established workflow this is the milestone acceptance signal.
-- **Current active milestone:** M3.232 — Bound Pending Export Cancellation Job IDs.
-- **Current branch:** `fix/m3-232-bound-export-cancel-pending-job-ids`.
-- **Current PR:** #250 (Draft).
-- Fresh audit found `ExportProcessState.cancel()` could retain arbitrary unknown cancellation job IDs indefinitely in the `cancelled` set.
-- M3.232 adds `MAX_PENDING_CANCELLED_EXPORT_JOB_IDS = 1024` and bounds insertion of unknown/pending cancellation IDs.
-- Duplicate pending cancellation IDs remain idempotent.
-- Active child cancellation behavior is preserved, including when pending capacity is already full.
-- Cancellation records the pending marker before child lookup and reasserts it for an active child, preserving cancellation behavior across register/cancel ordering races.
-- No project schema change.
-- PR #250 is not merged. Local validation is pending the user's validation run.
+- **Current active milestone:** M3.233 — Close Export Cancel/Registration Race.
+- **Current branch:** `fix/m3-233-close-export-cancel-registration-race`.
+- **Current PR:** pending creation after documentation reconciliation.
+- Fresh audit found a cancellation/registration race in `run_ffmpeg_with_progress()`: a cancel request can arrive after FFmpeg spawn but before `register()`, leaving a pending cancellation marker that the registration path previously cleared.
+- M3.233 preserves the cancellation marker during registration and immediately re-checks cancellation after the child is registered.
+- This closes the spawn/register cancellation gap without changing FFmpeg execution, export progress, project schema, or frontend behavior.
+- Focused regression coverage verifies a cancellation marker created before registration survives registration and active cancellation remains available.
+- PR #250 is merged and M3.232 is completed. M3.233 validation is pending user run.
+
+### Important validation-context rule
 
 ### Important validation-context rule
 
